@@ -1,6 +1,21 @@
-name = "my-cf-app"
+name = "ai-grija-ro"
 main = "src/worker/index.ts"
 compatibility_date = "2025-01-01"
 
 [assets]
 directory = "./dist"
+binding = "ASSETS"
+
+[ai]
+binding = "AI"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "TBD"
+
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "ai-grija-share-cards"
+
+[vars]
+BASE_URL = "https://ai-grija.ro"

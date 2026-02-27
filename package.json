@@ -1,5 +1,5 @@
 {
-  "name": "my-cf-app",
+  "name": "ai-grija-ro",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "hono": "^4.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

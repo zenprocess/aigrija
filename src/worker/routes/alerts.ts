@@ -3,10 +3,15 @@ import type { Env } from '../lib/types';
 import { CAMPAIGNS } from '../data/campaigns';
 import { renderAlertPage, renderAlertsIndex } from '../templates/alert-page';
 
+const VALID_STATUSES = ['active', 'declining', 'resolved'] as const;
+
 const alerts = new Hono<{ Bindings: Env }>();
 
 alerts.get('/api/alerts', (c) => {
   const status = c.req.query('status');
+  if (status && !VALID_STATUSES.includes(status as typeof VALID_STATUSES[number])) {
+    return c.json({ error: `Status invalid. Valori acceptate: ${VALID_STATUSES.join(', ')}` }, 400);
+  }
   const filtered = status ? CAMPAIGNS.filter(ca => ca.status === status) : CAMPAIGNS;
   return c.json({
     campaigns: filtered.map(ca => ({

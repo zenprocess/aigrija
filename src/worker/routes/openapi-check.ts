@@ -13,7 +13,7 @@ const MAX_URL_LENGTH = 2048;
 
 const CheckRequestSchema = z.object({
   text: z.string().min(3).max(MAX_TEXT_LENGTH).describe('Textul mesajului suspect'),
-  url: z.string().max(MAX_URL_LENGTH).url().optional().describe('URL-ul suspect (optional)'),
+  url: z.string().max(MAX_URL_LENGTH).optional().describe('URL-ul suspect (optional)'),
 });
 
 const ClassificationSchema = z.object({

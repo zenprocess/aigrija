@@ -3,14 +3,16 @@ import { cors } from 'hono/cors';
 import { secureHeaders } from 'hono/secure-headers';
 import type { Env } from './lib/types';
 import { requestId } from './lib/request-id';
-import { health } from './routes/health';
 import { counter } from './routes/counter';
-import { check } from './routes/check';
 import { alerts } from './routes/alerts';
 import { share } from './routes/share';
 import { sitemap } from './routes/sitemap';
 import { telegram } from './routes/telegram';
 import { whatsapp } from './routes/whatsapp';
+import { createOpenAPIApp } from './lib/openapi';
+import { CheckEndpoint } from './routes/openapi-check';
+import { AlertsEndpoint } from './routes/openapi-alerts';
+import { HealthEndpoint } from './routes/openapi-health';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -31,10 +33,17 @@ app.use('/alerte', secureHeaders());
 // CORS only on public API routes
 app.use('/api/*', cors({ origin: '*' }));
 
-app.route('/', health);
+// Wrap with chanfana for OpenAPI docs at /docs
+const openapi = createOpenAPIApp(app);
+
+// OpenAPI-documented routes
+openapi.post('/api/check', CheckEndpoint);
+openapi.get('/api/alerts', AlertsEndpoint);
+openapi.get('/health', HealthEndpoint);
+
+// Plain Hono routes (no OpenAPI docs needed)
 app.route('/', counter);
-app.route('/', check);
-app.route('/', alerts);
+app.route('/', alerts);   // keeps /alerte SSR + legacy /api/alerts (chanfana takes priority)
 app.route('/', share);
 app.route('/', sitemap);
 app.route('/', telegram);

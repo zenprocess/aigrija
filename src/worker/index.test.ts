@@ -2,13 +2,27 @@ import { describe, it, expect } from 'vitest';
 import app from './index';
 
 describe('/health', () => {
-  it('returns ok status', async () => {
-    const res = await app.request('/health');
+  it('returns ok status with deep checks', async () => {
+    const env = {
+      CACHE: mockKV(),
+      AI: {},
+      STORAGE: mockR2(),
+    };
+    const res = await app.request('/health', undefined, env);
     expect(res.status).toBe(200);
-    const body = await res.json() as { status: string; timestamp: string; version: string };
+    const body = await res.json() as any;
     expect(body.status).toBe('ok');
-    expect(body.timestamp).toBeDefined();
     expect(body.version).toBe('1.0.0');
+    expect(body.timestamp).toBeDefined();
+    expect(body.checks.kv.status).toBe('ok');
+    expect(body.checks.ai.status).toBe('ok');
+    expect(body.checks.r2.status).toBe('ok');
+  });
+
+  it('returns X-Request-Id header', async () => {
+    const env = { CACHE: mockKV(), AI: {}, STORAGE: mockR2() };
+    const res = await app.request('/health', undefined, env);
+    expect(res.headers.get('X-Request-Id')).toBeDefined();
   });
 });
 
@@ -47,17 +61,23 @@ describe('/api/alerts', () => {
     expect(body.campaigns.every(c => c.status === 'active')).toBe(true);
   });
 
-  it('rejects invalid status', async () => {
+  it('rejects invalid status with error envelope', async () => {
     const res = await app.request('/api/alerts?status=bogus');
     expect(res.status).toBe(400);
+    const body = await res.json() as any;
+    expect(body.error.code).toBe('VALIDATION_ERROR');
+    expect(body.error.request_id).toBeDefined();
   });
 });
 
 describe('/alerte/:slug', () => {
-  it('returns 404 for unknown slug', async () => {
+  it('returns 404 with error envelope for unknown slug', async () => {
     const env = { BASE_URL: 'https://ai-grija.ro', CACHE: mockKV() };
     const res = await app.request('/alerte/nonexistent-slug', undefined, env);
     expect(res.status).toBe(404);
+    const body = await res.json() as any;
+    expect(body.error.code).toBe('NOT_FOUND');
+    expect(body.error.request_id).toBeDefined();
   });
 });
 
@@ -83,14 +103,17 @@ describe('/webhook/whatsapp GET', () => {
 });
 
 describe('/webhook/telegram POST', () => {
-  it('returns 401 without secret header', async () => {
+  it('returns 401 with error envelope without secret header', async () => {
     const env = { TELEGRAM_WEBHOOK_SECRET: 'secret123' };
     const res = await app.request('/webhook/telegram', { method: 'POST' }, env);
     expect(res.status).toBe(401);
+    const body = await res.json() as any;
+    expect(body.error.code).toBe('UNAUTHORIZED');
+    expect(body.error.request_id).toBeDefined();
   });
 });
 
-// Minimal KV mock for routes that need CACHE
+// Minimal KV mock
 function mockKV(): KVNamespace {
   const store = new Map<string, string>();
   return {
@@ -100,4 +123,17 @@ function mockKV(): KVNamespace {
     list: async () => ({ keys: [], list_complete: true, cacheStatus: null }),
     getWithMetadata: async () => ({ value: null, metadata: null, cacheStatus: null }),
   } as unknown as KVNamespace;
+}
+
+// Minimal R2 mock
+function mockR2(): R2Bucket {
+  return {
+    head: async () => null,
+    get: async () => null,
+    put: async () => {},
+    delete: async () => {},
+    list: async () => ({ objects: [], truncated: false }),
+    createMultipartUpload: async () => ({}),
+    resumeMultipartUpload: async () => ({}),
+  } as unknown as R2Bucket;
 }

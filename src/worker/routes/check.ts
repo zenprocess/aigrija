@@ -6,6 +6,9 @@ import { analyzeUrl } from '../lib/url-analyzer';
 import { matchCampaigns } from '../lib/campaign-matcher';
 import { BANK_PLAYBOOKS } from '../data/bank-playbooks';
 
+const MAX_TEXT_LENGTH = 5000;
+const MAX_URL_LENGTH = 2048;
+
 const check = new Hono<{ Bindings: Env }>();
 
 check.post('/api/check', async (c) => {
@@ -15,9 +18,24 @@ check.post('/api/check', async (c) => {
     return c.json({ error: 'Limita de verificari depasita. Incercati din nou mai tarziu.' }, 429);
   }
 
-  const body = await c.req.json<CheckRequest>();
+  // Fix #3: catch malformed JSON
+  let body: CheckRequest;
+  try {
+    body = await c.req.json<CheckRequest>();
+  } catch {
+    return c.json({ error: 'Request body invalid. Trimiteti JSON valid.' }, 400);
+  }
+
   if (!body.text || body.text.trim().length < 3) {
     return c.json({ error: 'Textul este prea scurt pentru analiza.' }, 400);
+  }
+
+  // Fix #4: input length limits
+  if (body.text.length > MAX_TEXT_LENGTH) {
+    return c.json({ error: `Textul depaseste limita de ${MAX_TEXT_LENGTH} caractere.` }, 400);
+  }
+  if (body.url && body.url.length > MAX_URL_LENGTH) {
+    return c.json({ error: `URL-ul depaseste limita de ${MAX_URL_LENGTH} caractere.` }, 400);
   }
 
   const classification = await classify(c.env.AI, body.text, body.url);

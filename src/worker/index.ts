@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { secureHeaders } from 'hono/secure-headers';
 import type { Env } from './lib/types';
 import { health } from './routes/health';
 import { counter } from './routes/counter';
@@ -12,6 +13,17 @@ import { whatsapp } from './routes/whatsapp';
 
 const app = new Hono<{ Bindings: Env }>();
 
+// Global error handler (#1)
+app.onError((err, c) => {
+  console.error(`[ERROR] ${c.req.method} ${c.req.path}:`, err.message);
+  return c.json({ error: 'Eroare interna. Va rugam incercati din nou.' }, 500);
+});
+
+// Security headers for SSR pages (#5)
+app.use('/alerte/*', secureHeaders());
+app.use('/alerte', secureHeaders());
+
+// CORS only on public API routes, not webhooks (#8)
 app.use('/api/*', cors({ origin: '*' }));
 
 app.route('/', health);

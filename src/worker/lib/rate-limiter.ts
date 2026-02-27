@@ -18,7 +18,7 @@ export async function checkRateLimit(
     return { allowed: false, remaining: 0 };
   }
 
-  // Increment without resetting TTL by using metadata to preserve original expiry
+  // Increment counter — note: KV put always resets TTL, creating a sliding window
   // Note: KV put always resets TTL. We accept this tradeoff — the window slides.
   // For strict fixed windows, use Durable Objects instead.
   await cache.put(key, String(current + 1), { expirationTtl: windowSeconds });

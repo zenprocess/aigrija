@@ -15,7 +15,7 @@ const app = new Hono<{ Bindings: Env }>();
 
 // Global error handler (#1)
 app.onError((err, c) => {
-  console.error(`[ERROR] ${c.req.method} ${c.req.path}:`, err.message);
+  console.error(`[ERROR] ${c.req.method} ${c.req.path}:`, err);
   return c.json({ error: 'Eroare interna. Va rugam incercati din nou.' }, 500);
 });
 

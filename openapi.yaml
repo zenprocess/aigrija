@@ -1,0 +1,542 @@
+openapi: 3.1.0
+info:
+  title: ai-grija.ro API
+  description: Romanian anti-phishing classification and campaign intelligence API
+  version: 1.0.0
+  contact:
+    name: ai-grija.ro
+    url: https://ai-grija.ro
+
+servers:
+  - url: https://ai-grija.ro
+    description: Production
+  - url: http://localhost:8787
+    description: Local development
+
+tags:
+  - name: Classification
+    description: Scam/phishing message classification
+  - name: Campaigns
+    description: Active phishing campaign intelligence
+  - name: System
+    description: Health, metrics, SEO
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      tags: [System]
+      summary: Health check with dependency probes
+      responses:
+        '200':
+          description: All systems operational
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: One or more dependencies degraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/check:
+    post:
+      operationId: checkMessage
+      tags: [Classification]
+      summary: Classify a message or URL for phishing/scam indicators
+      description: |
+        Analyzes text and optional URL using Workers AI (Llama 3.1 8B),
+        heuristic URL analysis, and campaign pattern matching.
+        Rate limited to 20 requests/IP/hour.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckRequest'
+            examples:
+              sms_phishing:
+                summary: SMS phishing example
+                value:
+                  text: "Coletul dvs FANBOX este in asteptare. Confirmati livrarea"
+                  url: "https://fanocurier.co/tracking"
+              bank_spoofing:
+                summary: Bank call spoofing
+                value:
+                  text: "Am primit un apel de la ING despre tranzactii suspecte pe homebank"
+      responses:
+        '200':
+          description: Classification result
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                too_short:
+                  value:
+                    error:
+                      code: VALIDATION_ERROR
+                      message: "Textul este prea scurt pentru analiza."
+                      request_id: "req_abc123"
+                too_long:
+                  value:
+                    error:
+                      code: VALIDATION_ERROR
+                      message: "Textul depaseste limita de 5000 caractere."
+                      request_id: "req_abc123"
+        '429':
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds until rate limit resets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/alerts:
+    get:
+      operationId: listAlerts
+      tags: [Campaigns]
+      summary: List active phishing campaigns in Romania
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/CampaignStatus'
+          description: Filter by campaign status
+      responses:
+        '200':
+          description: Campaign list
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertsResponse'
+        '400':
+          description: Invalid status filter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/alerts/{slug}:
+    get:
+      operationId: getAlert
+      tags: [Campaigns]
+      summary: Get details of a specific phishing campaign
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          example: apel-fals-ing-romania-2025
+      responses:
+        '200':
+          description: Campaign details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampaignDetail'
+        '404':
+          description: Campaign not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/counter:
+    get:
+      operationId: getCounter
+      tags: [System]
+      summary: Total number of checks performed
+      responses:
+        '200':
+          description: Counter value
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [total_checks]
+                properties:
+                  total_checks:
+                    type: integer
+
+  /alerte:
+    get:
+      operationId: getAlertsPage
+      tags: [Campaigns]
+      summary: Server-rendered alerts index page (SEO)
+      responses:
+        '200':
+          description: HTML page
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /alerte/{slug}:
+    get:
+      operationId: getAlertPage
+      tags: [Campaigns]
+      summary: Server-rendered alert detail page (SEO)
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: HTML page
+          content:
+            text/html:
+              schema:
+                type: string
+        '404':
+          description: Campaign not found
+
+  /sitemap.xml:
+    get:
+      operationId: getSitemap
+      tags: [System]
+      summary: XML Sitemap
+      responses:
+        '200':
+          content:
+            application/xml:
+              schema:
+                type: string
+
+  /robots.txt:
+    get:
+      operationId: getRobots
+      tags: [System]
+      summary: Robots.txt
+      responses:
+        '200':
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /webhook/telegram:
+    post:
+      operationId: telegramWebhook
+      tags: [System]
+      summary: Telegram bot webhook
+      security:
+        - telegramSecret: []
+      responses:
+        '200':
+          description: Processed
+        '401':
+          description: Invalid secret token
+
+  /webhook/whatsapp:
+    get:
+      operationId: whatsappVerify
+      tags: [System]
+      summary: WhatsApp webhook verification
+      parameters:
+        - name: hub.mode
+          in: query
+          schema:
+            type: string
+        - name: hub.verify_token
+          in: query
+          schema:
+            type: string
+        - name: hub.challenge
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Challenge echo
+        '403':
+          description: Invalid verify token
+    post:
+      operationId: whatsappWebhook
+      tags: [System]
+      summary: WhatsApp Cloud API webhook
+      responses:
+        '200':
+          description: Processed
+
+components:
+  headers:
+    X-Request-Id:
+      schema:
+        type: string
+        format: uuid
+      description: Unique request identifier for tracing
+    X-RateLimit-Limit:
+      schema:
+        type: integer
+      description: Max requests per window
+    X-RateLimit-Remaining:
+      schema:
+        type: integer
+      description: Remaining requests in current window
+
+  schemas:
+    CheckRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          minLength: 3
+          maxLength: 5000
+          description: Message text to analyze
+        url:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: Optional URL to analyze
+
+    CheckResponse:
+      type: object
+      required: [request_id, classification, matched_campaigns, rate_limit]
+      properties:
+        request_id:
+          type: string
+        classification:
+          $ref: '#/components/schemas/ClassificationResult'
+        url_analysis:
+          $ref: '#/components/schemas/UrlAnalysisResult'
+        matched_campaigns:
+          type: array
+          items:
+            $ref: '#/components/schemas/CampaignMatch'
+        bank_playbook:
+          $ref: '#/components/schemas/BankPlaybookResponse'
+        rate_limit:
+          type: object
+          required: [remaining, limit]
+          properties:
+            remaining:
+              type: integer
+            limit:
+              type: integer
+
+    ClassificationResult:
+      type: object
+      required: [verdict, confidence, scam_type, red_flags, explanation, recommended_actions]
+      properties:
+        verdict:
+          type: string
+          enum: [phishing, suspicious, likely_safe]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        scam_type:
+          type: string
+        impersonated_entity:
+          type: string
+        red_flags:
+          type: array
+          items:
+            type: string
+        explanation:
+          type: string
+        recommended_actions:
+          type: array
+          items:
+            type: string
+
+    UrlAnalysisResult:
+      type: object
+      required: [url, is_suspicious, risk_score, flags]
+      properties:
+        url:
+          type: string
+        domain:
+          type: string
+        is_suspicious:
+          type: boolean
+        risk_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        flags:
+          type: array
+          items:
+            type: string
+
+    CampaignMatch:
+      type: object
+      required: [campaign_id, campaign_name, slug, score]
+      properties:
+        campaign_id:
+          type: string
+        campaign_name:
+          type: string
+        slug:
+          type: string
+        score:
+          type: number
+
+    BankPlaybookResponse:
+      type: object
+      required: [entity, official_domain, fraud_phone, fraud_page, if_compromised]
+      properties:
+        entity:
+          type: string
+        official_domain:
+          type: string
+        fraud_phone:
+          type: string
+        fraud_page:
+          type: string
+          format: uri
+        if_compromised:
+          type: array
+          items:
+            type: string
+
+    CampaignStatus:
+      type: string
+      enum: [active, declining, resolved]
+
+    CampaignSeverity:
+      type: string
+      enum: [critical, high, medium]
+
+    CampaignSummary:
+      type: object
+      required: [id, slug, name, status, severity, impersonated_entity, first_seen]
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/CampaignStatus'
+        severity:
+          $ref: '#/components/schemas/CampaignSeverity'
+        impersonated_entity:
+          type: string
+        first_seen:
+          type: string
+          format: date
+
+    CampaignDetail:
+      allOf:
+        - $ref: '#/components/schemas/CampaignSummary'
+        - type: object
+          required: [description, how_it_works, red_flags, advice]
+          properties:
+            description:
+              type: string
+            how_it_works:
+              type: string
+            red_flags:
+              type: array
+              items:
+                type: string
+            advice:
+              type: array
+              items:
+                type: string
+            dnsc_alert_url:
+              type: string
+              format: uri
+
+    AlertsResponse:
+      type: object
+      required: [campaigns]
+      properties:
+        campaigns:
+          type: array
+          items:
+            $ref: '#/components/schemas/CampaignSummary'
+
+    HealthResponse:
+      type: object
+      required: [status, version, timestamp, checks]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        version:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          properties:
+            kv:
+              $ref: '#/components/schemas/HealthCheck'
+            ai:
+              $ref: '#/components/schemas/HealthCheck'
+            r2:
+              $ref: '#/components/schemas/HealthCheck'
+
+    HealthCheck:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok, fail, skip]
+        latency_ms:
+          type: number
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - VALIDATION_ERROR
+                - RATE_LIMITED
+                - NOT_FOUND
+                - INTERNAL_ERROR
+                - UNAUTHORIZED
+            message:
+              type: string
+            request_id:
+              type: string
+
+  securitySchemes:
+    telegramSecret:
+      type: apiKey
+      in: header
+      name: X-Telegram-Bot-Api-Secret-Token

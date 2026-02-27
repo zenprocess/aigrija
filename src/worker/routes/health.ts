@@ -25,7 +25,7 @@ health.get('/health', async (c) => {
   }
 
   // AI binding check (no inference call — too expensive)
-  checks.ai = { status: c.env.AI ? 'ok' : 'skip', latency_ms: 0 };
+  checks.ai = { status: c.env.AI ? 'ok' : 'skip' };
 
   // R2 probe (404 is fine — means R2 is reachable)
   try {

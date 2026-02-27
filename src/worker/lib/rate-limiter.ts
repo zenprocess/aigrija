@@ -12,7 +12,7 @@ export async function checkRateLimit(
     return { allowed: true, remaining: limit - 1, limit };
   }
 
-  const current = parseInt(raw);
+  const current = parseInt(raw, 10);
   if (current >= limit) {
     return { allowed: false, remaining: 0, limit };
   }

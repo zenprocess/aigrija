@@ -164,7 +164,7 @@ export class CheckEndpoint extends OpenAPIRoute {
     };
 
     const countKey = 'stats:total_checks';
-    const current = parseInt(await c.env.CACHE.get(countKey) || '0');
+    const current = parseInt(await c.env.CACHE.get(countKey) || '0', 10);
     await c.env.CACHE.put(countKey, String(current + 1));
 
     return c.json(response);

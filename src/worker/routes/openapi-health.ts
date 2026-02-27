@@ -59,7 +59,7 @@ export class HealthEndpoint extends OpenAPIRoute {
       checks.kv = { status: 'fail' };
     }
 
-    checks.ai = { status: c.env.AI ? 'ok' : 'skip', latency_ms: 0 };
+    checks.ai = { status: c.env.AI ? 'ok' : 'skip' };
 
     try {
       const start = Date.now();

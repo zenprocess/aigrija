@@ -1,0 +1,6 @@
+name = "my-cf-app"
+main = "src/worker/index.ts"
+compatibility_date = "2025-01-01"
+
+[assets]
+directory = "./dist"

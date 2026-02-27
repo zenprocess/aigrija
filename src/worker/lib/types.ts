@@ -29,6 +29,7 @@ export interface CheckRequest {
 }
 
 export interface CheckResponse {
+  request_id: string;
   classification: ClassificationResult;
   url_analysis?: UrlAnalysisResult;
   matched_campaigns: {
@@ -44,7 +45,7 @@ export interface CheckResponse {
     fraud_page: string;
     if_compromised: string[];
   };
-  rate_limit: { remaining: number };
+  rate_limit: { remaining: number; limit: number };
 }
 
 export interface UrlAnalysisResult {

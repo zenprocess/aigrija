@@ -12,30 +12,41 @@ const MAX_URL_LENGTH = 2048;
 const check = new Hono<{ Bindings: Env }>();
 
 check.post('/api/check', async (c) => {
-  const ip = c.req.header('cf-connecting-ip') || 'unknown';
-  const { allowed, remaining } = await checkRateLimit(c.env.CACHE, ip);
+  const rid = c.get('requestId' as never) as string;
+
+  // #19: IP fallback chain
+  const ip = c.req.header('cf-connecting-ip')
+    || c.req.header('x-forwarded-for')?.split(',')[0]?.trim()
+    || c.req.header('x-real-ip')
+    || 'unknown';
+
+  const { allowed, remaining, limit } = await checkRateLimit(c.env.CACHE, ip);
+
+  // #17: Rate limit headers on all responses
+  c.header('X-RateLimit-Limit', String(limit));
+  c.header('X-RateLimit-Remaining', String(remaining));
+
   if (!allowed) {
-    return c.json({ error: 'Limita de verificari depasita. Incercati din nou mai tarziu.' }, 429);
+    c.header('Retry-After', '3600');
+    return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de verificari depasita. Incercati din nou mai tarziu.', request_id: rid } }, 429);
   }
 
-  // Fix #3: catch malformed JSON
   let body: CheckRequest;
   try {
     body = await c.req.json<CheckRequest>();
   } catch {
-    return c.json({ error: 'Request body invalid. Trimiteti JSON valid.' }, 400);
+    return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Request body invalid. Trimiteti JSON valid.', request_id: rid } }, 400);
   }
 
   if (!body.text || body.text.trim().length < 3) {
-    return c.json({ error: 'Textul este prea scurt pentru analiza.' }, 400);
+    return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Textul este prea scurt pentru analiza.', request_id: rid } }, 400);
   }
 
-  // Fix #4: input length limits
   if (body.text.length > MAX_TEXT_LENGTH) {
-    return c.json({ error: `Textul depaseste limita de ${MAX_TEXT_LENGTH} caractere.` }, 400);
+    return c.json({ error: { code: 'VALIDATION_ERROR', message: `Textul depaseste limita de ${MAX_TEXT_LENGTH} caractere.`, request_id: rid } }, 400);
   }
   if (body.url && body.url.length > MAX_URL_LENGTH) {
-    return c.json({ error: `URL-ul depaseste limita de ${MAX_URL_LENGTH} caractere.` }, 400);
+    return c.json({ error: { code: 'VALIDATION_ERROR', message: `URL-ul depaseste limita de ${MAX_URL_LENGTH} caractere.`, request_id: rid } }, 400);
   }
 
   const classification = await classify(c.env.AI, body.text, body.url);
@@ -51,6 +62,7 @@ check.post('/api/check', async (c) => {
   }
 
   const response: CheckResponse = {
+    request_id: rid,
     classification,
     url_analysis: urlAnalysis,
     matched_campaigns: campaignMatches.map(m => ({
@@ -66,7 +78,7 @@ check.post('/api/check', async (c) => {
       fraud_page: bank_playbook.fraud_page,
       if_compromised: bank_playbook.if_compromised,
     } : undefined,
-    rate_limit: { remaining },
+    rate_limit: { remaining, limit },
   };
 
   // Increment counter

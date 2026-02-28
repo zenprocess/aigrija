@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import { classify } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
+import { checkRateLimit } from '../lib/rate-limiter';
 
 const whatsapp = new Hono<{ Bindings: Env }>();
 
@@ -191,6 +192,17 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
         const text = message.text.body.trim();
 
         await markMessageRead(accessToken, phoneNumberId, messageId);
+
+        const rl = await checkRateLimit(c.env.CACHE, `wa:${from}`, 20, 3600);
+        if (!rl.allowed) {
+          await sendWhatsAppMessage(
+            accessToken,
+            phoneNumberId,
+            from,
+            'Ai atins limita de 20 verificări/oră. Te rugăm să încerci din nou mai târziu.'
+          );
+          continue;
+        }
 
         const urls = extractUrls(text);
         const firstUrl = urls[0];

@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { AlertCircle, ShieldAlert, AlertTriangle, ShieldCheck, CheckCircle, ExternalLink, Phone, Share2, Copy, X, Loader2, Link2, AlertOctagon } from 'lucide-react';
-import { checkContent } from '../utils/api';
+import React, { useState, useRef, useEffect } from 'react';
+import { AlertCircle, ShieldAlert, AlertTriangle, ShieldCheck, CheckCircle, ExternalLink, Phone, Share2, Copy, X, Loader2, Link2, AlertOctagon, ImageIcon, Eye } from 'lucide-react';
+import { checkContent, checkImage } from '../utils/api';
+import { redactPII } from '../lib/redactor';
 
 export default function Checker() {
   const [text, setText] = useState('');
@@ -10,16 +11,53 @@ export default function Checker() {
   const [result, setResult] = useState(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [piiNotice, setPiiNotice] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageSizeError, setImageSizeError] = useState(null);
+  const [imageAnalysis, setImageAnalysis] = useState(null);
+  const [rateLimitSeconds, setRateLimitSeconds] = useState(0);
   
   const resultRef = useRef(null);
+  const countdownRef = useRef(null);
 
   const charCount = text.length;
   const isNearLimit = charCount > 4900;
   const isOverLimit = charCount > 5000;
 
+  // Rate limit countdown
+  useEffect(() => {
+    if (rateLimitSeconds <= 0) return;
+    countdownRef.current = setInterval(() => {
+      setRateLimitSeconds(s => {
+        if (s <= 1) {
+          clearInterval(countdownRef.current);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(countdownRef.current);
+  }, [rateLimitSeconds]);
+
+  const handleImageChange = (file) => {
+    setImageSizeError(null);
+    if (!file) { setImageFile(null); setImagePreview(null); return; }
+    if (file.size > 5 * 1024 * 1024) {
+      setImageSizeError("Imaginea nu poate depăși 5MB");
+      setImageFile(null);
+      setImagePreview(null);
+      return;
+    }
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setImagePreview(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (charCount < 3) {
+    if (!imageFile && charCount < 3) {
       setError("Mesajul trebuie să aibă cel puțin 3 caractere.");
       return;
     }
@@ -28,18 +66,37 @@ export default function Checker() {
       return;
     }
 
+    // PII redaction before sending
+    const { redacted, changed } = redactPII(text);
+    setPiiNotice(changed);
+
     setLoading(true);
     setError(null);
     setResult(null);
+    setImageAnalysis(null);
 
     try {
-      const data = await checkContent(text, url);
+      let data;
+      if (imageFile) {
+        data = await checkImage(imageFile, redacted || undefined);
+        if (data.image_analysis) setImageAnalysis(data.image_analysis);
+      } else {
+        data = await checkContent(redacted, url);
+      }
       setResult(data);
       setTimeout(() => {
         resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
     } catch (err) {
-      setError(err.message || "A apărut o eroare la verificare.");
+      const msg = err.message || "A apărut o eroare la verificare.";
+      // Parse rate limit
+      const retryMatch = msg.match(/(\d+)\s*secunde/i);
+      if (retryMatch) {
+        setRateLimitSeconds(parseInt(retryMatch[1], 10));
+      } else if (msg.toLowerCase().includes('prea multe')) {
+        setRateLimitSeconds(60);
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -76,6 +133,7 @@ export default function Checker() {
               <div className="relative">
                 <textarea
                   id="messageText"
+                  data-testid="checker-textarea"
                   aria-label="Textul mesajului suspect"
                   rows={5}
                   value={text}
@@ -87,7 +145,14 @@ export default function Checker() {
                   {charCount} / 5000
                 </div>
               </div>
-              {error && <p className="mt-2 text-sm text-red-400 flex items-center gap-1"><AlertCircle className="w-4 h-4"/> {error}</p>}
+              {error && (
+                <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4 shrink-0"/>
+                  {rateLimitSeconds > 0
+                    ? `Prea multe cereri. Încearcă din nou în ${rateLimitSeconds} secunde.`
+                    : error}
+                </p>
+              )}
             </div>
 
             <div>
@@ -101,6 +166,7 @@ export default function Checker() {
                 <input
                   type="text"
                   id="urlText"
+                  data-testid="checker-url-input"
                   aria-label="URL suspect"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
@@ -110,14 +176,73 @@ export default function Checker() {
               </div>
             </div>
 
+            {/* Image Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Sau încarcă o captură de ecran
+              </label>
+              <div
+                data-testid="checker-image-upload"
+                className={`relative border-2 border-dashed rounded-xl p-4 text-center transition-colors cursor-pointer ${imageSizeError ? 'border-red-500/50 bg-red-500/5' : 'border-white/20 hover:border-blue-500/50 bg-[#0A0A0F]/60'}`}
+                onDragOver={(ev) => ev.preventDefault()}
+                onDrop={(ev) => { ev.preventDefault(); const f = ev.dataTransfer.files[0]; if (f) handleImageChange(f); }}
+                onClick={() => document.getElementById('image-file-input').click()}
+              >
+                <input
+                  id="image-file-input"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={(ev) => handleImageChange(ev.target.files[0] || null)}
+                />
+                {imagePreview ? (
+                  <div className="flex items-center gap-4" onClick={(ev) => ev.stopPropagation()}>
+                    <img src={imagePreview} alt="Preview" className="w-16 h-16 object-cover rounded-lg border border-white/10" />
+                    <div className="flex-1 text-left">
+                      <p className="text-sm text-gray-300 truncate">{imageFile?.name}</p>
+                      <p className="text-xs text-gray-500">{(imageFile?.size / 1024).toFixed(0)} KB</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setImageFile(null); setImagePreview(null); setImageSizeError(null); }}
+                      className="p-1 rounded text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 py-2">
+                    <ImageIcon className="w-8 h-8 text-gray-500" />
+                    <p className="text-sm text-gray-400">Trage imaginea aici sau <span className="text-blue-400 underline">selecteaz-o</span></p>
+                    <p className="text-xs text-gray-600">PNG, JPG, WEBP — max 5MB</p>
+                  </div>
+                )}
+              </div>
+              {imageSizeError && (
+                <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4 shrink-0" />{imageSizeError}
+                </p>
+              )}
+            </div>
+
+            {piiNotice && (
+              <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-300 text-sm">
+                <ShieldCheck className="w-4 h-4 shrink-0 text-blue-400" />
+                Datele personale au fost mascate automat înainte de trimitere.
+              </div>
+            )}
+
             <button
               type="submit"
+              data-testid="checker-submit-btn"
               aria-label="Verifică mesajul"
-              disabled={loading || charCount === 0 || isOverLimit}
+              disabled={loading || (!imageFile && charCount === 0) || isOverLimit || rateLimitSeconds > 0}
               className="w-full py-4 rounded-xl font-bold text-white bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 focus:ring-4 focus:ring-red-500/30 transition-all duration-300 shadow-[0_0_15px_rgba(220,38,38,0.3)] hover:shadow-[0_0_25px_rgba(220,38,38,0.5)] disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
             >
               {loading ? (
                 <><Loader2 className="w-5 h-5 animate-spin" /> Verificare în curs...</>
+              ) : rateLimitSeconds > 0 ? (
+                `Reîncearcă în ${rateLimitSeconds}s`
               ) : (
                 'Verifică acum'
               )}
@@ -128,7 +253,17 @@ export default function Checker() {
         {/* Verdict Section */}
         {result && (
           <div ref={resultRef} className="mt-12 space-y-6 animate-fade-in-up">
-            
+
+            {/* Vision Analysis Card */}
+            {imageAnalysis && (
+              <div className="glass-card p-6 border-l-4 border-l-purple-500">
+                <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                  <Eye className="w-5 h-5 text-purple-400" /> Analiză vizuală AI
+                </h3>
+                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{imageAnalysis}</p>
+              </div>
+            )}
+
             {/* Main Verdict Card */}
             <div className={`glass-card overflow-hidden border-t-4 ${getVerdictStyles(result.classification.verdict).border} ${getVerdictStyles(result.classification.verdict).glow}`}>
               <div className="p-6 md:p-8">
@@ -199,10 +334,16 @@ export default function Checker() {
                   )}
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-white/10 text-center">
-                  <p className="text-sm text-gray-500 italic flex items-center justify-center gap-2">
-                    <span>🤖</span> Analiză generată de AI. Rezultatele sunt orientative.
-                  </p>
+                {/* AI Disclosure — prominent */}
+                <div className="mt-8 pt-6 border-t border-white/10">
+                  <div className="flex items-start gap-3 px-4 py-4 rounded-xl bg-yellow-500/10 border border-yellow-500/40">
+                    <AlertTriangle className="w-6 h-6 text-yellow-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-yellow-200 leading-relaxed">
+                      <span className="font-bold text-yellow-300">Analiză generată de AI.</span>{' '}
+                      Rezultatele sunt orientative și nu constituie consultanță juridică sau de securitate.
+                      Consultați autorități competente pentru situații cu impact financiar.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -308,21 +449,21 @@ export default function Checker() {
 
             {/* Action Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
-              <a href="tel:1911" className="flex items-center justify-center gap-2 p-4 rounded-xl glass-card hover:bg-red-500/10 hover:border-red-500/30 text-white transition-all transform hover:scale-[1.02]">
+              <a data-testid="checker-action-dnsc" href="tel:1911" className="flex items-center justify-center gap-2 p-4 rounded-xl glass-card hover:bg-red-500/10 hover:border-red-500/30 text-white transition-all transform hover:scale-[1.02]">
                 <Phone className="w-5 h-5 text-red-400" />
                 <span className="font-medium">Raportează la DNSC (1911)</span>
               </a>
-              <a href="https://www.politiaromana.ro/ro/petitii-online" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 p-4 rounded-xl glass-card hover:bg-blue-500/10 hover:border-blue-500/30 text-white transition-all transform hover:scale-[1.02]">
+              <a data-testid="checker-action-politie" href="https://www.politiaromana.ro/ro/petitii-online" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 p-4 rounded-xl glass-card hover:bg-blue-500/10 hover:border-blue-500/30 text-white transition-all transform hover:scale-[1.02]">
                 <ShieldCheck className="w-5 h-5 text-blue-400" />
                 <span className="font-medium">Sesizare Poliția Română</span>
               </a>
               {result.bank_playbook && (
-                <button onClick={() => document.getElementById('bank-playbook')?.scrollIntoView({behavior: 'smooth'})} className="flex items-center justify-center gap-2 p-4 rounded-xl glass-card hover:bg-yellow-500/10 hover:border-yellow-500/30 text-white transition-all transform hover:scale-[1.02]">
+                <button data-testid="checker-action-banca" onClick={() => document.getElementById('bank-playbook')?.scrollIntoView({behavior: 'smooth'})} className="flex items-center justify-center gap-2 p-4 rounded-xl glass-card hover:bg-yellow-500/10 hover:border-yellow-500/30 text-white transition-all transform hover:scale-[1.02]">
                   <AlertTriangle className="w-5 h-5 text-yellow-400" />
                   <span className="font-medium">Alertează banca</span>
                 </button>
               )}
-              <button onClick={() => setShareModalOpen(true)} className={`flex items-center justify-center gap-2 p-4 rounded-xl glass-card hover:bg-green-500/10 hover:border-green-500/30 text-white transition-all transform hover:scale-[1.02] ${!result.bank_playbook ? 'sm:col-span-2' : ''}`}>
+              <button data-testid="checker-action-share" onClick={() => setShareModalOpen(true)} className={`flex items-center justify-center gap-2 p-4 rounded-xl glass-card hover:bg-green-500/10 hover:border-green-500/30 text-white transition-all transform hover:scale-[1.02] ${!result.bank_playbook ? 'sm:col-span-2' : ''}`}>
                 <Share2 className="w-5 h-5 text-green-400" />
                 <span className="font-medium">Distribuie avertismentul</span>
               </button>
@@ -337,6 +478,7 @@ export default function Checker() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
           <div className="glass-card w-full max-w-md p-6 relative animate-fade-in-up">
             <button 
+              data-testid="checker-share-close-btn"
               onClick={() => setShareModalOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
             >
@@ -346,6 +488,7 @@ export default function Checker() {
             
             <div className="space-y-3">
               <a 
+                data-testid="checker-share-whatsapp"
                 href={`https://wa.me/?text=${encodeURIComponent(`⚠️ Am verificat un mesaj suspect pe ai-grija.ro — e ${result?.classification.verdict === 'phishing' ? 'PHISHING' : 'SUSPECT'}! Verifică și tu: https://ai-grija.ro`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -358,6 +501,7 @@ export default function Checker() {
               </a>
               
               <a 
+                data-testid="checker-share-facebook"
                 href="https://www.facebook.com/sharer/sharer.php?u=https://ai-grija.ro"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -370,6 +514,7 @@ export default function Checker() {
               </a>
 
               <button 
+                data-testid="checker-share-copy-link"
                 onClick={handleCopyLink}
                 className="w-full flex items-center gap-3 p-4 rounded-xl bg-gray-800/50 border border-gray-700 text-white hover:bg-gray-700/50 transition-colors"
               >

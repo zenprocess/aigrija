@@ -24,6 +24,8 @@ const ClassificationSchema = z.object({
   red_flags: z.array(z.string()),
   explanation: z.string(),
   recommended_actions: z.array(z.string()),
+  model_used: z.string().describe('Modelul AI folosit pentru analiza'),
+  ai_disclaimer: z.string().describe('Disclaimer analiza AI'),
 });
 
 const UrlAnalysisSchema = z.object({
@@ -32,6 +34,8 @@ const UrlAnalysisSchema = z.object({
   is_suspicious: z.boolean(),
   risk_score: z.number(),
   flags: z.array(z.string()),
+  safe_browsing_match: z.boolean().describe('URL gasit in Google Safe Browsing'),
+  safe_browsing_threats: z.array(z.string()).describe('Tipuri de amenintari detectate de Safe Browsing'),
 });
 
 const MatchedCampaignSchema = z.object({
@@ -132,7 +136,7 @@ export class CheckEndpoint extends OpenAPIRoute {
     }
 
     const classification = await classify(c.env.AI, body.text, body.url);
-    const urlAnalysis = body.url ? analyzeUrl(body.url) : undefined;
+    const urlAnalysis = body.url ? await analyzeUrl(body.url, c.env.GOOGLE_SAFE_BROWSING_KEY) : undefined;
     const campaignMatches = matchCampaigns(body.text, body.url);
 
     let bank_playbook = undefined;

@@ -99,3 +99,19 @@ export const checkContent = async (text, url) => {
     }
   }
 };
+export const checkImage = async (imageFile, textContext) => {
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  if (textContext) formData.append('text', textContext);
+
+  const res = await fetch('/api/check/image', {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) {
+    if (res.status === 429) throw new Error('Prea multe cereri. Încearcă din nou în 60 secunde.');
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error?.message || 'Eroare la analiza imaginii.');
+  }
+  return res.json();
+};

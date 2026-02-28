@@ -1,15 +1,33 @@
 import { Hono } from 'hono';
-import type { Env, CheckRequest, CheckResponse } from '../lib/types';
+import type { Env, CheckRequest, CheckResponse, ReportSignal } from '../lib/types';
 import { checkRateLimit } from '../lib/rate-limiter';
 import { classify } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
 import { matchCampaigns } from '../lib/campaign-matcher';
 import { BANK_PLAYBOOKS } from '../data/bank-playbooks';
+import { storeReportSignal } from '../lib/campaign-aggregator';
 
 const MAX_TEXT_LENGTH = 5000;
 const MAX_URL_LENGTH = 2048;
 
 const check = new Hono<{ Bindings: Env }>();
+
+async function hashText(text: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text.slice(0, 100));
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+}
+
+function extractDomain(url?: string): string | undefined {
+  if (!url) return undefined;
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return undefined;
+  }
+}
 
 check.post('/api/check', async (c) => {
   const rid = c.get('requestId' as never) as string;
@@ -50,7 +68,7 @@ check.post('/api/check', async (c) => {
   }
 
   const classification = await classify(c.env.AI, body.text, body.url);
-  const urlAnalysis = body.url ? analyzeUrl(body.url) : undefined;
+  const urlAnalysis = body.url ? await analyzeUrl(body.url, c.env.GOOGLE_SAFE_BROWSING_KEY) : undefined;
   const campaignMatches = matchCampaigns(body.text, body.url);
 
   let bank_playbook = undefined;
@@ -85,6 +103,20 @@ check.post('/api/check', async (c) => {
   const countKey = 'stats:total_checks';
   const current = parseInt(await c.env.CACHE.get(countKey) || '0', 10);
   await c.env.CACHE.put(countKey, String(current + 1));
+
+  // Store report signal for phishing/suspicious results only
+  if (classification.verdict === 'phishing' || classification.verdict === 'suspicious') {
+    const textHash = await hashText(body.text);
+    const signal: ReportSignal = {
+      verdict: classification.verdict,
+      scam_type: classification.scam_type,
+      url_domain: extractDomain(body.url),
+      confidence: classification.confidence,
+      timestamp: Date.now(),
+    };
+    // Fire-and-forget — don't block response
+    c.executionCtx.waitUntil(storeReportSignal(c.env, signal, textHash));
+  }
 
   return c.json(response);
 });

@@ -1,0 +1,128 @@
+import { Hono } from 'hono';
+import type { Env, ClassificationResult } from '../lib/types';
+import { checkRateLimit } from '../lib/rate-limiter';
+import { classify } from '../lib/classifier';
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+const VISION_MODEL = '@cf/meta/llava-1.5-7b-hf';
+
+const upload = new Hono<{ Bindings: Env }>();
+
+export interface ImageCheckResponse {
+  request_id: string;
+  classification: ClassificationResult;
+  image_analysis: string;
+  rate_limit: { remaining: number; limit: number };
+}
+
+upload.post('/api/check/image', async (c) => {
+  const rid = c.get('requestId' as never) as string;
+
+  const ip = c.req.header('cf-connecting-ip')
+    || c.req.header('x-forwarded-for')?.split(',')[0]?.trim()
+    || c.req.header('x-real-ip')
+    || 'unknown';
+
+  const { allowed, remaining, limit } = await checkRateLimit(c.env.CACHE, ip);
+
+  c.header('X-RateLimit-Limit', String(limit));
+  c.header('X-RateLimit-Remaining', String(remaining));
+
+  if (!allowed) {
+    c.header('Retry-After', '3600');
+    return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de verificari depasita. Incercati din nou mai tarziu.', request_id: rid } }, 429);
+  }
+
+  let formData: FormData;
+  try {
+    formData = await c.req.formData();
+  } catch {
+    return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Request invalid. Trimiteti multipart/form-data.', request_id: rid } }, 400);
+  }
+
+  const imageFile = formData.get('image') as File | null;
+  if (!imageFile || !(imageFile instanceof File)) {
+    return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Campul "image" lipseste sau nu este un fisier.', request_id: rid } }, 400);
+  }
+
+  if (!ALLOWED_TYPES.includes(imageFile.type)) {
+    return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Tipul imaginii nu este suportat. Acceptam PNG, JPG sau WEBP.', request_id: rid } }, 400);
+  }
+
+  if (imageFile.size > MAX_IMAGE_SIZE) {
+    return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Imaginea nu poate depasi 5MB.', request_id: rid } }, 400);
+  }
+
+  const textContext = (formData.get('text') as string | null) || '';
+
+  const imageBuffer = await imageFile.arrayBuffer();
+  const imageBytes = new Uint8Array(imageBuffer);
+
+  const visionPrompt = textContext
+    ? `Analizeaza aceasta captura de ecran a unui mesaj. Context suplimentar: ${textContext}. Este aceasta o tentativa de phishing, escrocherie sau un mesaj legitim? Cauta: URL-uri suspecte, limbaj de urgenta, uzurparea identitatii bancilor/institutiilor, solicitari de date personale. Raspunde in romana cu: verdict (phishing/suspect/sigur), explicatie, semnale de alarma gasite.`
+    : 'Analizeaza aceasta captura de ecran a unui mesaj. Este aceasta o tentativa de phishing, escrocherie sau un mesaj legitim? Cauta: URL-uri suspecte, limbaj de urgenta, uzurparea identitatii bancilor/institutiilor, solicitari de date personale. Raspunde in romana cu: verdict (phishing/suspect/sigur), explicatie, semnale de alarma gasite.';
+
+  let imageAnalysis = '';
+  let visionVerdict: 'phishing' | 'suspicious' | 'likely_safe' = 'suspicious';
+
+  try {
+    const visionResult = await (c.env.AI.run as any)(VISION_MODEL, {
+      image: Array.from(imageBytes),
+      prompt: visionPrompt,
+      max_tokens: 512,
+    }) as { description?: string; response?: string };
+
+    imageAnalysis = visionResult.description || visionResult.response || 'Analiza vizuala nu a putut fi finalizata.';
+
+    const lower = imageAnalysis.toLowerCase();
+    if (lower.includes('phishing') || lower.includes('frauda') || lower.includes('escrocherie')) {
+      visionVerdict = 'phishing';
+    } else if (lower.includes('suspect') || lower.includes('atentie') || lower.includes('posibil')) {
+      visionVerdict = 'suspicious';
+    } else if (lower.includes('sigur') || lower.includes('legitim') || lower.includes('oficial')) {
+      visionVerdict = 'likely_safe';
+    }
+  } catch (err) {
+    console.error('[upload] Vision model failed:', err);
+    imageAnalysis = 'Analiza vizuala nu a putut fi finalizata. Modelul de viziune nu este disponibil.';
+  }
+
+  let classification: ClassificationResult;
+  if (textContext && textContext.trim().length >= 3) {
+    classification = await classify(c.env.AI, textContext);
+    if (visionVerdict === 'phishing' && classification.verdict === 'likely_safe') {
+      classification = { ...classification, verdict: 'suspicious' };
+    }
+  } else {
+    classification = {
+      verdict: visionVerdict,
+      confidence: visionVerdict === 'phishing' ? 85 : visionVerdict === 'suspicious' ? 60 : 80,
+      scam_type: visionVerdict === 'phishing' ? 'Detectat in imagine' : visionVerdict === 'suspicious' ? 'Posibil suspect' : 'Necunoscut',
+      red_flags: visionVerdict !== 'likely_safe' ? ['Continut vizual suspect detectat'] : [],
+      explanation: imageAnalysis,
+      recommended_actions: visionVerdict === 'phishing'
+        ? ['Nu accesati link-urile din imagine', 'Raportati la DNSC (1911)', 'Blocati expeditorul']
+        : visionVerdict === 'suspicious'
+        ? ['Tratati mesajul cu precautie', 'Verificati sursa prin canale oficiale']
+        : ['Mesajul pare legitim dar ramati vigilent'],
+      model_used: VISION_MODEL,
+      ai_disclaimer: 'Analiza generata de AI. Rezultatele sunt orientative si nu constituie consiliere juridica.',
+    };
+  }
+
+  const response: ImageCheckResponse = {
+    request_id: rid,
+    classification,
+    image_analysis: imageAnalysis,
+    rate_limit: { remaining, limit },
+  };
+
+  const countKey = 'stats:total_checks';
+  const current = parseInt(await c.env.CACHE.get(countKey) || '0', 10);
+  await c.env.CACHE.put(countKey, String(current + 1));
+
+  return c.json(response);
+});
+
+export { upload };

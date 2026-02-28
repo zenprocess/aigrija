@@ -9,11 +9,36 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#39;');
 }
 
+function buildJsonLd(campaign: Campaign, baseUrl: string): string {
+  const datePublished = campaign.first_seen;
+  const pageUrl = `${baseUrl}/alerte/${campaign.slug}`;
+  const ld = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: `Alerta phishing: ${campaign.name_ro}`,
+    description: campaign.seo.description,
+    url: pageUrl,
+    publisher: {
+      '@type': 'Organization',
+      name: 'ai-grija.ro',
+      url: 'https://ai-grija.ro',
+    },
+    datePublished,
+    mainEntity: {
+      '@type': 'Article',
+      headline: campaign.name_ro,
+      articleBody: campaign.description_ro,
+    },
+  };
+  return JSON.stringify(ld);
+}
+
 export function renderAlertPage(campaign: Campaign, baseUrl: string): string {
   const statusBadge = campaign.status === 'active' ? '🔴 Activa' : campaign.status === 'declining' ? '🟡 In scadere' : '🟢 Rezolvata';
   const severityBadge = campaign.severity === 'critical' ? '⚠️ Critica' : campaign.severity === 'high' ? '🔶 Ridicata' : '🔵 Medie';
   const escapedSlug = escapeHtml(campaign.slug);
   const escapedBase = escapeHtml(baseUrl);
+  const jsonLd = buildJsonLd(campaign, baseUrl);
 
   return `<!DOCTYPE html>
 <html lang="ro">
@@ -28,6 +53,7 @@ export function renderAlertPage(campaign: Campaign, baseUrl: string): string {
 <meta property="og:url" content="${escapedBase}/alerte/${escapedSlug}">
 <meta property="og:type" content="article">
 <link rel="canonical" href="${escapedBase}/alerte/${escapedSlug}">
+<script type="application/ld+json">${jsonLd}</script>
 <style>body{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:20px;color:#1a1a1a;line-height:1.6}h1{color:#d32f2f;font-size:1.5rem}.badge{display:inline-block;padding:4px 12px;border-radius:12px;font-size:0.85rem;font-weight:600;margin-right:8px}.red-flag{background:#fff3e0;border-left:4px solid #ff9800;padding:12px;margin:8px 0}.advice{background:#e8f5e9;border-left:4px solid #4caf50;padding:12px;margin:8px 0}a{color:#1976d2}</style>
 </head>
 <body>

@@ -26,14 +26,15 @@ export default function Header() {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8">
-            <button onClick={() => scrollTo('verifica')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Verifică</button>
-            <button onClick={() => scrollTo('cum-functioneaza')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Cum funcționează</button>
-            <button onClick={() => scrollTo('alerte')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Alerte</button>
+            <button data-testid="header-nav-verifica" onClick={() => scrollTo('verifica')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Verifică</button>
+            <button data-testid="header-nav-cum-functioneaza" onClick={() => scrollTo('cum-functioneaza')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Cum funcționează</button>
+            <button data-testid="header-nav-alerte" onClick={() => scrollTo('alerte')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Alerte</button>
           </nav>
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center">
             <button
+              data-testid="header-hamburger-btn"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="text-gray-300 hover:text-white p-2"
               aria-label="Meniu"
@@ -47,9 +48,9 @@ export default function Header() {
       {/* Mobile Nav Panel */}
       <div className={`md:hidden absolute top-16 left-0 right-0 glass-panel transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'opacity-100 visible border-b border-white/10' : 'opacity-0 invisible h-0 overflow-hidden'}`}>
         <div className="px-4 pt-2 pb-6 space-y-4 flex flex-col bg-[#0A0A0F]/95">
-          <button onClick={() => scrollTo('verifica')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">Verifică un mesaj</button>
-          <button onClick={() => scrollTo('cum-functioneaza')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">Cum funcționează</button>
-          <button onClick={() => scrollTo('alerte')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">Alerte active</button>
+          <button data-testid="header-mobile-verifica" onClick={() => scrollTo('verifica')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">Verifică un mesaj</button>
+          <button data-testid="header-mobile-cum-functioneaza" onClick={() => scrollTo('cum-functioneaza')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">Cum funcționează</button>
+          <button data-testid="header-mobile-alerte" onClick={() => scrollTo('alerte')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">Alerte active</button>
         </div>
       </div>
     </header>

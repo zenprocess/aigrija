@@ -9,6 +9,9 @@ import { share } from './routes/share';
 import { sitemap } from './routes/sitemap';
 import { telegram } from './routes/telegram';
 import { whatsapp } from './routes/whatsapp';
+import { report } from './routes/report';
+import { og } from './routes/og';
+import { upload } from './routes/upload';
 import { createOpenAPIApp } from './lib/openapi';
 import { CheckEndpoint } from './routes/openapi-check';
 import { AlertsEndpoint } from './routes/openapi-alerts';
@@ -48,5 +51,8 @@ app.route('/', share);
 app.route('/', sitemap);
 app.route('/', telegram);
 app.route('/', whatsapp);
+app.route('/', report);
+app.route('/', og);
+app.route('/', upload);
 
 export default app;

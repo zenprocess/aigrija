@@ -11,9 +11,9 @@ export default function Footer() {
           </div>
           
           <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
-            <a href="#" className="hover:text-white transition-colors">Confidențialitate</a>
-            <a href="#" className="hover:text-white transition-colors">Termeni de utilizare</a>
-            <a href="#" className="hover:text-white transition-colors">Despre proiect</a>
+            <a data-testid="footer-link-confidentialitate" href="#/confidentialitate" className="hover:text-white transition-colors">Confidențialitate</a>
+            <a data-testid="footer-link-termeni" href="#/termeni" className="hover:text-white transition-colors">Termeni de utilizare</a>
+            <a data-testid="footer-link-despre" href="#despre" className="hover:text-white transition-colors">Despre proiect</a>
           </div>
         </div>
         
@@ -24,10 +24,10 @@ export default function Footer() {
             <span>Proiect civic gratuit dezvoltat cu</span>
             <Heart className="w-4 h-4 text-red-500 mx-1" />
             <span>de</span>
-            <a href="https://zen-labs.ro" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors font-medium ml-1">Zen Labs</a>
+            <a data-testid="footer-link-zenlabs" href="https://zen-labs.ro" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors font-medium ml-1">Zen Labs</a>
           </div>
           
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
+          <a data-testid="footer-link-github" href="https://github.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
             <Github className="w-4 h-4" />
             <span>Cod sursă deschis pe GitHub</span>
           </a>

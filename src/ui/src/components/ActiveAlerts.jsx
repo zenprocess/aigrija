@@ -76,7 +76,7 @@ export default function ActiveAlerts() {
         )}
 
         <div className="mt-8 text-center">
-          <button className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-medium transition-colors group">
+          <button data-testid="alerts-view-all-btn" className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-medium transition-colors group">
             Vezi toate alertele 
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>

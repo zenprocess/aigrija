@@ -1,19 +1,30 @@
 import { Hono } from 'hono';
-import type { Env } from '../lib/types';
+import type { Env, EmergingCampaign } from '../lib/types';
 import { CAMPAIGNS } from '../data/campaigns';
 import { renderAlertPage, renderAlertsIndex } from '../templates/alert-page';
+import { aggregateSignals } from '../lib/campaign-aggregator';
 
 const VALID_STATUSES = ['active', 'declining', 'resolved'] as const;
 
 const alerts = new Hono<{ Bindings: Env }>();
 
-alerts.get('/api/alerts', (c) => {
+alerts.get('/api/alerts', async (c) => {
   const rid = c.get('requestId' as never) as string;
   const status = c.req.query('status');
   if (status && !VALID_STATUSES.includes(status as typeof VALID_STATUSES[number])) {
     return c.json({ error: { code: 'VALIDATION_ERROR', message: `Status invalid. Valori acceptate: ${VALID_STATUSES.join(', ')}`, request_id: rid } }, 400);
   }
   const filtered = status ? CAMPAIGNS.filter(ca => ca.status === status) : CAMPAIGNS;
+
+  // Merge community-detected emerging campaigns
+  let emergingCampaigns: EmergingCampaign[] = [];
+  try {
+    const { emerging } = await aggregateSignals(c.env);
+    emergingCampaigns = emerging;
+  } catch {
+    // Aggregation failure must not break the main alerts response
+  }
+
   return c.json({
     campaigns: filtered.map(ca => ({
       id: ca.id,
@@ -23,8 +34,20 @@ alerts.get('/api/alerts', (c) => {
       severity: ca.severity,
       impersonated_entity: ca.impersonated_entity,
       first_seen: ca.first_seen,
+      source: 'curated' as const,
     })),
+    emerging_campaigns: emergingCampaigns,
   });
+});
+
+alerts.get('/api/alerts/emerging', async (c) => {
+  try {
+    const result = await aggregateSignals(c.env);
+    return c.json(result);
+  } catch (err) {
+    console.error('[alerts/emerging] aggregation failed:', err);
+    return c.json({ emerging: [] });
+  }
 });
 
 alerts.get('/alerte', async (c) => {

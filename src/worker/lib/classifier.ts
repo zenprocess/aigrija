@@ -1,5 +1,10 @@
 import type { ClassificationResult } from './types';
 
+const PRIMARY_MODEL = '@cf/meta/llama-3.1-8b-instruct-fast';
+const FALLBACK_MODEL = '@cf/google/gemma-3-12b-it';
+
+const AI_DISCLAIMER = 'Analiza generata de AI. Rezultatele sunt orientative si nu constituie consiliere juridica.';
+
 const SYSTEM_PROMPT = `Esti un expert roman in securitate cibernetica, specializat in fraudele din Romania.
 Analizezi mesaje, SMS-uri, emailuri si URL-uri suspecte.
 
@@ -21,20 +26,17 @@ Indicatori de frauda:
 
 Raspunde STRICT in JSON conform schemei furnizate.`;
 
-export async function classify(ai: Ai, text: string, url?: string): Promise<ClassificationResult> {
-  const userMessage = url
-    ? `Analizeaza acest mesaj si URL-ul asociat:\n\nMesaj: ${text}\nURL: ${url}`
-    : `Analizeaza acest mesaj:\n\n${text}`;
+async function runModel(ai: Ai, model: string, messages: { role: string; content: string }[]): Promise<{ response?: string }> {
+  return ai.run(model as any, { messages }) as Promise<{ response?: string }>;
+}
 
-  const response = await ai.run('@cf/meta/llama-3.1-8b-instruct-fast' as any, {
-    messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: userMessage },
-    ],
-  }) as { response?: string };
-
+function parseAiResponse(raw: string | undefined): Omit<ClassificationResult, 'model_used' | 'ai_disclaimer'> | null {
+  if (!raw || raw.trim() === '') return null;
   try {
-    const parsed = JSON.parse(response.response || '{}');
+    const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/) || raw.match(/(\{[\s\S]*\})/);
+    const jsonStr = jsonMatch ? jsonMatch[1] : raw;
+    const parsed = JSON.parse(jsonStr);
+    if (!parsed.verdict) return null;
     return {
       verdict: parsed.verdict || 'suspicious',
       confidence: parsed.confidence || 0.5,
@@ -45,13 +47,64 @@ export async function classify(ai: Ai, text: string, url?: string): Promise<Clas
       recommended_actions: parsed.recommended_actions || [],
     };
   } catch {
+    return null;
+  }
+}
+
+export async function classify(ai: Ai, text: string, url?: string): Promise<ClassificationResult> {
+  const userMessage = url
+    ? `Analizeaza acest mesaj si URL-ul asociat:\n\nMesaj: ${text}\nURL: ${url}`
+    : `Analizeaza acest mesaj:\n\n${text}`;
+
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'user', content: userMessage },
+  ];
+
+  let modelUsed = PRIMARY_MODEL;
+  let parsed: Omit<ClassificationResult, 'model_used' | 'ai_disclaimer'> | null = null;
+
+  try {
+    const response = await runModel(ai, PRIMARY_MODEL, messages);
+    parsed = parseAiResponse(response.response);
+    if (parsed) {
+      console.log(`[classifier] Primary model used: ${PRIMARY_MODEL}`);
+    } else {
+      console.warn(`[classifier] Primary model returned empty/invalid response, falling back to ${FALLBACK_MODEL}`);
+    }
+  } catch (err) {
+    console.warn(`[classifier] Primary model threw error, falling back to ${FALLBACK_MODEL}:`, err);
+  }
+
+  if (!parsed) {
+    modelUsed = FALLBACK_MODEL;
+    try {
+      const response = await runModel(ai, FALLBACK_MODEL, messages);
+      parsed = parseAiResponse(response.response);
+      if (parsed) {
+        console.log(`[classifier] Fallback model used: ${FALLBACK_MODEL}`);
+      }
+    } catch (err) {
+      console.error(`[classifier] Fallback model also failed:`, err);
+    }
+  }
+
+  if (parsed) {
     return {
-      verdict: 'suspicious',
-      confidence: 0.3,
-      scam_type: 'necunoscut',
-      red_flags: ['Analiza automata nu a putut fi finalizata'],
-      explanation: 'Mesajul a fost primit dar analiza automata nu a putut fi finalizata. Va recomandam prudenta.',
-      recommended_actions: ['Tratati mesajul cu precautie', 'Raportati la DNSC (1911)'],
+      ...parsed,
+      model_used: modelUsed,
+      ai_disclaimer: AI_DISCLAIMER,
     };
   }
+
+  return {
+    verdict: 'suspicious',
+    confidence: 0.3,
+    scam_type: 'necunoscut',
+    red_flags: ['Analiza automata nu a putut fi finalizata'],
+    explanation: 'Mesajul a fost primit dar analiza automata nu a putut fi finalizata. Va recomandam prudenta.',
+    recommended_actions: ['Tratati mesajul cu precautie', 'Raportati la DNSC (1911)'],
+    model_used: modelUsed,
+    ai_disclaimer: AI_DISCLAIMER,
+  };
 }

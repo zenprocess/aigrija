@@ -21,6 +21,8 @@ export interface ClassificationResult {
   red_flags: string[];
   explanation: string;
   recommended_actions: string[];
+  model_used: string;
+  ai_disclaimer: string;
 }
 
 export interface CheckRequest {
@@ -54,6 +56,8 @@ export interface UrlAnalysisResult {
   is_suspicious: boolean;
   risk_score: number;
   flags: string[];
+  safe_browsing_match?: boolean;
+  safe_browsing_threats?: string[];
 }
 
 export interface BankPlaybook {
@@ -63,4 +67,22 @@ export interface BankPlaybook {
   spoofing_page?: string;
   key_facts: string[];
   if_compromised: string[];
+}
+
+export interface ReportSignal {
+  verdict: string;
+  scam_type: string;
+  url_domain?: string;
+  confidence: number;
+  timestamp: number;
+}
+
+export interface EmergingCampaign {
+  domain?: string;
+  scam_type: string;
+  report_count: number;
+  first_seen: string;
+  last_seen: string;
+  source: 'community';
+  status: 'investigating';
 }

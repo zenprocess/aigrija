@@ -14,14 +14,14 @@ sitemap.get('/sitemap.xml', (c) => {
     ),
   ];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>`;
-  return new Response(xml, { headers: { 'Content-Type': 'application/xml' } });
+  c.header('Content-Type', 'application/xml');
+  return c.body(xml);
 });
 
 sitemap.get('/robots.txt', (c) => {
   const base = c.env.BASE_URL;
-  return new Response(`User-agent: *\nAllow: /\nSitemap: ${base}/sitemap.xml\n`, {
-    headers: { 'Content-Type': 'text/plain' },
-  });
+  c.header('Content-Type', 'text/plain');
+  return c.body(`User-agent: *\nAllow: /\nSitemap: ${base}/sitemap.xml\n`);
 });
 
 export { sitemap };

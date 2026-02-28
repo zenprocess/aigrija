@@ -4,6 +4,16 @@ import { getFlag, setFlag, FLAG_DEFAULTS, type FeatureFlag } from '../lib/featur
 
 const adminFlags = new Hono<{ Bindings: Env }>();
 
+// Auth middleware: require Authorization: Bearer <ADMIN_API_KEY>
+adminFlags.use('/api/admin/*', async (c, next) => {
+  const authHeader = c.req.header('Authorization') ?? '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (!token || token !== c.env.ADMIN_API_KEY) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+  return next();
+});
+
 // GET /api/admin/flags — list all feature flags with current values
 adminFlags.get('/api/admin/flags', async (c) => {
   const flags: Record<string, boolean> = {};

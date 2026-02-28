@@ -115,7 +115,7 @@ check.post('/api/check', async (c) => {
   const body = validation.data;
 
   const classification = await classify(c.env.AI, body.text, body.url);
-  const urlAnalysis = body.url ? await analyzeUrl(body.url, c.env.GOOGLE_SAFE_BROWSING_KEY, undefined, c.env.CACHE) : undefined;
+  const urlAnalysis = body.url ? await analyzeUrl(body.url, c.env.GOOGLE_SAFE_BROWSING_KEY, c.env.VIRUSTOTAL_API_KEY, c.env.CACHE) : undefined;
   const campaignMatches = matchCampaigns(body.text, body.url);
 
   let bank_playbook = undefined;

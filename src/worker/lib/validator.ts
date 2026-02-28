@@ -35,7 +35,7 @@ export function validateCheckRequest(body: unknown): ValidationResult {
     return { valid: false, error: 'Textul este obligatoriu' };
   }
 
-  if (text.length < 3 || raw.text.length > 5000) {
+  if (text.length < 3 || text.length > 5000) {
     return { valid: false, error: 'Textul trebuie să aibă între 3 și 5000 de caractere' };
   }
 

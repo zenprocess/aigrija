@@ -11,6 +11,7 @@ export interface Env {
   WHATSAPP_ACCESS_TOKEN: string;
   WHATSAPP_PHONE_NUMBER_ID: string;
   ADMIN_API_KEY: string;
+  VIRUSTOTAL_API_KEY: string;
 }
 
 export interface ClassificationResult {
@@ -59,6 +60,10 @@ export interface UrlAnalysisResult {
   safe_browsing_match?: boolean;
   safe_browsing_threats?: string[];
   phishtank_match?: boolean;
+  urlhaus_match: boolean;
+  urlhaus_threat?: string;
+  virustotal_match: boolean;
+  virustotal_stats?: { malicious: number; suspicious: number; harmless: number };
 }
 
 export interface BankPlaybook {

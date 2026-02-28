@@ -11,10 +11,12 @@ const SAFE_BROWSING_THREAT_TYPES = [
 ];
 
 const URL_THREAT_CACHE_TTL_MS = 60_000; // 1 minute
+const URL_THREAT_CACHE_TTL_KV = 60; // seconds for KV expirationTtl
 
 interface ThreatCacheEntry {
   safeBrowsing: { match: boolean; threats: string[] };
-  phishTank: { match: boolean };
+  urlhaus: { match: boolean; threat?: string };
+  virustotal: { match: boolean; stats?: { malicious: number; suspicious: number; harmless: number } };
   cachedAt: number;
 }
 
@@ -73,7 +75,7 @@ async function checkSafeBrowsing(url: string, apiKey: string, kv?: KVNamespace):
     return await withRetry(doFetch, { maxRetries: 1, backoffMs: 500, retryable: isRetryableHttpError });
   } catch (err) {
     if (err instanceof CircuitOpenError) {
-      console.warn('[url-analyzer] Safe Browsing circuit OPEN — skipping');
+      console.warn('[url-analyzer] Safe Browsing circuit OPEN -- skipping');
     } else {
       console.warn('[url-analyzer] Safe Browsing check failed (graceful degrade):', err);
     }
@@ -81,45 +83,105 @@ async function checkSafeBrowsing(url: string, apiKey: string, kv?: KVNamespace):
   }
 }
 
-async function checkPhishTank(url: string, kv?: KVNamespace, apiKey?: string): Promise<{ match: boolean }> {
+async function checkURLhaus(url: string, kv?: KVNamespace): Promise<{ match: boolean; threat?: string }> {
   const doFetch = async () => {
     const formData = new URLSearchParams();
     formData.append('url', url);
-    formData.append('format', 'json');
-    if (apiKey) formData.append('app_key', apiKey);
 
-    const res = await fetch('https://checkurl.phishtank.com/checkurl/', {
+    const res = await fetch('https://urlhaus-api.abuse.ch/v1/url/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'phishtank/ai-grija-ro' },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: formData.toString(),
     });
 
     if (!res.ok) {
       if (res.status >= 500) {
-        const e = new Error(`PhishTank API ${res.status}`);
+        const e = new Error(`URLhaus API ${res.status}`);
         (e as any).status = res.status;
         throw e;
       }
-      console.warn(`[url-analyzer] PhishTank API returned ${res.status}`);
+      console.warn(`[url-analyzer] URLhaus API returned ${res.status}`);
       return { match: false };
     }
 
-    const data = await res.json() as { results?: { in_database: boolean; verified: boolean } };
-    const match = !!(data.results?.in_database && data.results?.verified);
-    return { match };
+    const data = await res.json() as { query_status: string; threat?: string; tags?: string[] };
+    if (data.query_status === 'listed') {
+      return { match: true, threat: data.threat };
+    }
+    return { match: false };
   };
 
   try {
     if (kv) {
-      const cb = new CircuitBreaker('phishtank', kv);
+      const cb = new CircuitBreaker('urlhaus', kv);
       return await cb.execute(() => withRetry(doFetch, { maxRetries: 1, backoffMs: 500, retryable: isRetryableHttpError }));
     }
     return await withRetry(doFetch, { maxRetries: 1, backoffMs: 500, retryable: isRetryableHttpError });
   } catch (err) {
     if (err instanceof CircuitOpenError) {
-      console.warn('[url-analyzer] PhishTank circuit OPEN — skipping');
+      console.warn('[url-analyzer] URLhaus circuit OPEN -- skipping');
     } else {
-      console.warn('[url-analyzer] PhishTank check failed (graceful degrade):', err);
+      console.warn('[url-analyzer] URLhaus check failed (graceful degrade):', err);
+    }
+    return { match: false };
+  }
+}
+
+async function checkVirusTotal(url: string, apiKey: string, kv?: KVNamespace): Promise<{ match: boolean; stats?: { malicious: number; suspicious: number; harmless: number } }> {
+  const doFetch = async () => {
+    // base64url encode the URL (no padding)
+    const urlId = btoa(url).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    const res = await fetch(`https://www.virustotal.com/api/v3/urls/${urlId}`, {
+      method: 'GET',
+      headers: { 'x-apikey': apiKey },
+    });
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        return { match: false };
+      }
+      if (res.status >= 500) {
+        const e = new Error(`VirusTotal API ${res.status}`);
+        (e as any).status = res.status;
+        throw e;
+      }
+      console.warn(`[url-analyzer] VirusTotal API returned ${res.status}`);
+      return { match: false };
+    }
+
+    const data = await res.json() as {
+      data?: {
+        attributes?: {
+          last_analysis_stats?: { malicious: number; suspicious: number; harmless: number; undetected: number };
+        };
+      };
+    };
+
+    const statsRaw = data.data?.attributes?.last_analysis_stats;
+    if (!statsRaw) return { match: false };
+
+    const stats = {
+      malicious: statsRaw.malicious ?? 0,
+      suspicious: statsRaw.suspicious ?? 0,
+      harmless: statsRaw.harmless ?? 0,
+    };
+
+    const match = stats.malicious > 0 || stats.suspicious > 2;
+    return { match, stats };
+  };
+
+  try {
+    if (kv) {
+      const cb = new CircuitBreaker('virustotal', kv);
+      return await cb.execute(() => withRetry(doFetch, { maxRetries: 1, backoffMs: 500, retryable: isRetryableHttpError }));
+    }
+    return await withRetry(doFetch, { maxRetries: 1, backoffMs: 500, retryable: isRetryableHttpError });
+  } catch (err) {
+    if (err instanceof CircuitOpenError) {
+      console.warn('[url-analyzer] VirusTotal circuit OPEN -- skipping');
+    } else {
+      console.warn('[url-analyzer] VirusTotal check failed (graceful degrade):', err);
     }
     return { match: false };
   }
@@ -128,7 +190,7 @@ async function checkPhishTank(url: string, kv?: KVNamespace, apiKey?: string): P
 export async function analyzeUrl(
   url: string,
   safeBrowsingKey?: string,
-  phishTankKey?: string,
+  virusTotalKey?: string,
   kv?: KVNamespace
 ): Promise<UrlAnalysisResult> {
   let parsed: URL;
@@ -143,6 +205,8 @@ export async function analyzeUrl(
       safe_browsing_match: false,
       safe_browsing_threats: [],
       phishtank_match: false,
+      urlhaus_match: false,
+      virustotal_match: false,
     };
   }
 
@@ -161,6 +225,8 @@ export async function analyzeUrl(
       safe_browsing_match: false,
       safe_browsing_threats: [],
       phishtank_match: false,
+      urlhaus_match: false,
+      virustotal_match: false,
     };
   }
 
@@ -187,7 +253,10 @@ export async function analyzeUrl(
   // Check KV cache for external threat results
   let safeBrowsingMatch = false;
   let safeBrowsingThreats: string[] = [];
-  let phishTankMatch = false;
+  let urlhausMatch = false;
+  let urlhausThreat: string | undefined;
+  let virustotalMatch = false;
+  let virustotalStats: { malicious: number; suspicious: number; harmless: number } | undefined;
 
   const cacheKey = `url-threat:${domain}`;
   let usedCache = false;
@@ -200,7 +269,10 @@ export async function analyzeUrl(
         if (Date.now() - entry.cachedAt < URL_THREAT_CACHE_TTL_MS) {
           safeBrowsingMatch = entry.safeBrowsing.match;
           safeBrowsingThreats = entry.safeBrowsing.threats;
-          phishTankMatch = entry.phishTank.match;
+          urlhausMatch = entry.urlhaus.match;
+          urlhausThreat = entry.urlhaus.threat;
+          virustotalMatch = entry.virustotal.match;
+          virustotalStats = entry.virustotal.stats;
           usedCache = true;
         }
       }
@@ -210,24 +282,35 @@ export async function analyzeUrl(
   }
 
   if (!usedCache) {
-    if (safeBrowsingKey) {
-      const sbResult = await checkSafeBrowsing(url, safeBrowsingKey, kv);
-      safeBrowsingMatch = sbResult.match;
-      safeBrowsingThreats = sbResult.threats;
+    const [sbResult, urlhausResult, vtResult] = await Promise.allSettled([
+      safeBrowsingKey ? checkSafeBrowsing(url, safeBrowsingKey, kv) : Promise.resolve(null),
+      checkURLhaus(url, kv),
+      virusTotalKey ? checkVirusTotal(url, virusTotalKey, kv) : Promise.resolve(null),
+    ]);
+
+    if (sbResult.status === 'fulfilled' && sbResult.value) {
+      safeBrowsingMatch = sbResult.value.match;
+      safeBrowsingThreats = sbResult.value.threats;
+    }
+    if (urlhausResult.status === 'fulfilled' && urlhausResult.value) {
+      urlhausMatch = urlhausResult.value.match;
+      urlhausThreat = urlhausResult.value.threat;
+    }
+    if (vtResult.status === 'fulfilled' && vtResult.value) {
+      virustotalMatch = vtResult.value.match;
+      virustotalStats = vtResult.value.stats;
     }
 
-    const ptResult = await checkPhishTank(url, kv, phishTankKey);
-    phishTankMatch = ptResult.match;
-
-    // Store in KV cache
+    // Store in KV cache with expirationTtl (Finding 2 fix)
     if (kv) {
       const entry: ThreatCacheEntry = {
         safeBrowsing: { match: safeBrowsingMatch, threats: safeBrowsingThreats },
-        phishTank: { match: phishTankMatch },
+        urlhaus: { match: urlhausMatch, threat: urlhausThreat },
+        virustotal: { match: virustotalMatch, stats: virustotalStats },
         cachedAt: Date.now(),
       };
       try {
-        await kv.put(cacheKey, JSON.stringify(entry));
+        await kv.put(cacheKey, JSON.stringify(entry), { expirationTtl: URL_THREAT_CACHE_TTL_KV });
       } catch {
         // ignore cache write errors
       }
@@ -238,9 +321,17 @@ export async function analyzeUrl(
     flagsArr.push(`Detectat de Google Safe Browsing: ${safeBrowsingThreats.join(', ')}`);
     risk += 0.5;
   }
-  if (phishTankMatch) {
-    flagsArr.push('Detectat in baza de date PhishTank ca phishing verificat');
-    risk += 0.6;
+  if (urlhausMatch) {
+    flagsArr.push(`Detectat in baza de date URLhaus: ${urlhausThreat ?? 'malware'}`);
+    risk += 0.5;
+  }
+  if (virustotalMatch && virustotalStats) {
+    flagsArr.push(`Detectat de VirusTotal: ${virustotalStats.malicious} motoare malitioase, ${virustotalStats.suspicious} suspecte`);
+    if (virustotalStats.malicious > 0) {
+      risk += 0.4;
+    } else {
+      risk += 0.2;
+    }
   }
 
   return {
@@ -251,6 +342,10 @@ export async function analyzeUrl(
     flags: flagsArr,
     safe_browsing_match: safeBrowsingMatch,
     safe_browsing_threats: safeBrowsingThreats,
-    phishtank_match: phishTankMatch,
+    phishtank_match: false,
+    urlhaus_match: urlhausMatch,
+    urlhaus_threat: urlhausThreat,
+    virustotal_match: virustotalMatch,
+    virustotal_stats: virustotalStats,
   };
 }

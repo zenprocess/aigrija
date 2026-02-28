@@ -148,7 +148,7 @@ export class CheckEndpoint extends OpenAPIRoute {
       ? await analyzeUrl(
           body.url,
           safeBrowsingEnabled ? c.env.GOOGLE_SAFE_BROWSING_KEY : undefined,
-          undefined,
+          c.env.VIRUSTOTAL_API_KEY,
           c.env.CACHE
         )
       : undefined;

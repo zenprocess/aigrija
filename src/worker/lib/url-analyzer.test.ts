@@ -76,7 +76,8 @@ describe('analyzeUrl KV caching', () => {
     const store = new Map<string, string>();
     const entry = {
       safeBrowsing: { match: true, threats: ['MALWARE'] },
-      phishTank: { match: false },
+      urlhaus: { match: false },
+      virustotal: { match: false },
       cachedAt: Date.now(),
     };
     store.set('url-threat:example.com', JSON.stringify(entry));
@@ -94,7 +95,8 @@ describe('analyzeUrl KV caching', () => {
     expect(cached).toBeDefined();
     const parsed = JSON.parse(cached!);
     expect(parsed).toHaveProperty('safeBrowsing');
-    expect(parsed).toHaveProperty('phishTank');
+    expect(parsed).toHaveProperty('urlhaus');
+    expect(parsed).toHaveProperty('virustotal');
     expect(parsed).toHaveProperty('cachedAt');
   });
 

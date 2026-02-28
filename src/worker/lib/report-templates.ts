@@ -61,6 +61,8 @@ Semnătura: [COMPLETAȚI]
 
 ---
 Document generat prin ai-grija.ro — platformă de protecție împotriva fraudelor online.
+---
+Raport generat de ai-grija.ro — un proiect civic Zen Labs.
 Completați toate câmpurile marcate cu [COMPLETAȚI] înainte de depunere.
 Depuneți la: Parchetul de pe lângă Judecătoria competentă sau la secția de poliție din raza domiciliului.
 `;
@@ -118,6 +120,8 @@ Semnătura electronică/olografă: [COMPLETAȚI]
 Depuneți online la: https://www.politiaromana.ro/ro/petitii
 Sau fizic la: secția de poliție din raza domiciliului dumneavoastră.
 Document generat prin ai-grija.ro.
+---
+Raport generat de ai-grija.ro — un proiect civic Zen Labs.
 `;
 }
 
@@ -169,6 +173,8 @@ Data raportului: ${p.date}
 ---
 DNSC procesează rapoartele și poate emite alerte publice pentru a proteja alți utilizatori.
 Document generat prin ai-grija.ro — platformă de protecție împotriva fraudelor online.
+---
+Raport generat de ai-grija.ro — un proiect civic Zen Labs.
 `;
 }
 
@@ -238,6 +244,8 @@ Semnătura: [COMPLETAȚI]
 Depuneți la: ghișeul băncii, e-mail departament fraude, sau prin aplicația bancară.
 Contactați și linia antifraudă a băncii pentru blocare urgentă a cardului.
 Document generat prin ai-grija.ro — platformă de protecție împotriva fraudelor online.
+---
+Raport generat de ai-grija.ro — un proiect civic Zen Labs.
 `;
 }
 

@@ -106,6 +106,7 @@ function buildVerdictSvg(verdict: VerdictType, confidence: number, scam_type: st
   <!-- Footer -->
   <rect x="0" y="590" width="1200" height="40" fill="#0f172a" opacity="0.8"/>
   <text x="60" y="614" font-family="system-ui, -apple-system, sans-serif" font-size="13" fill="#475569">Generat automat de AI-GRIJA.RO — Nu înlocuiește sfatul juridic profesional</text>
+  <text x="900" y="614" font-family="system-ui, -apple-system, sans-serif" font-size="13" fill="#475569" text-anchor="end">Proiect civic de Zen Labs</text>
 </svg>`;
 }
 
@@ -154,6 +155,7 @@ function buildAlertSvg(title: string, description: string): string {
   <!-- Footer -->
   <rect x="0" y="590" width="1200" height="40" fill="#0f172a" opacity="0.8"/>
   <text x="60" y="614" font-family="system-ui, -apple-system, sans-serif" font-size="13" fill="#475569">AI-GRIJA.RO — Platformă de protecție împotriva fraudelor online în România</text>
+  <text x="900" y="614" font-family="system-ui, -apple-system, sans-serif" font-size="13" fill="#475569" text-anchor="end">Proiect civic de Zen Labs</text>
 </svg>`;
 }
 

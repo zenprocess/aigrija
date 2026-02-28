@@ -3,6 +3,7 @@ import type { Env } from '../lib/types';
 import { classify } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
 import { checkRateLimit } from '../lib/rate-limiter';
+import { CAMPAIGNS } from '../data/campaigns';
 
 const telegram = new Hono<{ Bindings: Env }>();
 
@@ -58,11 +59,15 @@ async function sendMessage(
     };
   }
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error('[telegram] sendMessage failed:', err);
+  }
 }
 
 function verdictEmoji(verdict: string): string {
@@ -170,6 +175,29 @@ telegram.post('/webhook/telegram', async (c) => {
         '🟢 PROBABIL SIGUR — pare legitim\n\n' +
         '⚠️ Limita: 20 verificări/oră per utilizator.\n\n' +
         'Raportează fraude la DNSC: <b>1911</b>'
+    );
+    return c.json({ ok: true });
+  }
+
+
+  if (text === '/alerte' || text.startsWith('/alerte ')) {
+    const activeCampaigns = CAMPAIGNS.filter(camp => camp.status === 'active');
+    const severityEmoji = (s: string) => s === 'critical' ? '🔴' : s === 'high' ? '🟠' : '🟡';
+    const lines: string[] = ['📢 <b>Campanii active de phishing:</b>', ''];
+    for (const camp of activeCampaigns) {
+      lines.push(`${severityEmoji(camp.severity)} <b>${camp.name_ro}</b> — ${camp.impersonated_entity}`);
+    }
+    await sendMessage(token, chatId, lines.join('\n'), [
+      [{ text: '🔍 Vezi detalii pe ai-grija.ro/alerte', url: 'https://ai-grija.ro/alerte' }],
+    ]);
+    return c.json({ ok: true });
+  }
+
+  if (text === '/about' || text.startsWith('/about ')) {
+    await sendMessage(
+      token,
+      chatId,
+      'ℹ️ <b>Despre ai-grija.ro</b>\n\nai-grija.ro este un proiect civic gratuit creat de Zen Labs.\n\nVerifică mesaje suspecte, raportează la autorități, protejează-ți familia.\n\n🔗 ai-grija.ro | 📧 contact@ai-grija.ro'
     );
     return c.json({ ok: true });
   }

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { AlertCircle, ShieldAlert, AlertTriangle, ShieldCheck, CheckCircle, ExternalLink, Phone, Share2, Copy, X, Loader2, Link2, AlertOctagon, ImageIcon, Eye } from 'lucide-react';
 import { checkContent, checkImage } from '../utils/api';
 import { redactPII } from '../lib/redactor';
+import ReportForm from './ReportForm';
 
 export default function Checker() {
   const [text, setText] = useState('');
@@ -468,6 +469,11 @@ export default function Checker() {
                 <span className="font-medium">Distribuie avertismentul</span>
               </button>
             </div>
+
+            {/* Report Packet Generator */}
+            {(result.classification.verdict === 'phishing' || result.classification.verdict === 'suspicious') && (
+              <ReportForm result={result} />
+            )}
 
           </div>
         )}

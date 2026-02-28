@@ -16,22 +16,15 @@ export async function aggregateSignals(env: Env): Promise<{ emerging: EmergingCa
 
   const cutoff = Date.now() - LOOKBACK_DAYS * 24 * 60 * 60 * 1000;
 
-  // List all report keys
+  // List all report keys — read signal data from KV metadata (zero individual gets)
   const listResult = await env.CACHE.list({ prefix: REPORT_PREFIX });
-  const keys = listResult.keys.map((k) => k.name);
-
-  // Fetch all signals
   const signals: ReportSignal[] = [];
-  for (const key of keys) {
-    const raw = await env.CACHE.get(key);
-    if (!raw) continue;
-    try {
-      const signal = JSON.parse(raw) as ReportSignal;
+  for (const key of listResult.keys) {
+    if (key.metadata) {
+      const signal = key.metadata as ReportSignal;
       if (signal.timestamp >= cutoff) {
         signals.push(signal);
       }
-    } catch {
-      // skip malformed
     }
   }
 
@@ -117,7 +110,7 @@ export async function storeReportSignal(
   const date = new Date(signal.timestamp).toISOString().split('T')[0];
   const key = `${REPORT_PREFIX}${date}:${textHash}`;
   const TTL_30_DAYS = 30 * 24 * 60 * 60;
-  await env.CACHE.put(key, JSON.stringify(signal), { expirationTtl: TTL_30_DAYS });
+  await env.CACHE.put(key, '', { expirationTtl: TTL_30_DAYS, metadata: signal });
   // Invalidate aggregation cache so next request recomputes
   await env.CACHE.delete(CACHE_KEY);
 }

@@ -33,7 +33,7 @@ function buildJsonLd(campaign: Campaign, baseUrl: string): string {
   return JSON.stringify(ld);
 }
 
-export function renderAlertPage(campaign: Campaign, baseUrl: string): string {
+export function renderAlertPage(campaign: Campaign, baseUrl: string, checksMatched?: number): string {
   const statusBadge = campaign.status === 'active' ? '🔴 Activa' : campaign.status === 'declining' ? '🟡 In scadere' : '🟢 Rezolvata';
   const severityBadge = campaign.severity === 'critical' ? '⚠️ Critica' : campaign.severity === 'high' ? '🔶 Ridicata' : '🔵 Medie';
   const escapedSlug = escapeHtml(campaign.slug);
@@ -54,12 +54,13 @@ export function renderAlertPage(campaign: Campaign, baseUrl: string): string {
 <meta property="og:type" content="article">
 <link rel="canonical" href="${escapedBase}/alerte/${escapedSlug}">
 <script type="application/ld+json">${jsonLd}</script>
-<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:20px;color:#1a1a1a;line-height:1.6}h1{color:#d32f2f;font-size:1.5rem}.badge{display:inline-block;padding:4px 12px;border-radius:12px;font-size:0.85rem;font-weight:600;margin-right:8px}.red-flag{background:#fff3e0;border-left:4px solid #ff9800;padding:12px;margin:8px 0}.advice{background:#e8f5e9;border-left:4px solid #4caf50;padding:12px;margin:8px 0}a{color:#1976d2}</style>
+<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:20px;color:#1a1a1a;line-height:1.6}h1{color:#d32f2f;font-size:1.5rem}.badge{display:inline-block;padding:4px 12px;border-radius:12px;font-size:0.85rem;font-weight:600;margin-right:8px}.red-flag{background:#fff3e0;border-left:4px solid #ff9800;padding:12px;margin:8px 0}.advice{background:#e8f5e9;border-left:4px solid #4caf50;padding:12px;margin:8px 0}a{color:#1976d2}.counter{display:inline-flex;align-items:center;gap:8px;background:#fff8e1;border:1px solid #ffc107;border-radius:8px;padding:10px 16px;margin:12px 0;font-size:0.9rem;font-weight:600;color:#795548}</style>
 </head>
 <body>
 <nav><a href="/">ai-grija.ro</a> / <a href="/alerte">Alerte</a></nav>
 <h1>${escapeHtml(campaign.name_ro)}</h1>
 <p><span class="badge">${statusBadge}</span><span class="badge">${severityBadge}</span></p>
+${checksMatched && checksMatched > 0 ? '<p><span class="counter">🔍 ' + checksMatched + ' verificări au identificat această campanie</span></p>' : ''}
 <p><strong>Entitate impersonata:</strong> ${escapeHtml(campaign.impersonated_entity)}</p>
 <p>${escapeHtml(campaign.description_ro)}</p>
 <h2>Cum functioneaza</h2>

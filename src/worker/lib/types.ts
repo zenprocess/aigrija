@@ -58,6 +58,7 @@ export interface UrlAnalysisResult {
   flags: string[];
   safe_browsing_match?: boolean;
   safe_browsing_threats?: string[];
+  phishtank_match?: boolean;
 }
 
 export interface BankPlaybook {

@@ -6,8 +6,8 @@
 const PATTERNS = [
   // CNP: 13-digit number starting with 1-8
   {
-    regex: /\b([1-8])(\d{5})(\d{6})\b/g,
-    replace: (_, p1, p2, p3) => `${p1}${'*'.repeat(p2.length)}${p3.slice(0, 2)}${'*'.repeat(p3.length - 2)}`,
+    regex: /\b([1-8]\d{12})\b/g,
+    replace: (match) => match[0] + '*'.repeat(9) + match.slice(-3),
   },
   // IBAN: RO + 2 digits + 4 chars + 16 digits
   {
@@ -28,6 +28,11 @@ const PATTERNS = [
   {
     regex: /(\+40|0)(7\d{2})\s?(\d{3})\s?(\d{3})\b/g,
     replace: (_, prefix, mid, _p3, last3) => `${prefix}${mid}***${last3}`,
+  },
+  // Romanian ID card series: 2 uppercase letters + 6 digits (e.g., IF123456)
+  {
+    regex: /([A-Z]{2})\d{3}(\d{3})/g,
+    replace: (_, prefix, last3) => `${prefix}•••${last3}`,
   },
 ];
 

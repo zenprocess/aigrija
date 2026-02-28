@@ -21,10 +21,10 @@ async function checkSafeBrowsing(url: string, apiKey: string): Promise<{ match: 
     };
 
     const res = await fetch(
-      `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${apiKey}`,
+      'https://safebrowsing.googleapis.com/v4/threatMatches:find',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
         body: JSON.stringify(body),
       }
     );
@@ -43,7 +43,34 @@ async function checkSafeBrowsing(url: string, apiKey: string): Promise<{ match: 
   }
 }
 
-export async function analyzeUrl(url: string, safeBrowsingKey?: string): Promise<UrlAnalysisResult> {
+
+async function checkPhishTank(url: string, apiKey?: string): Promise<{ match: boolean }> {
+  try {
+    const formData = new URLSearchParams();
+    formData.append('url', url);
+    formData.append('format', 'json');
+    if (apiKey) formData.append('app_key', apiKey);
+
+    const res = await fetch('https://checkurl.phishtank.com/checkurl/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'phishtank/ai-grija-ro' },
+      body: formData.toString(),
+    });
+
+    if (!res.ok) {
+      console.warn(`[url-analyzer] PhishTank API returned ${res.status}`);
+      return { match: false };
+    }
+
+    const data = await res.json() as { results?: { in_database: boolean; verified: boolean } };
+    const match = !!(data.results?.in_database && data.results?.verified);
+    return { match };
+  } catch (err) {
+    console.warn('[url-analyzer] PhishTank check failed (graceful degrade):', err);
+    return { match: false };
+  }
+}
+export async function analyzeUrl(url: string, safeBrowsingKey?: string, phishTankKey?: string): Promise<UrlAnalysisResult> {
   let parsed: URL;
   try {
     parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
@@ -55,6 +82,7 @@ export async function analyzeUrl(url: string, safeBrowsingKey?: string): Promise
       flags: ['URL invalid sau malformat'],
       safe_browsing_match: false,
       safe_browsing_threats: [],
+      phishtank_match: false,
     };
   }
 
@@ -72,6 +100,7 @@ export async function analyzeUrl(url: string, safeBrowsingKey?: string): Promise
       flags: [],
       safe_browsing_match: false,
       safe_browsing_threats: [],
+      phishtank_match: false,
     };
   }
 
@@ -112,6 +141,17 @@ export async function analyzeUrl(url: string, safeBrowsingKey?: string): Promise
     }
   }
 
+  // PhishTank check (async, graceful degrade)
+  let phishTankMatch = false;
+  {
+    const ptResult = await checkPhishTank(url, phishTankKey);
+    phishTankMatch = ptResult.match;
+    if (phishTankMatch) {
+      flags.push('Detectat in baza de date PhishTank ca phishing verificat');
+      risk += 0.6;
+    }
+  }
+
   return {
     url,
     domain,
@@ -120,5 +160,6 @@ export async function analyzeUrl(url: string, safeBrowsingKey?: string): Promise
     flags,
     safe_browsing_match: safeBrowsingMatch,
     safe_browsing_threats: safeBrowsingThreats,
+    phishtank_match: phishTankMatch,
   };
 }

@@ -2,15 +2,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { aggregateSignals, storeReportSignal } from './campaign-aggregator';
 import type { Env, ReportSignal } from './types';
 
-function makeKV(store: Map<string, string>) {
+function makeKV(store: Map<string, string>, metaStore: Map<string, unknown> = new Map()) {
   return {
     get: vi.fn(async (key: string) => store.get(key) ?? null),
-    put: vi.fn(async (key: string, value: string) => { store.set(key, value); }),
-    delete: vi.fn(async (key: string) => { store.delete(key); }),
+    put: vi.fn(async (key: string, value: string, opts?: { metadata?: unknown }) => {
+      store.set(key, value);
+      if (opts?.metadata !== undefined) metaStore.set(key, opts.metadata);
+    }),
+    delete: vi.fn(async (key: string) => { store.delete(key); metaStore.delete(key); }),
     list: vi.fn(async ({ prefix }: { prefix: string }) => {
       const keys = [...store.keys()]
         .filter((k) => k.startsWith(prefix))
-        .map((name) => ({ name }));
+        .map((name) => {
+          // If metadata stored, use it; otherwise try to parse value as metadata (test compat)
+          const meta = metaStore.get(name) ?? (() => {
+            try { return JSON.parse(store.get(name) ?? ''); } catch { return undefined; }
+          })();
+          return { name, metadata: meta };
+        });
       return { keys };
     }),
   } as unknown as KVNamespace;

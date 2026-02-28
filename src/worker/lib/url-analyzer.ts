@@ -83,14 +83,15 @@ async function checkSafeBrowsing(url: string, apiKey: string, kv?: KVNamespace):
   }
 }
 
-async function checkURLhaus(url: string, kv?: KVNamespace): Promise<{ match: boolean; threat?: string }> {
+async function checkURLhaus(url: string, authKey?: string, kv?: KVNamespace): Promise<{ match: boolean; threat?: string }> {
+  if (!authKey) return { match: false };
   const doFetch = async () => {
     const formData = new URLSearchParams();
     formData.append('url', url);
 
     const res = await fetch('https://urlhaus-api.abuse.ch/v1/url/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Auth-Key': authKey },
       body: formData.toString(),
     });
 
@@ -191,7 +192,8 @@ export async function analyzeUrl(
   url: string,
   safeBrowsingKey?: string,
   virusTotalKey?: string,
-  kv?: KVNamespace
+  kv?: KVNamespace,
+  urlhausAuthKey?: string
 ): Promise<UrlAnalysisResult> {
   let parsed: URL;
   try {
@@ -284,7 +286,7 @@ export async function analyzeUrl(
   if (!usedCache) {
     const [sbResult, urlhausResult, vtResult] = await Promise.allSettled([
       safeBrowsingKey ? checkSafeBrowsing(url, safeBrowsingKey, kv) : Promise.resolve(null),
-      checkURLhaus(url, kv),
+      urlhausAuthKey ? checkURLhaus(url, urlhausAuthKey, kv) : Promise.resolve(null),
       virusTotalKey ? checkVirusTotal(url, virusTotalKey, kv) : Promise.resolve(null),
     ]);
 

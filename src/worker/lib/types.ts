@@ -12,6 +12,7 @@ export interface Env {
   WHATSAPP_PHONE_NUMBER_ID: string;
   ADMIN_API_KEY: string;
   VIRUSTOTAL_API_KEY: string;
+  URLHAUS_AUTH_KEY?: string;
 }
 
 export interface ClassificationResult {

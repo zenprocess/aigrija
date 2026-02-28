@@ -1,0 +1,24 @@
+# ai-grija.ro — Local Development Secrets
+# Copy to .dev.vars and fill in real values
+# .dev.vars is gitignored — never commit secrets
+
+# Google Safe Browsing API (https://console.cloud.google.com/apis/credentials)
+GOOGLE_SAFE_BROWSING_KEY=
+
+# VirusTotal API (https://www.virustotal.com/gui/my-apikey)
+VIRUSTOTAL_API_KEY=
+
+# URLhaus Auth Key (https://auth.abuse.ch — free registration)
+URLHAUS_AUTH_KEY=
+
+# Telegram Bot (https://t.me/BotFather)
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_WEBHOOK_SECRET=
+
+# WhatsApp Business API (https://developers.facebook.com)
+WHATSAPP_ACCESS_TOKEN=
+WHATSAPP_VERIFY_TOKEN=
+WHATSAPP_PHONE_NUMBER_ID=
+
+# Admin API (generate with: openssl rand -hex 32)
+ADMIN_API_KEY=

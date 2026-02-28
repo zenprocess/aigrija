@@ -32,6 +32,20 @@ const VERDICT_STYLES: Record<VerdictType, VerdictStyle> = {
     bgAccent: '#14532d',
   },
 };
+function escapeHtml(s: string): string {
+  return s.replace(/[<>&"']/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '"': return '&quot;';
+      case "'": return '&#39;';
+      default: return c;
+    }
+  });
+}
+
+
 
 function buildVerdictSvg(verdict: VerdictType, confidence: number, scam_type: string): string {
   const style = VERDICT_STYLES[verdict] || VERDICT_STYLES['suspicious'];
@@ -165,9 +179,11 @@ og.get('/og/image', (c) => {
   const verdict: VerdictType = (['phishing', 'suspicious', 'likely_safe'] as const).includes(rawVerdict as VerdictType)
     ? (rawVerdict as VerdictType)
     : 'suspicious';
-  const confidence = parseFloat(c.req.query('confidence') || '75');
+  // NOTE: The AI API returns confidence as a 0-1 float, but buildVerdictSvg
+  // expects a 0-100 scale. Normalise here: if confidence <= 1, multiply by 100.
+  const rawConfidence = parseFloat(c.req.query('confidence') || '75');
+  const confidence = rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence;
   const scam_type = c.req.query('scam_type') || 'Conținut suspect';
-
   const svg = buildVerdictSvg(verdict, confidence, scam_type);
 
   return new Response(svg, {
@@ -211,8 +227,8 @@ og.get('/og/:type', (c) => {
     pageDescription = 'Am verificat un mesaj suspect pe ai-grija.ro. Protejează-te și tu!';
   } else if (type === 'alert') {
     imageUrl = `${baseUrl}/og/alert?${query}`;
-    pageTitle = c.req.query('title') || 'Alertă Fraudă — ai-grija.ro';
-    pageDescription = c.req.query('description') || 'Alertă de securitate activă pe ai-grija.ro.';
+    pageTitle = escapeHtml(c.req.query('title') || 'Alertă Fraudă — ai-grija.ro');
+    pageDescription = escapeHtml(c.req.query('description') || 'Alertă de securitate activă pe ai-grija.ro.');
   } else {
     return c.json({ error: 'Tip OG invalid. Folosiți: verdict sau alert.' }, 400);
   }

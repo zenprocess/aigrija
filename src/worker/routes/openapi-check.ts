@@ -8,6 +8,8 @@ import { analyzeUrl } from '../lib/url-analyzer';
 import { matchCampaigns } from '../lib/campaign-matcher';
 import { BANK_PLAYBOOKS } from '../data/bank-playbooks';
 import { getFlag } from '../lib/feature-flags';
+import { storeReportSignal } from '../lib/campaign-aggregator';
+import type { ReportSignal } from '../lib/types';
 
 const MAX_TEXT_LENGTH = 5000;
 const MAX_URL_LENGTH = 2048;
@@ -64,7 +66,76 @@ const CheckResponseSchema = z.object({
     remaining: z.number(),
     limit: z.number(),
   }),
+  share_id: z.string().optional().describe('ID-ul cardului de distribuire generat'),
 });
+
+
+function escapeXml(s: string): string {
+  return s.replace(/[<>&"']/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '"': return '&quot;';
+      case "'": return '&apos;';
+      default: return c;
+    }
+  });
+}
+
+function buildShareSvg(verdict: string, confidence: number, scam_type: string): string {
+  const styles: Record<string, { color: string; label: string; icon: string; bgAccent: string }> = {
+    phishing: { color: '#ef4444', label: 'FRAUDĂ CONFIRMATĂ', icon: '⚠', bgAccent: '#7f1d1d' },
+    suspicious: { color: '#f59e0b', label: 'SUSPECT', icon: '⚡', bgAccent: '#78350f' },
+    likely_safe: { color: '#22c55e', label: 'PROBABIL SIGUR', icon: '✓', bgAccent: '#14532d' },
+  };
+  const style = styles[verdict] || styles['suspicious'];
+  const pct = Math.round(Math.min(100, Math.max(0, confidence * 100)));
+  const barWidth = Math.round((pct / 100) * 720);
+  const safeType = escapeXml(scam_type.length > 28 ? scam_type.slice(0, 28) + '...' : scam_type);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e293b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="0" width="8" height="630" fill="${style.color}"/>
+  <rect x="0" y="0" width="1200" height="4" fill="${style.color}" opacity="0.6"/>
+  <text x="60" y="72" font-family="system-ui,-apple-system,sans-serif" font-size="22" font-weight="600" fill="#94a3b8" letter-spacing="2">AI-GRIJA.RO</text>
+  <text x="60" y="96" font-family="system-ui,-apple-system,sans-serif" font-size="14" fill="#475569">Protecție împotriva fraudelor online</text>
+  <line x1="60" y1="116" x2="1140" y2="116" stroke="#334155" stroke-width="1"/>
+  <circle cx="120" cy="240" r="60" fill="${style.bgAccent}" opacity="0.6"/>
+  <text x="120" y="258" font-family="system-ui,-apple-system,sans-serif" font-size="48" fill="${style.color}" text-anchor="middle">${style.icon}</text>
+  <text x="210" y="210" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="500" fill="${style.color}" letter-spacing="3">${style.label}</text>
+  <text x="210" y="265" font-family="system-ui,-apple-system,sans-serif" font-size="52" font-weight="700" fill="#f1f5f9">${safeType}</text>
+  <text x="60" y="350" font-family="system-ui,-apple-system,sans-serif" font-size="16" fill="#64748b" letter-spacing="1">NIVEL DE ÎNCREDERE</text>
+  <rect x="60" y="365" width="720" height="12" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <rect x="60" y="365" width="${barWidth}" height="12" rx="6" fill="${style.color}" opacity="0.85"/>
+  <text x="796" y="377" font-family="system-ui,-apple-system,sans-serif" font-size="22" font-weight="700" fill="${style.color}">${pct}%</text>
+  <rect x="0" y="590" width="1200" height="40" fill="#0f172a" opacity="0.8"/>
+  <text x="60" y="614" font-family="system-ui,-apple-system,sans-serif" font-size="13" fill="#475569">Generat automat de AI-GRIJA.RO</text>
+  <text x="900" y="614" font-family="system-ui,-apple-system,sans-serif" font-size="13" fill="#475569" text-anchor="end">Proiect civic de Zen Labs</text>
+</svg>`;
+}
+
+function extractDomain(url?: string): string | undefined {
+  if (!url) return undefined;
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return undefined;
+  }
+}
+
+async function hashText(text: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text.slice(0, 100));
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+}
 
 export class CheckEndpoint extends OpenAPIRoute {
   schema = {
@@ -187,6 +258,32 @@ export class CheckEndpoint extends OpenAPIRoute {
     const current = parseInt(await c.env.CACHE.get(countKey) || '0', 10);
     await c.env.CACHE.put(countKey, String(current + 1));
 
-    return c.json(response);
+    // Store report signal for phishing/suspicious results only
+    if (classification.verdict === 'phishing' || classification.verdict === 'suspicious') {
+      const textHash = await hashText(body.text);
+      const signal: ReportSignal = {
+        verdict: classification.verdict,
+        scam_type: classification.scam_type,
+        url_domain: extractDomain(body.url),
+        confidence: classification.confidence,
+        timestamp: Date.now(),
+      };
+      c.executionCtx.waitUntil(storeReportSignal(c.env, signal, textHash));
+    }
+
+    // Generate share card and store in R2
+    const shareId = crypto.randomUUID();
+    const svgContent = buildShareSvg(
+      classification.verdict,
+      classification.confidence,
+      classification.scam_type
+    );
+    c.executionCtx.waitUntil(
+      c.env.STORAGE.put('share/' + shareId + '.svg', svgContent, {
+        httpMetadata: { contentType: 'image/svg+xml' },
+      })
+    );
+
+    return c.json({ ...response, share_id: shareId });
   }
 }

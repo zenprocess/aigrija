@@ -1,3 +1,4 @@
+import { structuredLog } from '../lib/logger';
 import type { ClassificationResult } from './types';
 
 const PRIMARY_MODEL = '@cf/meta/llama-3.1-8b-instruct-fast';
@@ -79,12 +80,12 @@ export async function classify(
     const response = await runModel(ai, PRIMARY_MODEL, messages);
     parsed = parseAiResponse(response.response);
     if (parsed) {
-      console.log(`[classifier] Primary model used: ${PRIMARY_MODEL}`);
+      structuredLog('debug', '[classifier] Primary model used', { model: PRIMARY_MODEL });
     } else {
-      console.warn(`[classifier] Primary model returned empty/invalid response, falling back to ${FALLBACK_MODEL}`);
+      structuredLog('warn', '[classifier] Primary model returned empty/invalid response', { fallback: FALLBACK_MODEL });
     }
   } catch (err) {
-    console.warn(`[classifier] Primary model threw error, falling back to ${FALLBACK_MODEL}:`, err);
+    structuredLog('warn', '[classifier] Primary model threw error', { fallback: FALLBACK_MODEL, error: String(err) });
   }
 
   if (!parsed && gemma_fallback_enabled) {
@@ -93,13 +94,13 @@ export async function classify(
       const response = await runModel(ai, FALLBACK_MODEL, messages);
       parsed = parseAiResponse(response.response);
       if (parsed) {
-        console.log(`[classifier] Fallback model used: ${FALLBACK_MODEL}`);
+        structuredLog('debug', '[classifier] Fallback model used', { model: FALLBACK_MODEL });
       }
     } catch (err) {
-      console.error(`[classifier] Fallback model also failed:`, err);
+      structuredLog('error', '[classifier] Fallback model also failed', { error: String(err) });
     }
   } else if (!parsed && !gemma_fallback_enabled) {
-    console.warn('[classifier] Gemma fallback disabled by feature flag — skipping fallback');
+    structuredLog('warn', '[classifier] Gemma fallback disabled by feature flag — skipping fallback');
   }
 
   if (parsed) {

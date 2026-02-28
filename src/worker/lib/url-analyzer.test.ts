@@ -105,7 +105,7 @@ describe('analyzeUrl KV caching', () => {
     const entry = {
       safeBrowsing: { match: true, threats: ['MALWARE'] },
       phishTank: { match: false },
-      cachedAt: Date.now() - 120_000, // 2 minutes ago — expired
+      cachedAt: Date.now() - 1_000_000, // ~17 minutes ago — expired
     };
     store.set('url-threat:example.com', JSON.stringify(entry));
     const kv = makeKV(store);

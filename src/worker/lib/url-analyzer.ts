@@ -10,8 +10,8 @@ const SAFE_BROWSING_THREAT_TYPES = [
   'POTENTIALLY_HARMFUL_APPLICATION',
 ];
 
-const URL_THREAT_CACHE_TTL_MS = 60_000; // 1 minute
-const URL_THREAT_CACHE_TTL_KV = 60; // seconds for KV expirationTtl
+const URL_THREAT_CACHE_TTL_MS = 900_000; // 15 minutes
+const URL_THREAT_CACHE_TTL_KV = 900; // seconds for KV expirationTtl
 
 interface ThreatCacheEntry {
   safeBrowsing: { match: boolean; threats: string[] };

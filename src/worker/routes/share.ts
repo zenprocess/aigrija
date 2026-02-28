@@ -3,8 +3,14 @@ import type { Env } from '../lib/types';
 
 const share = new Hono<{ Bindings: Env }>();
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 share.get('/api/share/:id', async (c) => {
   const id = c.req.param('id');
+
+  if (!UUID_RE.test(id)) {
+    return c.json({ error: 'ID invalid. Se asteapta un UUID.' }, 400);
+  }
 
   // Try SVG first (new format), fall back to PNG (legacy)
   let obj = await c.env.STORAGE.get(`share/${id}.svg`);

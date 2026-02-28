@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, ArrowRight, ShieldAlert } from 'lucide-react';
 import { fetchAlerts } from '../utils/api';
+import { useTranslation } from '../i18n/index.js';
 
 export default function ActiveAlerts() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const getAlerts = async () => {
@@ -39,7 +41,7 @@ export default function ActiveAlerts() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500"></span>
           </div>
-          <h2 className="text-3xl font-bold text-white">Campanii de phishing active</h2>
+          <h2 className="text-3xl font-bold text-white">{t('alerts.title')}</h2>
         </div>
 
         {loading ? (
@@ -56,7 +58,7 @@ export default function ActiveAlerts() {
                       {alert.severity === 'high' && <ShieldAlert className="w-5 h-5 text-red-400" />}
                       {alert.name}
                     </h3>
-                    <p className="text-sm text-gray-400 mt-1">Țintă: <span className="text-gray-300 font-medium">{alert.entity}</span></p>
+                    <p className="text-sm text-gray-400 mt-1">{t('alerts.target')} <span className="text-gray-300 font-medium">{alert.entity}</span></p>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <span className={`px-2.5 py-1 rounded text-xs font-bold border ${getSeverityStyles(alert.severity).badge}`}>
@@ -64,7 +66,7 @@ export default function ActiveAlerts() {
                     </span>
                     {alert.status === 'active' && (
                       <span className="px-2.5 py-1 rounded text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
-                        Activ
+                        {t('alerts.active')}
                       </span>
                     )}
                   </div>
@@ -77,7 +79,7 @@ export default function ActiveAlerts() {
 
         <div className="mt-8 text-center">
           <button data-testid="alerts-view-all-btn" className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-medium transition-colors group">
-            Vezi toate alertele 
+            {t('alerts.view_all')}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Menu, X } from 'lucide-react';
+import { ShieldCheck, Menu, X, Globe } from 'lucide-react';
+import { useTranslation } from '../i18n/index.js';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const { t, lang, setLang, languages, languageNames } = useTranslation();
 
   const scrollTo = (id) => {
     setIsMobileMenuOpen(false);
@@ -26,18 +29,73 @@ export default function Header() {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8">
-            <button data-testid="header-nav-verifica" onClick={() => scrollTo('verifica')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Verifică</button>
-            <button data-testid="header-nav-cum-functioneaza" onClick={() => scrollTo('cum-functioneaza')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Cum funcționează</button>
-            <button data-testid="header-nav-alerte" onClick={() => scrollTo('alerte')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Alerte</button>
+            <button data-testid="header-nav-verifica" onClick={() => scrollTo('verifica')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">{t('header.nav_verifica')}</button>
+            <button data-testid="header-nav-cum-functioneaza" onClick={() => scrollTo('cum-functioneaza')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">{t('header.nav_how_it_works')}</button>
+            <button data-testid="header-nav-alerte" onClick={() => scrollTo('alerte')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">{t('header.nav_alerte')}</button>
+
+            {/* Language Switcher */}
+            <div className="relative">
+              <button
+                data-testid="header-lang-switcher"
+                onClick={() => setIsLangOpen(!isLangOpen)}
+                className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors text-sm font-medium px-2 py-1 rounded-lg hover:bg-white/10"
+                aria-label={t('lang_switcher.label')}
+              >
+                <Globe className="w-4 h-4" />
+                <span>{languages[lang]}</span>
+              </button>
+              {isLangOpen && (
+                <div className="absolute right-0 top-full mt-2 w-40 glass-card border border-white/10 rounded-xl overflow-hidden shadow-xl z-50">
+                  {Object.entries(languages).map(([code]) => (
+                    <button
+                      key={code}
+                      data-testid={`lang-option-${code}`}
+                      onClick={() => { setLang(code); setIsLangOpen(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 ${lang === code ? 'text-blue-400 bg-blue-500/10' : 'text-gray-300 hover:text-white hover:bg-white/10'}`}
+                    >
+                      <span className="font-mono font-bold text-xs">{languages[code]}</span>
+                      <span>{languageNames[code]}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden flex items-center gap-2">
+            {/* Mobile lang switcher */}
+            <div className="relative">
+              <button
+                data-testid="header-lang-switcher-mobile"
+                onClick={() => setIsLangOpen(!isLangOpen)}
+                className="text-gray-300 hover:text-white p-2 flex items-center gap-1"
+                aria-label={t('lang_switcher.label')}
+              >
+                <Globe className="w-5 h-5" />
+                <span className="text-xs font-bold">{languages[lang]}</span>
+              </button>
+              {isLangOpen && (
+                <div className="absolute right-0 top-full mt-2 w-40 glass-card border border-white/10 rounded-xl overflow-hidden shadow-xl z-50">
+                  {Object.entries(languages).map(([code]) => (
+                    <button
+                      key={code}
+                      data-testid={`lang-option-mobile-${code}`}
+                      onClick={() => { setLang(code); setIsLangOpen(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 ${lang === code ? 'text-blue-400 bg-blue-500/10' : 'text-gray-300 hover:text-white hover:bg-white/10'}`}
+                    >
+                      <span className="font-mono font-bold text-xs">{languages[code]}</span>
+                      <span>{languageNames[code]}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               data-testid="header-hamburger-btn"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="text-gray-300 hover:text-white p-2"
-              aria-label="Meniu"
+              aria-label={t('header.menu_aria')}
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -48,9 +106,9 @@ export default function Header() {
       {/* Mobile Nav Panel */}
       <div className={`md:hidden absolute top-16 left-0 right-0 glass-panel transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'opacity-100 visible border-b border-white/10' : 'opacity-0 invisible h-0 overflow-hidden'}`}>
         <div className="px-4 pt-2 pb-6 space-y-4 flex flex-col bg-[#0A0A0F]/95">
-          <button data-testid="header-mobile-verifica" onClick={() => scrollTo('verifica')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">Verifică un mesaj</button>
-          <button data-testid="header-mobile-cum-functioneaza" onClick={() => scrollTo('cum-functioneaza')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">Cum funcționează</button>
-          <button data-testid="header-mobile-alerte" onClick={() => scrollTo('alerte')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">Alerte active</button>
+          <button data-testid="header-mobile-verifica" onClick={() => scrollTo('verifica')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">{t('header.mobile_verifica')}</button>
+          <button data-testid="header-mobile-cum-functioneaza" onClick={() => scrollTo('cum-functioneaza')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">{t('header.mobile_how_it_works')}</button>
+          <button data-testid="header-mobile-alerte" onClick={() => scrollTo('alerte')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">{t('header.mobile_alerte')}</button>
         </div>
       </div>
     </header>

@@ -65,6 +65,10 @@ export interface UrlAnalysisResult {
   urlhaus_threat?: string;
   virustotal_match: boolean;
   virustotal_stats?: { malicious: number; suspicious: number; harmless: number };
+  domain_age_days?: number | null;
+  registrar?: string | null;
+  creation_date?: string | null;
+  is_new_domain?: boolean;
 }
 
 export interface BankPlaybook {

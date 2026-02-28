@@ -3,6 +3,7 @@ import type { UrlAnalysisResult } from './types';
 import { CircuitBreaker, CircuitOpenError } from './circuit-breaker';
 import { withRetry } from './retry';
 import { structuredLog } from './logger';
+import { getDomainIntel } from './domain-intel';
 
 const SAFE_BROWSING_THREAT_TYPES = [
   'MALWARE',
@@ -276,6 +277,10 @@ export async function analyzeUrl(
   let urlhausThreat: string | undefined;
   let virustotalMatch = false;
   let virustotalStats: { malicious: number; suspicious: number; harmless: number } | undefined;
+  let domainAgeDays: number | null = null;
+  let registrar: string | null = null;
+  let creationDate: string | null = null;
+  let isNewDomain = false;
 
   const cacheKey = `url-threat:${domain}`;
   let usedCache = false;
@@ -301,10 +306,11 @@ export async function analyzeUrl(
   }
 
   if (!usedCache) {
-    const [sbResult, urlhausResult, vtResult] = await Promise.allSettled([
+    const [sbResult, urlhausResult, vtResult, rdapResult] = await Promise.allSettled([
       safeBrowsingKey ? checkSafeBrowsing(url, safeBrowsingKey, kv) : Promise.resolve(null),
       urlhausAuthKey ? checkURLhaus(url, urlhausAuthKey, kv) : Promise.resolve(null),
       virusTotalKey ? checkVirusTotal(url, virusTotalKey, kv) : Promise.resolve(null),
+      getDomainIntel(domain, kv),
     ]);
 
     if (sbResult.status === 'fulfilled' && sbResult.value) {
@@ -318,6 +324,12 @@ export async function analyzeUrl(
     if (vtResult.status === 'fulfilled' && vtResult.value) {
       virustotalMatch = vtResult.value.match;
       virustotalStats = vtResult.value.stats;
+    }
+    if (rdapResult.status === 'fulfilled' && rdapResult.value) {
+      domainAgeDays = rdapResult.value.domain_age_days;
+      registrar = rdapResult.value.registrar;
+      creationDate = rdapResult.value.creation_date;
+      isNewDomain = rdapResult.value.is_new_domain;
     }
 
     // Store in KV cache with expirationTtl (Finding 2 fix)
@@ -352,6 +364,13 @@ export async function analyzeUrl(
       risk += 0.2;
     }
   }
+  if (domainAgeDays !== null && domainAgeDays < 30) {
+    flagsArr.push(`Domeniu inregistrat recent (${domainAgeDays} zile)`);
+    risk += 0.4;
+  } else if (domainAgeDays !== null && domainAgeDays < 90) {
+    flagsArr.push(`Domeniu relativ nou (${domainAgeDays} zile)`);
+    risk += 0.2;
+  }
 
   return {
     url,
@@ -365,5 +384,9 @@ export async function analyzeUrl(
     urlhaus_threat: urlhausThreat,
     virustotal_match: virustotalMatch,
     virustotal_stats: virustotalStats,
+    domain_age_days: domainAgeDays,
+    registrar,
+    creation_date: creationDate,
+    is_new_domain: isNewDomain,
   };
 }

@@ -8,7 +8,10 @@ import { analyzeUrl } from '../lib/url-analyzer';
 import { matchCampaigns } from '../lib/campaign-matcher';
 import { BANK_PLAYBOOKS } from '../data/bank-playbooks';
 import { getFlag } from '../lib/feature-flags';
+import { matchScamPattern } from '../data/scam-patterns';
+import type { ScamPatternMatch } from '../data/scam-patterns';
 import { storeReportSignal } from '../lib/campaign-aggregator';
+import { storeCommunityReport } from './community';
 import type { ReportSignal } from '../lib/types';
 
 const MAX_TEXT_LENGTH = 5000;
@@ -39,6 +42,10 @@ const UrlAnalysisSchema = z.object({
   flags: z.array(z.string()),
   safe_browsing_match: z.boolean().describe('URL gasit in Google Safe Browsing'),
   safe_browsing_threats: z.array(z.string()).describe('Tipuri de amenintari detectate de Safe Browsing'),
+  domain_age_days: z.number().nullable().optional().describe('Varsta domeniului in zile'),
+  registrar: z.string().nullable().optional().describe('Registratorul domeniului'),
+  creation_date: z.string().nullable().optional().describe('Data inregistrarii domeniului'),
+  is_new_domain: z.boolean().optional().describe('Domeniu inregistrat in ultimele 30 de zile'),
 });
 
 const MatchedCampaignSchema = z.object({
@@ -56,6 +63,12 @@ const BankPlaybookSchema = z.object({
   if_compromised: z.array(z.string()),
 });
 
+const ScamPatternSchema = z.object({
+  name: z.string(),
+  category: z.enum(['courier', 'tax', 'marketplace', 'bank', 'utility']),
+  description: z.string(),
+});
+
 const CheckResponseSchema = z.object({
   request_id: z.string(),
   classification: ClassificationSchema,
@@ -67,6 +80,7 @@ const CheckResponseSchema = z.object({
     limit: z.number(),
   }),
   share_id: z.string().optional().describe('ID-ul cardului de distribuire generat'),
+  matched_scam_pattern: ScamPatternSchema.optional().describe('Tiparul de scam romanesc detectat'),
 });
 
 
@@ -234,6 +248,8 @@ export class CheckEndpoint extends OpenAPIRoute {
       bank_playbook = BANK_PLAYBOOKS[campaignMatches[0].campaign.impersonated_entity];
     }
 
+    const matchedScamPattern = matchScamPattern(body.text, body.url) || undefined;
+
     const response = {
       request_id: rid,
       classification,
@@ -252,6 +268,7 @@ export class CheckEndpoint extends OpenAPIRoute {
         if_compromised: bank_playbook.if_compromised,
       } : undefined,
       rate_limit: { remaining, limit },
+      matched_scam_pattern: matchedScamPattern,
     };
 
     const countKey = 'stats:total_checks';
@@ -269,6 +286,15 @@ export class CheckEndpoint extends OpenAPIRoute {
         timestamp: Date.now(),
       };
       c.executionCtx.waitUntil(storeReportSignal(c.env, signal, textHash));
+      const ipHash = await hashText(ip);
+      c.executionCtx.waitUntil(
+        storeCommunityReport(c.env.CACHE, rid, {
+          url: body.url,
+          text: body.text,
+          verdict: classification.verdict,
+          reporter_ip_hash: ipHash,
+        })
+      );
     }
 
     // Generate share card and store in R2

@@ -1,4 +1,5 @@
 import { structuredLog } from '../lib/logger';
+export { matchScamPattern } from '../data/scam-patterns';
 import type { ClassificationResult } from './types';
 
 const PRIMARY_MODEL = '@cf/meta/llama-3.1-8b-instruct-fast';
@@ -25,7 +26,12 @@ Indicatori de frauda:
 - Greseli gramaticale tipice
 - Numere de telefon neoficiale
 
-Raspunde STRICT in JSON conform schemei furnizate.`;
+Raspunde STRICT in JSON conform schemei furnizate.
+
+IMPORTANT: Foloseste romana simpla (nivel A2-B1). Propozitii scurte (maxim 15 cuvinte).
+Explica termenii tehnici in paranteze. Exemplu: "inselaciune online (phishing)".
+Evita cuvinte straine fara explicatii. Foloseste limbaj de zi cu zi, pe intelesul unui om de 65 de ani.
+Vorbeste la forma activa. Fii direct si clar.`;
 
 async function runModel(ai: Ai, model: string, messages: { role: string; content: string }[]): Promise<{ response?: string }> {
   return ai.run(model as any, { messages }) as Promise<{ response?: string }>;

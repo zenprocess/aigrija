@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Copy, ExternalLink, Check, Trash2, FileText } from 'lucide-react';
 import { generateReport } from '../lib/report-generator';
+import { useTranslation } from '../i18n/index.js';
 
 const STORAGE_KEY = 'aigrija_identity';
 
@@ -64,7 +65,7 @@ const REPORT_TYPES = [
 const emptyIdentity = () => Object.fromEntries(IDENTITY_FIELDS.map(f => [f.key, '']));
 
 export default function ReportForm({ result }) {
-  // Build verdict object that report-generator.js expects
+  const { t } = useTranslation();
   const classification = result?.classification ?? {};
   const verdict = {
     ...classification,
@@ -80,7 +81,6 @@ export default function ReportForm({ result }) {
   const [copiedKey, setCopiedKey] = useState(null);
   const [hasSaved, setHasSaved] = useState(false);
 
-  // Load saved identity on mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -136,7 +136,6 @@ export default function ReportForm({ result }) {
 
   return (
     <div className="glass-card overflow-hidden border border-white/10 mt-6">
-      {/* Header — collapsible toggle */}
       <button
         data-testid="report-form-toggle"
         onClick={() => setOpen(o => !o)}
@@ -146,8 +145,8 @@ export default function ReportForm({ result }) {
         <div className="flex items-center gap-3">
           <FileText className="w-5 h-5 text-red-400 shrink-0" />
           <div>
-            <p className="font-semibold text-white text-sm">Generează documente de raportare</p>
-            <p className="text-xs text-gray-400 mt-0.5">Plângere penală, petiție poliție, raport DNSC, sesizare bancă</p>
+            <p className="font-semibold text-white text-sm">{t('report_form.toggle_title')}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{t('report_form.toggle_subtitle')}</p>
           </div>
         </div>
         {open ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
@@ -159,14 +158,14 @@ export default function ReportForm({ result }) {
           <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-green-500/10 border border-green-500/30">
             <div className="w-2 h-2 rounded-full bg-green-400 mt-1.5 shrink-0"></div>
             <p className="text-sm text-green-300 leading-relaxed">
-              <span className="font-semibold">Datele tale rămân pe dispozitivul tău.</span>{' '}
-              Niciun câmp de mai jos nu este trimis la server. Rapoartele sunt generate local, în browser.
+              <span className="font-semibold">{t('report_form.privacy_notice')}</span>{' '}
+              {t('report_form.privacy_notice_body')}
             </p>
           </div>
 
           {/* Identity form */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">Date personale</h3>
+            <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">{t('report_form.section_personal')}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {IDENTITY_FIELDS.map(field => (
                 <div key={field.key}>
@@ -196,7 +195,7 @@ export default function ReportForm({ result }) {
                 onChange={e => handleSaveToggle(e.target.checked)}
                 className="w-4 h-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500/50 bg-[#0A0A0F]"
               />
-              <span className="text-sm text-gray-300">Salvează datele pentru utilizare ulterioară</span>
+              <span className="text-sm text-gray-300">{t('report_form.save_label')}</span>
             </label>
             {hasSaved && (
               <button
@@ -205,14 +204,14 @@ export default function ReportForm({ result }) {
                 className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                Șterge datele salvate
+                {t('report_form.clear_btn')}
               </button>
             )}
           </div>
 
           {/* Report type buttons */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">Generează document</h3>
+            <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">{t('report_form.section_generate')}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {REPORT_TYPES.map(rt => (
                 <button
@@ -233,7 +232,7 @@ export default function ReportForm({ result }) {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">
-                  Previzualizare — {activeType?.label}
+                  {t('report_form.preview_title')} — {activeType?.label}
                 </h3>
                 <div className="flex items-center gap-2">
                   <button
@@ -242,7 +241,7 @@ export default function ReportForm({ result }) {
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs text-gray-300 hover:text-white transition-all"
                   >
                     {copiedKey === activeReport ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    {copiedKey === activeReport ? 'Copiat!' : 'Copiază în clipboard'}
+                    {copiedKey === activeReport ? t('report_form.copied_btn') : t('report_form.copy_btn')}
                   </button>
                   {activeType?.externalUrl && (
                     <a
@@ -253,7 +252,7 @@ export default function ReportForm({ result }) {
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-xs text-blue-300 hover:text-blue-200 transition-all"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      Deschide formularul
+                      {t('report_form.open_form_btn')}
                     </a>
                   )}
                 </div>
@@ -266,7 +265,7 @@ export default function ReportForm({ result }) {
                 className="w-full bg-[#0A0A0F]/90 border border-white/10 rounded-xl p-4 text-sm text-gray-300 font-mono leading-relaxed resize-y focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/30 transition-all"
               />
               <p className="text-xs text-gray-500">
-                Completați câmpurile marcate cu [COMPLETAȚI] înainte de depunere. Imprimați sau copiați textul.
+                {t('report_form.complete_note')}
               </p>
             </div>
           )}

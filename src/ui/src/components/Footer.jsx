@@ -1,7 +1,10 @@
 import React from 'react';
 import { Github, Heart } from 'lucide-react';
+import { useTranslation } from '../i18n/index.js';
 
 export default function Footer() {
+  const { t } = useTranslation();
+
   return (
     <footer className="bg-black/80 border-t border-white/10 pt-12 pb-8 relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -11,25 +14,25 @@ export default function Footer() {
           </div>
           
           <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
-            <a data-testid="footer-link-confidentialitate" href="#/confidentialitate" className="hover:text-white transition-colors">Confidențialitate</a>
-            <a data-testid="footer-link-termeni" href="#/termeni" className="hover:text-white transition-colors">Termeni de utilizare</a>
-            <a data-testid="footer-link-despre" href="#despre" className="hover:text-white transition-colors">Despre proiect</a>
+            <a data-testid="footer-link-confidentialitate" href="#/confidentialitate" className="hover:text-white transition-colors">{t('footer.privacy')}</a>
+            <a data-testid="footer-link-termeni" href="#/termeni" className="hover:text-white transition-colors">{t('footer.terms')}</a>
+            <a data-testid="footer-link-despre" href="#despre" className="hover:text-white transition-colors">{t('footer.about')}</a>
           </div>
         </div>
         
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} ai-grija.ro. Toate drepturile rezervate.</p>
+          <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
           
           <div className="flex items-center gap-1">
-            <span>Proiect civic gratuit dezvoltat cu</span>
+            <span>{t('footer.made_with')}</span>
             <Heart className="w-4 h-4 text-red-500 mx-1" />
-            <span>de</span>
+            <span>{t('footer.made_by')}</span>
             <a data-testid="footer-link-zenlabs" href="https://zen-labs.ro" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors font-medium ml-1">Zen Labs</a>
           </div>
           
           <a data-testid="footer-link-github" href="https://github.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
             <Github className="w-4 h-4" />
-            <span>Cod sursă deschis pe GitHub</span>
+            <span>{t('footer.github')}</span>
           </a>
         </div>
       </div>

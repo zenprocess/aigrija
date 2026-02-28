@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, ArrowRight } from 'lucide-react';
 import { fetchCounter } from '../utils/api';
+import { useTranslation } from '../i18n/index.js';
 
 export default function Hero() {
   const [count, setCount] = useState(0);
   const [targetCount, setTargetCount] = useState(0);
+  const { t, lang } = useTranslation();
 
   useEffect(() => {
     const getCount = async () => {
@@ -21,7 +23,7 @@ export default function Hero() {
     
     let start = 0;
     const duration = 2000;
-    const increment = targetCount / (duration / 16); // 60fps
+    const increment = targetCount / (duration / 16);
     
     const timer = setInterval(() => {
       start += increment;
@@ -53,19 +55,19 @@ export default function Hero() {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
           </span>
           <span className="text-xs font-medium text-gray-300">
-            {count > 0 ? `${count.toLocaleString('ro-RO')} verificări efectuate` : 'Se încarcă statisticile...'}
+            {count > 0 ? t('hero.counter_done', { count: count.toLocaleString(lang === 'ro' ? 'ro-RO' : undefined) }) : t('hero.counter_loading')}
           </span>
         </div>
 
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6">
-          <span className="text-white">Ai primit un mesaj </span>
+          <span className="text-white">{t('hero.title_main')}</span>
           <span className="text-gradient from-blue-400 via-purple-400 to-blue-400 animate-shimmer">
-            suspect?
+            {t('hero.title_highlight')}
           </span>
         </h1>
         
         <p className="text-xl md:text-2xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-          Verifică în 30 de secunde dacă este o tentativă de fraudă. Gratuit, anonim, fără cont.
+          {t('hero.subtitle')}
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -73,7 +75,7 @@ export default function Hero() {
             onClick={scrollToChecker}
             data-testid="hero-cta-btn" className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-white font-semibold text-lg hover:from-blue-500 hover:to-blue-400 transition-all duration-300 shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transform hover:-translate-y-1 w-full sm:w-auto flex items-center justify-center gap-2"
           >
-            Verifică acum
+            {t('hero.cta')}
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>

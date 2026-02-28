@@ -6,6 +6,7 @@ const CACHE_TTL = 3600; // 1 hour
 const LOOKBACK_DAYS = 7;
 const DOMAIN_THRESHOLD = 5;
 const SCAM_TYPE_THRESHOLD = 10;
+const DEDUP_TTL = 3600; // 1 hour
 
 export async function aggregateSignals(env: Env): Promise<{ emerging: EmergingCampaign[] }> {
   // Check cache first
@@ -108,6 +109,17 @@ export async function storeReportSignal(
   textHash: string,
 ): Promise<void> {
   const date = new Date(signal.timestamp).toISOString().split('T')[0];
+
+  // Dedup check: skip if same domain+scam_type+date seen within last hour
+  if (signal.url_domain) {
+    const dedupKey = `dedup:${signal.url_domain}:${signal.scam_type}:${date}`;
+    const existing = await env.CACHE.get(dedupKey);
+    if (existing) {
+      return;
+    }
+    await env.CACHE.put(dedupKey, '1', { expirationTtl: DEDUP_TTL });
+  }
+
   const key = `${REPORT_PREFIX}${date}:${textHash}`;
   const TTL_30_DAYS = 30 * 24 * 60 * 60;
   await env.CACHE.put(key, '', { expirationTtl: TTL_30_DAYS, metadata: signal });

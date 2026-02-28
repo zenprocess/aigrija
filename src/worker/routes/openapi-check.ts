@@ -7,6 +7,7 @@ import { classify } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
 import { matchCampaigns } from '../lib/campaign-matcher';
 import { BANK_PLAYBOOKS } from '../data/bank-playbooks';
+import { getFlag } from '../lib/feature-flags';
 
 const MAX_TEXT_LENGTH = 5000;
 const MAX_URL_LENGTH = 2048;
@@ -135,8 +136,22 @@ export class CheckEndpoint extends OpenAPIRoute {
       return c.json({ error: { code: 'VALIDATION_ERROR', message: `URL-ul depaseste limita de ${MAX_URL_LENGTH} caractere.`, request_id: rid } }, 400);
     }
 
-    const classification = await classify(c.env.AI, body.text, body.url);
-    const urlAnalysis = body.url ? await analyzeUrl(body.url, c.env.GOOGLE_SAFE_BROWSING_KEY) : undefined;
+    // Load feature flags
+    const [gemmaFallbackEnabled, phishtankEnabled, safeBrowsingEnabled] = await Promise.all([
+      getFlag(c.env, 'gemma_fallback_enabled', true),
+      getFlag(c.env, 'phishtank_enabled', true),
+      getFlag(c.env, 'safe_browsing_enabled', true),
+    ]);
+
+    const classification = await classify(c.env.AI, body.text, body.url, { gemma_fallback_enabled: gemmaFallbackEnabled });
+    const urlAnalysis = body.url
+      ? await analyzeUrl(
+          body.url,
+          safeBrowsingEnabled ? c.env.GOOGLE_SAFE_BROWSING_KEY : undefined,
+          undefined,
+          c.env.CACHE
+        )
+      : undefined;
     const campaignMatches = matchCampaigns(body.text, body.url);
 
     let bank_playbook = undefined;

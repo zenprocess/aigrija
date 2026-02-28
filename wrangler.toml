@@ -16,6 +16,11 @@ id = "TBD"
 [[r2_buckets]]
 binding = "STORAGE"
 bucket_name = "ai-grija-share-cards"
+# R2 lifecycle: configure via dashboard — delete objects older than 30 days
+
+# [[queues.producers]]
+# queue = "report-signals"
+# binding = "REPORT_QUEUE"
 
 [vars]
 BASE_URL = "https://ai-grija.ro"

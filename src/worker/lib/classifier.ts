@@ -51,7 +51,18 @@ function parseAiResponse(raw: string | undefined): Omit<ClassificationResult, 'm
   }
 }
 
-export async function classify(ai: Ai, text: string, url?: string): Promise<ClassificationResult> {
+export interface ClassifierFlags {
+  gemma_fallback_enabled?: boolean;
+}
+
+export async function classify(
+  ai: Ai,
+  text: string,
+  url?: string,
+  flags: ClassifierFlags = {}
+): Promise<ClassificationResult> {
+  const { gemma_fallback_enabled = true } = flags;
+
   const userMessage = url
     ? `Analizeaza acest mesaj si URL-ul asociat:\n\nMesaj: ${text}\nURL: ${url}`
     : `Analizeaza acest mesaj:\n\n${text}`;
@@ -76,7 +87,7 @@ export async function classify(ai: Ai, text: string, url?: string): Promise<Clas
     console.warn(`[classifier] Primary model threw error, falling back to ${FALLBACK_MODEL}:`, err);
   }
 
-  if (!parsed) {
+  if (!parsed && gemma_fallback_enabled) {
     modelUsed = FALLBACK_MODEL;
     try {
       const response = await runModel(ai, FALLBACK_MODEL, messages);
@@ -87,6 +98,8 @@ export async function classify(ai: Ai, text: string, url?: string): Promise<Clas
     } catch (err) {
       console.error(`[classifier] Fallback model also failed:`, err);
     }
+  } else if (!parsed && !gemma_fallback_enabled) {
+    console.warn('[classifier] Gemma fallback disabled by feature flag — skipping fallback');
   }
 
   if (parsed) {

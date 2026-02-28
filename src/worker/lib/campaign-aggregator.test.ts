@@ -136,3 +136,58 @@ describe('aggregateSignals', () => {
     expect(campaign?.status).toBe('investigating');
   });
 });
+
+describe('storeReportSignal dedup', () => {
+  it('skips storing when dedup key already exists', async () => {
+    const store = new Map<string, string>();
+    const metaStore = new Map<string, unknown>();
+    const kv = makeKV(store, metaStore);
+    const env = makeEnv(kv);
+    const date = new Date(NOW).toISOString().split('T')[0];
+    const dedupKey = `dedup:evil.com:banking:${date}`;
+    store.set(dedupKey, '1');
+
+    const signal: ReportSignal = {
+      verdict: 'phishing',
+      scam_type: 'banking',
+      url_domain: 'evil.com',
+      confidence: 0.95,
+      timestamp: NOW,
+    };
+    await storeReportSignal(env, signal, 'newhash');
+    // Should not have stored a report key (dedup skipped it)
+    const reportKeys = [...store.keys()].filter(k => k.startsWith('report:'));
+    expect(reportKeys).toHaveLength(0);
+  });
+
+  it('stores dedup key when no prior entry', async () => {
+    const store = new Map<string, string>();
+    const kv = makeKV(store);
+    const env = makeEnv(kv);
+    const signal: ReportSignal = {
+      verdict: 'phishing',
+      scam_type: 'banking',
+      url_domain: 'new-evil.com',
+      confidence: 0.9,
+      timestamp: NOW,
+    };
+    await storeReportSignal(env, signal, 'hash999');
+    const dedupKeys = [...store.keys()].filter(k => k.startsWith('dedup:'));
+    expect(dedupKeys.length).toBeGreaterThan(0);
+  });
+
+  it('stores signal without dedup when no url_domain', async () => {
+    const store = new Map<string, string>();
+    const kv = makeKV(store);
+    const env = makeEnv(kv);
+    const signal: ReportSignal = {
+      verdict: 'suspicious',
+      scam_type: 'lottery',
+      confidence: 0.7,
+      timestamp: NOW,
+    };
+    await storeReportSignal(env, signal, 'hash-nodomain');
+    const reportKeys = [...store.keys()].filter(k => k.startsWith('report:'));
+    expect(reportKeys.length).toBeGreaterThan(0);
+  });
+});

@@ -11,12 +11,12 @@ describe('/health', () => {
     const res = await app.request('/health', undefined, env);
     expect(res.status).toBe(200);
     const body = await res.json() as any;
-    expect(body.status).toBe('ok');
+    expect(body.status).toBe('healthy');
     expect(body.version).toBe('1.0.0');
     expect(body.timestamp).toBeDefined();
-    expect(body.checks.kv.status).toBe('ok');
-    expect(body.checks.ai.status).toBe('ok');
-    expect(body.checks.r2.status).toBe('ok');
+    expect(body.components.kv.status).toBe('healthy');
+    expect(body.components.ai.status).toBe('healthy');
+    expect(body.components.r2.status).toBe('healthy');
   });
 
   it('returns X-Request-Id header', async () => {

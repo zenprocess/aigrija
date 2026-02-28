@@ -61,3 +61,54 @@ describe('analyzeUrl', () => {
     expect(result.safe_browsing_threats).toEqual([]);
   });
 });
+
+describe('analyzeUrl KV caching', () => {
+  function makeKV(store: Map<string, string>) {
+    return {
+      get: async (key: string) => store.get(key) ?? null,
+      put: async (key: string, value: string) => { store.set(key, value); },
+      delete: async (key: string) => { store.delete(key); },
+      list: async () => ({ keys: [] }),
+    } as unknown as KVNamespace;
+  }
+
+  it('returns cached result when within TTL', async () => {
+    const store = new Map<string, string>();
+    const entry = {
+      safeBrowsing: { match: true, threats: ['MALWARE'] },
+      phishTank: { match: false },
+      cachedAt: Date.now(),
+    };
+    store.set('url-threat:example.com', JSON.stringify(entry));
+    const kv = makeKV(store);
+    const result = await analyzeUrl('https://example.com', undefined, undefined, kv);
+    expect(result.safe_browsing_match).toBe(true);
+    expect(result.safe_browsing_threats).toContain('MALWARE');
+  });
+
+  it('stores result in KV after external calls', async () => {
+    const store = new Map<string, string>();
+    const kv = makeKV(store);
+    await analyzeUrl('https://suspicious-test-xyz.xyz', undefined, undefined, kv);
+    const cached = store.get('url-threat:suspicious-test-xyz.xyz');
+    expect(cached).toBeDefined();
+    const parsed = JSON.parse(cached!);
+    expect(parsed).toHaveProperty('safeBrowsing');
+    expect(parsed).toHaveProperty('phishTank');
+    expect(parsed).toHaveProperty('cachedAt');
+  });
+
+  it('ignores expired cache entries', async () => {
+    const store = new Map<string, string>();
+    const entry = {
+      safeBrowsing: { match: true, threats: ['MALWARE'] },
+      phishTank: { match: false },
+      cachedAt: Date.now() - 120_000, // 2 minutes ago — expired
+    };
+    store.set('url-threat:example.com', JSON.stringify(entry));
+    const kv = makeKV(store);
+    // Should proceed without using cached value (no API key, so match stays false)
+    const result = await analyzeUrl('https://example.com', undefined, undefined, kv);
+    expect(result.safe_browsing_match).toBe(false);
+  });
+});

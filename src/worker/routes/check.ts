@@ -1,11 +1,12 @@
 import { Hono } from 'hono';
-import type { Env, CheckRequest, CheckResponse, ReportSignal } from '../lib/types';
+import type { Env, CheckResponse, ReportSignal } from '../lib/types';
 import { checkRateLimit } from '../lib/rate-limiter';
 import { classify } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
 import { matchCampaigns } from '../lib/campaign-matcher';
 import { BANK_PLAYBOOKS } from '../data/bank-playbooks';
 import { storeReportSignal } from '../lib/campaign-aggregator';
+import { validateCheckRequest } from '../lib/validator';
 
 
 function escapeXml(s: string): string {
@@ -100,26 +101,21 @@ check.post('/api/check', async (c) => {
     return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de verificari depasita. Incercati din nou mai tarziu.', request_id: rid } }, 429);
   }
 
-  let body: CheckRequest;
+  let rawBody: unknown;
   try {
-    body = await c.req.json<CheckRequest>();
+    rawBody = await c.req.json();
   } catch {
     return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Request body invalid. Trimiteti JSON valid.', request_id: rid } }, 400);
   }
 
-  if (!body.text || body.text.trim().length < 3) {
-    return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Textul este prea scurt pentru analiza.', request_id: rid } }, 400);
+  const validation = validateCheckRequest(rawBody);
+  if (!validation.valid) {
+    return c.json({ error: { code: 'VALIDATION_ERROR', message: validation.error, request_id: rid } }, 400);
   }
-
-  if (body.text.length > MAX_TEXT_LENGTH) {
-    return c.json({ error: { code: 'VALIDATION_ERROR', message: `Textul depaseste limita de ${MAX_TEXT_LENGTH} caractere.`, request_id: rid } }, 400);
-  }
-  if (body.url && body.url.length > MAX_URL_LENGTH) {
-    return c.json({ error: { code: 'VALIDATION_ERROR', message: `URL-ul depaseste limita de ${MAX_URL_LENGTH} caractere.`, request_id: rid } }, 400);
-  }
+  const body = validation.data;
 
   const classification = await classify(c.env.AI, body.text, body.url);
-  const urlAnalysis = body.url ? await analyzeUrl(body.url, c.env.GOOGLE_SAFE_BROWSING_KEY) : undefined;
+  const urlAnalysis = body.url ? await analyzeUrl(body.url, c.env.GOOGLE_SAFE_BROWSING_KEY, undefined, c.env.CACHE) : undefined;
   const campaignMatches = matchCampaigns(body.text, body.url);
 
   let bank_playbook = undefined;
@@ -165,7 +161,8 @@ check.post('/api/check', async (c) => {
       confidence: classification.confidence,
       timestamp: Date.now(),
     };
-    // Fire-and-forget — don't block response
+    // Fire-and-forget via waitUntil — response is not blocked on KV write.
+    // Future: replace with Cloudflare Queues (REPORT_QUEUE binding) for guaranteed delivery.
     c.executionCtx.waitUntil(storeReportSignal(c.env, signal, textHash));
   }
 

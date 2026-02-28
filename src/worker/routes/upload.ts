@@ -122,6 +122,16 @@ upload.post('/api/check/image', async (c) => {
   const current = parseInt(await c.env.CACHE.get(countKey) || '0', 10);
   await c.env.CACHE.put(countKey, String(current + 1));
 
+  // Store screenshot in R2 for audit trail. Metadata includes timestamp so
+  // a future lifecycle rule (dashboard: delete after 30 days) can target old objects.
+  const ext = imageFile.type.split('/')[1] || 'bin';
+  c.executionCtx.waitUntil(
+    c.env.STORAGE.put('screenshots/' + rid + '.' + ext, imageBuffer, {
+      httpMetadata: { contentType: imageFile.type },
+      customMetadata: { uploadedAt: new Date().toISOString(), verdict: classification.verdict },
+    })
+  );
+
   return c.json(response);
 });
 

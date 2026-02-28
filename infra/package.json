@@ -1,0 +1,8 @@
+{
+  "name": "ai-grija-infra",
+  "main": "index.ts",
+  "dependencies": {
+    "@pulumi/pulumi": "^3",
+    "@pulumi/cloudflare": "^5"
+  }
+}

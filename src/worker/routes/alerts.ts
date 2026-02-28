@@ -3,6 +3,7 @@ import type { Env, EmergingCampaign } from '../lib/types';
 import { CAMPAIGNS } from '../data/campaigns';
 import { renderAlertPage, renderAlertsIndex } from '../templates/alert-page';
 import { aggregateSignals } from '../lib/campaign-aggregator';
+import { structuredLog } from '../lib/logger';
 
 const VALID_STATUSES = ['active', 'declining', 'resolved'] as const;
 
@@ -45,9 +46,29 @@ alerts.get('/api/alerts/emerging', async (c) => {
     const result = await aggregateSignals(c.env);
     return c.json(result);
   } catch (err) {
-    console.error('[alerts/emerging] aggregation failed:', err);
+    structuredLog('error', '[alerts/emerging] aggregation failed', { error: String(err) });
     return c.json({ emerging: [] });
   }
+});
+
+
+alerts.get('/api/alerts/:slug', async (c) => {
+  const rid = c.get('requestId' as never) as string;
+  const slug = c.req.param('slug');
+  const campaign = CAMPAIGNS.find(ca => ca.slug === slug);
+  if (!campaign) {
+    return c.json({ error: { code: 'NOT_FOUND', message: 'Campania nu a fost gasita.', request_id: rid } }, 404);
+  }
+  return c.json({
+    id: campaign.id,
+    slug: campaign.slug,
+    name: campaign.name_ro,
+    status: campaign.status,
+    severity: campaign.severity,
+    impersonated_entity: campaign.impersonated_entity,
+    first_seen: campaign.first_seen,
+    source: 'curated' as const,
+  });
 });
 
 alerts.get('/alerte', async (c) => {

@@ -2,6 +2,7 @@ import { getAllOfficialDomains } from '../data/domains-whitelist';
 import type { UrlAnalysisResult } from './types';
 import { CircuitBreaker, CircuitOpenError } from './circuit-breaker';
 import { withRetry } from './retry';
+import { structuredLog } from './logger';
 
 const SAFE_BROWSING_THREAT_TYPES = [
   'MALWARE',
@@ -58,7 +59,7 @@ async function checkSafeBrowsing(url: string, apiKey: string, kv?: KVNamespace):
         (e as any).status = res.status;
         throw e;
       }
-      console.warn(`[url-analyzer] Safe Browsing API returned ${res.status}`);
+      structuredLog('warn', '[url-analyzer] Safe Browsing API non-ok', { status: res.status });
       return { match: false, threats: [] };
     }
 
@@ -75,9 +76,9 @@ async function checkSafeBrowsing(url: string, apiKey: string, kv?: KVNamespace):
     return await withRetry(doFetch, { maxRetries: 1, backoffMs: 500, retryable: isRetryableHttpError });
   } catch (err) {
     if (err instanceof CircuitOpenError) {
-      console.warn('[url-analyzer] Safe Browsing circuit OPEN -- skipping');
+      structuredLog('warn', '[url-analyzer] Safe Browsing circuit OPEN -- skipping');
     } else {
-      console.warn('[url-analyzer] Safe Browsing check failed (graceful degrade):', err);
+      structuredLog('warn', '[url-analyzer] Safe Browsing check failed (graceful degrade)', { error: String(err) });
     }
     return { match: false, threats: [] };
   }
@@ -101,7 +102,7 @@ async function checkURLhaus(url: string, authKey?: string, kv?: KVNamespace): Pr
         (e as any).status = res.status;
         throw e;
       }
-      console.warn(`[url-analyzer] URLhaus API returned ${res.status}`);
+      structuredLog('warn', '[url-analyzer] URLhaus API non-ok', { status: res.status });
       return { match: false };
     }
 
@@ -120,9 +121,9 @@ async function checkURLhaus(url: string, authKey?: string, kv?: KVNamespace): Pr
     return await withRetry(doFetch, { maxRetries: 1, backoffMs: 500, retryable: isRetryableHttpError });
   } catch (err) {
     if (err instanceof CircuitOpenError) {
-      console.warn('[url-analyzer] URLhaus circuit OPEN -- skipping');
+      structuredLog('warn', '[url-analyzer] URLhaus circuit OPEN -- skipping');
     } else {
-      console.warn('[url-analyzer] URLhaus check failed (graceful degrade):', err);
+      structuredLog('warn', '[url-analyzer] URLhaus check failed (graceful degrade)', { error: String(err) });
     }
     return { match: false };
   }
@@ -147,7 +148,7 @@ async function checkVirusTotal(url: string, apiKey: string, kv?: KVNamespace): P
         (e as any).status = res.status;
         throw e;
       }
-      console.warn(`[url-analyzer] VirusTotal API returned ${res.status}`);
+      structuredLog('warn', '[url-analyzer] VirusTotal API non-ok', { status: res.status });
       return { match: false };
     }
 
@@ -180,12 +181,27 @@ async function checkVirusTotal(url: string, apiKey: string, kv?: KVNamespace): P
     return await withRetry(doFetch, { maxRetries: 1, backoffMs: 500, retryable: isRetryableHttpError });
   } catch (err) {
     if (err instanceof CircuitOpenError) {
-      console.warn('[url-analyzer] VirusTotal circuit OPEN -- skipping');
+      structuredLog('warn', '[url-analyzer] VirusTotal circuit OPEN -- skipping');
     } else {
-      console.warn('[url-analyzer] VirusTotal check failed (graceful degrade):', err);
+      structuredLog('warn', '[url-analyzer] VirusTotal check failed (graceful degrade)', { error: String(err) });
     }
     return { match: false };
   }
+}
+
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[m][n];
 }
 
 export async function analyzeUrl(
@@ -206,7 +222,6 @@ export async function analyzeUrl(
       flags: ['URL invalid sau malformat'],
       safe_browsing_match: false,
       safe_browsing_threats: [],
-      phishtank_match: false,
       urlhaus_match: false,
       virustotal_match: false,
     };
@@ -226,7 +241,6 @@ export async function analyzeUrl(
       flags: [],
       safe_browsing_match: false,
       safe_browsing_threats: [],
-      phishtank_match: false,
       urlhaus_match: false,
       virustotal_match: false,
     };
@@ -237,9 +251,12 @@ export async function analyzeUrl(
   if (/\d{4,}/.test(domain)) { flagsArr.push('Domeniu cu multe cifre'); risk += 0.15; }
   if (domain.split('.').length > 3) { flagsArr.push('Prea multe subdomenii'); risk += 0.1; }
 
-  const lookalikes = ['ing', 'bcr', 'brd', 'anaf', 'fancourier', 'cnair', 'roviniete'];
+  const lookalikes = ['ing', 'bcr', 'brd', 'anaf', 'fancourier', 'cnair', 'roviniete', 'bt', 'cec', 'unicredit'];
+  const domainParts = domain.split(/[.\-]/);
   for (const brand of lookalikes) {
-    if (domain.includes(brand) && !officialDomains.some(d => domain.endsWith(d))) {
+    const directMatch = domain.includes(brand);
+    const fuzzyMatch = !directMatch && domainParts.some(part => part.length >= 2 && levenshtein(part, brand) <= 2);
+    if ((directMatch || fuzzyMatch) && !officialDomains.some(d => domain.endsWith(d))) {
       flagsArr.push(`Posibil domeniu look-alike pentru ${brand}`);
       risk += 0.4;
       break;
@@ -344,7 +361,6 @@ export async function analyzeUrl(
     flags: flagsArr,
     safe_browsing_match: safeBrowsingMatch,
     safe_browsing_threats: safeBrowsingThreats,
-    phishtank_match: false,
     urlhaus_match: urlhausMatch,
     urlhaus_threat: urlhausThreat,
     virustotal_match: virustotalMatch,

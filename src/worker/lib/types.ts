@@ -13,6 +13,7 @@ export interface Env {
   ADMIN_API_KEY: string;
   VIRUSTOTAL_API_KEY: string;
   URLHAUS_AUTH_KEY?: string;
+  WHATSAPP_APP_SECRET?: string;
 }
 
 export interface ClassificationResult {
@@ -60,7 +61,6 @@ export interface UrlAnalysisResult {
   flags: string[];
   safe_browsing_match?: boolean;
   safe_browsing_threats?: string[];
-  phishtank_match?: boolean;
   urlhaus_match: boolean;
   urlhaus_threat?: string;
   virustotal_match: boolean;

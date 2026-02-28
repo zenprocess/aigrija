@@ -1,3 +1,4 @@
+import { structuredLog } from './logger';
 export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 
 export interface CircuitBreakerConfig {
@@ -90,7 +91,7 @@ export class CircuitBreaker {
 
       if (s.state === 'HALF_OPEN' || s.failures >= this.failureThreshold) {
         s.state = 'OPEN';
-        console.warn(`[circuit-breaker] '${this.name}' tripped OPEN after ${s.failures} failures`);
+        structuredLog('warn', '[circuit-breaker] circuit tripped OPEN', { circuit: this.name, failures: s.failures });
       }
 
       await this.setState(s);

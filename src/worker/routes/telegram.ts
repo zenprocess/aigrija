@@ -173,7 +173,7 @@ telegram.post('/webhook/telegram', async (c) => {
         '🔴 PHISHING DETECTAT — mesaj periculos, nu accesa linkurile\n' +
         '🟡 MESAJ SUSPECT — fii precaut\n' +
         '🟢 PROBABIL SIGUR — pare legitim\n\n' +
-        '⚠️ Limita: 20 verificări/oră per utilizator.\n\n' +
+        '⚠️ Limita: 50 verificări/oră per utilizator.\n\n' +
         'Raportează fraude la DNSC: <b>1911</b>'
     );
     return c.json({ ok: true });
@@ -204,12 +204,12 @@ telegram.post('/webhook/telegram', async (c) => {
 
   // ── Rate limit ────────────────────────────────────────────────────────────
 
-  const rl = await checkRateLimit(c.env.CACHE, `tg:${userId}`, 20, 3600);
+  const rl = await checkRateLimit(c.env.CACHE, `tg:${userId}`, 50, 3600);
   if (!rl.allowed) {
     await sendMessage(
       token,
       chatId,
-      '⏳ Ai atins limita de 20 verificări/oră. Te rugăm să încerci din nou mai târziu.'
+      '⏳ Ai atins limita de 50 verificări/oră. Te rugăm să încerci din nou mai târziu.'
     );
     return c.json({ ok: true });
   }

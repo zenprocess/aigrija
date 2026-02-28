@@ -142,6 +142,25 @@ async function markMessageRead(
   }
 }
 
+
+// ── HMAC-SHA256 signature verification ───────────────────────────────────────
+
+async function verifyHmacSha256(secret: string, rawBody: string, signatureHeader: string | null): Promise<boolean> {
+  if (!signatureHeader || !signatureHeader.startsWith('sha256=')) return false;
+  const expected = signatureHeader.slice('sha256='.length);
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(rawBody));
+  const computed = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return computed === expected;
+}
+
 // ── Routes ────────────────────────────────────────────────────────────────────
 
 whatsapp.get('/webhook/whatsapp', (c) => {
@@ -155,9 +174,20 @@ whatsapp.get('/webhook/whatsapp', (c) => {
 });
 
 whatsapp.post('/webhook/whatsapp', async (c) => {
+  const rawBody = await c.req.text();
+
+  // Verify X-Hub-Signature-256 when app secret is configured
+  if (c.env.WHATSAPP_APP_SECRET) {
+    const sigHeader = c.req.header('x-hub-signature-256') ?? null;
+    const valid = await verifyHmacSha256(c.env.WHATSAPP_APP_SECRET, rawBody, sigHeader);
+    if (!valid) {
+      return c.json({ error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+    }
+  }
+
   let body: WhatsAppWebhookBody;
   try {
-    body = await c.req.json<WhatsAppWebhookBody>();
+    body = JSON.parse(rawBody) as WhatsAppWebhookBody;
   } catch {
     return c.json({ ok: true });
   }
@@ -193,13 +223,13 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
 
         await markMessageRead(accessToken, phoneNumberId, messageId);
 
-        const rl = await checkRateLimit(c.env.CACHE, `wa:${from}`, 20, 3600);
+        const rl = await checkRateLimit(c.env.CACHE, `wa:${from}`, 50, 3600);
         if (!rl.allowed) {
           await sendWhatsAppMessage(
             accessToken,
             phoneNumberId,
             from,
-            'Ai atins limita de 20 verificări/oră. Te rugăm să încerci din nou mai târziu.'
+            'Ai atins limita de 50 verificări/oră. Te rugăm să încerci din nou mai târziu.'
           );
           continue;
         }

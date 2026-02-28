@@ -6,3 +6,6 @@ dist/
 *.pem
 *.key
 .wrangler/
+
+# Added by ggshield
+.cache_ggshield

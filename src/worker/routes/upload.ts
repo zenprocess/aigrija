@@ -97,7 +97,7 @@ upload.post('/api/check/image', async (c) => {
   } else {
     classification = {
       verdict: visionVerdict,
-      confidence: visionVerdict === 'phishing' ? 85 : visionVerdict === 'suspicious' ? 60 : 80,
+      confidence: visionVerdict === 'phishing' ? 0.85 : visionVerdict === 'suspicious' ? 0.60 : 0.80,
       scam_type: visionVerdict === 'phishing' ? 'Detectat in imagine' : visionVerdict === 'suspicious' ? 'Posibil suspect' : 'Necunoscut',
       red_flags: visionVerdict !== 'likely_safe' ? ['Continut vizual suspect detectat'] : [],
       explanation: imageAnalysis,

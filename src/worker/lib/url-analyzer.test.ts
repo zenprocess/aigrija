@@ -1,4 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+beforeEach(() => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 404 })));
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 import { analyzeUrl } from './url-analyzer';
 
 describe('analyzeUrl', () => {

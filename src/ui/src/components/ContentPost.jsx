@@ -50,12 +50,12 @@ function estimateReadingTime(body) {
 }
 
 const CATEGORY_ENDPOINTS = {
-  amenintari: '/api/amenintari',
-  ghid: '/api/ghid',
-  educatie: '/api/educatie',
-  povesti: '/api/povesti',
-  rapoarte: '/api/rapoarte',
-  presa: '/api/presa',
+  amenintari: '/amenintari',
+  ghid: '/ghid',
+  educatie: '/educatie',
+  povesti: '/povesti',
+  rapoarte: '/rapoarte',
+  presa: '/presa',
 };
 
 export default function ContentPost({ slug, category }) {
@@ -67,7 +67,7 @@ export default function ContentPost({ slug, category }) {
   const [shareCopied, setShareCopied] = useState(false);
   const [ttsPlaying, setTtsPlaying] = useState(false);
 
-  const baseEndpoint = CATEGORY_ENDPOINTS[category] || `/api/${category}`;
+  const baseEndpoint = CATEGORY_ENDPOINTS[category] || `/${category}`;
   const backPath = `#/${category}`;
 
   useEffect(() => {

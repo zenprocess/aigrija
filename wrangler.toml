@@ -2,6 +2,11 @@ name = "ai-grija-ro"
 main = "src/worker/index.ts"
 compatibility_date = "2025-01-01"
 
+routes = [
+  { pattern = "ai-grija.ro/*", zone_name = "ai-grija.ro" },
+  { pattern = "admin.ai-grija.ro/*", zone_name = "ai-grija.ro" },
+]
+
 [assets]
 directory = "./dist"
 binding = "ASSETS"
@@ -68,7 +73,10 @@ dataset = "ai_grija"
 # ---------------------------------------------------------------------------
 [env.preview]
 name = "ai-grija-ro-preview"
-route = { pattern = "pre.ai-grija.ro/*", zone_name = "ai-grija.ro" }
+routes = [
+  { pattern = "pre.ai-grija.ro/*", zone_name = "ai-grija.ro" },
+  { pattern = "pre-admin.ai-grija.ro/*", zone_name = "ai-grija.ro" },
+]
 vars = { BASE_URL = "https://pre.ai-grija.ro" }
 
 [[env.preview.kv_namespaces]]

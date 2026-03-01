@@ -120,6 +120,7 @@ const workerHandler = {
     const url = new URL(request.url);
     const host = url.hostname;
     const isAdminHost = host === 'admin.ai-grija.ro' ||
+      host === 'pre-admin.ai-grija.ro' ||
       (host === 'localhost' && url.pathname.startsWith('/admin'));
     if (isAdminHost) {
       const adminReq = host === 'localhost'

@@ -11,10 +11,10 @@ export default function ContentList({ category }) {
     if (!category) return;
     setLoading(true);
     setError(null);
-    fetch(`/api/feed?category=${encodeURIComponent(category)}&limit=20`)
+    fetch(`/${encodeURIComponent(category)}?limit=20`)
       .then((r) => r.json())
       .then((data) => {
-        setItems(Array.isArray(data.items) ? data.items : []);
+        setItems(Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []));
         setLoading(false);
       })
       .catch(() => {

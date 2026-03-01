@@ -12,7 +12,7 @@ binding = "AI"
 
 [[kv_namespaces]]
 binding = "CACHE"
-id = "TBD"
+id = "fd0667f87eb44232badd391fc3c72bde"
 
 [[r2_buckets]]
 binding = "STORAGE"
@@ -29,12 +29,12 @@ binding = "DB"
 database_name = "ai-grija-admin"
 # After pulumi up, run: pulumi stack output d1DatabaseId
 # Then replace the placeholder below with the actual ID
-database_id = "TBD"
+database_id = "9d15ccda-3648-4a93-8856-2ac5b5ffe199"
 
 [[d1_databases]]
 binding = "ADMIN_DB"
 database_name = "ai-grija-admin"
-database_id = "TBD"
+database_id = "9d15ccda-3648-4a93-8856-2ac5b5ffe199"
 
 [[queues.producers]]
 queue = "draft-generation"
@@ -73,7 +73,7 @@ vars = { BASE_URL = "https://pre.ai-grija.ro" }
 
 [[env.preview.kv_namespaces]]
 binding = "CACHE"
-id = "TBD_PREVIEW"
+id = "912ef2fa84a445f0bb916896881a9fac"
 
 [[env.preview.r2_buckets]]
 binding = "STORAGE"
@@ -82,13 +82,13 @@ bucket_name = "ai-grija-share-cards-preview"
 [[env.preview.d1_databases]]
 binding = "DB"
 database_name = "ai-grija-admin-preview"
-database_id = "TBD_PREVIEW"
+database_id = "4d78649f-36ef-49bf-bcc1-672c61c5dd93"
 
 
 [[env.preview.d1_databases]]
 binding = "ADMIN_DB"
 database_name = "ai-grija-admin-preview"
-database_id = "TBD_PREVIEW"
+database_id = "4d78649f-36ef-49bf-bcc1-672c61c5dd93"
 
 [env.preview.ai]
 binding = "AI"

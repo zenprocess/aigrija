@@ -174,5 +174,20 @@
   },
   "lang_switcher": {
     "label": "Nyelv"
+  },
+  "nav": {
+    "blog": "Blog"
+  },
+  "blog": {
+    "title": "Blog",
+    "read_more": "Tovább olvasás",
+    "load_more": "Több cikk",
+    "no_posts": "Nincs elérhető cikk",
+    "back": "Vissza a bloghoz",
+    "listen": "Cikk meghallgatása",
+    "share": "Megosztás",
+    "reading_time": "perc olvasás",
+    "threat_reports": "Fenyegetésjelentések",
+    "severity": "Súlyosság"
   }
 }

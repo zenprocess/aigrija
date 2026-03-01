@@ -174,5 +174,20 @@
   },
   "lang_switcher": {
     "label": "Limbă"
+  },
+  "nav": {
+    "blog": "Blog"
+  },
+  "blog": {
+    "title": "Blog",
+    "read_more": "Citeste mai mult",
+    "load_more": "Mai multe articole",
+    "no_posts": "Niciun articol disponibil",
+    "back": "Inapoi la blog",
+    "listen": "Asculta articolul",
+    "share": "Distribuie",
+    "reading_time": "min de citit",
+    "threat_reports": "Rapoarte amenintari",
+    "severity": "Severitate"
   }
 }

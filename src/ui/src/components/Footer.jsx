@@ -14,6 +14,7 @@ export default function Footer() {
           </div>
           
           <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
+            <a data-testid="footer-link-blog" href="#/blog" className="hover:text-white transition-colors">{t('nav.blog')}</a>
             <a data-testid="footer-link-confidentialitate" href="#/confidentialitate" className="hover:text-white transition-colors">{t('footer.privacy')}</a>
             <a data-testid="footer-link-termeni" href="#/termeni" className="hover:text-white transition-colors">{t('footer.terms')}</a>
             <a data-testid="footer-link-despre" href="#despre" className="hover:text-white transition-colors">{t('footer.about')}</a>

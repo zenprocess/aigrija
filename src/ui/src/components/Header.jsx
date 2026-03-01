@@ -15,12 +15,17 @@ export default function Header() {
     }
   };
 
+  const navigateTo = (hash) => {
+    setIsMobileMenuOpen(false);
+    window.location.hash = hash;
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-panel transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => { window.location.hash = ''; window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
             <div className="p-1.5 bg-blue-600/20 rounded-lg border border-blue-500/30">
               <ShieldCheck className="w-6 h-6 text-blue-500" />
             </div>
@@ -32,6 +37,7 @@ export default function Header() {
             <button data-testid="header-nav-verifica" onClick={() => scrollTo('verifica')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">{t('header.nav_verifica')}</button>
             <button data-testid="header-nav-cum-functioneaza" onClick={() => scrollTo('cum-functioneaza')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">{t('header.nav_how_it_works')}</button>
             <button data-testid="header-nav-alerte" onClick={() => scrollTo('alerte')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">{t('header.nav_alerte')}</button>
+            <button data-testid="header-nav-blog" onClick={() => navigateTo('/blog')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">{t('nav.blog')}</button>
 
             {/* Language Switcher */}
             <div className="relative">
@@ -109,6 +115,7 @@ export default function Header() {
           <button data-testid="header-mobile-verifica" onClick={() => scrollTo('verifica')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">{t('header.mobile_verifica')}</button>
           <button data-testid="header-mobile-cum-functioneaza" onClick={() => scrollTo('cum-functioneaza')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">{t('header.mobile_how_it_works')}</button>
           <button data-testid="header-mobile-alerte" onClick={() => scrollTo('alerte')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">{t('header.mobile_alerte')}</button>
+          <button data-testid="header-mobile-blog" onClick={() => navigateTo('/blog')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">{t('nav.blog')}</button>
         </div>
       </div>
     </header>

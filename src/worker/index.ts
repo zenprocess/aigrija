@@ -16,6 +16,7 @@ import { og } from './routes/og';
 import { upload } from './routes/upload';
 import { checkQr } from './routes/check-qr';
 import { adminFlags } from './routes/admin-flags';
+import { blog } from './routes/blog';
 import { createOpenAPIApp } from './lib/openapi';
 import { CheckEndpoint } from './routes/openapi-check';
 import { AlertsEndpoint } from './routes/openapi-alerts';
@@ -90,5 +91,6 @@ app.route('/', community);
 app.route('/', og);
 app.route('/', upload);
 app.route('/', checkQr);
+app.route('/', blog);
 
 export default app;

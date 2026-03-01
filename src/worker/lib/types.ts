@@ -14,6 +14,9 @@ export interface Env {
   VIRUSTOTAL_API_KEY: string;
   URLHAUS_AUTH_KEY?: string;
   WHATSAPP_APP_SECRET?: string;
+  SANITY_PROJECT_ID?: string;
+  SANITY_DATASET?: string;
+  SANITY_WEBHOOK_SECRET?: string;
 }
 
 export interface ClassificationResult {

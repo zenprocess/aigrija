@@ -17,6 +17,9 @@ import { upload } from './routes/upload';
 import { checkQr } from './routes/check-qr';
 import { adminFlags } from './routes/admin-flags';
 import { blog } from './routes/blog';
+import { campaignsRouter } from './admin/campaigns';
+import { handleScheduled } from './lib/cron-handler';
+import { admin } from './admin';
 import { createOpenAPIApp } from './lib/openapi';
 import { CheckEndpoint } from './routes/openapi-check';
 import { AlertsEndpoint } from './routes/openapi-alerts';
@@ -92,5 +95,32 @@ app.route('/', og);
 app.route('/', upload);
 app.route('/', checkQr);
 app.route('/', blog);
+app.route('/', campaignsRouter);
 
-export default app;
+// Admin host routing
+// Requests from admin.ai-grija.ro are handled by the admin app
+// On localhost, requests to /admin/* are also routed to the admin app
+const mainFetch = app.fetch.bind(app);
+
+const workerHandler = {
+  fetch: async function(request: Request, env: Parameters<typeof app.fetch>[1], ctx: ExecutionContext) {
+    const url = new URL(request.url);
+    const host = url.hostname;
+    const isAdminHost = host === 'admin.ai-grija.ro' ||
+      (host === 'localhost' && url.pathname.startsWith('/admin'));
+    if (isAdminHost) {
+      const adminReq = host === 'localhost'
+        ? request
+        : new Request(url.toString().replace(url.pathname, url.pathname.replace(/^\/admin/, '') || '/'), request);
+      return admin.fetch(host === 'localhost' ? request : adminReq, env, ctx);
+    }
+    return mainFetch(request, env, ctx);
+  },
+  // Expose Hono test helper for unit tests
+  request: app.request.bind(app),
+  async scheduled(event: ScheduledEvent, env: Parameters<typeof app.fetch>[1], ctx: ExecutionContext) {
+    ctx.waitUntil(handleScheduled(event, env as Env));
+  },
+};
+
+export default workerHandler;

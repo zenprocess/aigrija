@@ -2,6 +2,9 @@ export interface Env {
   ASSETS: Fetcher;
   AI: Ai;
   CACHE: KVNamespace;
+  DB: D1Database;
+  ADMIN_DB: D1Database;
+  DRAFT_QUEUE: Queue;
   STORAGE: R2Bucket;
   BASE_URL: string;
   GOOGLE_SAFE_BROWSING_KEY: string;
@@ -17,6 +20,23 @@ export interface Env {
   SANITY_PROJECT_ID?: string;
   SANITY_DATASET?: string;
   SANITY_WEBHOOK_SECRET?: string;
+  SANITY_WRITE_TOKEN?: string;
+  CF_ACCESS_TEAM_DOMAIN?: string;
+}
+
+export interface Campaign {
+  id: string;
+  title: string;
+  source: string;
+  threat_type: string;
+  severity: string;
+  affected_brands: string;
+  body_text: string;
+  source_url?: string;
+  draft_content?: string;
+  draft_status?: 'pending' | 'generated' | 'approved' | 'published' | 'rejected';
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ClassificationResult {

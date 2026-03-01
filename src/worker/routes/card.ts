@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
+import { escapeHtml } from '../lib/escape-html';
 
 const card = new Hono<{ Bindings: Env }>();
 
@@ -8,18 +9,6 @@ interface CardMeta {
   scam_type: string;
 }
 
-function escapeHtml(s: string): string {
-  return s.replace(/[<>&"']/g, (c) => {
-    switch (c) {
-      case '<': return '&lt;';
-      case '>': return '&gt;';
-      case '&': return '&amp;';
-      case '"': return '&quot;';
-      case "'": return '&#39;';
-      default: return c;
-    }
-  });
-}
 
 card.get('/card/:hash/image', async (c) => {
   const hash = c.req.param('hash');

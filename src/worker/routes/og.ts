@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
+import { escapeHtml } from '../lib/escape-html';
 
 const og = new Hono<{ Bindings: Env }>();
 
@@ -32,18 +33,6 @@ const VERDICT_STYLES: Record<VerdictType, VerdictStyle> = {
     bgAccent: '#14532d',
   },
 };
-function escapeHtml(s: string): string {
-  return s.replace(/[<>&"']/g, (c) => {
-    switch (c) {
-      case '<': return '&lt;';
-      case '>': return '&gt;';
-      case '&': return '&amp;';
-      case '"': return '&quot;';
-      case "'": return '&#39;';
-      default: return c;
-    }
-  });
-}
 
 
 
@@ -51,16 +40,7 @@ function buildVerdictSvg(verdict: VerdictType, confidence: number, scam_type: st
   const style = VERDICT_STYLES[verdict] || VERDICT_STYLES['suspicious'];
   const confidencePct = Math.round(Math.min(100, Math.max(0, confidence)));
   const barWidth = Math.round((confidencePct / 100) * 720);
-  const safeScamType = scam_type.replace(/[<>&"']/g, (c) => {
-    switch (c) {
-      case '<': return '&lt;';
-      case '>': return '&gt;';
-      case '&': return '&amp;';
-      case '"': return '&quot;';
-      case "'": return '&#39;';
-      default: return c;
-    }
-  });
+  const safeScamType = escapeHtml(scam_type);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
@@ -125,8 +105,8 @@ function buildVerdictSvg(verdict: VerdictType, confidence: number, scam_type: st
 }
 
 function buildAlertSvg(title: string, description: string): string {
-  const safeTitle = title.replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c] || c));
-  const safeDesc = description.replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c] || c));
+  const safeTitle = escapeHtml(title);
+  const safeDesc = escapeHtml(description);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>

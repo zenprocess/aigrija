@@ -86,7 +86,18 @@ async function executeStep(page: Page, step: Step, storyDir: string, screenshots
 async function runStory(browser: Browser, story: Story, storySlug: string): Promise<StoryResult> {
   const screenshots: string[] = [];
   const storyOutputDir = path.join(OUTPUT_DIR, storySlug);
-  const page = await browser.newPage();
+
+  const cfHeaders: Record<string, string> = {};
+  if (process.env.CF_ACCESS_CLIENT_ID) {
+    cfHeaders['CF-Access-Client-Id'] = process.env.CF_ACCESS_CLIENT_ID;
+  }
+  if (process.env.CF_ACCESS_CLIENT_SECRET) {
+    cfHeaders['CF-Access-Client-Secret'] = process.env.CF_ACCESS_CLIENT_SECRET;
+  }
+  const context = await browser.newContext({
+    extraHTTPHeaders: cfHeaders,
+  });
+  const page = await context.newPage();
 
   try {
     console.log(`\nRunning story: ${story.name}`);
@@ -112,6 +123,7 @@ async function runStory(browser: Browser, story: Story, storySlug: string): Prom
     return { story: story.name, passed: false, error: errMsg, screenshots };
   } finally {
     await page.close();
+    await context.close();
   }
 }
 

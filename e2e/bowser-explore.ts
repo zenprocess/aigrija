@@ -291,7 +291,17 @@ async function main() {
   };
 
   const browser: Browser = await chromium.launch();
-  const context = await browser.newContext();
+
+  const cfHeaders: Record<string, string> = {};
+  if (process.env.CF_ACCESS_CLIENT_ID) {
+    cfHeaders['CF-Access-Client-Id'] = process.env.CF_ACCESS_CLIENT_ID;
+  }
+  if (process.env.CF_ACCESS_CLIENT_SECRET) {
+    cfHeaders['CF-Access-Client-Secret'] = process.env.CF_ACCESS_CLIENT_SECRET;
+  }
+  const context = await browser.newContext({
+    extraHTTPHeaders: cfHeaders,
+  });
 
   const visited = new Set<string>();
   const queue: string[] = [normalizeUrl(baseUrl, baseUrl) || baseUrl];

@@ -16,10 +16,10 @@ echo "Preview D1 ID:   $PREVIEW_D1_ID"
 python3 -c "
 with open('wrangler.toml', 'r') as f:
     content = f.read()
-content = content.replace('id = \"TBD\"', 'id = \"$KV_ID\"', 1)
-content = content.replace('database_id = \"TBD\"', 'database_id = \"$D1_ID\"', 1)
-content = content.replace('id = \"TBD_PREVIEW\"', 'id = \"$PREVIEW_KV_ID\"', 1)
-content = content.replace('database_id = \"TBD_PREVIEW\"', 'database_id = \"$PREVIEW_D1_ID\"', 1)
+content = content.replace('id = \"TBD\"', 'id = \"$KV_ID\"')
+content = content.replace('database_id = \"TBD\"', 'database_id = \"$D1_ID\"')
+content = content.replace('id = \"TBD_PREVIEW\"', 'id = \"$PREVIEW_KV_ID\"')
+content = content.replace('database_id = \"TBD_PREVIEW\"', 'database_id = \"$PREVIEW_D1_ID\"')
 with open('wrangler.toml', 'w') as f:
     f.write(content)
 "

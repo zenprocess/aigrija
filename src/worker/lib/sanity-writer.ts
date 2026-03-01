@@ -76,14 +76,22 @@ export async function publishToSanity(
     mutations: [{ createOrReplace: doc }],
   };
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(body),
-  });
+  const swController = new AbortController();
+  const swTimeoutId = setTimeout(() => swController.abort(), 5000);
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+      signal: swController.signal,
+    });
+  } finally {
+    clearTimeout(swTimeoutId);
+  }
 
   if (!res.ok) {
     const text = await res.text();

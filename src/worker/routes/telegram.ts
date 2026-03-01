@@ -83,11 +83,18 @@ async function sendMessage(
   }
 
   try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    const smController = new AbortController();
+    const smTimeoutId = setTimeout(() => smController.abort(), 5000);
+    try {
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: smController.signal,
+      });
+    } finally {
+      clearTimeout(smTimeoutId);
+    }
   } catch (err) {
     console.error('[telegram] sendMessage failed:', err);
   }
@@ -99,11 +106,18 @@ async function answerCallbackQuery(
   text?: string
 ): Promise<void> {
   try {
-    await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ callback_query_id: callbackQueryId, text }),
-    });
+    const acqController = new AbortController();
+    const acqTimeoutId = setTimeout(() => acqController.abort(), 5000);
+    try {
+      await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ callback_query_id: callbackQueryId, text }),
+        signal: acqController.signal,
+      });
+    } finally {
+      clearTimeout(acqTimeoutId);
+    }
   } catch (err) {
     console.error('[telegram] answerCallbackQuery failed:', err);
   }
@@ -115,11 +129,18 @@ async function answerInlineQuery(
   results: unknown[]
 ): Promise<void> {
   try {
-    await fetch(`https://api.telegram.org/bot${token}/answerInlineQuery`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ inline_query_id: inlineQueryId, results }),
-    });
+    const aiqController = new AbortController();
+    const aiqTimeoutId = setTimeout(() => aiqController.abort(), 5000);
+    try {
+      await fetch(`https://api.telegram.org/bot${token}/answerInlineQuery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inline_query_id: inlineQueryId, results }),
+        signal: aiqController.signal,
+      });
+    } finally {
+      clearTimeout(aiqTimeoutId);
+    }
   } catch (err) {
     console.error('[telegram] answerInlineQuery failed:', err);
   }

@@ -32,9 +32,17 @@ export async function sanityFetch<T>(
     url.searchParams.set(`$${key}`, JSON.stringify(value));
   }
 
-  const res = await fetch(url.toString(), {
-    headers: { Accept: 'application/json' },
-  });
+  const sanityController = new AbortController();
+  const sanityTimeoutId = setTimeout(() => sanityController.abort(), 5000);
+  let res: Response;
+  try {
+    res = await fetch(url.toString(), {
+      headers: { Accept: 'application/json' },
+      signal: sanityController.signal,
+    });
+  } finally {
+    clearTimeout(sanityTimeoutId);
+  }
 
   if (!res.ok) {
     throw new Error(`Sanity API error: ${res.status}`);

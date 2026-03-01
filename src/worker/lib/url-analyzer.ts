@@ -31,11 +31,19 @@ async function checkPhishTank(url: string, apiKey: string, kv?: KVNamespace): Pr
     formData.append('format', 'json');
     formData.append('app_key', apiKey);
 
-    const res = await fetch('https://checkurl.phishtank.com/checkurl/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'phishtank/ai-grija-ro' },
-      body: formData.toString(),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    let res: Response;
+    try {
+      res = await fetch('https://checkurl.phishtank.com/checkurl/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'phishtank/ai-grija-ro' },
+        body: formData.toString(),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!res.ok) {
       if (res.status >= 500) {
@@ -94,14 +102,22 @@ async function checkSafeBrowsing(url: string, apiKey: string, kv?: KVNamespace):
       },
     };
 
-    const res = await fetch(
-      'https://safebrowsing.googleapis.com/v4/threatMatches:find',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-        body: JSON.stringify(body),
-      }
-    );
+    const sbController = new AbortController();
+    const sbTimeoutId = setTimeout(() => sbController.abort(), 5000);
+    let res: Response;
+    try {
+      res = await fetch(
+        'https://safebrowsing.googleapis.com/v4/threatMatches:find',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          body: JSON.stringify(body),
+          signal: sbController.signal,
+        }
+      );
+    } finally {
+      clearTimeout(sbTimeoutId);
+    }
 
     if (!res.ok) {
       if (res.status >= 500) {
@@ -140,11 +156,19 @@ async function checkURLhaus(url: string, authKey?: string, kv?: KVNamespace): Pr
     const formData = new URLSearchParams();
     formData.append('url', url);
 
-    const res = await fetch('https://urlhaus-api.abuse.ch/v1/url/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Auth-Key': authKey },
-      body: formData.toString(),
-    });
+    const uhController = new AbortController();
+    const uhTimeoutId = setTimeout(() => uhController.abort(), 5000);
+    let res: Response;
+    try {
+      res = await fetch('https://urlhaus-api.abuse.ch/v1/url/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Auth-Key': authKey },
+        body: formData.toString(),
+        signal: uhController.signal,
+      });
+    } finally {
+      clearTimeout(uhTimeoutId);
+    }
 
     if (!res.ok) {
       if (res.status >= 500) {
@@ -184,10 +208,18 @@ async function checkVirusTotal(url: string, apiKey: string, kv?: KVNamespace): P
     // base64url encode the URL (no padding)
     const urlId = btoa(url).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
-    const res = await fetch(`https://www.virustotal.com/api/v3/urls/${urlId}`, {
-      method: 'GET',
-      headers: { 'x-apikey': apiKey },
-    });
+    const vtController = new AbortController();
+    const vtTimeoutId = setTimeout(() => vtController.abort(), 5000);
+    let res: Response;
+    try {
+      res = await fetch(`https://www.virustotal.com/api/v3/urls/${urlId}`, {
+        method: 'GET',
+        headers: { 'x-apikey': apiKey },
+        signal: vtController.signal,
+      });
+    } finally {
+      clearTimeout(vtTimeoutId);
+    }
 
     if (!res.ok) {
       if (res.status === 404) {

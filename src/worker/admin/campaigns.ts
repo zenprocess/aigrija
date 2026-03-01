@@ -29,8 +29,7 @@ function adminAuth(app: Hono<{ Bindings: Env }>) {
     const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
     // For HTML page routes also check cookie or query param for browser access
     const cookieToken = getCookieValue(c.req.header('Cookie') ?? '', 'admin_key');
-    const queryToken = new URL(c.req.url).searchParams.get('admin_key') ?? '';
-    const provided = token || cookieToken || queryToken;
+    const provided = token || cookieToken;
     if (!provided || provided !== c.env.ADMIN_API_KEY) {
       // Return login prompt for HTML routes
       if (!c.req.path.includes('/api/')) {
@@ -94,7 +93,7 @@ function adminLayout(title: string, body: string): string {
 function loginPage(): string {
   return `<!DOCTYPE html>
 <html><body>
-<form method="get" action="">
+<form method="post" action="/admin/login">
   <label>Admin Key: <input type="password" name="admin_key"/></label>
   <button type="submit">Login</button>
 </form>
@@ -103,6 +102,7 @@ function loginPage(): string {
 
 // ---- Router ----------------------------------------------------------------
 
+// CSRF mitigated by CF Access Zero Trust — only authenticated users can reach admin routes
 export const campaignsRouter = new Hono<{ Bindings: Env }>();
 adminAuth(campaignsRouter);
 

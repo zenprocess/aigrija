@@ -74,7 +74,10 @@ alerts.get('/api/alerts/:slug', async (c) => {
 alerts.get('/alerte', async (c) => {
   const cacheKey = 'page:alerte:index';
   const cached = await c.env.CACHE.get(cacheKey);
-  if (cached) return c.html(cached);
+  if (cached) {
+    c.header('Cache-Control', 'public, max-age=300');
+    return c.html(cached);
+  }
   const html = renderAlertsIndex(CAMPAIGNS, c.env.BASE_URL);
   await c.env.CACHE.put(cacheKey, html, { expirationTtl: 3600 });
   return c.html(html);

@@ -8,8 +8,7 @@ export function errorResponse(
 ) {
   return c.json(
     {
-      error: message,
-      code,
+      error: { code, message },
       request_id: (c.get('requestId' as never) as string) || 'unknown',
     },
     status as 400 | 401 | 403 | 404 | 429 | 500

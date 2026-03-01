@@ -9,8 +9,8 @@ describe('errorResponse', () => {
     const res = await app.request('/test');
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.code).toBe('INVALID_INPUT');
-    expect(body.error).toBe('Input invalid');
+    expect(body.error.code).toBe('INVALID_INPUT');
+    expect(body.error.message).toBe('Input invalid');
     expect(body).toHaveProperty('request_id');
   });
 

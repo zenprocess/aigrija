@@ -331,12 +331,12 @@ translationsAdmin.post('/api/auto-translate', async (c) => {
   if (!SUPPORTED_LANGS.includes(lang as Lang) || lang === 'ro') return c.json({ error: 'Invalid lang' }, 400);
   if (sourceText.length > 2000) return c.json({ error: 'sourceText exceeds 2000 character limit' }, 400);
 
-  const adminEmail = c.get('adminEmail');
-  const rateLimitKey = `rate:translate:${adminEmail}`;
-  const countRaw = await c.env.CACHE.get(rateLimitKey);
-  const count = countRaw ? parseInt(countRaw, 10) : 0;
-  if (count >= 100) return c.json({ error: 'Rate limit exceeded: max 100 auto-translations per hour' }, 429);
-  await c.env.CACHE.put(rateLimitKey, String(count + 1), { expirationTtl: 3600 });
+  const adminId = c.get('adminEmail');
+  const perMinuteKey = `ratelimit:translate:${adminId}`;
+  const perMinuteRaw = await c.env.CACHE.get(perMinuteKey);
+  const perMinuteCount = perMinuteRaw ? parseInt(perMinuteRaw, 10) : 0;
+  if (perMinuteCount >= 10) return c.json({ error: 'Rate limit exceeded: max 10 auto-translate requests per minute' }, 429);
+  await c.env.CACHE.put(perMinuteKey, String(perMinuteCount + 1), { expirationTtl: 60 });
 
   const targetLanguage = LANG_FULL_NAMES[lang as Exclude<Lang, 'ro'>];
 
@@ -358,6 +358,13 @@ translationsAdmin.post('/api/auto-translate-all', async (c) => {
     return c.json({ error: 'Invalid lang' }, 400);
   }
 
+  const adminId = c.get('adminEmail');
+  const perMinuteKey = `ratelimit:translate:${adminId}`;
+  const perMinuteRaw = await c.env.CACHE.get(perMinuteKey);
+  const perMinuteCount = perMinuteRaw ? parseInt(perMinuteRaw, 10) : 0;
+  if (perMinuteCount >= 10) return c.json({ error: 'Rate limit exceeded: max 10 auto-translate requests per minute' }, 429);
+  await c.env.CACHE.put(perMinuteKey, String(perMinuteCount + 1), { expirationTtl: 60 });
+
   const targetLanguage = LANG_FULL_NAMES[lang as Exclude<Lang, 'ro'>];
   const existingOverrides = await getKvOverrides(c.env.CACHE, lang as Lang);
 
@@ -365,6 +372,7 @@ translationsAdmin.post('/api/auto-translate-all', async (c) => {
   let skipped = 0;
   let failed = 0;
   let processed = 0;
+  const failedKeys: string[] = [];
 
   const missingEntries = Object.entries(RO_FLAT).filter(([key]) => !existingOverrides.has(key));
   const totalMissing = missingEntries.length;
@@ -380,14 +388,16 @@ translationsAdmin.post('/api/auto-translate-all', async (c) => {
         translated++;
       } else {
         failed++;
+        failedKeys.push(key);
       }
     } catch {
       failed++;
+      failedKeys.push(key);
     }
   }
 
   skipped = existingOverrides.size;
   const remaining = totalMissing - translated;
 
-  return c.json({ ok: true, translated, skipped, failed, remaining });
+  return c.json({ ok: true, translated, skipped, failed, remaining, failedKeys });
 });

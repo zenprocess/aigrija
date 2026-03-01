@@ -152,7 +152,14 @@ export const adminAuth: MiddlewareHandler<{ Bindings: Env; Variables: AdminVaria
   // In production CF_ACCESS_TEAM_DOMAIN must be set and Zero Trust enforces auth.
   if (!jwt && !teamDomain) {
     const baseUrl = (c.env as Env & { BASE_URL?: string }).BASE_URL ?? '';
-    if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
+    let isLocal = false;
+    try {
+      const parsedUrl = new URL(baseUrl);
+      isLocal = parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1';
+    } catch {
+      // not a valid URL — treat as non-local
+    }
+    if (isLocal) {
       console.warn('[admin-auth] DEV MODE — localhost detected, allowing access without authentication');
       c.set('adminEmail', 'dev@localhost');
       return next();

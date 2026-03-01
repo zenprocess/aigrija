@@ -1,13 +1,21 @@
 name: "Generare raport autoritati"
-description: "Utilizatorul genereaza un raport pentru DNSC/Politie"
+description: "Utilizatorul verifica un mesaj suspect si acceseaza sectiunea de raportare"
 steps:
   - action: navigate
-    url: "/raport?verdict=phishing&scam_type=bank_impersonation"
+    url: /
+  - action: fill
+    selector: "textarea[data-testid='checker-textarea']"
+    value: "Contul dvs ING a fost blocat. Accesati urgent: http://ing-verify.com/deblocare"
+  - action: click
+    selector: "button[data-testid='checker-submit-btn']"
+  - action: wait
+    selector: "button[data-testid='checker-action-share']"
+    timeout: 15000
   - action: screenshot
     name: report-prefilled
   - action: assert
     selector: body
     contains: "phishing"
   - action: assert
-    selector: body
+    selector: "a[data-testid='checker-action-dnsc']"
     contains: "1911"

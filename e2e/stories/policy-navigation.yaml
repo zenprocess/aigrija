@@ -1,24 +1,20 @@
 name: "Navigare politici legale"
-description: "Utilizatorul verifica paginile legale in romana si engleza"
+description: "Utilizatorul verifica paginile legale in romana"
 steps:
   - action: navigate
-    url: /policies/privacy
+    url: "/#/confidentialitate"
   - action: screenshot
     name: privacy-ro
   - action: assert
     selector: body
-    contains: "Politica de confidentialitate"
-  - action: click
-    selector: "a[hreflang='en']"
-  - action: screenshot
-    name: privacy-en
+    contains: "Confidentialitate"
   - action: assert
-    selector: ".disclaimer"
-    contains: "This is a translation"
+    selector: "button[data-testid='privacy-back-btn']"
+    contains: "napoi"
   - action: navigate
-    url: /gdpr
+    url: "/#/termeni"
   - action: screenshot
-    name: gdpr-ro
+    name: termeni-ro
   - action: assert
     selector: body
-    contains: "GDPR"
+    contains: "Termeni"

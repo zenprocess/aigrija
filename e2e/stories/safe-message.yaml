@@ -4,15 +4,15 @@ steps:
   - action: navigate
     url: /
   - action: fill
-    selector: "textarea[data-testid='check-input']"
+    selector: "textarea[data-testid='checker-textarea']"
     value: "Salut! Ne vedem maine la cafea? Am rezervat la Origo, ora 18:00."
   - action: click
-    selector: "button[data-testid='check-submit']"
+    selector: "button[data-testid='checker-submit-btn']"
   - action: wait
-    selector: "[data-testid='verdict-card']"
+    selector: "button[data-testid='checker-action-share']"
     timeout: 15000
   - action: screenshot
     name: verdict-safe
   - action: assert
-    selector: "[data-testid='verdict-card']"
+    selector: body
     contains: "SIGUR"

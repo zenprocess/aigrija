@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { Env, ClassificationResult } from '../lib/types';
 import { checkRateLimit } from '../lib/rate-limiter';
 import { classify } from '../lib/classifier';
+import { structuredLog } from '../lib/logger';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
@@ -84,7 +85,7 @@ upload.post('/api/check/image', async (c) => {
       visionVerdict = 'likely_safe';
     }
   } catch (err) {
-    console.error('[upload] Vision model failed:', err);
+    structuredLog('error', 'vision_model_failed', { error: String(err) });
     imageAnalysis = 'Analiza vizuala nu a putut fi finalizata. Modelul de viziune nu este disponibil.';
   }
 

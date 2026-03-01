@@ -6,7 +6,7 @@ const adminFlags = new Hono<{ Bindings: Env }>();
 
 // Auth middleware: require Authorization: Bearer <ADMIN_API_KEY>
 adminFlags.use('/api/admin/*', async (c, next) => {
-  if (!c.env.ADMIN_API_KEY) {
+  if (!c.env.ADMIN_API_KEY || c.env.ADMIN_API_KEY.trim() === '') {
     return c.json({ error: 'Admin API not configured' }, 503);
   }
   const authHeader = c.req.header('Authorization') ?? '';

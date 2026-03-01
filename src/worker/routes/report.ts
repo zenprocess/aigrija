@@ -13,7 +13,7 @@ report.get('/api/report/:type', async (c) => {
     || c.req.header('x-real-ip')
     || 'unknown';
 
-  const { allowed, remaining, limit } = await checkRateLimit(c.env.CACHE, ip);
+  const { allowed, remaining, limit } = await checkRateLimit(c.env.CACHE, `report:${ip}`, 100);
 
   c.header('X-RateLimit-Limit', String(limit));
   c.header('X-RateLimit-Remaining', String(remaining));

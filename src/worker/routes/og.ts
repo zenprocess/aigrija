@@ -219,14 +219,23 @@ og.get('/og/:type', (c) => {
   let pageTitle: string;
   let pageDescription: string;
 
+  // Build a sanitized image URL: reconstruct from validated/escaped params only
+  // to prevent XSS via raw query string injection into HTML attributes.
   if (type === 'verdict') {
-    imageUrl = `${baseUrl}/og/image?${query}`;
-    const verdict = c.req.query('verdict') || 'suspicious';
+    const rawVerdict = c.req.query('verdict') || 'suspicious';
+    const verdict = (['phishing', 'suspicious', 'likely_safe'] as const).includes(rawVerdict as 'phishing' | 'suspicious' | 'likely_safe')
+      ? rawVerdict : 'suspicious';
+    const rawConfidence = c.req.query('confidence') || '75';
+    const confidence = String(parseFloat(rawConfidence) || 75);
+    const scam_type = encodeURIComponent(c.req.query('scam_type') || 'Continut suspect');
+    imageUrl = escapeHtml(`${baseUrl}/og/image?verdict=${verdict}&confidence=${confidence}&scam_type=${scam_type}`);
     const verdictLabel = verdict === 'phishing' ? 'Fraudă confirmată' : verdict === 'likely_safe' ? 'Probabil sigur' : 'Suspect';
-    pageTitle = `Verificare ai-grija.ro — ${verdictLabel}`;
-    pageDescription = 'Am verificat un mesaj suspect pe ai-grija.ro. Protejează-te și tu!';
+    pageTitle = escapeHtml(`Verificare ai-grija.ro — ${verdictLabel}`);
+    pageDescription = escapeHtml('Am verificat un mesaj suspect pe ai-grija.ro. Protejează-te și tu!');
   } else if (type === 'alert') {
-    imageUrl = `${baseUrl}/og/alert?${query}`;
+    const title = encodeURIComponent(c.req.query('title') || 'Alerta Frauda');
+    const description = encodeURIComponent(c.req.query('description') || 'Alerta de securitate activa.');
+    imageUrl = escapeHtml(`${baseUrl}/og/alert?title=${title}&description=${description}`);
     pageTitle = escapeHtml(c.req.query('title') || 'Alertă Fraudă — ai-grija.ro');
     pageDescription = escapeHtml(c.req.query('description') || 'Alertă de securitate activă pe ai-grija.ro.');
   } else {

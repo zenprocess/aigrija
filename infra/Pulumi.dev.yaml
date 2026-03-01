@@ -1,7 +1,7 @@
 # Dev stack — see infra/README.md for setup instructions.
 config:
   ai-grija-infra:cloudflareAccountId: "45bbb068e251ef12e83c9d4be4856229"
-  ai-grija-infra:cloudflareZoneId: "REPLACE_WITH_ZONE_ID"
+  ai-grija-infra:cloudflareZoneId: "8605213ab504a728423318afa00d9e2d"
   ai-grija-infra:googleSafeBrowsingKey:
     secure: v1:JHhcCHpp/pEJQujd:AgW+grgy3vqMhAJLM8J5BUoZQqrCT1Uk5tD9fRZsDja3Y/IhpARzNcKhVjnRWVe742RHhQ0qxQ==
   ai-grija-infra:virustotalApiKey:

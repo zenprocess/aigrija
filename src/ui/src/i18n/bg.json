@@ -189,5 +189,13 @@
     "reading_time": "мин четене",
     "threat_reports": "Доклади за заплахи",
     "severity": "Тежест"
+  },
+  "content": {
+    "threats": "Заплахи",
+    "guides": "Ръководства",
+    "education": "Образование",
+    "stories": "Реални истории",
+    "reports": "Доклади",
+    "press": "Прессъобщения"
   }
 }

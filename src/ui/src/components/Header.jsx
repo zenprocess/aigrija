@@ -1,22 +1,31 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Menu, X, Globe } from 'lucide-react';
+import { ShieldCheck, Menu, X, Globe, ChevronDown } from 'lucide-react';
 import { useTranslation } from '../i18n/index.js';
+
+const CONTENT_NAV = [
+  { key: 'amenintari', i18nKey: 'content.threats' },
+  { key: 'ghid', i18nKey: 'content.guides' },
+  { key: 'educatie', i18nKey: 'content.education' },
+  { key: 'povesti', i18nKey: 'content.stories' },
+  { key: 'rapoarte', i18nKey: 'content.reports' },
+  { key: 'presa', i18nKey: 'content.press' },
+];
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
+  const [isContentOpen, setIsContentOpen] = useState(false);
   const { t, lang, setLang, languages, languageNames } = useTranslation();
 
   const scrollTo = (id) => {
     setIsMobileMenuOpen(false);
     const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (element) element.scrollIntoView({ behavior: 'smooth' });
   };
 
   const navigateTo = (hash) => {
     setIsMobileMenuOpen(false);
+    setIsContentOpen(false);
     window.location.hash = hash;
   };
 
@@ -33,11 +42,41 @@ export default function Header() {
           </div>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-6">
             <button data-testid="header-nav-verifica" onClick={() => scrollTo('verifica')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">{t('header.nav_verifica')}</button>
             <button data-testid="header-nav-cum-functioneaza" onClick={() => scrollTo('cum-functioneaza')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">{t('header.nav_how_it_works')}</button>
             <button data-testid="header-nav-alerte" onClick={() => scrollTo('alerte')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">{t('header.nav_alerte')}</button>
-            <button data-testid="header-nav-blog" onClick={() => navigateTo('/blog')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">{t('nav.blog')}</button>
+
+            {/* Primary content nav items */}
+            <button data-testid="header-nav-amenintari" onClick={() => navigateTo('/amenintari')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">{t('content.threats')}</button>
+            <button data-testid="header-nav-ghid" onClick={() => navigateTo('/ghid')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">{t('content.guides')}</button>
+            <button data-testid="header-nav-educatie" onClick={() => navigateTo('/educatie')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium">{t('content.education')}</button>
+
+            {/* More dropdown for remaining 3 categories */}
+            <div className="relative">
+              <button
+                data-testid="header-nav-more-btn"
+                onClick={() => setIsContentOpen(!isContentOpen)}
+                className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors text-sm font-medium"
+              >
+                Mai mult
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isContentOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isContentOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 glass-card border border-white/10 rounded-xl overflow-hidden shadow-xl z-50">
+                  {[{ key: 'povesti', i18nKey: 'content.stories' }, { key: 'rapoarte', i18nKey: 'content.reports' }, { key: 'presa', i18nKey: 'content.press' }].map(({ key, i18nKey }) => (
+                    <button
+                      key={key}
+                      data-testid={`header-nav-${key}`}
+                      onClick={() => navigateTo(`/${key}`)}
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+                    >
+                      {t(i18nKey)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Language Switcher */}
             <div className="relative">
@@ -111,11 +150,22 @@ export default function Header() {
 
       {/* Mobile Nav Panel */}
       <div className={`md:hidden absolute top-16 left-0 right-0 glass-panel transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'opacity-100 visible border-b border-white/10' : 'opacity-0 invisible h-0 overflow-hidden'}`}>
-        <div className="px-4 pt-2 pb-6 space-y-4 flex flex-col bg-[#0A0A0F]/95">
+        <div className="px-4 pt-2 pb-6 space-y-2 flex flex-col bg-[#0A0A0F]/95">
           <button data-testid="header-mobile-verifica" onClick={() => scrollTo('verifica')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">{t('header.mobile_verifica')}</button>
           <button data-testid="header-mobile-cum-functioneaza" onClick={() => scrollTo('cum-functioneaza')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">{t('header.mobile_how_it_works')}</button>
           <button data-testid="header-mobile-alerte" onClick={() => scrollTo('alerte')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">{t('header.mobile_alerte')}</button>
-          <button data-testid="header-mobile-blog" onClick={() => navigateTo('/blog')} className="text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2">{t('nav.blog')}</button>
+          <div className="border-t border-white/10 pt-2 mt-1">
+            {CONTENT_NAV.map(({ key, i18nKey }) => (
+              <button
+                key={key}
+                data-testid={`header-mobile-${key}`}
+                onClick={() => navigateTo(`/${key}`)}
+                className="w-full text-left text-gray-300 hover:text-white transition-colors text-lg font-medium py-2"
+              >
+                {t(i18nKey)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </header>

@@ -8,11 +8,13 @@ import Footer from './components/Footer';
 import About from './components/About';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
-import BlogList from './components/BlogList';
-import BlogPost from './components/BlogPost';
+import ContentList from './components/ContentList';
+import ContentPost from './components/ContentPost';
 import ThreatReports from './components/ThreatReports';
 
 const BG_PATTERN = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=";
+
+const CONTENT_CATEGORIES = ['amenintari', 'ghid', 'educatie', 'povesti', 'rapoarte', 'presa'];
 
 function PageShell({ children }) {
   return (
@@ -56,34 +58,28 @@ function App() {
     );
   }
 
-  if (hash === '#/blog') {
-    return (
-      <PageShell>
-        <BlogList />
-      </PageShell>
-    );
-  }
-
-  const blogPostMatch = hash.match(/^#\/blog\/(.+)$/);
-  if (blogPostMatch) {
-    return (
-      <PageShell>
-        <BlogPost slug={blogPostMatch[1]} />
-      </PageShell>
-    );
-  }
-
-  if (hash === '#/reports') {
-    return (
-      <PageShell>
-        <ThreatReports />
-      </PageShell>
-    );
+  // Content category list pages: /amenintari, /ghid, /educatie, /povesti, /rapoarte, /presa
+  for (const cat of CONTENT_CATEGORIES) {
+    if (hash === `#/${cat}`) {
+      return (
+        <PageShell>
+          <ContentList category={cat} />
+        </PageShell>
+      );
+    }
+    const postMatch = hash.match(new RegExp(`^#\/${cat}\/(.+)$`));
+    if (postMatch) {
+      return (
+        <PageShell>
+          <ContentPost slug={postMatch[1]} category={cat} />
+        </PageShell>
+      );
+    }
   }
 
   return (
     <div className="min-h-screen flex flex-col relative selection:bg-blue-500/30 selection:text-white">
-      <a href="#main-content" className="skip-to-content">Treci la conținut principal</a>
+      <a href="#main-content" className="skip-to-content">Treci la continut principal</a>
       <div className={`fixed inset-0 bg-[url('${BG_PATTERN}')] opacity-30 pointer-events-none z-0`} />
       
       <Header />

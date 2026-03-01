@@ -189,5 +189,13 @@
     "reading_time": "perc olvasás",
     "threat_reports": "Fenyegetésjelentések",
     "severity": "Súlyosság"
+  },
+  "content": {
+    "threats": "Fenyegetések",
+    "guides": "Útmutatók",
+    "education": "Oktatás",
+    "stories": "Valós történetek",
+    "reports": "Jelentések",
+    "press": "Sajtóközlemények"
   }
 }

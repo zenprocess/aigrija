@@ -94,6 +94,20 @@ export const blogPost = defineType({
       rows: 2,
     }),
     defineField({
+      name: 'category',
+      title: 'Category',
+      description: 'Content category — determines the URL path for this post',
+      type: 'string',
+      options: {
+        list: [
+          { title: 'Ghid de protectie', value: 'ghid' },
+          { title: 'Educatie digitala', value: 'educatie' },
+        ],
+        layout: 'radio',
+      },
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
       name: 'featured',
       title: 'Featured',
       type: 'boolean',

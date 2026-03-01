@@ -189,5 +189,13 @@
     "reading_time": "min de citit",
     "threat_reports": "Rapoarte amenintari",
     "severity": "Severitate"
+  },
+  "content": {
+    "threats": "Amenințări",
+    "guides": "Ghiduri",
+    "education": "Educație",
+    "stories": "Povești reale",
+    "reports": "Rapoarte",
+    "press": "Comunicate"
   }
 }

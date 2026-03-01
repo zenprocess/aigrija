@@ -189,5 +189,13 @@
     "reading_time": "хв читання",
     "threat_reports": "Звіти про загрози",
     "severity": "Серйозність"
+  },
+  "content": {
+    "threats": "Загрози",
+    "guides": "Посібники",
+    "education": "Освіта",
+    "stories": "Реальні історії",
+    "reports": "Звіти",
+    "press": "Прес-релізи"
   }
 }

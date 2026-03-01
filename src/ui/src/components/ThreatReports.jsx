@@ -107,7 +107,7 @@ export default function ThreatReports() {
 
   useEffect(() => {
     setLoading(true);
-    fetch('/reports')
+    fetch('/api/amenintari')
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();

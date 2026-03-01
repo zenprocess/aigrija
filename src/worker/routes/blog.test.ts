@@ -20,8 +20,6 @@ function makeEnv(overrides: Record<string, unknown> = {}) {
   };
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function makeRequest(path: string, method = 'GET', body?: string) {
   const init: RequestInit = { method };
   if (body) {
@@ -31,8 +29,6 @@ function makeRequest(path: string, method = 'GET', body?: string) {
   return new Request(`https://ai-grija.ro${path}`, init);
 }
 
-// ─── sanityFetch mock ─────────────────────────────────────────────────────────
-
 vi.mock('../lib/sanity', () => ({
   sanityFetch: vi.fn(),
 }));
@@ -40,31 +36,89 @@ vi.mock('../lib/sanity', () => ({
 import { sanityFetch } from '../lib/sanity';
 const mockSanityFetch = vi.mocked(sanityFetch);
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
+// ─── /amenintari ──────────────────────────────────────────────────────────────
 
-describe('GET /blog', () => {
+describe('GET /amenintari', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('returns list of posts as JSON', async () => {
-    const posts = [{ title: 'Test', slug: { current: 'test' } }];
-    mockSanityFetch.mockResolvedValue(posts);
+  it('returns list of threat reports', async () => {
+    const reports = [{ title: 'Raport 1', slug: { current: 'raport-1' } }];
+    mockSanityFetch.mockResolvedValue(reports);
     const env = makeEnv();
-    const res = await blog.fetch(makeRequest('/blog'), env);
+    const res = await blog.fetch(makeRequest('/amenintari'), env);
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(Array.isArray(json)).toBe(true);
-    expect(json[0].title).toBe('Test');
+    expect((json as { title: string }[])[0].title).toBe('Raport 1');
+  });
+
+  it('returns 500 on Sanity error', async () => {
+    mockSanityFetch.mockRejectedValue(new Error('down'));
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/amenintari'), env);
+    expect(res.status).toBe(500);
+    const json = await res.json() as { error: string };
+    expect(json.error).toMatch(/amenintari/i);
+  });
+});
+
+describe('GET /amenintari/:slug', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns single threat report', async () => {
+    const report = { title: 'Raport', slug: { current: 'raport' } };
+    mockSanityFetch.mockResolvedValue(report);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/amenintari/raport'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json() as { title: string };
+    expect(json.title).toBe('Raport');
+  });
+
+  it('returns 404 when not found', async () => {
+    mockSanityFetch.mockResolvedValue(null);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/amenintari/missing'), env);
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('GET /amenintari/feed.xml', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns RSS XML for amenintari', async () => {
+    const posts = [{ title: 'Raport RSS', slug: { current: 'raport-rss' }, firstSeen: '2024-01-01T00:00:00Z' }];
+    mockSanityFetch.mockResolvedValue(posts);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/amenintari/feed.xml'), env);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toContain('rss+xml');
+    const text = await res.text();
+    expect(text).toContain('<rss');
+    expect(text).toContain('Raport RSS');
+  });
+});
+
+// ─── /ghid ────────────────────────────────────────────────────────────────────
+
+describe('GET /ghid', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns list of guides', async () => {
+    const guides = [{ title: 'Ghid 1', slug: { current: 'ghid-1' } }];
+    mockSanityFetch.mockResolvedValue(guides);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/ghid'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(Array.isArray(json)).toBe(true);
   });
 
   it('returns cached response on second call', async () => {
-    const posts = [{ title: 'Cached', slug: { current: 'cached' } }];
-    mockSanityFetch.mockResolvedValue(posts);
-    const env = makeEnv();
-    // First call populates cache
-    await blog.fetch(makeRequest('/blog'), env);
-    // Pre-seed cache manually (simulating KV returning stored value)
-    const cachedBody = JSON.stringify(posts);
-    const cacheStore: Record<string, string> = { 'blog:list:ro:1': cachedBody };
+    const guides = [{ title: 'Ghid Cached', slug: { current: 'ghid-cached' } }];
+    mockSanityFetch.mockResolvedValue(guides);
+    const cachedBody = JSON.stringify(guides);
+    const cacheStore: Record<string, string> = { 'ghid:list:ro:1': cachedBody };
     const envWithCache = makeEnv({
       CACHE: {
         get: vi.fn(async (key: string) => cacheStore[key] ?? null),
@@ -74,70 +128,238 @@ describe('GET /blog', () => {
       },
     });
     mockSanityFetch.mockClear();
-    const res2 = await blog.fetch(makeRequest('/blog'), envWithCache);
-    expect(res2.status).toBe(200);
-    // sanityFetch should NOT have been called again
+    const res = await blog.fetch(makeRequest('/ghid'), envWithCache);
+    expect(res.status).toBe(200);
     expect(mockSanityFetch).not.toHaveBeenCalled();
-  });
-
-  it('returns 500 on Sanity error', async () => {
-    mockSanityFetch.mockRejectedValue(new Error('Sanity down'));
-    const env = makeEnv();
-    const res = await blog.fetch(makeRequest('/blog'), env);
-    expect(res.status).toBe(500);
-    const json = await res.json() as { error: string };
-    expect(json.error).toMatch(/articolele/i);
   });
 });
 
-describe('GET /blog/:slug', () => {
+describe('GET /ghid/:slug', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('returns single post', async () => {
-    const post = { title: 'Articol', slug: { current: 'articol' }, body: [] };
-    mockSanityFetch.mockResolvedValue(post);
+  it('returns single guide', async () => {
+    const guide = { title: 'Ghid', slug: { current: 'ghid' } };
+    mockSanityFetch.mockResolvedValue(guide);
     const env = makeEnv();
-    const res = await blog.fetch(makeRequest('/blog/articol'), env);
+    const res = await blog.fetch(makeRequest('/ghid/ghid'), env);
     expect(res.status).toBe(200);
-    const json = await res.json() as { title: string };
-    expect(json.title).toBe('Articol');
   });
 
-  it('returns 404 when post not found', async () => {
+  it('returns 404 when not found', async () => {
     mockSanityFetch.mockResolvedValue(null);
     const env = makeEnv();
-    const res = await blog.fetch(makeRequest('/blog/inexistent'), env);
+    const res = await blog.fetch(makeRequest('/ghid/missing'), env);
+    expect(res.status).toBe(404);
+    const json = await res.json() as { error: string };
+    expect(json.error).toMatch(/gasit/i);
+  });
+});
+
+describe('GET /ghid/feed.xml', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns RSS for ghid', async () => {
+    const posts = [{ title: 'Ghid RSS', slug: { current: 'ghid-rss' }, publishedAt: '2024-01-01T00:00:00Z' }];
+    mockSanityFetch.mockResolvedValue(posts);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/ghid/feed.xml'), env);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toContain('rss+xml');
+    const text = await res.text();
+    expect(text).toContain('Ghid RSS');
+  });
+});
+
+// ─── /educatie ────────────────────────────────────────────────────────────────
+
+describe('GET /educatie', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns list of education posts', async () => {
+    const posts = [{ title: 'Educatie 1', slug: { current: 'educatie-1' } }];
+    mockSanityFetch.mockResolvedValue(posts);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/educatie'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(Array.isArray(json)).toBe(true);
+  });
+});
+
+describe('GET /educatie/:slug', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns single educatie post', async () => {
+    const post = { title: 'Educatie Post', slug: { current: 'educatie-post' } };
+    mockSanityFetch.mockResolvedValue(post);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/educatie/educatie-post'), env);
+    expect(res.status).toBe(200);
+  });
+
+  it('returns 404 when not found', async () => {
+    mockSanityFetch.mockResolvedValue(null);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/educatie/missing'), env);
     expect(res.status).toBe(404);
   });
 });
 
-describe('GET /blog/feed.xml', () => {
+describe('GET /educatie/feed.xml', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('returns valid RSS XML', async () => {
+  it('returns RSS for educatie', async () => {
+    const posts = [{ title: 'Educatie RSS', slug: { current: 'edu-rss' }, publishedAt: '2024-01-01T00:00:00Z' }];
+    mockSanityFetch.mockResolvedValue(posts);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/educatie/feed.xml'), env);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toContain('rss+xml');
+  });
+});
+
+// ─── /rapoarte ────────────────────────────────────────────────────────────────
+
+describe('GET /rapoarte', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns list of weekly digests', async () => {
+    const items = [{ title: 'Raport Sapt 1', slug: { current: 'raport-sapt-1' } }];
+    mockSanityFetch.mockResolvedValue(items);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/rapoarte'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(Array.isArray(json)).toBe(true);
+  });
+});
+
+describe('GET /rapoarte/:slug', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns single raport saptamanal', async () => {
+    const item = { title: 'Raport Sapt', slug: { current: 'raport-sapt' } };
+    mockSanityFetch.mockResolvedValue(item);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/rapoarte/raport-sapt'), env);
+    expect(res.status).toBe(200);
+  });
+
+  it('returns 404 when not found', async () => {
+    mockSanityFetch.mockResolvedValue(null);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/rapoarte/missing'), env);
+    expect(res.status).toBe(404);
+  });
+});
+
+// ─── /povesti ─────────────────────────────────────────────────────────────────
+
+describe('GET /povesti', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns list of community stories', async () => {
+    const items = [{ title: 'Poveste 1', slug: { current: 'poveste-1' } }];
+    mockSanityFetch.mockResolvedValue(items);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/povesti'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(Array.isArray(json)).toBe(true);
+  });
+});
+
+describe('GET /povesti/:slug', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns single community story', async () => {
+    const item = { title: 'Poveste', slug: { current: 'poveste' } };
+    mockSanityFetch.mockResolvedValue(item);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/povesti/poveste'), env);
+    expect(res.status).toBe(200);
+  });
+
+  it('returns 404 when not found', async () => {
+    mockSanityFetch.mockResolvedValue(null);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/povesti/missing'), env);
+    expect(res.status).toBe(404);
+  });
+});
+
+// ─── /presa ───────────────────────────────────────────────────────────────────
+
+describe('GET /presa', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns list of press releases', async () => {
+    const items = [{ title: 'Comunicat 1', slug: { current: 'comunicat-1' } }];
+    mockSanityFetch.mockResolvedValue(items);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/presa'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(Array.isArray(json)).toBe(true);
+  });
+});
+
+describe('GET /presa/:slug', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns single press release', async () => {
+    const item = { title: 'Comunicat', slug: { current: 'comunicat' } };
+    mockSanityFetch.mockResolvedValue(item);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/presa/comunicat'), env);
+    expect(res.status).toBe(200);
+  });
+
+  it('returns 404 when not found', async () => {
+    mockSanityFetch.mockResolvedValue(null);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/presa/missing'), env);
+    expect(res.status).toBe(404);
+  });
+});
+
+// ─── /feed.xml (combined) ─────────────────────────────────────────────────────
+
+describe('GET /feed.xml', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns combined RSS feed', async () => {
     const posts = [
-      { title: 'Post 1', slug: { current: 'post-1' }, excerpt: 'Text', publishedAt: '2024-01-01T00:00:00Z', author: { name: 'Autor' } },
+      { _type: 'blogPost', category: 'ghid', title: 'Ghid RSS', slug: { current: 'g1' }, publishedAt: '2024-01-01T00:00:00Z', author: { name: 'Autor' } },
+      { _type: 'threatReport', title: 'Amenintare RSS', slug: { current: 'a1' }, firstSeen: '2024-01-02T00:00:00Z' },
+      { _type: 'blogPost', category: 'educatie', title: 'Educatie RSS', slug: { current: 'e1' }, publishedAt: '2024-01-03T00:00:00Z' },
     ];
     mockSanityFetch.mockResolvedValue(posts);
     const env = makeEnv();
-    const res = await blog.fetch(makeRequest('/blog/feed.xml'), env);
+    const res = await blog.fetch(makeRequest('/feed.xml'), env);
     expect(res.status).toBe(200);
-    const ct = res.headers.get('Content-Type');
-    expect(ct).toContain('rss+xml');
+    expect(res.headers.get('Content-Type')).toContain('rss+xml');
     const text = await res.text();
     expect(text).toContain('<rss');
-    expect(text).toContain('Post 1');
+    expect(text).toContain('/amenintari/a1');
+    expect(text).toContain('/ghid/g1');
+    expect(text).toContain('/educatie/e1');
   });
 });
+
+// ─── /sitemap-content.xml ─────────────────────────────────────────────────────
 
 describe('GET /sitemap-content.xml', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('returns XML sitemap', async () => {
+  it('returns XML sitemap with category paths', async () => {
     const result = {
-      blogPosts: [{ slug: 'post-1', language: 'ro', _updatedAt: '2024-01-01T00:00:00Z' }],
-      threatReports: [],
-      bankGuides: [],
+      ghid: [{ slug: 'ghid-1', language: 'ro', _updatedAt: '2024-01-01T00:00:00Z' }],
+      educatie: [{ slug: 'edu-1', language: 'ro', _updatedAt: '2024-01-01T00:00:00Z' }],
+      amenintari: [{ slug: 'raport-1', language: 'ro', _updatedAt: '2024-01-01T00:00:00Z' }],
+      rapoarte: [],
+      povesti: [],
+      presa: [],
     };
     mockSanityFetch.mockResolvedValue(result);
     const env = makeEnv();
@@ -145,16 +367,20 @@ describe('GET /sitemap-content.xml', () => {
     expect(res.status).toBe(200);
     const text = await res.text();
     expect(text).toContain('<urlset');
-    expect(text).toContain('/blog/post-1');
+    expect(text).toContain('/ghid/ghid-1');
+    expect(text).toContain('/educatie/edu-1');
+    expect(text).toContain('/amenintari/raport-1');
   });
 });
 
-describe('POST /blog/webhook', () => {
+// ─── POST /content/webhook ────────────────────────────────────────────────────
+
+describe('POST /content/webhook', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('invalidates cache and returns ok', async () => {
     const env = makeEnv();
-    const res = await blog.fetch(makeRequest('/blog/webhook', 'POST', '{}'), env);
+    const res = await blog.fetch(makeRequest('/content/webhook', 'POST', '{}'), env);
     expect(res.status).toBe(200);
     const json = await res.json() as { ok: boolean };
     expect(json.ok).toBe(true);
@@ -162,78 +388,12 @@ describe('POST /blog/webhook', () => {
 
   it('returns 401 when signature mismatch', async () => {
     const env = makeEnv({ SANITY_WEBHOOK_SECRET: 'secret123' });
-    const req = new Request('https://ai-grija.ro/blog/webhook', {
+    const req = new Request('https://ai-grija.ro/content/webhook', {
       method: 'POST',
       body: '{}',
       headers: { 'sanity-webhook-signature': 'wrong' },
     });
     const res = await blog.fetch(req, env);
     expect(res.status).toBe(401);
-  });
-});
-
-describe('GET /reports', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it('returns list of threat reports', async () => {
-    const reports = [{ title: 'Raport 1', slug: { current: 'raport-1' } }];
-    mockSanityFetch.mockResolvedValue(reports);
-    const env = makeEnv();
-    const res = await blog.fetch(makeRequest('/reports'), env);
-    expect(res.status).toBe(200);
-    const json = await res.json();
-    expect(Array.isArray(json)).toBe(true);
-  });
-});
-
-describe('GET /reports/:slug', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it('returns single report', async () => {
-    const report = { title: 'Raport', slug: { current: 'raport' } };
-    mockSanityFetch.mockResolvedValue(report);
-    const env = makeEnv();
-    const res = await blog.fetch(makeRequest('/reports/raport'), env);
-    expect(res.status).toBe(200);
-  });
-
-  it('returns 404 for missing report', async () => {
-    mockSanityFetch.mockResolvedValue(null);
-    const env = makeEnv();
-    const res = await blog.fetch(makeRequest('/reports/missing'), env);
-    expect(res.status).toBe(404);
-  });
-});
-
-describe('GET /guides', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it('returns list of bank guides', async () => {
-    const guides = [{ title: 'Ghid 1', slug: { current: 'ghid-1' } }];
-    mockSanityFetch.mockResolvedValue(guides);
-    const env = makeEnv();
-    const res = await blog.fetch(makeRequest('/guides'), env);
-    expect(res.status).toBe(200);
-    const json = await res.json();
-    expect(Array.isArray(json)).toBe(true);
-  });
-});
-
-describe('GET /guides/:slug', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it('returns single guide', async () => {
-    const guide = { title: 'Ghid', slug: { current: 'ghid' } };
-    mockSanityFetch.mockResolvedValue(guide);
-    const env = makeEnv();
-    const res = await blog.fetch(makeRequest('/guides/ghid'), env);
-    expect(res.status).toBe(200);
-  });
-
-  it('returns 404 for missing guide', async () => {
-    mockSanityFetch.mockResolvedValue(null);
-    const env = makeEnv();
-    const res = await blog.fetch(makeRequest('/guides/missing'), env);
-    expect(res.status).toBe(404);
   });
 });

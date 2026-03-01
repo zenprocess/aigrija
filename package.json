@@ -11,7 +11,9 @@
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "test:stories": "npx tsx e2e/run-stories.ts",
-    "test:all": "vitest run && playwright test"
+    "test:all": "vitest run && playwright test",
+    "test:bowser": "tsx e2e/bowser-dispatch.ts",
+    "ext:pack": "cd extension && zip -r ../dist/ai-grija-extension.zip . -x '*.DS_Store'"
   },
   "dependencies": {
     "chanfana": "^3.2.1",

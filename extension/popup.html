@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ai-grija.ro</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <img src="icons/icon-48.png" alt="ai-grija.ro" width="24" height="24" onerror="this.style.display='none'" />
+      <span>ai-grija.ro</span>
+    </div>
+    <span class="tagline">Protecție împotriva phishingului</span>
+  </div>
+
+  <div id="state-idle" class="state">
+    <div class="idle-msg">
+      <p>Selectează text sau un link pe orice pagină, apoi click dreapta și alege <strong>"Verifică cu ai-grija.ro"</strong>.</p>
+    </div>
+  </div>
+
+  <div id="state-loading" class="state hidden">
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <p>Verificare în curs...</p>
+    </div>
+  </div>
+
+  <div id="state-error" class="state hidden">
+    <div class="error-card">
+      <span class="error-icon">⚠</span>
+      <p id="error-msg">Eroare de conexiune. Încearcă din nou.</p>
+      <button id="retry-btn" class="btn btn-secondary">Încearcă din nou</button>
+    </div>
+  </div>
+
+  <div id="state-result" class="state hidden">
+    <div id="verdict-card" class="verdict-card">
+      <div class="verdict-header">
+        <span id="verdict-icon" class="verdict-icon"></span>
+        <div>
+          <div id="verdict-label" class="verdict-label"></div>
+          <div id="confidence-bar-wrap" class="confidence-bar-wrap">
+            <div id="confidence-bar" class="confidence-bar"></div>
+            <span id="confidence-pct" class="confidence-pct"></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="scam-type-row" class="detail-row hidden">
+        <span class="detail-label">Tip:</span>
+        <span id="scam-type" class="detail-value badge"></span>
+      </div>
+
+      <div id="explanation-row" class="detail-row">
+        <p id="explanation" class="explanation-text"></p>
+      </div>
+
+      <div id="red-flags-section" class="hidden">
+        <div class="detail-label">Semnale de alarmă:</div>
+        <ul id="red-flags-list" class="red-flags-list"></ul>
+      </div>
+
+      <div id="checked-content" class="checked-content hidden">
+        <div class="detail-label">Conținut verificat:</div>
+        <p id="checked-text" class="checked-text"></p>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <a id="open-full-link" href="#" target="_blank" class="btn btn-primary">
+        Deschide pe ai-grija.ro
+      </a>
+      <a id="report-link" href="https://ai-grija.ro/raport" target="_blank" class="btn btn-outline">
+        Raportează
+      </a>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="https://ai-grija.ro" target="_blank">ai-grija.ro</a>
+    <span>·</span>
+    <span>Protejăm românii online</span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

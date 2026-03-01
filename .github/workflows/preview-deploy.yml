@@ -6,20 +6,40 @@ on:
     branches: [main]
 
 jobs:
-  preview:
+  deploy-preview:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - run: npm ci
       - run: npx vitest run
       - run: npx wrangler deploy --env preview
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      - name: Run E2E against preview
-        run: BASE_URL=https://pre.ai-grija.ro npx playwright test
+
+  bowser-test:
+    needs: deploy-preview
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.50.0-noble
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Run Bowser stories
         env:
-          PLAYWRIGHT_BROWSERS_PATH: 0
+          BASE_URL: https://pre.ai-grija.ro
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          CI: 'true'
+        run: npx tsx e2e/bowser-dispatch.ts --base-url $BASE_URL
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bowser-report
+          path: playwright-report/

@@ -105,12 +105,47 @@ describe('analyzeUrl KV caching', () => {
     const entry = {
       safeBrowsing: { match: true, threats: ['MALWARE'] },
       phishTank: { match: false },
-      cachedAt: Date.now() - 1_000_000, // ~17 minutes ago — expired
+      cachedAt: Date.now() - 4_000_000, // ~67 minutes ago — expired (beyond 1h threat TTL)
     };
     store.set('url-threat:example.com', JSON.stringify(entry));
     const kv = makeKV(store);
     // Should proceed without using cached value (no API key, so match stays false)
     const result = await analyzeUrl('https://example.com', undefined, undefined, kv);
     expect(result.safe_browsing_match).toBe(false);
+  });
+});
+
+describe('analyzeUrl PhishTank integration', () => {
+  it('returns phishtank_match false when no API key provided', async () => {
+    const result = await analyzeUrl('https://example.com');
+    expect(result.phishtank_match).toBe(false);
+  });
+
+  it('returns phishtank_match false for whitelisted domain regardless of key', async () => {
+    const result = await analyzeUrl('https://ing.ro/homebank', undefined, undefined, undefined, undefined, 'any-key');
+    // Official domain returns early before phishtank check
+    expect(result.phishtank_match).toBeUndefined();
+  });
+
+  it('reads phishtank data from KV cache', async () => {
+    const store = new Map<string, string>();
+    const entry = {
+      safeBrowsing: { match: false, threats: [] },
+      urlhaus: { match: false },
+      virustotal: { match: false },
+      phishtank: { match: true, phish_url: 'https://phishtank.org/phish_detail.php?phish_id=123' },
+      cachedAt: Date.now(),
+    };
+    store.set('url-threat:evil-phishing-site.xyz', JSON.stringify(entry));
+    const kv = {
+      get: async (key: string) => store.get(key) ?? null,
+      put: async (key: string, value: string) => { store.set(key, value); },
+      delete: async (key: string) => { store.delete(key); },
+      list: async () => ({ keys: [] }),
+    } as unknown as KVNamespace;
+
+    const result = await analyzeUrl('https://evil-phishing-site.xyz', undefined, undefined, kv);
+    expect(result.phishtank_match).toBe(true);
+    expect(result.phishtank_url).toBe('https://phishtank.org/phish_detail.php?phish_id=123');
   });
 });

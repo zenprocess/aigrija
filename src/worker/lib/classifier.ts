@@ -1,4 +1,5 @@
 import { structuredLog } from '../lib/logger';
+import { redactPii } from './pii-redactor';
 export { matchScamPattern } from '../data/scam-patterns';
 import type { ClassificationResult } from './types';
 
@@ -62,6 +63,37 @@ export interface ClassifierFlags {
   gemma_fallback_enabled?: boolean;
 }
 
+export class ClassificationValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ClassificationValidationError';
+  }
+}
+
+const MIN_TEXT_LENGTH = 3;
+const MAX_TEXT_LENGTH = 5000;
+
+function stripHtml(text: string): string {
+  return text.replace(/<[^>]*>/g, '');
+}
+
+function validateAndSanitizeInput(text: string): string {
+  const stripped = stripHtml(text);
+  const trimmed = stripped.trim();
+
+  if (trimmed.length === 0) {
+    throw new ClassificationValidationError('Textul nu poate fi gol sau compus doar din spatii.');
+  }
+  if (trimmed.length < MIN_TEXT_LENGTH) {
+    throw new ClassificationValidationError(`Textul este prea scurt pentru analiza (minim ${MIN_TEXT_LENGTH} caractere).`);
+  }
+  if (text.length > MAX_TEXT_LENGTH) {
+    throw new ClassificationValidationError(`Textul depaseste limita de ${MAX_TEXT_LENGTH} caractere.`);
+  }
+
+  return trimmed;
+}
+
 export async function classify(
   ai: Ai,
   text: string,
@@ -70,9 +102,15 @@ export async function classify(
 ): Promise<ClassificationResult> {
   const { gemma_fallback_enabled = true } = flags;
 
+  const sanitizedText = validateAndSanitizeInput(text);
+  const { redacted: piiSafeText, count: piiCount } = redactPii(sanitizedText);
+  if (piiCount > 0) {
+    structuredLog('info', '[classifier] PII redacted before AI call', { count: piiCount });
+  }
+
   const userMessage = url
-    ? `Analizeaza acest mesaj si URL-ul asociat:\n\nMesaj: ${text}\nURL: ${url}`
-    : `Analizeaza acest mesaj:\n\n${text}`;
+    ? `Analizeaza acest mesaj si URL-ul asociat:\n\nMesaj: ${piiSafeText}\nURL: ${url}`
+    : `Analizeaza acest mesaj:\n\n${piiSafeText}`;
 
   const messages = [
     { role: 'system', content: SYSTEM_PROMPT },

@@ -87,11 +87,20 @@ alerts.get('/alerte/:slug', async (c) => {
   if (!campaign) {
     return c.json({ error: { code: 'NOT_FOUND', message: 'Campania nu a fost gasita.', request_id: rid } }, 404);
   }
-  const cacheKey = `page:alerte:${slug}`;
-  const cached = await c.env.CACHE.get(cacheKey);
-  if (cached) return c.html(cached);
-  const html = renderAlertPage(campaign, c.env.BASE_URL);
-  await c.env.CACHE.put(cacheKey, html, { expirationTtl: 3600 });
+  // Fetch campaign report stats from KV
+  let reportCount = 0;
+  let lastReport: string | null = null;
+  try {
+    const countRaw = await c.env.CACHE.get(`campaign-reports:${slug}`);
+    if (countRaw) {
+      const parsed = JSON.parse(countRaw) as { count?: number; last?: string };
+      reportCount = parsed.count ?? 0;
+      lastReport = parsed.last ?? null;
+    }
+  } catch {
+    // stats unavailable
+  }
+  const html = renderAlertPage(campaign, c.env.BASE_URL, undefined, reportCount, lastReport);
   return c.html(html);
 });
 

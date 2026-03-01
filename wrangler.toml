@@ -17,7 +17,12 @@ id = "TBD"
 [[r2_buckets]]
 binding = "STORAGE"
 bucket_name = "ai-grija-share-cards"
-# R2 lifecycle: configure via dashboard — delete objects older than 30 days
+# R2 Lifecycle Policy — IMPORTANT:
+# Cloudflare R2 does not support lifecycle rules in wrangler.toml.
+# Configure via CF Dashboard: R2 → ai-grija-share-cards → Settings → Object lifecycle rules.
+# Recommended rule: expire objects (share cards) after 30 days.
+# Alternatively, the scheduled cron invokes src/worker/lib/r2-cleanup.ts::deleteOldShareCards()
+# which programmatically deletes objects older than 30 days as a fallback.
 
 [[d1_databases]]
 binding = "DB"

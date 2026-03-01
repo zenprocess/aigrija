@@ -45,7 +45,7 @@ report.get('/api/report/:type', async (c) => {
   const params: ReportParams = { scam_type, text_excerpt, date, url, bank_name, verdict };
   const result = generateReport(type, params);
 
-  return c.json(result);
+  return c.json({ ...result, zen_labs_credit: 'ai-grija.ro — Proiect civic Zen Labs' });
 });
 
 export { report };

@@ -33,7 +33,7 @@ function buildJsonLd(campaign: Campaign, baseUrl: string): string {
   return JSON.stringify(ld);
 }
 
-export function renderAlertPage(campaign: Campaign, baseUrl: string, checksMatched?: number): string {
+export function renderAlertPage(campaign: Campaign, baseUrl: string, checksMatched?: number, reportCount?: number, lastReport?: string | null): string {
   const statusBadge = campaign.status === 'active' ? '🔴 Activa' : campaign.status === 'declining' ? '🟡 In scadere' : '🟢 Rezolvata';
   const severityBadge = campaign.severity === 'critical' ? '⚠️ Critica' : campaign.severity === 'high' ? '🔶 Ridicata' : '🔵 Medie';
   const escapedSlug = escapeHtml(campaign.slug);
@@ -61,6 +61,7 @@ export function renderAlertPage(campaign: Campaign, baseUrl: string, checksMatch
 <h1>${escapeHtml(campaign.name_ro)}</h1>
 <p><span class="badge">${statusBadge}</span><span class="badge">${severityBadge}</span></p>
 ${checksMatched && checksMatched > 0 ? '<p><span class="counter">🔍 ' + checksMatched + ' verificări au identificat această campanie</span></p>' : ''}
+${reportCount !== undefined ? (reportCount > 0 ? '<p><span class="counter">📊 ' + reportCount + ' rapoarte primite' + (lastReport ? ' | Ultima raportare: ' + escapeHtml(lastReport) : '') + '</span></p>' : '<p><span class="counter">📊 Niciun raport încă</span></p>') : ''}
 <p><strong>Entitate impersonata:</strong> ${escapeHtml(campaign.impersonated_entity)}</p>
 <p>${escapeHtml(campaign.description_ro)}</p>
 <h2>Cum functioneaza</h2>

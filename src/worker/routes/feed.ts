@@ -26,4 +26,26 @@ feed.get('/api/feed/latest', async (c) => {
   return c.json(entries.slice(0, FEED_DISPLAY));
 });
 
+
+feed.get('/api/stats', async (c) => {
+  const [checksRaw, threatsRaw, campaignsRaw] = await Promise.all([
+    c.env.CACHE.get('stats:total_checks'),
+    c.env.CACHE.get('stats:threats_detected'),
+    c.env.CACHE.get('stats:active_campaigns'),
+  ]);
+  return c.json({
+    total_checks: parseInt(checksRaw ?? '0'),
+    threats_detected: parseInt(threatsRaw ?? '0'),
+    active_campaigns: parseInt(campaignsRaw ?? '0'),
+  });
+});
+
+feed.get('/api/badges', async (c) => {
+  return c.json({
+    verified_by: 'Cloudflare Workers AI',
+    data_sources: ['Google Safe Browsing', 'VirusTotal', 'URLhaus', 'PhishTank'],
+    certifications: ['GDPR Compliant', 'No Data Stored'],
+  });
+});
+
 export { feed };

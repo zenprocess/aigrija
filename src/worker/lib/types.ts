@@ -16,6 +16,7 @@ export interface Env {
   ADMIN_API_KEY: string;
   VIRUSTOTAL_API_KEY: string;
   URLHAUS_AUTH_KEY?: string;
+  PHISHTANK_API_KEY?: string;
   WHATSAPP_APP_SECRET?: string;
   SANITY_PROJECT_ID?: string;
   SANITY_DATASET?: string;
@@ -91,10 +92,13 @@ export interface UrlAnalysisResult {
   urlhaus_threat?: string;
   virustotal_match: boolean;
   virustotal_stats?: { malicious: number; suspicious: number; harmless: number };
+  phishtank_match?: boolean;
+  phishtank_url?: string;
   domain_age_days?: number | null;
   registrar?: string | null;
   creation_date?: string | null;
   is_new_domain?: boolean;
+  cache_hit?: boolean;
 }
 
 export interface BankPlaybook {

@@ -193,6 +193,7 @@ function formatAnalysisReply(
     });
   }
 
+  lines.push('', '🛡️ ai-grija.ro — Proiect civic de Zen Labs');
   return lines.join('\n');
 }
 

@@ -21,6 +21,7 @@ import { policies } from './routes/policies';
 import { card } from './routes/card';
 import { feed } from './routes/feed';
 import { weekly } from './routes/weekly';
+import { reportGenerator } from './routes/report-generator';
 import { campaignsRouter } from './admin/campaigns';
 import { handleScheduled } from './lib/cron-handler';
 import { admin } from './admin';
@@ -104,6 +105,7 @@ app.route('/', campaignsRouter);
 app.route('/', card);
 app.route('/', feed);
 app.route('/', weekly);
+app.route('/', reportGenerator);
 
 // Admin host routing
 // Requests from admin.ai-grija.ro are handled by the admin app

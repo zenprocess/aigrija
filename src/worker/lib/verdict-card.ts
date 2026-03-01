@@ -23,8 +23,9 @@ export async function generateVerdictCard(data: VerdictCardData): Promise<string
   <text x="60" y="200" font-family="Arial, sans-serif" font-size="40" fill="#374151">Scor risc: ${scorePercent}%</text>
   ${data.scamType ? `<text x="60" y="260" font-family="Arial, sans-serif" font-size="32" fill="#6B7280">Tip: ${data.scamType}</text>` : ''}
   ${data.domain ? `<text x="60" y="310" font-family="Arial, sans-serif" font-size="28" fill="#9CA3AF">Domeniu: ${escapeXml(data.domain)}</text>` : ''}
-  <text x="60" y="580" font-family="Arial, sans-serif" font-size="36" fill="#2563EB" font-weight="bold">ai-grija.ro</text>
-  <text x="400" y="580" font-family="Arial, sans-serif" font-size="24" fill="#9CA3AF">Verifică mesajele suspecte gratuit</text>
+  <text x="60" y="560" font-family="Arial, sans-serif" font-size="36" fill="#2563EB" font-weight="bold">ai-grija.ro</text>
+  <text x="360" y="560" font-family="Arial, sans-serif" font-size="24" fill="#9CA3AF">Verifică mesajele suspecte gratuit</text>
+  <text x="60" y="605" font-family="Arial, sans-serif" font-size="20" fill="#9CA3AF">Verificat de ai-grija.ro | Proiect civic Zen Labs</text>
 </svg>`;
 
   return svg;

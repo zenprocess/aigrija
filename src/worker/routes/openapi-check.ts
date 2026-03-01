@@ -12,6 +12,7 @@ import { matchScamPattern } from '../data/scam-patterns';
 import type { ScamPatternMatch } from '../data/scam-patterns';
 import { storeReportSignal } from '../lib/campaign-aggregator';
 import { storeCommunityReport } from './community';
+import { prependFeedEntry } from './feed';
 import type { ReportSignal } from '../lib/types';
 
 const MAX_TEXT_LENGTH = 5000;
@@ -80,6 +81,7 @@ const CheckResponseSchema = z.object({
     limit: z.number(),
   }),
   share_id: z.string().optional().describe('ID-ul cardului de distribuire generat'),
+  share_url: z.string().optional().describe('URL-ul cardului de distribuire pentru retele sociale'),
   matched_scam_pattern: ScamPatternSchema.optional().describe('Tiparul de scam romanesc detectat'),
 });
 
@@ -304,12 +306,31 @@ export class CheckEndpoint extends OpenAPIRoute {
       classification.confidence,
       classification.scam_type
     );
+    // Compute a stable hash for the /card/:hash route
+    const cardHash = await hashText(body.text + (body.url ?? ''));
+    const cardMeta = JSON.stringify({ verdict: classification.verdict, scam_type: classification.scam_type });
     c.executionCtx.waitUntil(
-      c.env.STORAGE.put('share/' + shareId + '.svg', svgContent, {
-        httpMetadata: { contentType: 'image/svg+xml' },
+      Promise.all([
+        c.env.STORAGE.put('share/' + shareId + '.svg', svgContent, {
+          httpMetadata: { contentType: 'image/svg+xml' },
+        }),
+        c.env.STORAGE.put('cards/' + cardHash + '.svg', svgContent, {
+          httpMetadata: { contentType: 'image/svg+xml' },
+        }),
+        c.env.CACHE.put('cards:meta:' + cardHash, cardMeta, { expirationTtl: 86400 }),
+      ])
+    );
+
+    c.executionCtx.waitUntil(
+      prependFeedEntry(c.env.CACHE, {
+        verdict: classification.verdict,
+        scam_type: classification.scam_type,
+        timestamp: Date.now(),
       })
     );
 
-    return c.json({ ...response, share_id: shareId });
+    const baseUrl = c.env.BASE_URL ?? 'https://ai-grija.ro';
+    const shareUrl = `${baseUrl}/card/${cardHash}`;
+    return c.json({ ...response, share_id: cardHash, share_url: shareUrl });
   }
 }

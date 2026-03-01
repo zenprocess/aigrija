@@ -12,14 +12,63 @@ const SAFE_BROWSING_THREAT_TYPES = [
   'POTENTIALLY_HARMFUL_APPLICATION',
 ];
 
-const URL_THREAT_CACHE_TTL_MS = 900_000; // 15 minutes
-const URL_THREAT_CACHE_TTL_KV = 900; // seconds for KV expirationTtl
-
+const URL_THREAT_CACHE_TTL_SAFE_MS = 86_400_000; // 24 hours — safe results
+const URL_THREAT_CACHE_TTL_SAFE_KV = 86_400; // 24h in seconds
+const URL_THREAT_CACHE_TTL_THREAT_MS = 3_600_000; // 1 hour — suspicious/malicious
+const URL_THREAT_CACHE_TTL_THREAT_KV = 3_600; // 1h in seconds
 interface ThreatCacheEntry {
   safeBrowsing: { match: boolean; threats: string[] };
   urlhaus: { match: boolean; threat?: string };
   virustotal: { match: boolean; stats?: { malicious: number; suspicious: number; harmless: number } };
+  phishtank: { match: boolean; phish_url?: string };
   cachedAt: number;
+}
+
+async function checkPhishTank(url: string, apiKey: string, kv?: KVNamespace): Promise<{ match: boolean; phish_url?: string }> {
+  const doFetch = async () => {
+    const formData = new URLSearchParams();
+    formData.append('url', url);
+    formData.append('format', 'json');
+    formData.append('app_key', apiKey);
+
+    const res = await fetch('https://checkurl.phishtank.com/checkurl/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'phishtank/ai-grija-ro' },
+      body: formData.toString(),
+    });
+
+    if (!res.ok) {
+      if (res.status >= 500) {
+        const e = new Error(`PhishTank API ${res.status}`);
+        (e as any).status = res.status;
+        throw e;
+      }
+      structuredLog('warn', '[url-analyzer] PhishTank API non-ok', { status: res.status });
+      return { match: false };
+    }
+
+    const data = await res.json() as { results?: { in_database: boolean; valid: boolean; phish_detail_url?: string } };
+    const results = data.results;
+    if (results && results.in_database && results.valid) {
+      return { match: true, phish_url: results.phish_detail_url };
+    }
+    return { match: false };
+  };
+
+  try {
+    if (kv) {
+      const cb = new CircuitBreaker('phishtank', kv);
+      return await cb.execute(() => withRetry(doFetch, { maxRetries: 1, backoffMs: 500, retryable: isRetryableHttpError }));
+    }
+    return await withRetry(doFetch, { maxRetries: 1, backoffMs: 500, retryable: isRetryableHttpError });
+  } catch (err) {
+    if (err instanceof CircuitOpenError) {
+      structuredLog('warn', '[url-analyzer] PhishTank circuit OPEN -- skipping');
+    } else {
+      structuredLog('warn', '[url-analyzer] PhishTank check failed (graceful degrade)', { error: String(err) });
+    }
+    return { match: false };
+  }
 }
 
 function isRetryableHttpError(err: unknown): boolean {
@@ -210,7 +259,8 @@ export async function analyzeUrl(
   safeBrowsingKey?: string,
   virusTotalKey?: string,
   kv?: KVNamespace,
-  urlhausAuthKey?: string
+  urlhausAuthKey?: string,
+  phishtankApiKey?: string
 ): Promise<UrlAnalysisResult> {
   let parsed: URL;
   try {
@@ -277,6 +327,8 @@ export async function analyzeUrl(
   let urlhausThreat: string | undefined;
   let virustotalMatch = false;
   let virustotalStats: { malicious: number; suspicious: number; harmless: number } | undefined;
+  let phishtankMatch = false;
+  let phishtankUrl: string | undefined;
   let domainAgeDays: number | null = null;
   let registrar: string | null = null;
   let creationDate: string | null = null;
@@ -290,13 +342,19 @@ export async function analyzeUrl(
       const cached = await kv.get(cacheKey);
       if (cached) {
         const entry = JSON.parse(cached) as ThreatCacheEntry;
-        if (Date.now() - entry.cachedAt < URL_THREAT_CACHE_TTL_MS) {
+        const isThreat = !!(entry.safeBrowsing?.match || entry.urlhaus?.match || entry.virustotal?.match);
+        const ttlMs = isThreat ? URL_THREAT_CACHE_TTL_THREAT_MS : URL_THREAT_CACHE_TTL_SAFE_MS;
+        if (Date.now() - entry.cachedAt < ttlMs) {
           safeBrowsingMatch = entry.safeBrowsing.match;
           safeBrowsingThreats = entry.safeBrowsing.threats;
           urlhausMatch = entry.urlhaus.match;
           urlhausThreat = entry.urlhaus.threat;
           virustotalMatch = entry.virustotal.match;
           virustotalStats = entry.virustotal.stats;
+          if (entry.phishtank) {
+            phishtankMatch = entry.phishtank.match;
+            phishtankUrl = entry.phishtank.phish_url;
+          }
           usedCache = true;
         }
       }
@@ -306,11 +364,12 @@ export async function analyzeUrl(
   }
 
   if (!usedCache) {
-    const [sbResult, urlhausResult, vtResult, rdapResult] = await Promise.allSettled([
+    const [sbResult, urlhausResult, vtResult, rdapResult, ptResult] = await Promise.allSettled([
       safeBrowsingKey ? checkSafeBrowsing(url, safeBrowsingKey, kv) : Promise.resolve(null),
       urlhausAuthKey ? checkURLhaus(url, urlhausAuthKey, kv) : Promise.resolve(null),
       virusTotalKey ? checkVirusTotal(url, virusTotalKey, kv) : Promise.resolve(null),
       getDomainIntel(domain, kv),
+      phishtankApiKey ? checkPhishTank(url, phishtankApiKey, kv) : Promise.resolve(null),
     ]);
 
     if (sbResult.status === 'fulfilled' && sbResult.value) {
@@ -325,6 +384,10 @@ export async function analyzeUrl(
       virustotalMatch = vtResult.value.match;
       virustotalStats = vtResult.value.stats;
     }
+    if (ptResult.status === 'fulfilled' && ptResult.value) {
+      phishtankMatch = ptResult.value.match;
+      phishtankUrl = ptResult.value.phish_url;
+    }
     if (rdapResult.status === 'fulfilled' && rdapResult.value) {
       domainAgeDays = rdapResult.value.domain_age_days;
       registrar = rdapResult.value.registrar;
@@ -338,16 +401,23 @@ export async function analyzeUrl(
         safeBrowsing: { match: safeBrowsingMatch, threats: safeBrowsingThreats },
         urlhaus: { match: urlhausMatch, threat: urlhausThreat },
         virustotal: { match: virustotalMatch, stats: virustotalStats },
+        phishtank: { match: phishtankMatch, phish_url: phishtankUrl },
         cachedAt: Date.now(),
       };
       try {
-        await kv.put(cacheKey, JSON.stringify(entry), { expirationTtl: URL_THREAT_CACHE_TTL_KV });
+        const isThreatResult = safeBrowsingMatch || urlhausMatch || virustotalMatch;
+        const kvTtl = isThreatResult ? URL_THREAT_CACHE_TTL_THREAT_KV : URL_THREAT_CACHE_TTL_SAFE_KV;
+        await kv.put(cacheKey, JSON.stringify(entry), { expirationTtl: kvTtl });
       } catch {
         // ignore cache write errors
       }
     }
   }
 
+  if (phishtankMatch) {
+    flagsArr.push('Detectat in baza de date PhishTank ca site de phishing');
+    risk += 0.5;
+  }
   if (safeBrowsingMatch) {
     flagsArr.push(`Detectat de Google Safe Browsing: ${safeBrowsingThreats.join(', ')}`);
     risk += 0.5;
@@ -384,9 +454,12 @@ export async function analyzeUrl(
     urlhaus_threat: urlhausThreat,
     virustotal_match: virustotalMatch,
     virustotal_stats: virustotalStats,
+    phishtank_match: phishtankMatch,
+    phishtank_url: phishtankUrl,
     domain_age_days: domainAgeDays,
     registrar,
     creation_date: creationDate,
     is_new_domain: isNewDomain,
+    cache_hit: usedCache,
   };
 }

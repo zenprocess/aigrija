@@ -14,6 +14,7 @@ interface WhatsAppTextMessage {
   timestamp: string;
   type: 'text';
   text: { body: string };
+  context?: { forwarded?: boolean; frequently_forwarded?: boolean };
 }
 
 interface WhatsAppStatus {
@@ -58,9 +59,20 @@ function verdictLabel(verdict: string): string {
   return 'PROBABIL SIGUR';
 }
 
+function simpleHash(text: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = (h * 16777619) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0');
+}
+
 function formatAnalysisReply(
   result: Awaited<ReturnType<typeof classify>>,
-  urlFlags: string[]
+  urlFlags: string[],
+  isForwarded?: boolean,
+  cardUrl?: string
 ): string {
   const emoji = verdictEmoji(result.verdict);
   const label = verdictLabel(result.verdict);
@@ -89,6 +101,12 @@ function formatAnalysisReply(
     });
   }
 
+  if (isForwarded) {
+    lines.push('', '⚠️ Mesaj redirecționat detectat — analizat automat.');
+  }
+  if (cardUrl) {
+    lines.push('', `📊 Card verificare: ${cardUrl}`);
+  }
   lines.push('', 'Verifica pe https://ai-grija.ro');
 
   return lines.join('\n');
@@ -116,6 +134,41 @@ async function sendWhatsAppMessage(
     });
   } catch (err) {
     console.error('[whatsapp] sendWhatsAppMessage failed:', err);
+  }
+}
+
+async function sendWhatsAppInteractive(
+  accessToken: string,
+  phoneNumberId: string,
+  to: string,
+  bodyText: string,
+  buttons: { id: string; title: string }[]
+): Promise<void> {
+  try {
+    await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to,
+        type: 'interactive',
+        interactive: {
+          type: 'button',
+          body: { text: bodyText },
+          action: {
+            buttons: buttons.map(btn => ({
+              type: 'reply',
+              reply: { id: btn.id, title: btn.title },
+            })),
+          },
+        },
+      }),
+    });
+  } catch (err) {
+    console.error('[whatsapp] sendWhatsAppInteractive failed:', err);
   }
 }
 
@@ -259,8 +312,22 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
           }
         }
 
-        const replyText = formatAnalysisReply(classification, urlFlags);
-        await sendWhatsAppMessage(accessToken, phoneNumberId, from, replyText);
+        const isForwarded = !!(message.context?.forwarded || message.context?.frequently_forwarded);
+        const baseUrl = c.env.BASE_URL ?? 'https://ai-grija.ro';
+        const hash = simpleHash(text);
+        const cardUrl = `${baseUrl}/card/${hash}`;
+
+        const replyText = formatAnalysisReply(classification, urlFlags, isForwarded, cardUrl);
+
+        if (isForwarded) {
+          // Send interactive message with action buttons for forwarded messages
+          await sendWhatsAppInteractive(accessToken, phoneNumberId, from, replyText, [
+            { id: 'report', title: 'Raportează' },
+            { id: 'share', title: 'Distribuie' },
+          ]);
+        } else {
+          await sendWhatsAppMessage(accessToken, phoneNumberId, from, replyText);
+        }
       }
     }
   }

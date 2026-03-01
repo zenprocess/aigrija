@@ -1,4 +1,5 @@
 import { structuredLog } from './logger';
+
 export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 
 export interface CircuitBreakerConfig {
@@ -98,4 +99,18 @@ export class CircuitBreaker {
       throw err;
     }
   }
+}
+
+/**
+ * Functional wrapper — convenience API for one-off circuit-breaker usage.
+ * State is persisted in KV under `cb:<serviceName>`.
+ */
+export async function withCircuitBreaker<T>(
+  kv: KVNamespace,
+  serviceName: string,
+  fn: () => Promise<T>,
+  config?: CircuitBreakerConfig,
+): Promise<T> {
+  const cb = new CircuitBreaker(serviceName, kv, config);
+  return cb.execute(fn);
 }

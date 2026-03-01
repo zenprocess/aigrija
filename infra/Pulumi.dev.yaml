@@ -1,4 +1,29 @@
 # Dev stack — see infra/README.md for setup instructions.
 config:
-  ai-grija-infra:cloudflareAccountId: "REPLACE_WITH_YOUR_CF_ACCOUNT_ID"
+  ai-grija-infra:cloudflareAccountId: "45bbb068e251ef12e83c9d4be4856229"
   ai-grija-infra:cloudflareZoneId: "REPLACE_WITH_ZONE_ID"
+  ai-grija-infra:googleSafeBrowsingKey:
+    secure: v1:JHhcCHpp/pEJQujd:AgW+grgy3vqMhAJLM8J5BUoZQqrCT1Uk5tD9fRZsDja3Y/IhpARzNcKhVjnRWVe742RHhQ0qxQ==
+  ai-grija-infra:virustotalApiKey:
+    secure: v1:UGfpco59JzhvQkUB:+B94R57v5Aud1XdtmeRh/Py2Le0Kv45WJASEBjdNUGeuAkllWP6RKRQlD8z+5W4K2ofZoNDU1POlxyytpSUpHsMUlcqdTjnwds128W0QVjo=
+  ai-grija-infra:urlhausAuthKey:
+    secure: v1:mRWU7TALJgkpiVBY:eZFkJlGGqPfhDAnS0BistwF+RVvyzMleQTtt9dh5fDnbeAmljXh0m0YEXSChDR817U5XRljWUum9sCHef/cqpQ==
+  ai-grija-infra:telegramBotToken:
+    secure: v1:fbStmtlRFWfOpG2u:Noo7aTwKtbHzjv3VgudBP2yEKWg4fbrD6RYhhNqdlP96Y+jjE8BpRozrov6XS7t9pXnzCI4XjF4RQFNVBp4=
+  ai-grija-infra:telegramWebhookSecret:
+    secure: v1:gXVJ5uvJ1sNovKKn:4kcLlJy8rSF2luttL4tq2otYHRna0/7HjqEVPJMj4hq5PkOHs/9P6yA7E135lzSNNDuIQFuWJF5yJokw535lgf1x9vuonDNBpK+jf67xkk0=
+  ai-grija-infra:adminApiKey:
+    secure: v1:gV5vqVNDsEBYdWNH:fPCU4dH+DLZV3N7hL5L3d/rROY2S82GFjWlQhs9+TQvh0Do52m4JAr1AY2V0Ge8S901XlFowCfmR7ZRMH6GST9s5XRKlGiU8AXlZuFBCAdk=
+  ai-grija-infra:launchdarklySDKKey:
+    secure: v1:Aj7SWloR9IAjl5xO:u/ppzseVZHlrMRdWic06QztBc9X3Y73c80hIlVSg1GBTgX0EygCVXx+/kdX0XhLqNRleidtFKW8=
+  ai-grija-infra:whatsappAccessToken:
+    secure: v1:xh3lr0O08DRwww5W:T7LR2VBwsrzXE+mEBfI2zvou+KhjeS/ZIZmBH9ODbQwX802Taa5U+aGPtBE9xB/Q9jbo
+  ai-grija-infra:whatsappVerifyToken:
+    secure: v1:XvToV71gKwdM2srf:NWM3Hv6HaBHYUvwZ159mqGothxDb0iVKIPZ/ruYVpq+c1BarIBi+gYrRcXy7W/au
+  ai-grija-infra:whatsappPhoneNumberId:
+    secure: v1:e74d91Habz9/OF8k:OWqCvSetlWKkaAtJNXtS4aPMy08ZDgq9GusdbnPO8OVaW48LZDOPEb44JNy86OsBii1fPBA=
+  ai-grija-infra:telegramAdminChatId:
+    secure: v1:WguPKeTbzxaJWMGM:rjRzS3srJBb6/fZLJnaU+JU+73KDAJgn2HREKUZUMvSyI9o/YZjc+SHkQZKJDK64UgRa
+  ai-grija-infra:sanityWriteToken:
+    secure: v1:JSDndUJsboLKkiPA:BmlZ7RXYcScreJU9g6Dy4eSTLToSUrxlpybhjPIaAX5DO/qOOQ17RYhL7MM8Ego=
+encryptionsalt: v1:bWPQDOEUFbE=:v1:Xzk9XH/AQyc/3P/u:smVfb5qyD++BMC/NLKHAcRhuNzRmPw==

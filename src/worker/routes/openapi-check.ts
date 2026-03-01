@@ -2,7 +2,8 @@ import { OpenAPIRoute } from 'chanfana';
 import { z } from 'zod';
 import type { Context } from 'hono';
 import type { Env } from '../lib/types';
-import { checkRateLimit } from '../lib/rate-limiter';
+import { CheckRequestSchema, MAX_TEXT_LENGTH, MAX_URL_LENGTH, formatZodError } from '../lib/schemas';
+import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { classify } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
 import { matchCampaigns } from '../lib/campaign-matcher';
@@ -15,13 +16,6 @@ import { storeCommunityReport } from './community';
 import { prependFeedEntry } from './feed';
 import type { ReportSignal } from '../lib/types';
 
-const MAX_TEXT_LENGTH = 5000;
-const MAX_URL_LENGTH = 2048;
-
-const CheckRequestSchema = z.object({
-  text: z.string().min(3).max(MAX_TEXT_LENGTH).describe('Textul mesajului suspect'),
-  url: z.string().max(MAX_URL_LENGTH).optional().describe('URL-ul suspect (optional)'),
-});
 
 const ClassificationSchema = z.object({
   verdict: z.enum(['phishing', 'suspicious', 'likely_safe']),
@@ -194,34 +188,26 @@ export class CheckEndpoint extends OpenAPIRoute {
       || c.req.header('x-real-ip')
       || 'unknown';
 
-    const { allowed, remaining, limit } = await checkRateLimit(c.env.CACHE, ip);
-
-    c.header('X-RateLimit-Limit', String(limit));
-    c.header('X-RateLimit-Remaining', String(remaining));
+    const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['check'].limit, ROUTE_RATE_LIMITS['check'].windowSeconds);
+    applyRateLimitHeaders((k, v) => c.header(k, v), rl);
+    const { allowed, remaining, limit } = rl;
 
     if (!allowed) {
-      c.header('Retry-After', '3600');
       return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de verificari depasita. Incercati din nou mai tarziu.', request_id: rid } }, 429);
     }
 
-    let body: { text: string; url?: string };
+    let rawBody: unknown;
     try {
-      body = await c.req.json();
+      rawBody = await c.req.json();
     } catch {
       return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Request body invalid. Trimiteti JSON valid.', request_id: rid } }, 400);
     }
 
-    if (!body.text || body.text.trim().length < 3) {
-      return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Textul este prea scurt pentru analiza.', request_id: rid } }, 400);
+    const parsed = CheckRequestSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return c.json({ error: { code: 'VALIDATION_ERROR', message: formatZodError(parsed.error), request_id: rid } }, 400);
     }
-
-    if (body.text.length > MAX_TEXT_LENGTH) {
-      return c.json({ error: { code: 'VALIDATION_ERROR', message: `Textul depaseste limita de ${MAX_TEXT_LENGTH} caractere.`, request_id: rid } }, 400);
-    }
-
-    if (body.url && body.url.length > MAX_URL_LENGTH) {
-      return c.json({ error: { code: 'VALIDATION_ERROR', message: `URL-ul depaseste limita de ${MAX_URL_LENGTH} caractere.`, request_id: rid } }, 400);
-    }
+    const body = parsed.data;
 
     // Load feature flags
     const [gemmaFallbackEnabled, phishtankEnabled, safeBrowsingEnabled] = await Promise.all([

@@ -35,7 +35,7 @@ describe('#52 Admin auth — empty ADMIN_API_KEY', () => {
     );
     expect(res.status).toBe(503);
     const body = await res.json() as any;
-    expect(body.error).toBe('Admin API not configured');
+    expect(body.error.message).toBe('API de administrare nu este configurat.');
   });
 
   it('returns 503 when ADMIN_API_KEY is whitespace only', async () => {

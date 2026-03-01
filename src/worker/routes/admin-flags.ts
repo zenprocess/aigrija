@@ -6,13 +6,20 @@ const adminFlags = new Hono<{ Bindings: Env }>();
 
 // Auth middleware: require Authorization: Bearer <ADMIN_API_KEY>
 adminFlags.use('/api/admin/*', async (c, next) => {
+  const rid = (c.get('requestId' as never) as string) || 'unknown';
   if (!c.env.ADMIN_API_KEY || c.env.ADMIN_API_KEY.trim() === '') {
-    return c.json({ error: 'Admin API not configured' }, 503);
+    return c.json(
+      { error: { code: 'SERVICE_UNAVAILABLE', message: 'API de administrare nu este configurat.' }, request_id: rid },
+      503
+    );
   }
   const authHeader = c.req.header('Authorization') ?? '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
   if (!token || token !== c.env.ADMIN_API_KEY) {
-    return c.json({ error: 'Unauthorized' }, 401);
+    return c.json(
+      { error: { code: 'UNAUTHORIZED', message: 'Acces neautorizat. Cheia API lipseste sau este invalida.' }, request_id: rid },
+      401
+    );
   }
   return next();
 });
@@ -28,15 +35,22 @@ adminFlags.get('/api/admin/flags', async (c) => {
 
 // POST /api/admin/flags/:name — set a feature flag value
 adminFlags.post('/api/admin/flags/:name', async (c) => {
+  const rid = (c.get('requestId' as never) as string) || 'unknown';
   const name = c.req.param('name');
   let body: { enabled: boolean };
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: 'Invalid JSON body. Expected { "enabled": true|false }' }, 400);
+    return c.json(
+      { error: { code: 'INVALID_JSON', message: 'Corp JSON invalid. Se asteapta { "enabled": true|false }.' }, request_id: rid },
+      400
+    );
   }
   if (typeof body.enabled !== 'boolean') {
-    return c.json({ error: 'Field "enabled" must be a boolean' }, 400);
+    return c.json(
+      { error: { code: 'VALIDATION_ERROR', message: 'Campul "enabled" trebuie sa fie boolean (true sau false).' }, request_id: rid },
+      400
+    );
   }
   await setFlag(c.env, name, body.enabled);
   return c.json({ flag: name, enabled: body.enabled });

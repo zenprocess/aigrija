@@ -22,6 +22,7 @@ import { card } from './routes/card';
 import { feed } from './routes/feed';
 import { weekly } from './routes/weekly';
 import { reportGenerator } from './routes/report-generator';
+import { metrics } from './routes/metrics';
 import { campaignsRouter } from './admin/campaigns';
 import { handleScheduled } from './lib/cron-handler';
 import { admin } from './admin';
@@ -65,6 +66,7 @@ app.onError((err, c) => {
     method: c.req.method,
     path: c.req.path,
     error: err.message,
+    stack: err.stack,
   });
   return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Eroare interna. Va rugam incercati din nou.', request_id: rid } }, 500);
 });
@@ -106,6 +108,7 @@ app.route('/', card);
 app.route('/', feed);
 app.route('/', weekly);
 app.route('/', reportGenerator);
+app.route('/', metrics);
 
 // Admin host routing
 // Requests from admin.ai-grija.ro are handled by the admin app

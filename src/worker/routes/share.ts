@@ -7,9 +7,13 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f
 
 share.get('/api/share/:id', async (c) => {
   const id = c.req.param('id');
+  const rid = (c.get('requestId' as never) as string) || 'unknown';
 
   if (!UUID_RE.test(id)) {
-    return c.json({ error: 'ID invalid. Se asteapta un UUID.' }, 400);
+    return c.json(
+      { error: { code: 'VALIDATION_ERROR', message: 'ID invalid. Se asteapta un UUID.' }, request_id: rid },
+      400
+    );
   }
 
   // Try SVG first (new format), fall back to PNG (legacy)
@@ -29,7 +33,10 @@ share.get('/api/share/:id', async (c) => {
     return new Response(obj.body, { headers });
   }
 
-  return c.json({ error: 'Share card not found.' }, 404);
+  return c.json(
+    { error: { code: 'NOT_FOUND', message: 'Cardul de distribuire nu a fost gasit.' }, request_id: rid },
+    404
+  );
 });
 
 export { share };

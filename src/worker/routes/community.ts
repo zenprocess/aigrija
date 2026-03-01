@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
-import { checkRateLimit } from '../lib/rate-limiter';
+import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 
 const community = new Hono<{ Bindings: Env }>();
 
@@ -86,11 +86,10 @@ community.post('/api/reports/:id/vote', async (c) => {
     c.req.header('x-real-ip') ||
     'unknown';
 
-  const { allowed, remaining } = await checkRateLimit(c.env.CACHE, `vote:${ip}`, 10, 3600);
-  c.header('X-RateLimit-Remaining', String(remaining));
+  const voteRl = await checkRateLimit(c.env.CACHE, `vote:${ip}`, ROUTE_RATE_LIMITS['vote'].limit, ROUTE_RATE_LIMITS['vote'].windowSeconds);
+  applyRateLimitHeaders((k, v) => c.header(k, v), voteRl);
 
-  if (!allowed) {
-    c.header('Retry-After', '3600');
+  if (!voteRl.allowed) {
     return c.json(
       { error: { code: 'RATE_LIMITED', message: 'Ai votat prea mult. Incearca din nou mai tarziu.' } },
       429

@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import { generateReport, type ReportType, type ReportParams } from '../lib/report-templates';
-import { checkRateLimit } from '../lib/rate-limiter';
+import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { ReportTypeSchema, ReportQuerySchema, formatZodError } from '../lib/schemas';
 
 const report = new Hono<{ Bindings: Env }>();
 
@@ -9,44 +10,56 @@ function sanitize(s: string): string {
   return s.replace(/[<>"'&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '&': '&amp;' }[c] ?? c));
 }
 
-const VALID_TYPES: ReportType[] = ['plangere-penala', 'petitie-politie', 'raport-dnsc', 'sesizare-banca'];
-
 report.get('/api/report/:type', async (c) => {
   const ip = c.req.header('cf-connecting-ip')
     || c.req.header('x-forwarded-for')?.split(',')[0]?.trim()
     || c.req.header('x-real-ip')
     || 'unknown';
 
-  const { allowed, remaining, limit } = await checkRateLimit(c.env.CACHE, `report:${ip}`, 100);
-
-  c.header('X-RateLimit-Limit', String(limit));
-  c.header('X-RateLimit-Remaining', String(remaining));
+  const rl = await checkRateLimit(c.env.CACHE, `report:${ip}`, ROUTE_RATE_LIMITS['report'].limit, ROUTE_RATE_LIMITS['report'].windowSeconds);
+  applyRateLimitHeaders((k, v) => c.header(k, v), rl);
+  const { allowed } = rl;
 
   if (!allowed) {
-    c.header('Retry-After', '3600');
     return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de verificari depasita. Incercati din nou mai tarziu.' } }, 429);
   }
 
-  const type = c.req.param('type') as ReportType;
-
-  if (!VALID_TYPES.includes(type)) {
+  const typeResult = ReportTypeSchema.safeParse(c.req.param('type'));
+  if (!typeResult.success) {
     return c.json({
       error: {
         code: 'INVALID_REPORT_TYPE',
-        message: `Tip de raport invalid. Tipuri acceptate: ${VALID_TYPES.join(', ')}`,
+        message: formatZodError(typeResult.error),
+      },
+    }, 400);
+  }
+  const type = typeResult.data as ReportType;
+
+  const queryResult = ReportQuerySchema.safeParse({
+    scam_type: c.req.query('scam_type'),
+    text: c.req.query('text'),
+    url: c.req.query('url'),
+    bank: c.req.query('bank'),
+    verdict: c.req.query('verdict'),
+    date: c.req.query('date'),
+  });
+
+  if (!queryResult.success) {
+    return c.json({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: formatZodError(queryResult.error),
       },
     }, 400);
   }
 
-  const scam_type = sanitize(c.req.query('scam_type') || 'fraudă online');
-  const rawText = sanitize(c.req.query('text') || '');
-  const text_excerpt = rawText.slice(0, 200);
-  const rawUrl = c.req.query('url') || undefined;
-  const url = rawUrl ? sanitize(rawUrl) : undefined;
-  const bank_name_raw = c.req.query('bank') || undefined;
-  const bank_name = bank_name_raw ? sanitize(bank_name_raw) : undefined;
-  const verdict = sanitize(c.req.query('verdict') || 'suspicious');
-  const date = c.req.query('date') || new Date().toLocaleDateString('ro-RO');
+  const q = queryResult.data;
+  const scam_type = sanitize(q.scam_type);
+  const text_excerpt = sanitize(q.text).slice(0, 200);
+  const url = q.url ? sanitize(q.url) : undefined;
+  const bank_name = q.bank ? sanitize(q.bank) : undefined;
+  const verdict = sanitize(q.verdict);
+  const date = q.date || new Date().toLocaleDateString('ro-RO');
 
   const params: ReportParams = { scam_type, text_excerpt, date, url, bank_name, verdict };
   const result = generateReport(type, params);

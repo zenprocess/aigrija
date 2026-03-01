@@ -9,8 +9,9 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import { analyzeUrl } from '../lib/url-analyzer';
-import { checkRateLimit } from '../lib/rate-limiter';
+import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { getFlag } from '../lib/feature-flags';
+import { CheckQrRequestSchema, formatZodError } from '../lib/schemas';
 
 const checkQr = new Hono<{ Bindings: Env }>();
 
@@ -32,13 +33,11 @@ checkQr.post('/api/check-qr', async (c) => {
     c.req.header('x-real-ip') ||
     'unknown';
 
-  const { allowed, remaining, limit } = await checkRateLimit(c.env.CACHE, ip);
-
-  c.header('X-RateLimit-Limit', String(limit));
-  c.header('X-RateLimit-Remaining', String(remaining));
+  const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['check-qr'].limit, ROUTE_RATE_LIMITS['check-qr'].windowSeconds);
+  applyRateLimitHeaders((k, v) => c.header(k, v), rl);
+  const { allowed, remaining, limit } = rl;
 
   if (!allowed) {
-    c.header('Retry-After', '3600');
     return c.json(
       {
         error: {
@@ -51,9 +50,9 @@ checkQr.post('/api/check-qr', async (c) => {
     );
   }
 
-  let body: { qr_data: string };
+  let rawBody: unknown;
   try {
-    body = await c.req.json();
+    rawBody = await c.req.json();
   } catch {
     return c.json(
       {
@@ -67,12 +66,13 @@ checkQr.post('/api/check-qr', async (c) => {
     );
   }
 
-  if (!body.qr_data || typeof body.qr_data !== 'string' || body.qr_data.trim().length === 0) {
+  const parsed = CheckQrRequestSchema.safeParse(rawBody);
+  if (!parsed.success) {
     return c.json(
       {
         error: {
           code: 'VALIDATION_ERROR',
-          message: 'Campul qr_data este obligatoriu.',
+          message: formatZodError(parsed.error),
           request_id: rid,
         },
       },
@@ -80,12 +80,12 @@ checkQr.post('/api/check-qr', async (c) => {
     );
   }
 
-  const rawData = body.qr_data.trim();
+  const rawData = parsed.data.qr_data; // already trimmed by schema transform
 
   if (!isValidUrl(rawData)) {
     return c.json(
       {
-        error: { code: 'INVALID_QR', message: 'QR code does not contain a URL' },
+        error: { code: 'INVALID_QR', message: 'Codul QR nu contine un URL valid.' },
         is_url: false,
         raw_data: rawData,
         request_id: rid,

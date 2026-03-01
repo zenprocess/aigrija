@@ -57,8 +57,8 @@ describe('GET /amenintari', () => {
     const env = makeEnv();
     const res = await blog.fetch(makeRequest('/amenintari'), env);
     expect(res.status).toBe(500);
-    const json = await res.json() as { error: string };
-    expect(json.error).toMatch(/amenintari/i);
+    const json = await res.json() as { error: { code: string; message: string } };
+    expect(json.error.message).toMatch(/amenintari/i);
   });
 });
 
@@ -150,8 +150,8 @@ describe('GET /ghid/:slug', () => {
     const env = makeEnv();
     const res = await blog.fetch(makeRequest('/ghid/missing'), env);
     expect(res.status).toBe(404);
-    const json = await res.json() as { error: string };
-    expect(json.error).toMatch(/gasit/i);
+    const json = await res.json() as { error: { code: string; message: string } };
+    expect(json.error.message).toMatch(/gasit/i);
   });
 });
 

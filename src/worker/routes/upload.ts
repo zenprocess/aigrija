@@ -1,11 +1,10 @@
 import { Hono } from 'hono';
 import type { Env, ClassificationResult } from '../lib/types';
-import { checkRateLimit } from '../lib/rate-limiter';
+import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { classify } from '../lib/classifier';
 import { structuredLog } from '../lib/logger';
+import { ImageUploadSchema, formatZodError } from '../lib/schemas';
 
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const VISION_MODEL = '@cf/meta/llava-1.5-7b-hf';
 
 const upload = new Hono<{ Bindings: Env }>();
@@ -25,13 +24,11 @@ upload.post('/api/check/image', async (c) => {
     || c.req.header('x-real-ip')
     || 'unknown';
 
-  const { allowed, remaining, limit } = await checkRateLimit(c.env.CACHE, ip);
-
-  c.header('X-RateLimit-Limit', String(limit));
-  c.header('X-RateLimit-Remaining', String(remaining));
+  const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['check-image'].limit, ROUTE_RATE_LIMITS['check-image'].windowSeconds);
+  applyRateLimitHeaders((k, v) => c.header(k, v), rl);
+  const { allowed, remaining, limit } = rl;
 
   if (!allowed) {
-    c.header('Retry-After', '3600');
     return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de verificari depasita. Incercati din nou mai tarziu.', request_id: rid } }, 429);
   }
 
@@ -47,21 +44,31 @@ upload.post('/api/check/image', async (c) => {
     return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Campul "image" lipseste sau nu este un fisier.', request_id: rid } }, 400);
   }
 
-  if (!ALLOWED_TYPES.includes(imageFile.type)) {
-    return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Tipul imaginii nu este suportat. Acceptam PNG, JPG sau WEBP.', request_id: rid } }, 400);
-  }
-
-  if (imageFile.size > MAX_IMAGE_SIZE) {
-    return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Imaginea nu poate depasi 5MB.', request_id: rid } }, 400);
-  }
-
   const textContext = (formData.get('text') as string | null) || '';
+
+  const uploadValidation = ImageUploadSchema.safeParse({
+    mimeType: imageFile.type,
+    size: imageFile.size,
+    textContext,
+  });
+
+  if (!uploadValidation.success) {
+    return c.json({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: formatZodError(uploadValidation.error),
+        request_id: rid,
+      },
+    }, 400);
+  }
+
+  const validatedTextContext = uploadValidation.data.textContext;
 
   const imageBuffer = await imageFile.arrayBuffer();
   const imageBytes = new Uint8Array(imageBuffer);
 
-  const visionPrompt = textContext
-    ? `Analizeaza aceasta captura de ecran a unui mesaj. Context suplimentar: ${textContext}. Este aceasta o tentativa de phishing, escrocherie sau un mesaj legitim? Cauta: URL-uri suspecte, limbaj de urgenta, uzurparea identitatii bancilor/institutiilor, solicitari de date personale. Raspunde in romana cu: verdict (phishing/suspect/sigur), explicatie, semnale de alarma gasite.`
+  const visionPrompt = validatedTextContext
+    ? `Analizeaza aceasta captura de ecran a unui mesaj. Context suplimentar: ${validatedTextContext}. Este aceasta o tentativa de phishing, escrocherie sau un mesaj legitim? Cauta: URL-uri suspecte, limbaj de urgenta, uzurparea identitatii bancilor/institutiilor, solicitari de date personale. Raspunde in romana cu: verdict (phishing/suspect/sigur), explicatie, semnale de alarma gasite.`
     : 'Analizeaza aceasta captura de ecran a unui mesaj. Este aceasta o tentativa de phishing, escrocherie sau un mesaj legitim? Cauta: URL-uri suspecte, limbaj de urgenta, uzurparea identitatii bancilor/institutiilor, solicitari de date personale. Raspunde in romana cu: verdict (phishing/suspect/sigur), explicatie, semnale de alarma gasite.';
 
   let imageAnalysis = '';
@@ -90,8 +97,8 @@ upload.post('/api/check/image', async (c) => {
   }
 
   let classification: ClassificationResult;
-  if (textContext && textContext.trim().length >= 3) {
-    classification = await classify(c.env.AI, textContext);
+  if (validatedTextContext && validatedTextContext.trim().length >= 3) {
+    classification = await classify(c.env.AI, validatedTextContext);
     if (visionVerdict === 'phishing' && classification.verdict === 'likely_safe') {
       classification = { ...classification, verdict: 'suspicious' };
     }
@@ -123,8 +130,7 @@ upload.post('/api/check/image', async (c) => {
   const current = parseInt(await c.env.CACHE.get(countKey) || '0', 10);
   await c.env.CACHE.put(countKey, String(current + 1));
 
-  // Store screenshot in R2 for audit trail. Metadata includes timestamp so
-  // a future lifecycle rule (dashboard: delete after 30 days) can target old objects.
+  // Store screenshot in R2 for audit trail.
   const ext = imageFile.type.split('/')[1] || 'bin';
   c.executionCtx.waitUntil(
     c.env.STORAGE.put('screenshots/' + rid + '.' + ext, imageBuffer, {

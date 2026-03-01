@@ -75,7 +75,8 @@ describe("POST /api/check-qr", () => {
   });
 
   it("returns 429 when rate limited", async () => {
-    const kv = makeKV({ "rl:unknown": "20" }); // at limit
+    // Seed counter at the check-qr limit (30) so next request is rejected
+    const kv = makeKV({ "rl:unknown": "30" }); // at check-qr limit
     const env = makeEnv({ CACHE: kv });
     const req = new Request("http://localhost/api/check-qr", {
       method: "POST",
@@ -107,5 +108,6 @@ describe("POST /api/check-qr", () => {
     const res = await checkQr.fetch(req, makeEnv(), makeCtx());
     expect(res.headers.get("X-RateLimit-Limit")).not.toBeNull();
     expect(res.headers.get("X-RateLimit-Remaining")).not.toBeNull();
+    expect(res.headers.get("X-RateLimit-Reset")).not.toBeNull();
   });
 });

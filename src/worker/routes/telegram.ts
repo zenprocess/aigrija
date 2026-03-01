@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { structuredLog } from '../lib/logger';
 import type { Env } from '../lib/types';
 import { classify } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
@@ -96,7 +97,7 @@ async function sendMessage(
       clearTimeout(smTimeoutId);
     }
   } catch (err) {
-    console.error('[telegram] sendMessage failed:', err);
+    structuredLog('error', 'telegram_send_message_failed', { error: String(err), stack: err instanceof Error ? err.stack : undefined });
   }
 }
 
@@ -119,7 +120,7 @@ async function answerCallbackQuery(
       clearTimeout(acqTimeoutId);
     }
   } catch (err) {
-    console.error('[telegram] answerCallbackQuery failed:', err);
+    structuredLog('error', 'telegram_answer_callback_failed', { error: String(err), stack: err instanceof Error ? err.stack : undefined });
   }
 }
 
@@ -142,7 +143,7 @@ async function answerInlineQuery(
       clearTimeout(aiqTimeoutId);
     }
   } catch (err) {
-    console.error('[telegram] answerInlineQuery failed:', err);
+    structuredLog('error', 'telegram_answer_inline_failed', { error: String(err), stack: err instanceof Error ? err.stack : undefined });
   }
 }
 
@@ -226,19 +227,19 @@ telegram.post('/webhook/telegram', async (c) => {
   // Verify secret token
   const secret = c.req.header('x-telegram-bot-api-secret-token');
   if (!secret || secret !== c.env.TELEGRAM_WEBHOOK_SECRET) {
-    return c.json({ error: { code: 'UNAUTHORIZED', message: 'Unauthorized', request_id: rid } }, 401);
+    return c.json({ error: { code: 'UNAUTHORIZED', message: 'Acces neautorizat. Token webhook invalid.', request_id: rid } }, 401);
   }
 
   let update: TelegramUpdate;
   try {
     update = await c.req.json<TelegramUpdate>();
   } catch {
-    return c.json({ error: { code: 'BAD_REQUEST', message: 'Invalid JSON', request_id: rid } }, 400);
+    return c.json({ error: { code: 'BAD_REQUEST', message: 'Corp JSON invalid.', request_id: rid } }, 400);
   }
 
   const token = c.env.TELEGRAM_BOT_TOKEN;
   if (!token) {
-    console.error('[telegram] TELEGRAM_BOT_TOKEN not set');
+    structuredLog('error', 'telegram_bot_token_missing', { stage: 'config' });
     return c.json({ ok: true });
   }
 
@@ -383,7 +384,7 @@ telegram.post('/webhook/telegram', async (c) => {
   try {
     classification = await classify(c.env.AI, text, firstUrl);
   } catch (err) {
-    console.error('[telegram] classify error:', err);
+    structuredLog('error', 'telegram_classify_error', { error: String(err), stack: err instanceof Error ? err.stack : undefined });
     await sendMessage(token, chatId, 'A aparut o eroare la analiza. Te rugam sa incerci din nou.');
     return c.json({ ok: true });
   }

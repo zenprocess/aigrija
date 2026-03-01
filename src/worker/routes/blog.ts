@@ -107,7 +107,7 @@ blog.get('/amenintari', async (c) => {
     return c.body(body);
   } catch (err) {
     structuredLog('error', 'amenintari_list_error', { error: String(err) });
-    return c.json({ error: 'Nu am putut incarca rapoartele de amenintari.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut incarca rapoartele de amenintari.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -125,7 +125,7 @@ blog.get('/amenintari/feed.xml', async (c) => {
     return c.body(xml);
   } catch (err) {
     structuredLog('error', 'amenintari_feed_error', { error: String(err) });
-    return c.json({ error: 'Nu am putut genera feed-ul RSS.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut genera feed-ul RSS.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -137,14 +137,14 @@ blog.get('/amenintari/:slug', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
   try {
     const post = await sanityFetch<unknown>(c.env, AMENINTARI_POST_QUERY, { slug, lang });
-    if (!post) return c.json({ error: 'Raportul nu a fost gasit.' }, 404);
+    if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Raportul nu a fost gasit.' }, request_id: 'unknown' }, 404);
     const body = JSON.stringify(post);
     await kvPut(c.env, cacheKey, body, 600);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
     return c.body(body);
   } catch (err) {
     structuredLog('error', 'amenintari_post_error', { error: String(err), slug });
-    return c.json({ error: 'Nu am putut incarca raportul.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut incarca raportul.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -166,7 +166,7 @@ blog.get('/ghid', async (c) => {
     return c.body(body);
   } catch (err) {
     structuredLog('error', 'ghid_list_error', { error: String(err) });
-    return c.json({ error: 'Nu am putut incarca ghidurile.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut incarca ghidurile.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -184,7 +184,7 @@ blog.get('/ghid/feed.xml', async (c) => {
     return c.body(xml);
   } catch (err) {
     structuredLog('error', 'ghid_feed_error', { error: String(err) });
-    return c.json({ error: 'Nu am putut genera feed-ul RSS.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut genera feed-ul RSS.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -196,14 +196,14 @@ blog.get('/ghid/:slug', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
   try {
     const post = await sanityFetch<unknown>(c.env, GHID_POST_QUERY, { slug, lang });
-    if (!post) return c.json({ error: 'Ghidul nu a fost gasit.' }, 404);
+    if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Ghidul nu a fost gasit.' }, request_id: 'unknown' }, 404);
     const body = JSON.stringify(post);
     await kvPut(c.env, cacheKey, body, 600);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
     return c.body(body);
   } catch (err) {
     structuredLog('error', 'ghid_post_error', { error: String(err), slug });
-    return c.json({ error: 'Nu am putut incarca ghidul.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut incarca ghidul.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -225,7 +225,7 @@ blog.get('/educatie', async (c) => {
     return c.body(body);
   } catch (err) {
     structuredLog('error', 'educatie_list_error', { error: String(err) });
-    return c.json({ error: 'Nu am putut incarca articolele de educatie.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut incarca articolele de educatie.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -243,7 +243,7 @@ blog.get('/educatie/feed.xml', async (c) => {
     return c.body(xml);
   } catch (err) {
     structuredLog('error', 'educatie_feed_error', { error: String(err) });
-    return c.json({ error: 'Nu am putut genera feed-ul RSS.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut genera feed-ul RSS.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -255,14 +255,14 @@ blog.get('/educatie/:slug', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
   try {
     const post = await sanityFetch<unknown>(c.env, EDUCATIE_POST_QUERY, { slug, lang });
-    if (!post) return c.json({ error: 'Articolul de educatie nu a fost gasit.' }, 404);
+    if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Articolul de educatie nu a fost gasit.' }, request_id: 'unknown' }, 404);
     const body = JSON.stringify(post);
     await kvPut(c.env, cacheKey, body, 600);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
     return c.body(body);
   } catch (err) {
     structuredLog('error', 'educatie_post_error', { error: String(err), slug });
-    return c.json({ error: 'Nu am putut incarca articolul de educatie.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut incarca articolul de educatie.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -284,7 +284,7 @@ blog.get('/rapoarte', async (c) => {
     return c.body(body);
   } catch (err) {
     structuredLog('error', 'rapoarte_list_error', { error: String(err) });
-    return c.json({ error: 'Nu am putut incarca rapoartele saptamanale.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut incarca rapoartele saptamanale.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -296,14 +296,14 @@ blog.get('/rapoarte/:slug', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
   try {
     const post = await sanityFetch<unknown>(c.env, RAPOARTE_POST_QUERY, { slug, lang });
-    if (!post) return c.json({ error: 'Raportul saptamanal nu a fost gasit.' }, 404);
+    if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Raportul saptamanal nu a fost gasit.' }, request_id: 'unknown' }, 404);
     const body = JSON.stringify(post);
     await kvPut(c.env, cacheKey, body, 600);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
     return c.body(body);
   } catch (err) {
     structuredLog('error', 'rapoarte_post_error', { error: String(err), slug });
-    return c.json({ error: 'Nu am putut incarca raportul saptamanal.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut incarca raportul saptamanal.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -325,7 +325,7 @@ blog.get('/povesti', async (c) => {
     return c.body(body);
   } catch (err) {
     structuredLog('error', 'povesti_list_error', { error: String(err) });
-    return c.json({ error: 'Nu am putut incarca povestile.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut incarca povestile.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -337,14 +337,14 @@ blog.get('/povesti/:slug', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
   try {
     const post = await sanityFetch<unknown>(c.env, POVESTI_POST_QUERY, { slug, lang });
-    if (!post) return c.json({ error: 'Povestea nu a fost gasita.' }, 404);
+    if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Povestea nu a fost gasita.' }, request_id: 'unknown' }, 404);
     const body = JSON.stringify(post);
     await kvPut(c.env, cacheKey, body, 600);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
     return c.body(body);
   } catch (err) {
     structuredLog('error', 'povesti_post_error', { error: String(err), slug });
-    return c.json({ error: 'Nu am putut incarca povestea.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut incarca povestea.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -366,7 +366,7 @@ blog.get('/presa', async (c) => {
     return c.body(body);
   } catch (err) {
     structuredLog('error', 'presa_list_error', { error: String(err) });
-    return c.json({ error: 'Nu am putut incarca comunicatele de presa.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut incarca comunicatele de presa.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -378,14 +378,14 @@ blog.get('/presa/:slug', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
   try {
     const post = await sanityFetch<unknown>(c.env, PRESA_POST_QUERY, { slug, lang });
-    if (!post) return c.json({ error: 'Comunicatul de presa nu a fost gasit.' }, 404);
+    if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Comunicatul de presa nu a fost gasit.' }, request_id: 'unknown' }, 404);
     const body = JSON.stringify(post);
     await kvPut(c.env, cacheKey, body, 600);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
     return c.body(body);
   } catch (err) {
     structuredLog('error', 'presa_post_error', { error: String(err), slug });
-    return c.json({ error: 'Nu am putut incarca comunicatul de presa.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut incarca comunicatul de presa.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -442,7 +442,7 @@ blog.get('/feed.xml', async (c) => {
     return c.body(xml);
   } catch (err) {
     structuredLog('error', 'feed_all_error', { error: String(err) });
-    return c.json({ error: 'Nu am putut genera feed-ul RSS.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut genera feed-ul RSS.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -493,7 +493,7 @@ blog.get('/sitemap-content.xml', async (c) => {
     return c.body(xml);
   } catch (err) {
     structuredLog('error', 'sitemap_content_error', { error: String(err) });
-    return c.json({ error: 'Nu am putut genera sitemap-ul.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut genera sitemap-ul.' }, request_id: 'unknown' }, 500);
   }
 });
 
@@ -503,7 +503,7 @@ blog.post('/content/webhook', async (c) => {
   if (c.env.SANITY_WEBHOOK_SECRET) {
     const signature = c.req.header('sanity-webhook-signature') || '';
     if (!signature || !signature.includes(c.env.SANITY_WEBHOOK_SECRET)) {
-      return c.json({ error: 'Semnatura invalida.' }, 401);
+      return c.json({ error: { code: 'UNAUTHORIZED', message: 'Semnatura invalida.' }, request_id: 'unknown' }, 401);
     }
   }
 
@@ -522,7 +522,7 @@ blog.post('/content/webhook', async (c) => {
     return c.json({ ok: true });
   } catch (err) {
     structuredLog('error', 'content_webhook_error', { error: String(err) });
-    return c.json({ error: 'Eroare la invalidarea cache-ului.' }, 500);
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Eroare la invalidarea cache-ului.' }, request_id: 'unknown' }, 500);
   }
 });
 

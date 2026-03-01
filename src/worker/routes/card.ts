@@ -25,7 +25,8 @@ card.get('/card/:hash/image', async (c) => {
   const hash = c.req.param('hash');
   const obj = await c.env.STORAGE.get(`cards/${hash}.svg`);
   if (!obj) {
-    return c.text('Not found', 404);
+    const rid = (c.get('requestId' as never) as string) || 'unknown';
+    return c.json({ error: { code: 'NOT_FOUND', message: 'Imaginea cardului nu a fost gasita.' }, request_id: rid }, 404);
   }
   const svg = await obj.text();
   return c.text(svg, 200, { 'Content-Type': 'image/svg+xml' });
@@ -37,7 +38,11 @@ card.get('/card/:hash', async (c) => {
   const raw = await c.env.CACHE.get(`cards:meta:${hash}`);
   let meta: CardMeta = { verdict: 'safe', scam_type: 'unknown' };
   if (raw) {
-    meta = JSON.parse(raw) as CardMeta;
+    try {
+      meta = JSON.parse(raw) as CardMeta;
+    } catch {
+      // use defaults
+    }
   }
 
   const verdictUpper = escapeHtml(meta.verdict.toUpperCase());

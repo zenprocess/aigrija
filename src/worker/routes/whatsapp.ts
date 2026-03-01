@@ -223,7 +223,7 @@ whatsapp.get('/webhook/whatsapp', (c) => {
   if (mode === 'subscribe' && token === c.env.WHATSAPP_VERIFY_TOKEN) {
     return new Response(challenge, { status: 200 });
   }
-  return c.text('Forbidden', 403);
+  return c.json({ error: { code: 'FORBIDDEN', message: 'Acces interzis. Token de verificare invalid.' }, request_id: 'unknown' }, 403);
 });
 
 whatsapp.post('/webhook/whatsapp', async (c) => {
@@ -234,7 +234,7 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
     const sigHeader = c.req.header('x-hub-signature-256') ?? null;
     const valid = await verifyHmacSha256(c.env.WHATSAPP_APP_SECRET, rawBody, sigHeader);
     if (!valid) {
-      return c.json({ error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
+      return c.json({ error: { code: 'UNAUTHORIZED', message: 'Acces neautorizat. Semnatura invalida.' } }, 401);
     }
   }
 

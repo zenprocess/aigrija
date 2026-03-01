@@ -7,15 +7,19 @@ export interface LogMeta {
   method?: string;
   path?: string;
   status?: number;
+  error?: string;
+  stack?: string;
   [key: string]: unknown;
 }
 
 export function structuredLog(level: LogLevel, message: string, meta: LogMeta = {}): void {
+  const enrichedMeta: LogMeta = { ...meta };
+
   const entry = {
     level,
     message,
     timestamp: new Date().toISOString(),
-    ...meta,
+    ...enrichedMeta,
   };
   if (level === 'error') {
     console.error(JSON.stringify(entry));

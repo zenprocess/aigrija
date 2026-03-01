@@ -239,7 +239,7 @@ og.get('/og/:type', (c) => {
     pageTitle = escapeHtml(c.req.query('title') || 'Alertă Fraudă — ai-grija.ro');
     pageDescription = escapeHtml(c.req.query('description') || 'Alertă de securitate activă pe ai-grija.ro.');
   } else {
-    return c.json({ error: 'Tip OG invalid. Folosiți: verdict sau alert.' }, 400);
+    const rid = (c.get('requestId' as never) as string) || 'unknown'; return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Tip OG invalid. Folositi: verdict sau alert.' }, request_id: rid }, 400);
   }
 
   const html = `<!DOCTYPE html>

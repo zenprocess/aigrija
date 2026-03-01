@@ -8,6 +8,19 @@ interface CardMeta {
   scam_type: string;
 }
 
+function escapeHtml(s: string): string {
+  return s.replace(/[<>&"']/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '"': return '&quot;';
+      case "'": return '&#39;';
+      default: return c;
+    }
+  });
+}
+
 card.get('/card/:hash/image', async (c) => {
   const hash = c.req.param('hash');
   const obj = await c.env.STORAGE.get(`cards/${hash}.svg`);
@@ -27,7 +40,7 @@ card.get('/card/:hash', async (c) => {
     meta = JSON.parse(raw) as CardMeta;
   }
 
-  const verdictUpper = meta.verdict.toUpperCase();
+  const verdictUpper = escapeHtml(meta.verdict.toUpperCase());
   const imageUrl = `${baseUrl}/card/${hash}/image`;
   const pageUrl = `${baseUrl}/card/${hash}`;
 
@@ -45,7 +58,7 @@ card.get('/card/:hash', async (c) => {
 <body>
 <h1>${verdictUpper}</h1>
 <p>Ai primit un mesaj suspect? Verifica-l pe <a href="${baseUrl}">ai-grija.ro</a>.</p>
-<p>Tip frauda: ${meta.scam_type}</p>
+<p>Tip frauda: ${escapeHtml(meta.scam_type)}</p>
 </body>
 </html>`;
 

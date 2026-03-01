@@ -13,7 +13,7 @@ counter.get('/api/counter', async (c) => {
 counter.post('/api/counter', async (c) => {
   const authHeader = c.req.header('Authorization');
   const adminKey = c.env.ADMIN_API_KEY;
-  if (!adminKey || authHeader !== `Bearer ${adminKey}`) {
+  if (!adminKey || adminKey.trim() === "" || authHeader !== `Bearer ${adminKey}`) {
     return c.json({ error: { code: 'UNAUTHORIZED', message: 'Acces interzis. Cheia API este invalida.' } }, 401);
   }
   const key = 'stats:total_checks';

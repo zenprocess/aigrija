@@ -57,7 +57,7 @@ function buildVerdictSvg(verdict: VerdictType, confidence: number, scam_type: st
       case '>': return '&gt;';
       case '&': return '&amp;';
       case '"': return '&quot;';
-      case "'": return '&apos;';
+      case "'": return '&#39;';
       default: return c;
     }
   });
@@ -125,8 +125,8 @@ function buildVerdictSvg(verdict: VerdictType, confidence: number, scam_type: st
 }
 
 function buildAlertSvg(title: string, description: string): string {
-  const safeTitle = title.replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[c] || c));
-  const safeDesc = description.replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[c] || c));
+  const safeTitle = title.replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c] || c));
+  const safeDesc = description.replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c] || c));
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>

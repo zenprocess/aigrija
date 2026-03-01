@@ -10,7 +10,7 @@ steps:
     name: privacy-ro
   - action: assert
     selector: body
-    contains: "Confidentialitate"
+    contains: "Confidențialitate"
   - action: assert
     selector: "button[data-testid='privacy-back-btn']"
     contains: "napoi"

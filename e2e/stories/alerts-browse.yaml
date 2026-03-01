@@ -1,0 +1,10 @@
+name: "Navigare alerte active"
+description: "Utilizatorul consulta campaniile de phishing active"
+steps:
+  - action: navigate
+    url: /alerte
+  - action: screenshot
+    name: alerts-list
+  - action: assert
+    selector: body
+    contains: "phishing"

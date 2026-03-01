@@ -1,0 +1,13 @@
+name: "Generare raport autoritati"
+description: "Utilizatorul genereaza un raport pentru DNSC/Politie"
+steps:
+  - action: navigate
+    url: "/raport?verdict=phishing&scam_type=bank_impersonation"
+  - action: screenshot
+    name: report-prefilled
+  - action: assert
+    selector: body
+    contains: "phishing"
+  - action: assert
+    selector: body
+    contains: "1911"

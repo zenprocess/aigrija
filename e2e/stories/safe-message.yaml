@@ -1,0 +1,18 @@
+name: "Verificare mesaj sigur"
+description: "Mesaj legitim de la un prieten"
+steps:
+  - action: navigate
+    url: /
+  - action: fill
+    selector: "textarea[data-testid='check-input']"
+    value: "Salut! Ne vedem maine la cafea? Am rezervat la Origo, ora 18:00."
+  - action: click
+    selector: "button[data-testid='check-submit']"
+  - action: wait
+    selector: "[data-testid='verdict-card']"
+    timeout: 15000
+  - action: screenshot
+    name: verdict-safe
+  - action: assert
+    selector: "[data-testid='verdict-card']"
+    contains: "SIGUR"

@@ -1,0 +1,24 @@
+name: "Verificare SMS suspect"
+description: "Utilizatorul primeste un SMS suspect de la banca si il verifica pe ai-grija.ro"
+steps:
+  - action: navigate
+    url: /
+  - action: screenshot
+    name: homepage
+  - action: fill
+    selector: "textarea[data-testid='check-input']"
+    value: "Contul dvs ING a fost blocat. Accesati urgent: http://ing-verify.com/deblocare"
+  - action: click
+    selector: "button[data-testid='check-submit']"
+  - action: wait
+    selector: "[data-testid='verdict-card']"
+    timeout: 15000
+  - action: screenshot
+    name: verdict-phishing
+  - action: assert
+    selector: "[data-testid='verdict-card']"
+    contains: "PHISHING"
+  - action: click
+    selector: "[data-testid='share-btn']"
+  - action: screenshot
+    name: share-modal

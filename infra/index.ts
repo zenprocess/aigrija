@@ -120,6 +120,74 @@ for (const { configKey, secretName } of secretDefs) {
   });
 }
 
+
+// ---------------------------------------------------------------------------
+// Preview Environment — pre.ai-grija.ro
+// ---------------------------------------------------------------------------
+const previewWorkerName = "ai-grija-ro-preview";
+
+const previewKv = new cloudflare.WorkersKvNamespace("ai-grija-cache-preview", {
+  accountId,
+  title: "ai-grija-cache-preview",
+});
+
+const previewR2 = new cloudflare.R2Bucket("ai-grija-share-cards-preview", {
+  accountId,
+  name: "ai-grija-share-cards-preview",
+  location: "EEUR",
+});
+
+const previewDb = new cloudflare.D1Database("ai-grija-admin-preview", {
+  accountId,
+  name: "ai-grija-admin-preview",
+});
+
+// Preview DNS
+new cloudflare.Record("dns-preview", {
+  zoneId,
+  name: "pre",
+  type: "CNAME",
+  content: `${previewWorkerName}.workers.dev`,
+  proxied: true,
+});
+
+new cloudflare.Record("dns-preview-admin", {
+  zoneId,
+  name: "pre-admin",
+  type: "CNAME",
+  content: `${previewWorkerName}.workers.dev`,
+  proxied: true,
+});
+
+// Zero Trust for preview admin
+const previewAccessApp = new cloudflare.ZeroTrustAccessApplication("preview-admin-access", {
+  zoneId,
+  name: "ai-grija Preview Admin",
+  domain: "pre-admin.ai-grija.ro",
+  type: "self_hosted",
+  sessionDuration: "24h",
+  autoRedirectToIdentity: true,
+});
+
+new cloudflare.ZeroTrustAccessPolicy("preview-admin-policy", {
+  applicationId: previewAccessApp.id,
+  zoneId,
+  name: "Allow team preview",
+  decision: "allow",
+  precedence: 1,
+  includes: [{ emails: ["admin@zen-labs.ro"] }],
+});
+
+// Preview secrets — same keys, can use test values
+for (const { configKey, secretName } of secretDefs) {
+  new cloudflare.WorkersSecret(`preview-secret-${secretName.toLowerCase().replace(/_/g, "-")}`, {
+    accountId,
+    scriptName: previewWorkerName,
+    name: secretName,
+    secretText: config.requireSecret(configKey),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Stack Outputs
 // ---------------------------------------------------------------------------
@@ -129,3 +197,6 @@ export const d1DatabaseId = adminDb.id;
 export const queueId = draftQueue.id;
 export const zeroTrustAppId = accessApp.id;
 export { workerName };
+export const previewKvId = previewKv.id;
+export const previewDbId = previewDb.id;
+export const previewR2BucketName = previewR2.name;

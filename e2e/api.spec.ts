@@ -37,9 +37,7 @@ test.describe('POST /api/check', () => {
     expect(res.status()).toBe(200);
 
     const body = await res.json();
-    // Classification result must contain at minimum a verdict/label field
     expect(body).toBeTruthy();
-    // The response is an object (not an error string)
     expect(typeof body).toBe('object');
   });
 
@@ -53,9 +51,16 @@ test.describe('POST /api/check', () => {
     expect(res.status()).toBe(200);
   });
 
+  test('returns 400 for empty text', async ({ request }) => {
+    const res = await request.post('/api/check', {
+      data: { text: '' },
+    });
+    expect(res.status()).toBe(400);
+  });
+
   test('X-Request-Id header is present', async ({ request }) => {
     const res = await request.post('/api/check', {
-      data: { text: 'test content' },
+      data: { text: 'test content for checking request id header' },
     });
     expect(res.headers()['x-request-id']).toBeTruthy();
   });
@@ -90,6 +95,68 @@ test.describe('GET /api/alerts', () => {
   test('X-Request-Id header is present', async ({ request }) => {
     const res = await request.get('/api/alerts');
     expect(res.headers()['x-request-id']).toBeTruthy();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/counter
+// ---------------------------------------------------------------------------
+test.describe('GET /api/counter', () => {
+  test('returns 200 with count number', async ({ request }) => {
+    const res = await request.get('/api/counter');
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(typeof body.total_checks).toBe('number');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/feed/latest
+// ---------------------------------------------------------------------------
+test.describe('GET /api/feed/latest', () => {
+  test('returns 200 with array', async ({ request }) => {
+    const res = await request.get('/api/feed/latest');
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(Array.isArray(body)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/stats
+// ---------------------------------------------------------------------------
+test.describe('GET /api/stats', () => {
+  test('returns 200 with total_checks field', async ({ request }) => {
+    const res = await request.get('/api/stats');
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveProperty('total_checks');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/badges
+// ---------------------------------------------------------------------------
+test.describe('GET /api/badges', () => {
+  test('returns 200 with verified_by field', async ({ request }) => {
+    const res = await request.get('/api/badges');
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveProperty('verified_by');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/openapi.json
+// ---------------------------------------------------------------------------
+test.describe('GET /api/openapi.json', () => {
+  test('returns 200 with valid OpenAPI spec', async ({ request }) => {
+    const res = await request.get('/api/openapi.json');
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveProperty('openapi');
+    expect(body).toHaveProperty('info');
+    expect(body).toHaveProperty('paths');
   });
 });
 

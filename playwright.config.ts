@@ -1,19 +1,23 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
+  outputDir: './test-results',
   timeout: 30_000,
-  retries: 0,
+  retries: 1,
   use: {
-    baseURL: 'http://localhost:8787',
-    extraHTTPHeaders: {
-      'Accept': 'application/json',
-    },
+    baseURL: process.env.BASE_URL || 'http://localhost:8787',
+    screenshot: 'on',
+    trace: 'on-first-retry',
   },
   projects: [
-    {
-      name: 'api',
-      use: {},
-    },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'mobile', use: { ...devices['iPhone 14'] } },
   ],
+  webServer: process.env.BASE_URL ? undefined : {
+    command: 'npx wrangler dev --port 8787',
+    port: 8787,
+    reuseExistingServer: true,
+    timeout: 30_000,
+  },
 });

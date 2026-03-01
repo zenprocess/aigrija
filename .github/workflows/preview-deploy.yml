@@ -1,0 +1,25 @@
+name: Preview Deploy
+on:
+  push:
+    branches: [feat/*, fix/*]
+  pull_request:
+    branches: [main]
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npx vitest run
+      - run: npx wrangler deploy --env preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Run E2E against preview
+        run: BASE_URL=https://pre.ai-grija.ro npx playwright test
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: 0

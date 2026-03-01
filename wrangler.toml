@@ -49,3 +49,29 @@ BASE_URL = "https://ai-grija.ro"
 [[analytics_engine_datasets]]
 binding = "ANALYTICS"
 dataset = "ai_grija"
+
+# ---------------------------------------------------------------------------
+# Preview environment — pre.ai-grija.ro / pre-admin.ai-grija.ro
+# Deploy with: npx wrangler deploy --env preview
+# ---------------------------------------------------------------------------
+[env.preview]
+name = "ai-grija-ro-preview"
+route = { pattern = "pre.ai-grija.ro/*", zone_name = "ai-grija.ro" }
+vars = { BASE_URL = "https://pre.ai-grija.ro" }
+
+[[env.preview.kv_namespaces]]
+binding = "CACHE"
+id = "TBD_PREVIEW"
+
+[[env.preview.r2_buckets]]
+binding = "STORAGE"
+bucket_name = "ai-grija-share-cards-preview"
+
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "ai-grija-admin-preview"
+database_id = "TBD_PREVIEW"
+
+[[env.preview.analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "ai_grija_preview"

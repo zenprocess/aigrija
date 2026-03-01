@@ -94,3 +94,39 @@ To list existing datasets: `wrangler analytics-engine datasets list`
 | `queueId` | Queue resource ID (`draft-generation`) |
 | `zeroTrustAppId` | Zero Trust Access Application ID |
 | `workerName` | Worker script name (`ai-grija-ro`) |
+| `previewKvId` | Preview KV namespace ID — update `wrangler.toml` `[env.preview]` |
+| `previewDbId` | Preview D1 database ID — update `wrangler.toml` `[env.preview]` |
+| `previewR2BucketName` | Preview R2 bucket name (`ai-grija-share-cards-preview`) |
+
+## Preview Environment
+
+The preview environment mirrors production but runs on `pre.ai-grija.ro` with isolated Cloudflare resources.
+
+### Deploy to preview
+
+```bash
+npx wrangler deploy --env preview
+```
+
+### Resources
+
+- Separate KV namespace, R2 bucket, and D1 database — changes do not affect production data.
+- Zero Trust Access protects `pre-admin.ai-grija.ro` (same email allowlist as production).
+- Secrets are shared from the same Pulumi config keys — rotate per environment if needed.
+
+### Post-deploy: update wrangler.toml preview IDs
+
+After `pulumi up`, retrieve preview IDs and replace the `TBD_PREVIEW` placeholders in `wrangler.toml`:
+
+```bash
+pulumi stack output previewKvId    # → [[env.preview.kv_namespaces]] id
+pulumi stack output previewDbId    # → [[env.preview.d1_databases]] database_id
+```
+
+### E2E tests against preview
+
+```bash
+BASE_URL=https://pre.ai-grija.ro npx playwright test
+```
+
+The GitHub Actions workflow `.github/workflows/preview-deploy.yml` runs this automatically on every `feat/*` and `fix/*` branch push and on pull requests targeting `main`.

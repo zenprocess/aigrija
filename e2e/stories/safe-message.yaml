@@ -3,6 +3,9 @@ description: "Mesaj legitim de la un prieten"
 steps:
   - action: navigate
     url: /
+  - action: wait
+    selector: "textarea[data-testid='checker-textarea']"
+    timeout: 15000
   - action: fill
     selector: "textarea[data-testid='checker-textarea']"
     value: "Salut! Ne vedem maine la cafea? Am rezervat la Origo, ora 18:00."

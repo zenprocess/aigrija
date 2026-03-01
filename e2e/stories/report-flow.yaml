@@ -3,6 +3,9 @@ description: "Utilizatorul verifica un mesaj suspect si acceseaza sectiunea de r
 steps:
   - action: navigate
     url: /
+  - action: wait
+    selector: "textarea[data-testid='checker-textarea']"
+    timeout: 15000
   - action: fill
     selector: "textarea[data-testid='checker-textarea']"
     value: "Contul dvs ING a fost blocat. Accesati urgent: http://ing-verify.com/deblocare"

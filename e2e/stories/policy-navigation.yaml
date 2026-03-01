@@ -3,6 +3,9 @@ description: "Utilizatorul verifica paginile legale in romana"
 steps:
   - action: navigate
     url: "/#/confidentialitate"
+  - action: wait
+    selector: "button[data-testid='privacy-back-btn']"
+    timeout: 15000
   - action: screenshot
     name: privacy-ro
   - action: assert
@@ -13,6 +16,9 @@ steps:
     contains: "napoi"
   - action: navigate
     url: "/#/termeni"
+  - action: wait
+    selector: body
+    timeout: 10000
   - action: screenshot
     name: termeni-ro
   - action: assert

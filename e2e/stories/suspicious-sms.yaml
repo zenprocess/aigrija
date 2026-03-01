@@ -3,6 +3,9 @@ description: "Utilizatorul primeste un SMS suspect de la banca si il verifica pe
 steps:
   - action: navigate
     url: /
+  - action: wait
+    selector: "textarea[data-testid='checker-textarea']"
+    timeout: 15000
   - action: screenshot
     name: homepage
   - action: fill

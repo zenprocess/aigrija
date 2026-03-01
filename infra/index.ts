@@ -74,24 +74,23 @@ new cloudflare.Record("dns-admin", {
 // ---------------------------------------------------------------------------
 // Zero Trust Access — protect admin.ai-grija.ro
 // ---------------------------------------------------------------------------
-// TODO: Zero Trust Access requires Account:Access permission — re-enable when token updated
-// const accessApp = new cloudflare.ZeroTrustAccessApplication("admin-access", {
-//   zoneId,
-//   name: "ai-grija Admin",
-//   domain: "admin.ai-grija.ro",
-//   type: "self_hosted",
-//   sessionDuration: "24h",
-//   autoRedirectToIdentity: true,
-// });
-//
-// new cloudflare.ZeroTrustAccessPolicy("admin-policy", {
-//   applicationId: accessApp.id,
-//   zoneId,
-//   name: "Allow team",
-//   decision: "allow",
-//   precedence: 1,
-//   includes: [{ emails: ["admin@zen-labs.ro"] }],
-// });
+const accessApp = new cloudflare.ZeroTrustAccessApplication("admin-access", {
+  zoneId,
+  name: "ai-grija Admin",
+  domain: "admin.ai-grija.ro",
+  type: "self_hosted",
+  sessionDuration: "24h",
+  autoRedirectToIdentity: false,
+});
+
+new cloudflare.ZeroTrustAccessPolicy("admin-policy", {
+  applicationId: accessApp.id,
+  zoneId,
+  name: "Allow team",
+  decision: "allow",
+  precedence: 1,
+  includes: [{ emails: ["admin@zen-labs.ro"] }],
+});
 
 // ---------------------------------------------------------------------------
 // Worker Secrets
@@ -166,24 +165,23 @@ new cloudflare.Record("dns-preview-admin", {
 });
 
 // Zero Trust for preview admin
-// TODO: Zero Trust Access requires Account:Access permission — re-enable when token updated
-// const previewAccessApp = new cloudflare.ZeroTrustAccessApplication("preview-admin-access", {
-//   zoneId,
-//   name: "ai-grija Preview Admin",
-//   domain: "pre-admin.ai-grija.ro",
-//   type: "self_hosted",
-//   sessionDuration: "24h",
-//   autoRedirectToIdentity: true,
-// });
-//
-// new cloudflare.ZeroTrustAccessPolicy("preview-admin-policy", {
-//   applicationId: previewAccessApp.id,
-//   zoneId,
-//   name: "Allow team preview",
-//   decision: "allow",
-//   precedence: 1,
-//   includes: [{ emails: ["admin@zen-labs.ro"] }],
-// });
+const previewAccessApp = new cloudflare.ZeroTrustAccessApplication("preview-admin-access", {
+  zoneId,
+  name: "ai-grija Preview Admin",
+  domain: "pre-admin.ai-grija.ro",
+  type: "self_hosted",
+  sessionDuration: "24h",
+  autoRedirectToIdentity: false,
+});
+
+new cloudflare.ZeroTrustAccessPolicy("preview-admin-policy", {
+  applicationId: previewAccessApp.id,
+  zoneId,
+  name: "Allow team preview",
+  decision: "allow",
+  precedence: 1,
+  includes: [{ emails: ["admin@zen-labs.ro"] }],
+});
 
 // Preview secrets — same keys, can use test values
 for (const { configKey, secretName } of secretDefs) {
@@ -202,7 +200,7 @@ export const kvNamespaceId = kvNamespace.id;
 export const r2BucketName = r2Bucket.name;
 export const d1DatabaseId = adminDb.id;
 export const queueId = draftQueue.id;
-// export const zeroTrustAppId = accessApp.id; // TODO: re-enable with Zero Trust
+export const zeroTrustAppId = accessApp.id;
 export { workerName };
 export const previewKvId = previewKv.id;
 export const previewDbId = previewDb.id;

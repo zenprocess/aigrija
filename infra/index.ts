@@ -5,6 +5,7 @@ import * as cloudflare from "@pulumi/cloudflare";
 
 const config = new pulumi.Config();
 const accountId = config.require("cloudflareAccountId");
+const zoneId = config.require("cloudflareZoneId");
 const workerName = "ai-grija-ro";
 
 // ---------------------------------------------------------------------------
@@ -25,6 +26,73 @@ const r2Bucket = new cloudflare.R2Bucket("ai-grija-share-cards", {
 });
 
 // ---------------------------------------------------------------------------
+// D1 Database — admin DB for structured data (conversations, reports, audit)
+// After `pulumi up`, run: pulumi stack output d1DatabaseId
+// Then update wrangler.toml [[d1_databases]] database_id field.
+// ---------------------------------------------------------------------------
+const adminDb = new cloudflare.D1Database("ai-grija-admin", {
+  accountId,
+  name: "ai-grija-admin",
+});
+
+// ---------------------------------------------------------------------------
+// Queue — async draft generation pipeline
+// Supported in @pulumi/cloudflare v5+
+// Fallback (if provider support missing): npx wrangler queues create draft-generation
+// ---------------------------------------------------------------------------
+const draftQueue = new cloudflare.Queue("draft-generation", {
+  accountId,
+  name: "draft-generation",
+});
+
+// ---------------------------------------------------------------------------
+// Analytics Engine Dataset
+// Note: Workers Analytics Engine datasets are created automatically on first
+// write from the Worker — no Pulumi resource needed.
+// Fallback reference: wrangler analytics-engine datasets list
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// DNS Records — ai-grija.ro and admin.ai-grija.ro proxied through Cloudflare
+// ---------------------------------------------------------------------------
+new cloudflare.Record("dns-root", {
+  zoneId,
+  name: "ai-grija.ro",
+  type: "CNAME",
+  content: "ai-grija-ro.workers.dev",
+  proxied: true,
+});
+
+new cloudflare.Record("dns-admin", {
+  zoneId,
+  name: "admin",
+  type: "CNAME",
+  content: "ai-grija-ro.workers.dev",
+  proxied: true,
+});
+
+// ---------------------------------------------------------------------------
+// Zero Trust Access — protect admin.ai-grija.ro
+// ---------------------------------------------------------------------------
+const accessApp = new cloudflare.ZeroTrustAccessApplication("admin-access", {
+  zoneId,
+  name: "ai-grija Admin",
+  domain: "admin.ai-grija.ro",
+  type: "self_hosted",
+  sessionDuration: "24h",
+  autoRedirectToIdentity: true,
+});
+
+new cloudflare.ZeroTrustAccessPolicy("admin-policy", {
+  applicationId: accessApp.id,
+  zoneId,
+  name: "Allow team",
+  decision: "allow",
+  precedence: 1,
+  includes: [{ emails: ["admin@zen-labs.ro"] }],
+});
+
+// ---------------------------------------------------------------------------
 // Worker Secrets
 // All values come from Pulumi config (encrypted at rest in the state file).
 // ---------------------------------------------------------------------------
@@ -38,6 +106,9 @@ const secretDefs: { configKey: string; secretName: string }[] = [
   { configKey: "whatsappVerifyToken",    secretName: "WHATSAPP_VERIFY_TOKEN" },
   { configKey: "whatsappPhoneNumberId",  secretName: "WHATSAPP_PHONE_NUMBER_ID" },
   { configKey: "adminApiKey",            secretName: "ADMIN_API_KEY" },
+  { configKey: "telegramAdminChatId",    secretName: "TELEGRAM_ADMIN_CHAT_ID" },
+  { configKey: "sanityWriteToken",       secretName: "SANITY_WRITE_TOKEN" },
+  { configKey: "launchdarklySDKKey",     secretName: "LAUNCHDARKLY_SDK_KEY" },
 ];
 
 for (const { configKey, secretName } of secretDefs) {
@@ -54,4 +125,7 @@ for (const { configKey, secretName } of secretDefs) {
 // ---------------------------------------------------------------------------
 export const kvNamespaceId = kvNamespace.id;
 export const r2BucketName = r2Bucket.name;
+export const d1DatabaseId = adminDb.id;
+export const queueId = draftQueue.id;
+export const zeroTrustAppId = accessApp.id;
 export { workerName };

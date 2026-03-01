@@ -1,3 +1,4 @@
 # Dev stack — see infra/README.md for setup instructions.
 config:
   ai-grija-infra:cloudflareAccountId: "REPLACE_WITH_YOUR_CF_ACCOUNT_ID"
+  ai-grija-infra:cloudflareZoneId: "REPLACE_WITH_ZONE_ID"

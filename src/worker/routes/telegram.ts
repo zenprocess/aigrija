@@ -25,11 +25,29 @@ interface TelegramMessage {
   from?: TelegramUser;
   chat: TelegramChat;
   text?: string;
+  caption?: string;
+  forward_from?: TelegramUser;
+  forward_date?: number;
+  forward_from_chat?: TelegramChat;
+}
+
+interface TelegramCallbackQuery {
+  id: string;
+  from: { id: number };
+  data?: string;
+}
+
+interface TelegramInlineQuery {
+  id: string;
+  from: { id: number };
+  query: string;
 }
 
 interface TelegramUpdate {
   update_id: number;
   message?: TelegramMessage;
+  callback_query?: TelegramCallbackQuery;
+  inline_query?: TelegramInlineQuery;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -43,7 +61,7 @@ async function sendMessage(
   token: string,
   chatId: number,
   text: string,
-  inlineKeyboard?: { text: string; url: string }[][]
+  inlineKeyboard?: { text: string; url?: string; callback_data?: string }[][]
 ): Promise<void> {
   const body: Record<string, unknown> = {
     chat_id: chatId,
@@ -54,7 +72,12 @@ async function sendMessage(
   if (inlineKeyboard) {
     body.reply_markup = {
       inline_keyboard: inlineKeyboard.map(row =>
-        row.map(btn => ({ text: btn.text, url: btn.url }))
+        row.map(btn => {
+          const b: Record<string, string> = { text: btn.text };
+          if (btn.url) b.url = btn.url;
+          if (btn.callback_data) b.callback_data = btn.callback_data;
+          return b;
+        })
       ),
     };
   }
@@ -68,6 +91,63 @@ async function sendMessage(
   } catch (err) {
     console.error('[telegram] sendMessage failed:', err);
   }
+}
+
+async function answerCallbackQuery(
+  token: string,
+  callbackQueryId: string,
+  text?: string
+): Promise<void> {
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: callbackQueryId, text }),
+    });
+  } catch (err) {
+    console.error('[telegram] answerCallbackQuery failed:', err);
+  }
+}
+
+async function answerInlineQuery(
+  token: string,
+  inlineQueryId: string,
+  results: unknown[]
+): Promise<void> {
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/answerInlineQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inline_query_id: inlineQueryId, results }),
+    });
+  } catch (err) {
+    console.error('[telegram] answerInlineQuery failed:', err);
+  }
+}
+
+/** FNV-1a 32-bit hash -> 8-char hex */
+function simpleHash(text: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = (h * 16777619) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0');
+}
+
+function buildVerdictKeyboard(
+  hash: string,
+  baseUrl: string
+): { text: string; url?: string; callback_data?: string }[][] {
+  return [
+    [
+      { text: 'Distribuie', callback_data: `share:${hash}` },
+      { text: 'Raporteaza', url: `${baseUrl}/raporteaza` },
+    ],
+    [
+      { text: 'Ajutor', callback_data: 'help' },
+    ],
+  ];
 }
 
 function verdictEmoji(verdict: string): string {
@@ -92,22 +172,22 @@ function formatAnalysisReply(
 
   const lines: string[] = [
     `${emoji} <b>${label}</b>`,
-    `<i>Confidență: ${confidencePct}%</i>`,
+    `<i>Confidenta: ${confidencePct}%</i>`,
     '',
-    `📋 <b>Explicație:</b>`,
+    `📋 <b>Explicatie:</b>`,
     result.explanation,
   ];
 
   const allFlags = [...result.red_flags, ...urlFlags];
   if (allFlags.length > 0) {
-    lines.push('', '🚩 <b>Semne de alarmă:</b>');
+    lines.push('', '🚩 <b>Semne de alarma:</b>');
     for (const flag of allFlags) {
       lines.push(`• ${flag}`);
     }
   }
 
   if (result.recommended_actions.length > 0) {
-    lines.push('', '✅ <b>Acțiuni recomandate:</b>');
+    lines.push('', '✅ <b>Actiuni recomandate:</b>');
     result.recommended_actions.forEach((action, i) => {
       lines.push(`${i + 1}. ${action}`);
     });
@@ -123,7 +203,7 @@ telegram.post('/webhook/telegram', async (c) => {
 
   // Verify secret token
   const secret = c.req.header('x-telegram-bot-api-secret-token');
-  if (c.env.TELEGRAM_WEBHOOK_SECRET && secret !== c.env.TELEGRAM_WEBHOOK_SECRET) {
+  if (!secret || secret !== c.env.TELEGRAM_WEBHOOK_SECRET) {
     return c.json({ error: { code: 'UNAUTHORIZED', message: 'Unauthorized', request_id: rid } }, 401);
   }
 
@@ -134,21 +214,82 @@ telegram.post('/webhook/telegram', async (c) => {
     return c.json({ error: { code: 'BAD_REQUEST', message: 'Invalid JSON', request_id: rid } }, 400);
   }
 
-  const message = update.message;
-  if (!message || !message.text) {
-    // Non-text updates — silently ack
-    return c.json({ ok: true });
-  }
-
-  const chatId = message.chat.id;
-  const userId = message.from?.id ?? chatId;
-  const text = message.text.trim();
   const token = c.env.TELEGRAM_BOT_TOKEN;
-
   if (!token) {
     console.error('[telegram] TELEGRAM_BOT_TOKEN not set');
     return c.json({ ok: true });
   }
+
+  const baseUrl = c.env.BASE_URL ?? 'https://ai-grija.ro';
+
+  // ── Callback query handling ───────────────────────────────────────────────
+
+  if (update.callback_query) {
+    const cq = update.callback_query;
+    const data = cq.data ?? '';
+
+    if (data === 'help') {
+      await answerCallbackQuery(token, cq.id, 'Trimite-mi orice mesaj suspect!');
+    } else if (data.startsWith('share:')) {
+      const hash = data.slice(6);
+      await answerCallbackQuery(token, cq.id, `${baseUrl}/card/${hash}`);
+    }
+
+    return c.json({ ok: true });
+  }
+
+  // ── Inline query handling ─────────────────────────────────────────────────
+
+  if (update.inline_query) {
+    const iq = update.inline_query;
+    if (iq.query.length >= 3) {
+      let classification: Awaited<ReturnType<typeof classify>>;
+      try {
+        classification = await classify(c.env.AI, iq.query);
+      } catch {
+        await answerInlineQuery(token, iq.id, []);
+        return c.json({ ok: true });
+      }
+
+      const hash = simpleHash(iq.query);
+      const emoji = verdictEmoji(classification.verdict);
+      const label = verdictLabel(classification.verdict);
+
+      await answerInlineQuery(token, iq.id, [
+        {
+          type: 'article',
+          id: hash,
+          title: `${emoji} ${label}`,
+          description: classification.explanation,
+          input_message_content: {
+            message_text: `${emoji} <b>${label}</b>\n\n${classification.explanation}\n\n🔗 ${baseUrl}/card/${hash}`,
+            parse_mode: 'HTML',
+          },
+        },
+      ]);
+    } else {
+      await answerInlineQuery(token, iq.id, []);
+    }
+    return c.json({ ok: true });
+  }
+
+  // ── Message handling ──────────────────────────────────────────────────────
+
+  const msg = update.message;
+  if (!msg) {
+    return c.json({ ok: true });
+  }
+
+  const isForwarded = !!(msg.forward_from || msg.forward_date || msg.forward_from_chat);
+  const text = (msg.text || msg.caption || '').trim();
+
+  if (!text) {
+    // Non-text updates — silently ack
+    return c.json({ ok: true });
+  }
+
+  const chatId = msg.chat.id;
+  const userId = msg.from?.id ?? chatId;
 
   // ── Commands ──────────────────────────────────────────────────────────────
 
@@ -156,7 +297,7 @@ telegram.post('/webhook/telegram', async (c) => {
     await sendMessage(
       token,
       chatId,
-      '👋 <b>Bine ai venit la ai-grija.ro Bot!</b>\n\nTrimite-mi orice mesaj suspect și îl verific instant.\n\nPoți trimite:\n• SMS-uri suspecte\n• URL-uri dubioase\n• Emailuri de phishing\n\nFolosește /help pentru instrucțiuni complete.'
+      'Bine ai venit la ai-grija.ro Bot! Trimite-mi orice mesaj suspect si il verific instant. Foloseste /help pentru instructiuni complete.'
     );
     return c.json({ ok: true });
   }
@@ -165,30 +306,20 @@ telegram.post('/webhook/telegram', async (c) => {
     await sendMessage(
       token,
       chatId,
-      '🛡️ <b>Cum folosești ai-grija.ro Bot:</b>\n\n' +
-        '1. <b>Trimite textul</b> unui mesaj suspect (SMS, email, notificare)\n' +
-        '2. <b>Sau trimite un URL</b> pe care nu știi dacă e sigur\n' +
-        '3. <b>Primești instant</b> o analiză cu verdict și sfaturi\n\n' +
-        '<b>Verdictele posibile:</b>\n' +
-        '🔴 PHISHING DETECTAT — mesaj periculos, nu accesa linkurile\n' +
-        '🟡 MESAJ SUSPECT — fii precaut\n' +
-        '🟢 PROBABIL SIGUR — pare legitim\n\n' +
-        '⚠️ Limita: 50 verificări/oră per utilizator.\n\n' +
-        'Raportează fraude la DNSC: <b>1911</b>'
+      'Cum folosesti ai-grija.ro Bot: Trimite textul unui mesaj suspect. Limita: 50 verificari/ora per utilizator. Raporteaza fraude la DNSC: 1911'
     );
     return c.json({ ok: true });
   }
 
-
   if (text === '/alerte' || text.startsWith('/alerte ')) {
     const activeCampaigns = CAMPAIGNS.filter(camp => camp.status === 'active');
     const severityEmoji = (s: string) => s === 'critical' ? '🔴' : s === 'high' ? '🟠' : '🟡';
-    const lines: string[] = ['📢 <b>Campanii active de phishing:</b>', ''];
+    const lines: string[] = ['Campanii active de phishing:', ''];
     for (const camp of activeCampaigns) {
-      lines.push(`${severityEmoji(camp.severity)} <b>${camp.name_ro}</b> — ${camp.impersonated_entity}`);
+      lines.push(`${severityEmoji(camp.severity)} ${camp.name_ro} — ${camp.impersonated_entity}`);
     }
     await sendMessage(token, chatId, lines.join('\n'), [
-      [{ text: '🔍 Vezi detalii pe ai-grija.ro/alerte', url: 'https://ai-grija.ro/alerte' }],
+      [{ text: 'Vezi detalii pe ai-grija.ro/alerte', url: 'https://ai-grija.ro/alerte' }],
     ]);
     return c.json({ ok: true });
   }
@@ -197,19 +328,26 @@ telegram.post('/webhook/telegram', async (c) => {
     await sendMessage(
       token,
       chatId,
-      'ℹ️ <b>Despre ai-grija.ro</b>\n\nai-grija.ro este un proiect civic gratuit creat de Zen Labs.\n\nVerifică mesaje suspecte, raportează la autorități, protejează-ți familia.\n\n🔗 ai-grija.ro | 📧 contact@ai-grija.ro'
+      'Despre ai-grija.ro: proiect civic gratuit creat de Zen Labs. Verifica mesaje suspecte, raporteaza la autoritati, protejeaza-ti familia. ai-grija.ro | contact@ai-grija.ro'
     );
     return c.json({ ok: true });
   }
 
   // ── Rate limit ────────────────────────────────────────────────────────────
 
-  const rl = await checkRateLimit(c.env.CACHE, `tg:${userId}`, 50, 3600);
-  if (!rl.allowed) {
+  let rlAllowed = true;
+  try {
+    const rl = await checkRateLimit(c.env.CACHE, `tg:${userId}`, 50, 3600);
+    rlAllowed = rl.allowed;
+  } catch {
+    // If rate limiter unavailable, allow the request
+    rlAllowed = true;
+  }
+  if (!rlAllowed) {
     await sendMessage(
       token,
       chatId,
-      '⏳ Ai atins limita de 50 verificări/oră. Te rugăm să încerci din nou mai târziu.'
+      'Ai atins limita de 50 verificari/ora. Te rugam sa incerci din nou mai tarziu.'
     );
     return c.json({ ok: true });
   }
@@ -224,24 +362,34 @@ telegram.post('/webhook/telegram', async (c) => {
     classification = await classify(c.env.AI, text, firstUrl);
   } catch (err) {
     console.error('[telegram] classify error:', err);
-    await sendMessage(token, chatId, '❌ A apărut o eroare la analiză. Te rugăm să încerci din nou.');
+    await sendMessage(token, chatId, 'A aparut o eroare la analiza. Te rugam sa incerci din nou.');
     return c.json({ ok: true });
   }
 
   // URL analysis flags
   const urlFlags: string[] = [];
-  for (const url of urls) {
-    const analysis = await analyzeUrl(url, c.env.GOOGLE_SAFE_BROWSING_KEY, c.env.VIRUSTOTAL_API_KEY, c.env.CACHE);
-    if (analysis.is_suspicious) {
-      urlFlags.push(...analysis.flags.map((f: string) => `[URL] ${f}`));
+  const hasUrlKeys = !!(c.env.GOOGLE_SAFE_BROWSING_KEY || c.env.VIRUSTOTAL_API_KEY);
+  if (hasUrlKeys) {
+    for (const url of urls) {
+      try {
+        const analysis = await analyzeUrl(url, c.env.GOOGLE_SAFE_BROWSING_KEY, c.env.VIRUSTOTAL_API_KEY, c.env.CACHE);
+        if (analysis.is_suspicious) {
+          urlFlags.push(...analysis.flags.map((f: string) => `[URL] ${f}`));
+        }
+      } catch {
+        // URL analysis unavailable, skip
+      }
     }
   }
 
   const replyText = formatAnalysisReply(classification, urlFlags);
+  const hash = simpleHash(text);
 
-  await sendMessage(token, chatId, replyText, [
-    [{ text: '🔍 Verifică pe ai-grija.ro', url: 'https://ai-grija.ro' }],
-  ]);
+  const keyboard = isForwarded
+    ? buildVerdictKeyboard(hash, baseUrl)
+    : [[{ text: 'Verifica pe ai-grija.ro', url: baseUrl }]];
+
+  await sendMessage(token, chatId, replyText, keyboard);
 
   return c.json({ ok: true });
 });

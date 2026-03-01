@@ -17,6 +17,10 @@ import { upload } from './routes/upload';
 import { checkQr } from './routes/check-qr';
 import { adminFlags } from './routes/admin-flags';
 import { blog } from './routes/blog';
+import { policies } from './routes/policies';
+import { card } from './routes/card';
+import { feed } from './routes/feed';
+import { weekly } from './routes/weekly';
 import { campaignsRouter } from './admin/campaigns';
 import { handleScheduled } from './lib/cron-handler';
 import { admin } from './admin';
@@ -95,7 +99,11 @@ app.route('/', og);
 app.route('/', upload);
 app.route('/', checkQr);
 app.route('/', blog);
+app.route('/', policies);
 app.route('/', campaignsRouter);
+app.route('/', card);
+app.route('/', feed);
+app.route('/', weekly);
 
 // Admin host routing
 // Requests from admin.ai-grija.ro are handled by the admin app

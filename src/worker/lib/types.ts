@@ -22,6 +22,9 @@ export interface Env {
   SANITY_WEBHOOK_SECRET?: string;
   SANITY_WRITE_TOKEN?: string;
   CF_ACCESS_TEAM_DOMAIN?: string;
+  ANALYTICS?: AnalyticsEngineDataset;
+  TELEGRAM_ADMIN_CHAT_ID?: string;
+  LAUNCHDARKLY_SDK_KEY?: string;
 }
 
 export interface Campaign {

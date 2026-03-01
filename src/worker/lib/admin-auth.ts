@@ -148,11 +148,17 @@ export const adminAuth: MiddlewareHandler<{ Bindings: Env; Variables: AdminVaria
   const jwt = c.req.header('CF-Access-Jwt-Assertion');
   const teamDomain = (c.env as Env & { CF_ACCESS_TEAM_DOMAIN?: string }).CF_ACCESS_TEAM_DOMAIN;
 
-  // Dev mode: no JWT header and no team domain configured
+  // Dev mode: only bypass auth on localhost with no team domain configured.
+  // In production CF_ACCESS_TEAM_DOMAIN must be set and Zero Trust enforces auth.
   if (!jwt && !teamDomain) {
-    console.warn('[admin-auth] DEV MODE — no CF Access JWT, allowing access without authentication');
-    c.set('adminEmail', 'dev@localhost');
-    return next();
+    const baseUrl = (c.env as Env & { BASE_URL?: string }).BASE_URL ?? '';
+    if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
+      console.warn('[admin-auth] DEV MODE — localhost detected, allowing access without authentication');
+      c.set('adminEmail', 'dev@localhost');
+      return next();
+    }
+    // Production with no CF Access configured — deny
+    return c.html('<h1>401 Unauthorized</h1><p>CF Access not configured. Set CF_ACCESS_TEAM_DOMAIN.</p>', 401);
   }
 
   if (!jwt) {

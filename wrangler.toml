@@ -31,6 +31,11 @@ database_name = "ai-grija-admin"
 # Then replace the placeholder below with the actual ID
 database_id = "TBD"
 
+[[d1_databases]]
+binding = "ADMIN_DB"
+database_name = "ai-grija-admin"
+database_id = "TBD"
+
 [[queues.producers]]
 queue = "draft-generation"
 binding = "DRAFT_QUEUE"
@@ -45,6 +50,13 @@ max_batch_size = 5
 
 [vars]
 BASE_URL = "https://ai-grija.ro"
+
+
+[triggers]
+crons = ["0 0 * * *", "0 1 * * *", "0 6 * * 1"]
+# 00:00 daily = campaign scraper
+# 01:00 daily = R2 share card cleanup
+# 06:00 Monday = weekly digest
 
 [[analytics_engine_datasets]]
 binding = "ANALYTICS"
@@ -71,6 +83,26 @@ bucket_name = "ai-grija-share-cards-preview"
 binding = "DB"
 database_name = "ai-grija-admin-preview"
 database_id = "TBD_PREVIEW"
+
+
+[[env.preview.d1_databases]]
+binding = "ADMIN_DB"
+database_name = "ai-grija-admin-preview"
+database_id = "TBD_PREVIEW"
+
+[env.preview.ai]
+binding = "AI"
+
+[[env.preview.queues.producers]]
+queue = "draft-generation-preview"
+binding = "DRAFT_QUEUE"
+
+[[env.preview.queues.consumers]]
+queue = "draft-generation-preview"
+max_batch_size = 5
+
+[env.preview.triggers]
+crons = ["0 0 * * *"]
 
 [[env.preview.analytics_engine_datasets]]
 binding = "ANALYTICS"

@@ -3,7 +3,7 @@ import { AlertCircle, ShieldAlert, AlertTriangle, ShieldCheck, CheckCircle, Exte
 import { checkContent, checkImage } from '../utils/api';
 import { redactPII } from '../lib/redactor';
 import ReportForm from './ReportForm';
-import { useTranslation } from '../i18n/index.js';
+import { useTranslation } from '../i18n/index.jsx';
 
 export default function Checker() {
   const [text, setText] = useState('');

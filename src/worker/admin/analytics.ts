@@ -11,20 +11,27 @@ analytics.get('/admin/analytics', async (c) => {
     return c.html('<h1>ADMIN_DB not configured</h1>', 503);
   }
 
-  const [severityRows, monthRows] = await Promise.all([
-    c.env.ADMIN_DB.prepare('SELECT severity, COUNT(*) as count FROM campaigns GROUP BY severity').all(),
-    c.env.ADMIN_DB.prepare("SELECT strftime('%Y-%m', created_at) as month, COUNT(*) as count FROM campaigns GROUP BY month ORDER BY month").all(),
-  ]);
+  let severityRows: { results: { severity: string; count: number }[] } = { results: [] };
+  let monthRows: { results: { month: string; count: number }[] } = { results: [] };
+  try {
+    [severityRows, monthRows] = await Promise.all([
+      c.env.ADMIN_DB.prepare('SELECT severity, COUNT(*) as count FROM campaigns GROUP BY severity').all() as Promise<{ results: { severity: string; count: number }[] }>,
+      c.env.ADMIN_DB.prepare("SELECT strftime('%Y-%m', created_at) as month, COUNT(*) as count FROM campaigns GROUP BY month ORDER BY month").all() as Promise<{ results: { month: string; count: number }[] }>,
+    ]);
+  } catch (err) {
+    console.error('[admin/analytics] D1 query failed:', err);
+    return c.html('<h1>Eroare baza de date</h1>', 500);
+  }
 
   const severityData = JSON.stringify(
-    (severityRows.results as { severity: string; count: number }[]).map(r => ({
+    severityRows.results.map(r => ({
       label: r.severity,
       count: r.count,
     }))
   );
 
   const monthData = JSON.stringify(
-    (monthRows.results as { month: string; count: number }[]).map(r => ({
+    monthRows.results.map(r => ({
       label: r.month,
       count: r.count,
     }))

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Copy, ExternalLink, Check, Trash2, FileText } from 'lucide-react';
 import { generateReport } from '../lib/report-generator';
-import { useTranslation } from '../i18n/index.js';
+import { useTranslation } from '../i18n/index.jsx';
 
 const STORAGE_KEY = 'aigrija_identity';
 

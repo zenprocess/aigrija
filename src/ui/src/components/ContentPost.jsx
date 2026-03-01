@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Calendar, User, Clock, Share2, Volume2, Tag } from 'lucide-react';
-import { useTranslation } from '../i18n/index.js';
+import { useTranslation } from '../i18n/index.jsx';
 
 function PortableTextRenderer({ body }) {
   if (!body) return null;

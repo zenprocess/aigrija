@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileText, ArrowLeft } from 'lucide-react';
-import { useTranslation } from '../i18n/index.js';
+import { useTranslation } from '../i18n/index.jsx';
 
 export default function TermsOfService() {
   const { t } = useTranslation();

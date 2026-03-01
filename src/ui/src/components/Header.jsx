@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Menu, X, Globe, ChevronDown } from 'lucide-react';
-import { useTranslation } from '../i18n/index.js';
+import { useTranslation } from '../i18n/index.jsx';
 
 const CONTENT_NAV = [
   { key: 'amenintari', i18nKey: 'content.threats' },

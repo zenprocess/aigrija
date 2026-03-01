@@ -12,13 +12,18 @@ export async function aggregateSignals(env: Env): Promise<{ emerging: EmergingCa
   // Check cache first
   const cached = await env.CACHE.get(CACHE_KEY);
   if (cached) {
-    return JSON.parse(cached) as { emerging: EmergingCampaign[] };
+    try {
+      return JSON.parse(cached) as { emerging: EmergingCampaign[] };
+    } catch {
+      // Corrupted cache entry — fall through to recompute
+    }
   }
 
   const cutoff = Date.now() - LOOKBACK_DAYS * 24 * 60 * 60 * 1000;
 
   // List all report keys — read signal data from KV metadata (zero individual gets)
-  const listResult = await env.CACHE.list({ prefix: REPORT_PREFIX });
+  // limit: 1000 guards against unbounded list scans
+  const listResult = await env.CACHE.list({ prefix: REPORT_PREFIX, limit: 1000 });
   const signals: ReportSignal[] = [];
   for (const key of listResult.keys) {
     if (key.metadata) {

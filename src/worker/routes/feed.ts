@@ -15,14 +15,16 @@ const FEED_DISPLAY = 5;
 
 export async function prependFeedEntry(cache: KVNamespace, entry: FeedEntry): Promise<void> {
   const raw = await cache.get(FEED_KEY);
-  const existing: FeedEntry[] = raw ? JSON.parse(raw) : [];
+  let existing: FeedEntry[] = [];
+  try { existing = raw ? JSON.parse(raw) : []; } catch { existing = []; }
   const updated = [entry, ...existing].slice(0, FEED_MAX);
   await cache.put(FEED_KEY, JSON.stringify(updated));
 }
 
 feed.get('/api/feed/latest', async (c) => {
   const raw = await c.env.CACHE.get(FEED_KEY);
-  const entries: FeedEntry[] = raw ? JSON.parse(raw) : [];
+  let entries: FeedEntry[] = [];
+  try { entries = raw ? JSON.parse(raw) : []; } catch { entries = []; }
   return c.json(entries.slice(0, FEED_DISPLAY));
 });
 

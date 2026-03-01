@@ -1,5 +1,5 @@
 import React from "react";
-import { useTranslation } from '../i18n/index.js';
+import { useTranslation } from '../i18n/index.jsx';
 
 export default function About() {
   const { t } = useTranslation();

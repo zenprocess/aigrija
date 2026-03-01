@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, ArrowRight } from 'lucide-react';
 import { fetchCounter } from '../utils/api';
-import { useTranslation } from '../i18n/index.js';
+import { useTranslation } from '../i18n/index.jsx';
 
 export default function Hero() {
   const [count, setCount] = useState(0);

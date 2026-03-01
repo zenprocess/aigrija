@@ -126,14 +126,21 @@ campaignsRouter.get('/campaigns/api/list', async (c) => {
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
-  const countRow = await c.env.DB.prepare(
-    `SELECT COUNT(*) as total FROM campaigns ${where}`
-  ).bind(...params).first<{ total: number }>();
+  let countRow: { total: number } | null = null;
+  let rows: { results: DbCampaign[] } = { results: [] };
+  try {
+    countRow = await c.env.DB.prepare(
+      `SELECT COUNT(*) as total FROM campaigns ${where}`
+    ).bind(...params).first<{ total: number }>();
 
-  const rows = await c.env.DB.prepare(
-    `SELECT id, title, slug, source, severity, draft_status, published_at, created_at
-     FROM campaigns ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
-  ).bind(...params, limitNum, offset).all<DbCampaign>();
+    rows = await c.env.DB.prepare(
+      `SELECT id, title, slug, source, severity, draft_status, published_at, created_at
+       FROM campaigns ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
+    ).bind(...params, limitNum, offset).all<DbCampaign>();
+  } catch (err) {
+    console.error('[admin/campaigns] D1 list query failed:', err);
+    return c.json({ error: { code: 'DB_ERROR', message: 'Database operation failed' } }, 500);
+  }
 
   return c.json({
     data: rows.results,
@@ -146,16 +153,23 @@ campaignsRouter.get('/campaigns/api/list', async (c) => {
 
 // --- API: single campaign ---
 campaignsRouter.get('/campaigns/api/:id', async (c) => {
-  const row = await c.env.DB.prepare(
-    'SELECT * FROM campaigns WHERE id = ?'
-  ).bind(c.req.param('id')).first<DbCampaign>();
+  let row: DbCampaign | null = null;
+  try {
+    row = await c.env.DB.prepare(
+      'SELECT * FROM campaigns WHERE id = ?'
+    ).bind(c.req.param('id')).first<DbCampaign>();
+  } catch (err) {
+    console.error('[admin/campaigns] D1 get query failed:', err);
+    return c.json({ error: { code: 'DB_ERROR', message: 'Database operation failed' } }, 500);
+  }
   if (!row) return c.json({ error: 'Not found' }, 404);
 
-  return c.json({
-    ...row,
-    affected_brands: row.affected_brands ? JSON.parse(row.affected_brands) : [],
-    iocs: row.iocs ? JSON.parse(row.iocs) : [],
-  });
+  let affected_brands: string[] = [];
+  let iocs: string[] = [];
+  try { affected_brands = row.affected_brands ? JSON.parse(row.affected_brands) : []; } catch { affected_brands = []; }
+  try { iocs = row.iocs ? JSON.parse(row.iocs) : []; } catch { iocs = []; }
+
+  return c.json({ ...row, affected_brands, iocs });
 });
 
 // --- API: update campaign ---
@@ -177,9 +191,14 @@ campaignsRouter.put('/campaigns/api/:id', async (c) => {
   if (!updates.length) return c.json({ error: 'No fields to update' }, 400);
   vals.push(id);
 
-  await c.env.DB.prepare(
-    `UPDATE campaigns SET ${updates.join(', ')} WHERE id = ?`
-  ).bind(...vals).run();
+  try {
+    await c.env.DB.prepare(
+      `UPDATE campaigns SET ${updates.join(', ')} WHERE id = ?`
+    ).bind(...vals).run();
+  } catch (err) {
+    console.error('[admin/campaigns] D1 update failed:', err);
+    return c.json({ error: { code: 'DB_ERROR', message: 'Database operation failed' } }, 500);
+  }
 
   return c.json({ ok: true, id });
 });
@@ -193,17 +212,27 @@ campaignsRouter.post('/campaigns/api/create', async (c) => {
   const id = crypto.randomUUID();
   const slug = body.slug ?? body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 80);
 
-  await c.env.DB.prepare(
-    `INSERT INTO campaigns (id, title, slug, source, source_url, threat_type, severity, draft_status, archived, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 0, ?)`
-  ).bind(id, body.title, slug, body.source ?? 'manual', body.source_url ?? null, body.threat_type ?? null, body.severity ?? null, new Date().toISOString()).run();
+  try {
+    await c.env.DB.prepare(
+      `INSERT INTO campaigns (id, title, slug, source, source_url, threat_type, severity, draft_status, archived, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 0, ?)`
+    ).bind(id, body.title, slug, body.source ?? 'manual', body.source_url ?? null, body.threat_type ?? null, body.severity ?? null, new Date().toISOString()).run();
+  } catch (err) {
+    console.error('[admin/campaigns] D1 insert failed:', err);
+    return c.json({ error: { code: 'DB_ERROR', message: 'Database operation failed' } }, 500);
+  }
 
   return c.json({ ok: true, id }, 201);
 });
 
 // --- API: soft delete (archive) ---
 campaignsRouter.delete('/campaigns/api/:id', async (c) => {
-  await c.env.DB.prepare('UPDATE campaigns SET archived = 1 WHERE id = ?').bind(c.req.param('id')).run();
+  try {
+    await c.env.DB.prepare('UPDATE campaigns SET archived = 1 WHERE id = ?').bind(c.req.param('id')).run();
+  } catch (err) {
+    console.error('[admin/campaigns] D1 delete failed:', err);
+    return c.json({ error: { code: 'DB_ERROR', message: 'Database operation failed' } }, 500);
+  }
   return c.json({ ok: true });
 });
 
@@ -226,14 +255,20 @@ campaignsRouter.get('/admin/campaigns', async (c) => {
   if (status) { conditions.push('draft_status = ?'); params.push(status); }
   const where = `WHERE ${conditions.join(' AND ')}`;
 
-  const countRow = await c.env.DB.prepare(`SELECT COUNT(*) as total FROM campaigns ${where}`).bind(...params).first<{ total: number }>();
+  let countRow: { total: number } | null = null;
+  let rows: { results: DbCampaign[] } = { results: [] };
+  try {
+    countRow = await c.env.DB.prepare(`SELECT COUNT(*) as total FROM campaigns ${where}`).bind(...params).first<{ total: number }>();
+    rows = await c.env.DB.prepare(
+      `SELECT id, title, slug, source, severity, draft_status, published_at, created_at
+       FROM campaigns ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
+    ).bind(...params, limit, offset).all<DbCampaign>();
+  } catch (err) {
+    console.error('[admin/campaigns] D1 HTML list query failed:', err);
+    return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>'), 500);
+  }
   const total = countRow?.total ?? 0;
   const pages = Math.ceil(total / limit);
-
-  const rows = await c.env.DB.prepare(
-    `SELECT id, title, slug, source, severity, draft_status, published_at, created_at
-     FROM campaigns ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
-  ).bind(...params, limit, offset).all<DbCampaign>();
 
   const adminKey = getCookieValue(c.req.header('Cookie') ?? '', 'admin_key') || url.searchParams.get('admin_key') || '';
   const qs = (extra: Record<string, string>) => {
@@ -307,11 +342,19 @@ campaignsRouter.get('/admin/campaigns', async (c) => {
 // --- HTML: campaign detail/edit ---
 campaignsRouter.get('/admin/campaigns/:id', async (c) => {
   if (c.req.param('id') === 'new') return c.redirect('/admin/campaigns/new');
-  const row = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(c.req.param('id')).first<DbCampaign>();
+  let row: DbCampaign | null = null;
+  try {
+    row = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(c.req.param('id')).first<DbCampaign>();
+  } catch (err) {
+    console.error('[admin/campaigns] D1 detail query failed:', err);
+    return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>'), 500);
+  }
   if (!row) return c.html(adminLayout('Not Found', '<p>Campanie negasita.</p>'), 404);
 
-  const brands: string[] = row.affected_brands ? JSON.parse(row.affected_brands) : [];
-  const iocs: string[] = row.iocs ? JSON.parse(row.iocs) : [];
+  let brands: string[] = [];
+  let iocs: string[] = [];
+  try { brands = row.affected_brands ? JSON.parse(row.affected_brands) : []; } catch { brands = []; }
+  try { iocs = row.iocs ? JSON.parse(row.iocs) : []; } catch { iocs = []; }
   const adminKey = new URL(c.req.url).searchParams.get('admin_key') ?? '';
 
   const body = `
@@ -419,9 +462,15 @@ campaignsRouter.get('/admin/campaigns/new', async (c) => {
 // --- scraper runs page (redirect from /admin/scrapers) ---
 campaignsRouter.get('/admin/scrapers', async (c) => {
   const adminKey = new URL(c.req.url).searchParams.get('admin_key') ?? '';
-  const rows = await c.env.DB.prepare(
-    'SELECT * FROM scraper_runs ORDER BY run_at DESC LIMIT 50'
-  ).all<{ id: string; source: string; items_found: number; items_new: number; errors: string | null; run_at: string }>();
+  let rows: { results: { id: string; source: string; items_found: number; items_new: number; errors: string | null; run_at: string }[] } = { results: [] };
+  try {
+    rows = await c.env.DB.prepare(
+      'SELECT * FROM scraper_runs ORDER BY run_at DESC LIMIT 50'
+    ).all<{ id: string; source: string; items_found: number; items_new: number; errors: string | null; run_at: string }>();
+  } catch (err) {
+    console.error('[admin/scrapers] D1 query failed:', err);
+    return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>'), 500);
+  }
 
   const tableRows = rows.results.map(r => `
     <tr class="border-b text-sm">

@@ -85,9 +85,10 @@ checkQr.post('/api/check-qr', async (c) => {
   if (!isValidUrl(rawData)) {
     return c.json(
       {
-        error: 'QR code does not contain a URL',
+        error: { code: 'INVALID_QR', message: 'QR code does not contain a URL' },
         is_url: false,
         raw_data: rawData,
+        request_id: rid,
       },
       422,
     );

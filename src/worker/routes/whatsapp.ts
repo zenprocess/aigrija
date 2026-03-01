@@ -306,9 +306,14 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
 
         const urlFlags: string[] = [];
         for (const url of urls) {
-          const analysis = await analyzeUrl(url, c.env.GOOGLE_SAFE_BROWSING_KEY, c.env.VIRUSTOTAL_API_KEY, c.env.CACHE);
-          if (analysis.is_suspicious) {
-            urlFlags.push(...analysis.flags.map((f: string) => `[URL] ${f}`));
+          try {
+            const analysis = await analyzeUrl(url, c.env.GOOGLE_SAFE_BROWSING_KEY, c.env.VIRUSTOTAL_API_KEY, c.env.CACHE);
+            if (analysis.is_suspicious) {
+              urlFlags.push(...analysis.flags.map((f: string) => `[URL] ${f}`));
+            }
+          } catch (err) {
+            console.error(`[whatsapp] URL analysis failed for ${url}:`, err);
+            // Continue to next URL
           }
         }
 

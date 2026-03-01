@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, ArrowRight, ShieldAlert } from 'lucide-react';
 import { fetchAlerts } from '../utils/api';
-import { useTranslation } from '../i18n/index.js';
+import { useTranslation } from '../i18n/index.jsx';
 
 export default function ActiveAlerts() {
   const [alerts, setAlerts] = useState([]);

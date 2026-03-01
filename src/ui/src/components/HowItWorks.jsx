@@ -1,6 +1,6 @@
 import React from 'react';
 import { ClipboardPaste, Brain, CheckCircle } from 'lucide-react';
-import { useTranslation } from '../i18n/index.js';
+import { useTranslation } from '../i18n/index.jsx';
 
 export default function HowItWorks() {
   const { t } = useTranslation();

@@ -12,17 +12,6 @@ function makeKV(data: Record<string, string> = {}): KVNamespace {
   } as unknown as KVNamespace;
 }
 
-vi.mock("../lib/url-analyzer", () => ({
-  analyzeUrl: vi.fn().mockResolvedValue({
-    url: "https://example.com",
-    verdict: "likely_safe",
-    confidence: 0.9,
-    red_flags: [],
-    explanation: "URL appears safe",
-    recommended_actions: [],
-  }),
-}));
-
 function makeEnv(overrides: Record<string, unknown> = {}): any {
   return {
     CACHE: makeKV(),

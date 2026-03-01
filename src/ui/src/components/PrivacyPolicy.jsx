@@ -3,7 +3,7 @@ import { ShieldCheck, ArrowLeft } from 'lucide-react';
 import { useTranslation } from '../i18n/index.jsx';
 
 export default function PrivacyPolicy() {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
 
   return (
     <div className="min-h-screen flex flex-col relative selection:bg-blue-500/30 selection:text-white">
@@ -85,6 +85,14 @@ export default function PrivacyPolicy() {
             <h2 className="text-xl font-semibold text-white">{t('privacy.s7_title')}</h2>
             <p className="text-gray-300 leading-relaxed">{t('privacy.s7_body')}</p>
           </section>
+          {lang !== 'ro' && (
+            <div
+              data-testid="privacy-ro-disclaimer"
+              className="text-sm text-gray-400 italic mt-6 pt-4 border-t border-gray-100"
+            >
+              {t('legal.disclaimer_ro_prevails')} / Versiunea în limba română prevalează.
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -3,9 +3,9 @@
  * Supports: ro (default), bg, hu, uk
  */
 
-export type SupportedLang = 'ro' | 'bg' | 'hu' | 'uk';
+export type SupportedLang = 'ro' | 'bg' | 'hu' | 'uk' | 'en';
 
-const SUPPORTED_LANGS: SupportedLang[] = ['ro', 'bg', 'hu', 'uk'];
+const SUPPORTED_LANGS: SupportedLang[] = ['ro', 'bg', 'hu', 'uk', 'en'];
 
 export function normalizeLang(lang: string | null | undefined): SupportedLang {
   if (lang && SUPPORTED_LANGS.includes(lang as SupportedLang)) {
@@ -66,6 +66,16 @@ const MESSAGES: Record<SupportedLang, Messages> = {
     'error.content_required': 'Текст повідомлення або зображення є обов\'язковим.',
     'success.check_complete': 'Перевірку завершено.',
     'success.report_submitted': 'Звіт успішно надіслано.',
+  },
+  en: {
+    'error.rate_limit': 'Too many requests. Try again in {{seconds}} seconds.',
+    'error.validation': 'Invalid data. Please check the completed fields.',
+    'error.generic': 'An error occurred. Please try again.',
+    'error.image_too_large': 'Image exceeds the 5MB limit.',
+    'error.unsupported_format': 'Unsupported image format. Use PNG, JPG or WEBP.',
+    'error.content_required': 'Message text or an image is required.',
+    'success.check_complete': 'Check complete.',
+    'success.report_submitted': 'Report submitted successfully.',
   },
 };
 

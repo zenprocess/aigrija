@@ -5,7 +5,7 @@ import { adminLayout } from './layout';
 
 type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 
-const SUPPORTED_LANGS = ['ro', 'bg', 'hu', 'uk'] as const;
+const SUPPORTED_LANGS = ['ro', 'bg', 'hu', 'uk', 'en'] as const;
 type Lang = typeof SUPPORTED_LANGS[number];
 
 const LANG_LABELS: Record<Lang, string> = {
@@ -13,6 +13,14 @@ const LANG_LABELS: Record<Lang, string> = {
   bg: 'Bulgara',
   hu: 'Maghiara',
   uk: 'Ucraineana',
+  en: 'Engleza',
+};
+
+const LANG_FULL_NAMES: Record<Exclude<Lang, 'ro'>, string> = {
+  en: 'English',
+  bg: 'Bulgarian',
+  hu: 'Hungarian',
+  uk: 'Ukrainian',
 };
 
 // Flatten nested JSON into dot-separated keys
@@ -34,9 +42,7 @@ import roJson from '../../ui/src/i18n/ro.json';
 const RO_FLAT = flattenKeys(roJson as Record<string, unknown>);
 
 async function getLangKeys(kv: KVNamespace, lang: Lang): Promise<Record<string, string>> {
-  // Start with RO as base (only for reference), for other langs start empty
   const base: Record<string, string> = lang === 'ro' ? { ...RO_FLAT } : {};
-  // Apply KV overrides
   try {
     const list = await kv.list({ prefix: `i18n:${lang}:` });
     await Promise.all(list.keys.map(async ({ name }) => {
@@ -76,6 +82,8 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
     !search || k.toLowerCase().includes(search.toLowerCase())
   );
 
+  const isRoLang = activeLang === 'ro';
+
   const rows = filteredEntries.map(([key, roVal]) => {
     const currentVal = keys[key] ?? '';
     const isOverride = overrides.has(key);
@@ -96,6 +104,8 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
                      placeholder="Traducere...">
               <button onclick="saveSingle('${activeLang}','${key}',this)"
                       class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs shrink-0">Salv</button>
+              <button onclick="autoTranslateSingle('${activeLang}','${key}',this)"
+                      class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs shrink-0" title="Auto-traducere AI">AI</button>
               ${isOverride ? `<button onclick="deleteOverride('${activeLang}','${key}',this)"
                       class="bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded text-xs shrink-0">X</button>` : ''}
             </div>`
@@ -116,6 +126,8 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
       <a href="/admin/traduceri/api/export?lang=${activeLang}"
          class="bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-4 py-2 rounded-lg text-sm flex items-center">Export JSON</a>
       <button onclick="showImport()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-lg text-sm">Import JSON</button>
+      ${!isRoLang ? `<button onclick="autoTranslateAll('${activeLang}')" id="auto-translate-all-btn"
+         class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm">Auto-traducere lipsa</button>` : ''}
     </div>
 
     <div id="import-panel" class="hidden bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4">
@@ -123,6 +135,10 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
       <textarea id="import-json" rows="6" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono mb-2" placeholder='{"key.path": "valoare", ...}'></textarea>
       <button onclick="bulkImport('${activeLang}')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm">Importa</button>
       <div id="import-result" class="mt-2 text-sm"></div>
+    </div>
+
+    <div id="auto-translate-progress" class="hidden bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+      <p class="text-sm text-purple-700" id="auto-translate-msg">Se traduce...</p>
     </div>
 
     <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -137,6 +153,7 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
     </div>
 
     <div id="save-notify" class="fixed bottom-4 right-4 hidden bg-green-600 text-white px-4 py-2 rounded-lg text-sm shadow-lg">Salvat!</div>
+    <div id="ai-notify" class="fixed bottom-4 right-4 hidden bg-purple-600 text-white px-4 py-2 rounded-lg text-sm shadow-lg">Tradus AI!</div>
 
     <script>
     async function saveSingle(lang, key, btn) {
@@ -147,7 +164,7 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({lang, key, value: input.value})
       });
-      if (res.ok) { showNotify(); btn.textContent = 'OK'; setTimeout(() => { btn.textContent = 'Salv'; location.reload(); }, 1500); }
+      if (res.ok) { showNotify('save-notify'); btn.textContent = 'OK'; setTimeout(() => { btn.textContent = 'Salv'; location.reload(); }, 1500); }
     }
     async function deleteOverride(lang, key, btn) {
       if (!confirm('Stergi override-ul? Se va reveni la valoarea statica.')) return;
@@ -171,10 +188,63 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
       document.getElementById('import-result').textContent = j.imported ? 'Importat ' + j.imported + ' chei.' : 'Eroare import.';
     }
     function showImport() { document.getElementById('import-panel').classList.toggle('hidden'); }
-    function showNotify() {
-      const el = document.getElementById('save-notify');
+    function showNotify(id) {
+      const el = document.getElementById(id || 'save-notify');
       el.classList.remove('hidden');
       setTimeout(() => el.classList.add('hidden'), 2000);
+    }
+    async function autoTranslateSingle(lang, key, btn) {
+      const row = btn.closest('tr');
+      const input = row.querySelector('.translation-input');
+      const sourceText = row.querySelectorAll('td')[1].textContent.trim();
+      const origText = btn.textContent;
+      btn.textContent = '...';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/admin/traduceri/api/auto-translate', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({lang, key, sourceText})
+        });
+        const j = await res.json();
+        if (j.ok) {
+          input.value = j.translation;
+          showNotify('ai-notify');
+        } else {
+          alert('Eroare auto-traducere: ' + (j.error || 'unknown'));
+        }
+      } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
+    }
+    async function autoTranslateAll(lang) {
+      const btn = document.getElementById('auto-translate-all-btn');
+      const progress = document.getElementById('auto-translate-progress');
+      const msg = document.getElementById('auto-translate-msg');
+      btn.disabled = true;
+      btn.textContent = 'Se traduce...';
+      progress.classList.remove('hidden');
+      msg.textContent = 'Se traduc cheile lipsa, asteptati...';
+      try {
+        const res = await fetch('/admin/traduceri/api/auto-translate-all', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({lang})
+        });
+        const j = await res.json();
+        if (j.ok) {
+          msg.textContent = 'Tradus: ' + j.translated + ' chei noi. Sarite (deja exista): ' + j.skipped + '.';
+          setTimeout(() => location.reload(), 2000);
+        } else {
+          msg.textContent = 'Eroare: ' + (j.error || 'unknown');
+        }
+      } catch(e) {
+        msg.textContent = 'Eroare de retea: ' + e.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Auto-traducere lipsa';
+      }
     }
     </script>`;
 
@@ -239,4 +309,72 @@ translationsAdmin.get('/api/export', async (c) => {
       'Content-Disposition': `attachment; filename="${lang}.json"`,
     },
   });
+});
+
+translationsAdmin.post('/api/auto-translate', async (c) => {
+  const { lang, key, sourceText } = await c.req.json<{ lang: string; key: string; sourceText: string }>();
+  if (!lang || !key || !sourceText) return c.json({ error: 'Missing fields' }, 400);
+  if (!SUPPORTED_LANGS.includes(lang as Lang) || lang === 'ro') return c.json({ error: 'Invalid lang' }, 400);
+
+  const targetLanguage = LANG_FULL_NAMES[lang as Exclude<Lang, 'ro'>];
+  const systemPrompt = `You are a professional translator. Translate the following text from Romanian to ${targetLanguage}. Return ONLY the translation, nothing else. Keep the same tone, formality, and formatting.`;
+
+  try {
+    const result = await (c.env.AI.run as Function)('@cf/meta/llama-3.1-8b-instruct', {
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: sourceText },
+      ],
+    }) as { response?: string };
+
+    const translation = result.response?.trim() ?? '';
+    if (!translation) return c.json({ error: 'Empty AI response' }, 500);
+
+    await c.env.CACHE.put(`i18n:${lang}:${key}`, translation);
+    return c.json({ ok: true, translation });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return c.json({ error: message }, 500);
+  }
+});
+
+translationsAdmin.post('/api/auto-translate-all', async (c) => {
+  const { lang } = await c.req.json<{ lang: string }>();
+  if (!lang || !SUPPORTED_LANGS.includes(lang as Lang) || lang === 'ro') {
+    return c.json({ error: 'Invalid lang' }, 400);
+  }
+
+  const targetLanguage = LANG_FULL_NAMES[lang as Exclude<Lang, 'ro'>];
+  const existingOverrides = await getKvOverrides(c.env.CACHE, lang as Lang);
+
+  let translated = 0;
+  let skipped = 0;
+
+  for (const [key, sourceText] of Object.entries(RO_FLAT)) {
+    if (existingOverrides.has(key)) {
+      skipped++;
+      continue;
+    }
+
+    const systemPrompt = `You are a professional translator. Translate the following text from Romanian to ${targetLanguage}. Return ONLY the translation, nothing else. Keep the same tone, formality, and formatting.`;
+
+    try {
+      const result = await (c.env.AI.run as Function)('@cf/meta/llama-3.1-8b-instruct', {
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: sourceText },
+        ],
+      }) as { response?: string };
+
+      const translation = result.response?.trim();
+      if (translation) {
+        await c.env.CACHE.put(`i18n:${lang}:${key}`, translation);
+        translated++;
+      }
+    } catch {
+      // skip failed keys, best effort
+    }
+  }
+
+  return c.json({ ok: true, translated, skipped });
 });

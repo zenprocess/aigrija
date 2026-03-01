@@ -59,7 +59,7 @@ const CATEGORY_ENDPOINTS = {
 };
 
 export default function ContentPost({ slug, category }) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const [post, setPost] = useState(null);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -180,6 +180,14 @@ export default function ContentPost({ slug, category }) {
                     </a>
                   ))}
                 </div>
+              </div>
+            )}
+            {lang !== 'ro' && (
+              <div
+                data-testid="content-post-ro-disclaimer"
+                className="text-sm text-gray-400 italic mt-6 pt-4 border-t border-gray-100"
+              >
+                {t('legal.disclaimer_ro_prevails')} / Versiunea în limba română prevalează.
               </div>
             )}
           </article>

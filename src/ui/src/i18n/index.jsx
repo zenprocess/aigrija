@@ -3,12 +3,14 @@ import ro from './ro.json';
 import bg from './bg.json';
 import hu from './hu.json';
 import uk from './uk.json';
+import en from './en.json';
 
 export const LANGUAGES = {
   ro: 'RO',
   bg: 'BG',
   hu: 'HU',
   uk: 'UK',
+  en: 'EN',
 };
 
 export const LANGUAGE_NAMES = {
@@ -16,9 +18,10 @@ export const LANGUAGE_NAMES = {
   bg: 'Български',
   hu: 'Magyar',
   uk: 'Українська',
+  en: 'English',
 };
 
-const TRANSLATIONS = { ro, bg, hu, uk };
+const TRANSLATIONS = { ro, bg, hu, uk, en };
 const LS_KEY = 'aigrija_lang';
 const SUPPORTED = Object.keys(LANGUAGES);
 

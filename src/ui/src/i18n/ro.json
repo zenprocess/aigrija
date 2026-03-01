@@ -197,5 +197,8 @@
     "stories": "Povești reale",
     "reports": "Rapoarte",
     "press": "Comunicate"
+  },
+  "legal": {
+    "disclaimer_ro_prevails": "Versiunea în limba română prevalează."
   }
 }

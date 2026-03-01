@@ -23,6 +23,20 @@ const LANG_FULL_NAMES: Record<Exclude<Lang, 'ro'>, string> = {
   uk: 'Ukrainian',
 };
 
+const MAX_PER_REQUEST = 50;
+
+async function aiTranslate(ai: Ai, targetLang: string, sourceText: string): Promise<string> {
+  const systemPrompt = `You are a professional translator. Translate the following text from Romanian to ${targetLang}. Return ONLY the translation, nothing else. Keep the same tone, formality, and formatting.`;
+  // @ts-expect-error - Workers AI types don't include all model strings
+  const result = await ai.run('@cf/meta/llama-3.1-8b-instruct', {
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: sourceText },
+    ],
+  });
+  return (result as { response?: string }).response?.trim() || '';
+}
+
 // Flatten nested JSON into dot-separated keys
 function flattenKeys(obj: Record<string, unknown>, prefix = ''): Record<string, string> {
   const result: Record<string, string> = {};
@@ -315,19 +329,19 @@ translationsAdmin.post('/api/auto-translate', async (c) => {
   const { lang, key, sourceText } = await c.req.json<{ lang: string; key: string; sourceText: string }>();
   if (!lang || !key || !sourceText) return c.json({ error: 'Missing fields' }, 400);
   if (!SUPPORTED_LANGS.includes(lang as Lang) || lang === 'ro') return c.json({ error: 'Invalid lang' }, 400);
+  if (sourceText.length > 2000) return c.json({ error: 'sourceText exceeds 2000 character limit' }, 400);
+
+  const adminEmail = c.get('adminEmail');
+  const rateLimitKey = `rate:translate:${adminEmail}`;
+  const countRaw = await c.env.CACHE.get(rateLimitKey);
+  const count = countRaw ? parseInt(countRaw, 10) : 0;
+  if (count >= 100) return c.json({ error: 'Rate limit exceeded: max 100 auto-translations per hour' }, 429);
+  await c.env.CACHE.put(rateLimitKey, String(count + 1), { expirationTtl: 3600 });
 
   const targetLanguage = LANG_FULL_NAMES[lang as Exclude<Lang, 'ro'>];
-  const systemPrompt = `You are a professional translator. Translate the following text from Romanian to ${targetLanguage}. Return ONLY the translation, nothing else. Keep the same tone, formality, and formatting.`;
 
   try {
-    const result = await (c.env.AI.run as Function)('@cf/meta/llama-3.1-8b-instruct', {
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: sourceText },
-      ],
-    }) as { response?: string };
-
-    const translation = result.response?.trim() ?? '';
+    const translation = await aiTranslate(c.env.AI, targetLanguage, sourceText);
     if (!translation) return c.json({ error: 'Empty AI response' }, 500);
 
     await c.env.CACHE.put(`i18n:${lang}:${key}`, translation);
@@ -349,32 +363,31 @@ translationsAdmin.post('/api/auto-translate-all', async (c) => {
 
   let translated = 0;
   let skipped = 0;
+  let failed = 0;
+  let processed = 0;
 
-  for (const [key, sourceText] of Object.entries(RO_FLAT)) {
-    if (existingOverrides.has(key)) {
-      skipped++;
-      continue;
-    }
+  const missingEntries = Object.entries(RO_FLAT).filter(([key]) => !existingOverrides.has(key));
+  const totalMissing = missingEntries.length;
 
-    const systemPrompt = `You are a professional translator. Translate the following text from Romanian to ${targetLanguage}. Return ONLY the translation, nothing else. Keep the same tone, formality, and formatting.`;
+  for (const [key, sourceText] of missingEntries) {
+    if (processed >= MAX_PER_REQUEST) break;
+    processed++;
 
     try {
-      const result = await (c.env.AI.run as Function)('@cf/meta/llama-3.1-8b-instruct', {
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: sourceText },
-        ],
-      }) as { response?: string };
-
-      const translation = result.response?.trim();
+      const translation = await aiTranslate(c.env.AI, targetLanguage, sourceText);
       if (translation) {
         await c.env.CACHE.put(`i18n:${lang}:${key}`, translation);
         translated++;
+      } else {
+        failed++;
       }
     } catch {
-      // skip failed keys, best effort
+      failed++;
     }
   }
 
-  return c.json({ ok: true, translated, skipped });
+  skipped = existingOverrides.size;
+  const remaining = totalMissing - translated;
+
+  return c.json({ ok: true, translated, skipped, failed, remaining });
 });

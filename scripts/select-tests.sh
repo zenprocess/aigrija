@@ -6,7 +6,13 @@ set -euo pipefail
 
 BASE_SHA="${1:-HEAD~1}"
 
-CHANGED_FILES=$(git diff --name-only "$BASE_SHA"...HEAD 2>/dev/null || git diff --name-only "$BASE_SHA" HEAD)
+# Try three-dot diff, then two-dot, then fall back to run all tests
+if git cat-file -e "$BASE_SHA" 2>/dev/null; then
+  CHANGED_FILES=$(git diff --name-only "$BASE_SHA"...HEAD 2>/dev/null || git diff --name-only "$BASE_SHA" HEAD 2>/dev/null || true)
+else
+  echo ""
+  exit 0
+fi
 FILE_COUNT=$(echo "$CHANGED_FILES" | grep -c . || true)
 
 # If >5 files changed, run everything

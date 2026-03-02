@@ -3,14 +3,14 @@
 # "smoke" always runs regardless of mapping.
 
 mappings:
-  - paths: ["src/routes/api/**", "src/middleware/**"]
-    tags: [api, backend]
-  - paths: ["src/routes/pages/**", "src/ui/**"]
-    tags: [smoke, a11y, homepage]
-  - paths: ["src/routes/admin/**"]
+  - paths: ["src/worker/routes/**", "src/worker/middleware/**"]
+    tags: [api]
+  - paths: ["src/ui/**"]
+    tags: [smoke, a11y]
+  - paths: ["src/worker/admin/**"]
     tags: [admin]
-  - paths: ["src/services/ai/**"]
-    tags: [ai, backend]
+  - paths: ["src/worker/lib/**"]
+    tags: [critical, api]
   - paths: ["e2e/**", "playwright.config.ts"]
     tags: []  # empty = run all (test infra changes)
   - paths: ["wrangler.toml", "infra/**"]

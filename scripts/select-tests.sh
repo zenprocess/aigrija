@@ -26,10 +26,10 @@ TAGS=""
 while IFS= read -r file; do
   [ -z "$file" ] && continue
   case "$file" in
-    src/routes/api/*|src/middleware/*) TAGS="$TAGS,api" ;;
-    src/routes/pages/*|src/ui/*) TAGS="$TAGS,smoke,a11y" ;;
-    src/routes/admin/*) TAGS="$TAGS,admin" ;;
-    src/services/ai/*) TAGS="$TAGS,critical,api" ;;
+    src/worker/routes/*|src/worker/middleware/*) TAGS="$TAGS,api" ;;
+    src/ui/*) TAGS="$TAGS,smoke,a11y" ;;
+    src/worker/admin/*) TAGS="$TAGS,admin" ;;
+    src/worker/lib/*) TAGS="$TAGS,critical,api" ;;
     e2e/*|playwright.config.ts) echo ""; exit 0 ;;  # test infra = run all
     wrangler.toml|infra/*) TAGS="$TAGS,smoke,api" ;;
   esac
@@ -39,6 +39,8 @@ done <<< "$CHANGED_FILES"
 TAGS="smoke,$TAGS"
 
 # Deduplicate and clean
-TAGS=$(echo "$TAGS" | tr ',' '\n' | sort -u | grep -v '^$' | tr '\n' ',' | sed 's/,$//')
+TAGS=$(echo "$TAGS" | tr ',' '
+' | sort -u | grep -v '^$' | tr '
+' ',' | sed 's/,$//')
 
 echo "$TAGS"

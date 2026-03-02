@@ -29,6 +29,7 @@ interface StoryEntry {
   name: string;
   status: 'pass' | 'fail';
   duration_ms: number;
+  startedAt: number;
   screenshots: string[];
   error?: string;
 }
@@ -119,27 +120,35 @@ function writeAllureResults(summary: BowserSummary): void {
       fullName: `bowser/${story.name}`,
       status: story.status === 'pass' ? 'passed' : 'failed',
       stage: 'finished',
-      start: Date.now() - story.duration_ms,
-      stop: Date.now(),
+      start: story.startedAt,
+      stop: story.startedAt + story.duration_ms,
       labels: [
         { name: 'suite', value: 'bowser' },
         { name: 'parentSuite', value: 'E2E Stories' },
       ],
+      attachments: [] as { name: string; source: string; type: string }[],
       ...(story.error ? { statusDetails: { message: story.error } } : {}),
     };
-    fs.writeFileSync(
-      path.join(ALLURE_DIR, `${uuid}-result.json`),
-      JSON.stringify(result, null, 2),
-    );
 
     for (const screenshot of story.screenshots) {
       const screenshotPath = path.resolve(screenshot);
       if (fs.existsSync(screenshotPath)) {
         const attachId = randomUUID();
         const ext = path.extname(screenshot);
-        fs.copyFileSync(screenshotPath, path.join(ALLURE_DIR, `${attachId}-attachment${ext}`));
+        const attachName = `${attachId}-attachment${ext}`;
+        fs.copyFileSync(screenshotPath, path.join(ALLURE_DIR, attachName));
+        result.attachments.push({
+          name: path.basename(screenshot),
+          source: attachName,
+          type: ext === '.png' ? 'image/png' : 'image/jpeg',
+        });
       }
     }
+
+    fs.writeFileSync(
+      path.join(ALLURE_DIR, `${uuid}-result.json`),
+      JSON.stringify(result, null, 2),
+    );
   }
   console.log(`Allure: wrote ${summary.stories.length} results to allure-results/`);
 }
@@ -217,6 +226,7 @@ async function main() {
       name,
       status: passed ? 'pass' : 'fail',
       duration_ms,
+      startedAt: t0,
       screenshots,
     };
     if (!passed) entry.error = extractError(result.output);

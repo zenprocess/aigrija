@@ -22,49 +22,29 @@ function makeCtx(): ExecutionContext {
   return { waitUntil: vi.fn(), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
 }
 
+// Auth is now handled by adminAuth middleware in the admin app (admin/index.ts).
+// The analytics sub-router itself does not perform auth — these tests exercise the route directly.
 describe('analytics router', () => {
-  it('returns 401 without admin key', async () => {
-    const env = { ADMIN_API_KEY: 'secret', ADMIN_DB: makeD1() };
-    const req = new Request('http://localhost/admin/analytics');
-    const res = await analytics.fetch(req, env, makeCtx());
-    expect(res.status).toBe(401);
-  });
-
   it('returns 503 when ADMIN_DB not configured', async () => {
-    const env = { ADMIN_API_KEY: 'secret', ADMIN_DB: null };
-    const req = new Request('http://localhost/admin/analytics', {
-      headers: { 'x-admin-key': 'secret' },
-    });
+    const env = { ADMIN_DB: null };
+    const req = new Request('http://localhost/');
     const res = await analytics.fetch(req, env, makeCtx());
     expect(res.status).toBe(503);
   });
 
   it('renders analytics page with charts', async () => {
     const env = {
-      ADMIN_API_KEY: 'secret',
       ADMIN_DB: makeD1(
         [{ severity: 'high', count: 5 }, { severity: 'low', count: 2 }],
         [{ month: '2025-01', count: 3 }]
       ),
     };
-    const req = new Request('http://localhost/admin/analytics', {
-      headers: { 'x-admin-key': 'secret' },
-    });
+    const req = new Request('http://localhost/');
     const res = await analytics.fetch(req, env, makeCtx());
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('Analytics');
     expect(html).toContain('severityChart');
     expect(html).toContain('monthChart');
-  });
-
-  it('accepts key query param for auth', async () => {
-    const env = {
-      ADMIN_API_KEY: 'secret',
-      ADMIN_DB: makeD1([], []),
-    };
-    const req = new Request('http://localhost/admin/analytics?key=secret');
-    const res = await analytics.fetch(req, env, makeCtx());
-    expect(res.status).toBe(200);
   });
 });

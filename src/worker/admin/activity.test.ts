@@ -18,28 +18,19 @@ function makeCtx(): ExecutionContext {
   return { waitUntil: vi.fn(), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
 }
 
+// Auth is now handled by adminAuth middleware in the admin app (admin/index.ts).
+// The activity sub-router itself does not perform auth — these tests exercise the route directly.
 describe('activity router', () => {
-  it('returns 401 without admin key', async () => {
-    const env = { ADMIN_API_KEY: 'secret', ADMIN_DB: {} };
-    const req = new Request('http://localhost/admin/activity');
-    const res = await activity.fetch(req, env, makeCtx());
-    expect(res.status).toBe(401);
-  });
-
   it('returns 503 when ADMIN_DB not configured', async () => {
-    const env = { ADMIN_API_KEY: 'secret', ADMIN_DB: null };
-    const req = new Request('http://localhost/admin/activity', {
-      headers: { 'x-admin-key': 'secret' },
-    });
+    const env = { ADMIN_DB: null };
+    const req = new Request('http://localhost/');
     const res = await activity.fetch(req, env, makeCtx());
     expect(res.status).toBe(503);
   });
 
   it('renders activity log page', async () => {
-    const env = { ADMIN_API_KEY: 'secret', ADMIN_DB: {} };
-    const req = new Request('http://localhost/admin/activity', {
-      headers: { 'x-admin-key': 'secret' },
-    });
+    const env = { ADMIN_DB: {} };
+    const req = new Request('http://localhost/');
     const res = await activity.fetch(req, env, makeCtx());
     expect(res.status).toBe(200);
     const html = await res.text();
@@ -48,26 +39,24 @@ describe('activity router', () => {
     expect(html).toContain('admin@test.ro');
   });
 
-  it('accepts x-admin-key header for auth', async () => {
-    const env = { ADMIN_API_KEY: 'secret', ADMIN_DB: {} };
-    const req = new Request('http://localhost/admin/activity', {
-      headers: { 'x-admin-key': 'secret' },
-    });
-    const res = await activity.fetch(req, env, makeCtx());
-    expect(res.status).toBe(200);
-  });
-
   it('passes filter params to getRecentActivity', async () => {
     const { getRecentActivity } = await import('../lib/activity-log');
-    const env = { ADMIN_API_KEY: 'secret', ADMIN_DB: {} };
-    const req = new Request('http://localhost/admin/activity?action=approve&admin=admin@test.ro', {
-      headers: { 'x-admin-key': 'secret' },
-    });
+    const env = { ADMIN_DB: {} };
+    const req = new Request('http://localhost/?action=approve&admin=admin@test.ro');
     await activity.fetch(req, env, makeCtx());
     expect(getRecentActivity).toHaveBeenCalledWith(
       expect.anything(),
       100,
       expect.objectContaining({ action: 'approve', adminEmail: 'admin@test.ro' })
     );
+  });
+
+  it('escapes XSS in filter params', async () => {
+    const env = { ADMIN_DB: {} };
+    const req = new Request('http://localhost/?action=%3Cscript%3Ealert(1)%3C%2Fscript%3E');
+    const res = await activity.fetch(req, env, makeCtx());
+    const html = await res.text();
+    expect(html).not.toContain('<script>alert(1)</script>');
+    expect(html).toContain('&lt;script&gt;');
   });
 });

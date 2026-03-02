@@ -4,9 +4,7 @@ import { structuredLog } from '../lib/logger';
 
 const analytics = new Hono<{ Bindings: Env }>();
 
-analytics.get('/admin/analytics', async (c) => {
-  const apiKey = c.req.header('x-admin-key') || c.req.query('key');
-  if (apiKey !== c.env.ADMIN_API_KEY) return c.text('Unauthorized', 401);
+analytics.get('/', async (c) => {
 
   if (!c.env.ADMIN_DB) {
     return c.html('<h1>ADMIN_DB not configured</h1>', 503);

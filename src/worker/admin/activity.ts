@@ -5,9 +5,7 @@ import { escapeHtml } from '../lib/escape-html';
 
 const activity = new Hono<{ Bindings: Env }>();
 
-activity.get('/admin/activity', async (c) => {
-  const apiKey = c.req.header('x-admin-key');
-  if (apiKey !== c.env.ADMIN_API_KEY) return c.text('Unauthorized', 401);
+activity.get('/', async (c) => {
 
   if (!c.env.ADMIN_DB) {
     return c.html('<h1>ADMIN_DB not configured</h1>', 503);
@@ -60,10 +58,10 @@ activity.get('/admin/activity', async (c) => {
   </nav>
   <h1>📋 Jurnal Activitate Admin</h1>
   <form method="GET" class="filters">
-    <input name="action" placeholder="Acțiune" value="${actionFilter ?? ''}"/>
-    <input name="admin" placeholder="Email admin" value="${adminFilter ?? ''}"/>
-    <input name="from" type="date" value="${dateFrom ?? ''}"/>
-    <input name="to" type="date" value="${dateTo ?? ''}"/>
+    <input name="action" placeholder="Acțiune" value="${escapeHtml(actionFilter ?? '')}"/>
+    <input name="admin" placeholder="Email admin" value="${escapeHtml(adminFilter ?? '')}"/>
+    <input name="from" type="date" value="${escapeHtml(dateFrom ?? '')}"/>
+    <input name="to" type="date" value="${escapeHtml(dateTo ?? '')}"/>
     <button type="submit">Filtrează</button>
   </form>
   <table>

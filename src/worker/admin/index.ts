@@ -7,6 +7,9 @@ import { translationsAdmin } from './translations';
 import { configAdmin } from './config';
 import { campaignRoutes, campaignApiRoutes, scraperRoutes } from './campaigns';
 import { translationReportsAdmin } from './translation-reports';
+import { escapeHtml } from '../lib/escape-html';
+import { analytics } from './analytics';
+import { activity } from './activity';
 import { generateStandalonePostWithOverrides } from '../lib/draft-generator';
 import { structuredLog } from '../lib/logger';
 
@@ -127,11 +130,11 @@ admin.get('/generare-continut', async (c) => {
   const draftsHtml = drafts.length
     ? drafts.map(d => `
       <tr class="border-b hover:bg-gray-50">
-        <td class="py-2 px-3 text-sm"><a href="/admin/campanii/${d.id}" class="text-blue-600 hover:underline">${d.title}</a></td>
-        <td class="py-2 px-3 text-xs text-gray-500">${categoryLabels[d.threat_type ?? ''] ?? (d.threat_type ?? '-')}</td>
-        <td class="py-2 px-3 text-xs text-gray-400">${(d.created_at ?? '').slice(0, 10)}</td>
-        <td class="py-2 px-3">${statusBadge(d.draft_status)}</td>
-        <td class="py-2 px-3"><a href="/admin/campanii/${d.id}" class="text-xs text-blue-500 hover:underline">Vizualizeaza</a></td>
+        <td class="py-2 px-3 text-sm"><a href="/admin/campanii/${escapeHtml(d.id)}" class="text-blue-600 hover:underline">${escapeHtml(d.title)}</a></td>
+        <td class="py-2 px-3 text-xs text-gray-500">${escapeHtml(categoryLabels[d.threat_type ?? ''] ?? (d.threat_type ?? '-'))}</td>
+        <td class="py-2 px-3 text-xs text-gray-400">${escapeHtml((d.created_at ?? '').slice(0, 10))}</td>
+        <td class="py-2 px-3">${statusBadge(escapeHtml(d.draft_status))}</td>
+        <td class="py-2 px-3"><a href="/admin/campanii/${escapeHtml(d.id)}" class="text-xs text-blue-500 hover:underline">Vizualizeaza</a></td>
       </tr>`).join('')
     : '<tr><td colspan="5" class="py-8 text-center text-gray-400 text-sm">Niciun draft generat inca.</td></tr>';
 
@@ -233,5 +236,7 @@ admin.route('/ponderi', weightsAdmin);
 admin.route('/traduceri', translationsAdmin);
 admin.route('/config', configAdmin);
 admin.route('/rapoarte-traduceri', translationReportsAdmin);
+admin.route('/analytics', analytics);
+admin.route('/activity', activity);
 
 export { admin };

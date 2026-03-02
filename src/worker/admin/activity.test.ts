@@ -48,9 +48,11 @@ describe('activity router', () => {
     expect(html).toContain('admin@test.ro');
   });
 
-  it('accepts key query param for auth', async () => {
+  it('accepts x-admin-key header for auth', async () => {
     const env = { ADMIN_API_KEY: 'secret', ADMIN_DB: {} };
-    const req = new Request('http://localhost/admin/activity?key=secret');
+    const req = new Request('http://localhost/admin/activity', {
+      headers: { 'x-admin-key': 'secret' },
+    });
     const res = await activity.fetch(req, env, makeCtx());
     expect(res.status).toBe(200);
   });
@@ -58,7 +60,8 @@ describe('activity router', () => {
   it('passes filter params to getRecentActivity', async () => {
     const { getRecentActivity } = await import('../lib/activity-log');
     const env = { ADMIN_API_KEY: 'secret', ADMIN_DB: {} };
-    const req = new Request('http://localhost/admin/activity?key=secret&action=approve&admin=admin@test.ro', {
+    const req = new Request('http://localhost/admin/activity?action=approve&admin=admin@test.ro', {
+      headers: { 'x-admin-key': 'secret' },
     });
     await activity.fetch(req, env, makeCtx());
     expect(getRecentActivity).toHaveBeenCalledWith(

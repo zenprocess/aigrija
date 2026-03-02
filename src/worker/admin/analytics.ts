@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
+import { structuredLog } from '../lib/logger';
 
 const analytics = new Hono<{ Bindings: Env }>();
 
@@ -19,7 +20,7 @@ analytics.get('/admin/analytics', async (c) => {
       c.env.ADMIN_DB.prepare("SELECT strftime('%Y-%m', created_at) as month, COUNT(*) as count FROM campaigns GROUP BY month ORDER BY month").all() as Promise<{ results: { month: string; count: number }[] }>,
     ]);
   } catch (err) {
-    console.error('[admin/analytics] D1 query failed:', err);
+    structuredLog('error', 'admin_analytics_query_failed', { stage: 'admin', error: String(err) });
     return c.html('<h1>Eroare baza de date</h1>', 500);
   }
 

@@ -3,6 +3,7 @@ import type { Env } from '../lib/types';
 import type { AdminVariables } from '../lib/admin-auth';
 import { adminLayout } from './layout';
 import { escapeHtml } from '../lib/escape-html';
+import { structuredLog } from '../lib/logger';
 
 type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 
@@ -83,7 +84,7 @@ campaignApiRoutes.get('/list', async (c) => {
        FROM campaigns ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
     ).bind(...params, limitNum, offset).all<DbCampaign>();
   } catch (err) {
-    console.error('[admin/campaigns] D1 list query failed:', err);
+    structuredLog('error', 'admin_campaigns_list_failed', { stage: 'admin', error: String(err) });
     return c.json({ error: { code: 'DB_ERROR', message: 'Database operation failed' } }, 500);
   }
 
@@ -103,7 +104,7 @@ campaignApiRoutes.get('/:id', async (c) => {
       'SELECT * FROM campaigns WHERE id = ?'
     ).bind(c.req.param('id')).first<DbCampaign>();
   } catch (err) {
-    console.error('[admin/campaigns] D1 get query failed:', err);
+    structuredLog('error', 'admin_campaigns_get_failed', { stage: 'admin', error: String(err) });
     return c.json({ error: { code: 'DB_ERROR', message: 'Database operation failed' } }, 500);
   }
   if (!row) return c.json({ error: 'Not found' }, 404);
@@ -139,7 +140,7 @@ campaignApiRoutes.put('/:id', async (c) => {
       `UPDATE campaigns SET ${updates.join(', ')} WHERE id = ?`
     ).bind(...vals).run();
   } catch (err) {
-    console.error('[admin/campaigns] D1 update failed:', err);
+    structuredLog('error', 'admin_campaigns_update_failed', { stage: 'admin', error: String(err) });
     return c.json({ error: { code: 'DB_ERROR', message: 'Database operation failed' } }, 500);
   }
 
@@ -160,7 +161,7 @@ campaignApiRoutes.post('/create', async (c) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 0, ?)`
     ).bind(id, body.title, slug, body.source ?? 'manual', body.source_url ?? null, body.threat_type ?? null, body.severity ?? null, new Date().toISOString()).run();
   } catch (err) {
-    console.error('[admin/campaigns] D1 insert failed:', err);
+    structuredLog('error', 'admin_campaigns_insert_failed', { stage: 'admin', error: String(err) });
     return c.json({ error: { code: 'DB_ERROR', message: 'Database operation failed' } }, 500);
   }
 
@@ -171,7 +172,7 @@ campaignApiRoutes.delete('/:id', async (c) => {
   try {
     await c.env.DB.prepare('UPDATE campaigns SET archived = 1 WHERE id = ?').bind(c.req.param('id')).run();
   } catch (err) {
-    console.error('[admin/campaigns] D1 delete failed:', err);
+    structuredLog('error', 'admin_campaigns_delete_failed', { stage: 'admin', error: String(err) });
     return c.json({ error: { code: 'DB_ERROR', message: 'Database operation failed' } }, 500);
   }
   return c.json({ ok: true });
@@ -209,7 +210,7 @@ campaignRoutes.get('/', async (c) => {
        FROM campaigns ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all<DbCampaign>();
   } catch (err) {
-    console.error('[admin/campaigns] D1 HTML list query failed:', err);
+    structuredLog('error', 'admin_campaigns_html_list_failed', { stage: 'admin', error: String(err) });
     return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>', 'campanii', email), 500);
   }
   const total = countRow?.total ?? 0;
@@ -318,7 +319,7 @@ campaignRoutes.get('/:id', async (c) => {
   try {
     row = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(c.req.param('id')).first<DbCampaign>();
   } catch (err) {
-    console.error('[admin/campaigns] D1 detail query failed:', err);
+    structuredLog('error', 'admin_campaigns_detail_failed', { stage: 'admin', error: String(err) });
     return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>', 'campanii', email), 500);
   }
   if (!row) return c.html(adminLayout('Not Found', '<p>Campanie negasita.</p>', 'campanii', email), 404);
@@ -394,7 +395,7 @@ scraperRoutes.get('/', async (c) => {
       'SELECT * FROM scraper_runs ORDER BY run_at DESC LIMIT 50'
     ).all<{ id: string; source: string; items_found: number; items_new: number; errors: string | null; run_at: string }>();
   } catch (err) {
-    console.error('[admin/scrapers] D1 query failed:', err);
+    structuredLog('error', 'admin_scrapers_list_failed', { stage: 'admin', error: String(err) });
     return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>', 'scrapere', email), 500);
   }
 

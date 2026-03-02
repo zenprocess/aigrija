@@ -8,6 +8,7 @@ import { generateWeeklyDigest, getISOWeek } from './weekly-digest';
 import { sendDigestToTelegram } from './telegram-digest';
 import { sendDigestEmail } from './email-digest';
 import { purgeInactiveSubscribers } from './gdpr-consent';
+import { deleteOldShareCards } from './r2-cleanup';
 
 const BATCH_LIMIT = 5;
 
@@ -156,7 +157,13 @@ export async function handleScheduled(event: ScheduledEvent, env: Env): Promise<
       });
     }
   } else if (event.cron === '0 1 * * *') {
-    // 01:00 daily — generate drafts, then publish to Sanity
+    // 01:00 daily — R2 share card cleanup + draft generation + Sanity publish
+    try {
+      await deleteOldShareCards(env.STORAGE);
+      structuredLog('info', 'cron_r2_cleanup_done', { stage: 'cron' });
+    } catch (err) {
+      structuredLog('error', 'cron_r2_cleanup_failed', { stage: 'cron', error: String(err) });
+    }
     await runDraftGeneration(env);
     await runSanityPublish(env);
   } else if (event.cron === '0 2 * * 1-5') {

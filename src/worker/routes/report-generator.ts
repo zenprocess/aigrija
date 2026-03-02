@@ -115,20 +115,38 @@ reportGenerator.get('/raport', (c) => {
 
       const reportDate = new Date().toLocaleDateString('ro-RO');
 
-      let html = '<h3>RAPORT INCIDENT FRAUDĂ ONLINE</h3>';
-      html += '<p><strong>Data raportului:</strong> ' + reportDate + '</p>';
-      html += '<p><strong>Data incidentului:</strong> ' + date + '</p>';
-      if (name) html += '<p><strong>Persoana raportoare:</strong> ' + name + '</p>';
-      if (email) html += '<p><strong>Email contact:</strong> ' + email + '</p>';
-      if (verdictText) html += '<p><strong>Verdict analiză AI-GRIJA.RO:</strong> ' + verdictText + '</p>';
-      if (scamText) html += '<p><strong>Tip fraudă:</strong> ' + scamText + '</p>';
-      html += '<hr>';
-      html += '<h4>Descrierea incidentului:</h4>';
-      html += '<p>' + description.replace(/\\n/g, '<br>') + '</p>';
-      html += '<hr>';
-      html += '<p style="font-size:12px;color:#6b7280;">Generat cu ai-grija.ro — Proiect civic Zen Labs | DNSC: 1911 | CERT-RO: cert.ro</p>';
-
-      document.getElementById('report-content').innerHTML = html;
+      function addLine(container, label, value) {
+        const p = document.createElement('p');
+        const strong = document.createElement('strong');
+        strong.textContent = label;
+        p.appendChild(strong);
+        p.appendChild(document.createTextNode(' ' + value));
+        container.appendChild(p);
+      }
+      const reportContent = document.getElementById('report-content');
+      reportContent.textContent = '';
+      const h3 = document.createElement('h3');
+      h3.textContent = 'RAPORT INCIDENT FRAUDĂ ONLINE';
+      reportContent.appendChild(h3);
+      addLine(reportContent, 'Data raportului:', reportDate);
+      addLine(reportContent, 'Data incidentului:', date);
+      if (name) addLine(reportContent, 'Persoana raportoare:', name);
+      if (email) addLine(reportContent, 'Email contact:', email);
+      if (verdictText) addLine(reportContent, 'Verdict analiză AI-GRIJA.RO:', verdictText);
+      if (scamText) addLine(reportContent, 'Tip fraudă:', scamText);
+      reportContent.appendChild(document.createElement('hr'));
+      const h4 = document.createElement('h4');
+      h4.textContent = 'Descrierea incidentului:';
+      reportContent.appendChild(h4);
+      const descP = document.createElement('p');
+      descP.textContent = description;
+      reportContent.appendChild(descP);
+      reportContent.appendChild(document.createElement('hr'));
+      const footer = document.createElement('p');
+      footer.style.fontSize = '12px';
+      footer.style.color = '#6b7280';
+      footer.textContent = 'Generat cu ai-grija.ro — Proiect civic Zen Labs | DNSC: 1911 | CERT-RO: cert.ro';
+      reportContent.appendChild(footer);
       document.getElementById('report-output').style.display = 'block';
       document.getElementById('report-output').scrollIntoView({ behavior: 'smooth' });
     }

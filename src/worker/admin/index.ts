@@ -7,7 +7,8 @@ import { translationsAdmin } from './translations';
 import { configAdmin } from './config';
 import { campaignRoutes, campaignApiRoutes, scraperRoutes } from './campaigns';
 import { translationReportsAdmin } from './translation-reports';
-import { generateStandalonePost, generateStandalonePostWithOverrides } from '../lib/draft-generator';
+import { generateStandalonePostWithOverrides } from '../lib/draft-generator';
+import { structuredLog } from '../lib/logger';
 
 type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 
@@ -57,41 +58,8 @@ drafturiRouter.get('/', (c) => {
   return c.html(adminLayout('Drafturi', content, 'drafturi', email));
 });
 
-// --- Ponderi (placeholder) ---
-const ponderiRouter = new Hono<AdminEnv>();
-ponderiRouter.get('/', (c) => {
-  const email = c.get('adminEmail');
-  const content = `
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 class="text-gray-700 font-medium mb-2">Ponderi clasificare</h2>
-      <p class="text-gray-500 text-sm">Ajustarea ponderilor pentru clasificarea amenintarilor va fi disponibila aici.</p>
-    </div>`;
-  return c.html(adminLayout('Ponderi', content, 'ponderi', email));
-});
 
-// --- Traduceri (placeholder) ---
-const traduceriRouter = new Hono<AdminEnv>();
-traduceriRouter.get('/', (c) => {
-  const email = c.get('adminEmail');
-  const content = `
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 class="text-gray-700 font-medium mb-2">Traduceri</h2>
-      <p class="text-gray-500 text-sm">Override-urile de traducere pe limbi vor fi gestionate aici.</p>
-    </div>`;
-  return c.html(adminLayout('Traduceri', content, 'traduceri', email));
-});
 
-// --- Config (placeholder) ---
-const configRouter = new Hono<AdminEnv>();
-configRouter.get('/', (c) => {
-  const email = c.get('adminEmail');
-  const content = `
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 class="text-gray-700 font-medium mb-2">Configuratie</h2>
-      <p class="text-gray-500 text-sm">Setarile generale ale aplicatiei vor fi disponibile aici.</p>
-    </div>`;
-  return c.html(adminLayout('Config', content, 'config', email));
-});
 
 // --- Generate Content API ---
 admin.post('/api/generate-content', async (c) => {
@@ -135,7 +103,7 @@ admin.get('/generare-continut', async (c) => {
     ).all<{ id: string; title: string; threat_type: string | null; draft_status: string; created_at: string }>();
     drafts = rows.results;
   } catch (err) {
-    console.error('[admin/generare-continut] DB error', err);
+    structuredLog('error', '[admin/generare-continut] DB error', { error: err instanceof Error ? err.message : String(err) });
   }
 
   const categoryLabels: Record<string, string> = {
@@ -230,7 +198,13 @@ admin.get('/generare-continut', async (c) => {
         const data = await res.json();
         if (data.ok) {
           result.className = 'mt-4 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-800';
-          result.innerHTML = 'Draft generat: <a href="/admin/campanii/' + data.id + '" class="underline font-medium">' + data.title + '</a>';
+          const link = document.createElement('a');
+          link.href = '/admin/campanii/' + data.id;
+          link.className = 'underline font-medium';
+          link.textContent = data.title;
+          result.textContent = '';
+          result.appendChild(document.createTextNode('Draft generat: '));
+          result.appendChild(link);
           setTimeout(() => location.reload(), 2000);
         } else {
           result.className = 'mt-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-800';

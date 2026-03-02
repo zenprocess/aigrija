@@ -16,7 +16,6 @@ export interface Env {
   ADMIN_API_KEY: string;
   VIRUSTOTAL_API_KEY: string;
   URLHAUS_AUTH_KEY?: string;
-  PHISHTANK_API_KEY?: string;
   WHATSAPP_APP_SECRET?: string;
   SANITY_PROJECT_ID?: string;
   SANITY_DATASET?: string;
@@ -25,7 +24,6 @@ export interface Env {
   CF_ACCESS_TEAM_DOMAIN?: string;
   ANALYTICS?: AnalyticsEngineDataset;
   TELEGRAM_ADMIN_CHAT_ID?: string;
-  LAUNCHDARKLY_SDK_KEY?: string;
   /** Comma-separated list of allowed CORS origins. Falls back to hardcoded defaults if unset. */
   CORS_ORIGINS?: string;
   BUTTONDOWN_API_KEY?: string;

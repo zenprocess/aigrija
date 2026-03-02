@@ -1,3 +1,4 @@
+import { structuredLog } from './logger';
 export interface RetryOptions {
   maxRetries?: number;
   backoffMs?: number;
@@ -38,7 +39,7 @@ export async function withRetry<T>(
       lastErr = err;
       if (attempt < maxRetries && isRetryable(err)) {
         const delay = jitter(backoffMs * Math.pow(2, attempt));
-        console.warn(`[retry] Attempt ${attempt + 1} failed, retrying in ${delay}ms:`, err);
+        structuredLog('warn', 'retry_attempt_failed', { stage: 'retry', attempt: attempt + 1, delayMs: delay, error: String(err) });
         await new Promise(resolve => setTimeout(resolve, delay));
       } else {
         break;

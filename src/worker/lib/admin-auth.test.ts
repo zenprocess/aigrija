@@ -68,7 +68,7 @@ describe("adminAuth middleware", () => {
     expect(res.status).toBe(401);
   });
 
-  it("JWT with no team domain falls back to payload check — valid email passes", async () => {
+  it("JWT with no team domain is rejected — unverified JWTs are never trusted", async () => {
     const app = makeApp();
     const payload = { email: "admin@example.com", sub: "user123" };
     const payloadB64 = btoa(JSON.stringify(payload)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
@@ -77,10 +77,8 @@ describe("adminAuth middleware", () => {
       headers: { "CF-Access-Jwt-Assertion": fakeJwt },
     });
     const res = await app.fetch(req, makeEnv({ CF_ACCESS_TEAM_DOMAIN: undefined }));
-    // No team domain, JWT present => falls back to payload check
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
-    expect(body.email).toBe("admin@example.com");
+    // No team domain => cannot verify signature => always 401
+    expect(res.status).toBe(401);
   });
 
   it("JWT with no team domain and no email returns 401", async () => {

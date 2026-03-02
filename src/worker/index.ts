@@ -107,7 +107,7 @@ app.use('/card/*', async (c, next) => {
 });
 
 // CORS only on public API routes
-app.use('/api/*', cors({ origin: '*' }));
+app.use('/api/*', cors({ origin: ['https://ai-grija.ro', 'https://pre.ai-grija.ro'] }));
 
 // Wrap with chanfana for OpenAPI docs at /docs
 const openapi = createOpenAPIApp(app);

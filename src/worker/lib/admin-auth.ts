@@ -1,6 +1,7 @@
 import type { MiddlewareHandler } from 'hono';
 import type { Env } from './types';
 import { toUint8Array } from './crypto-utils';
+import { structuredLog } from './logger';
 
 interface CFAccessCert {
   kid: string;
@@ -161,7 +162,7 @@ export const adminAuth: MiddlewareHandler<{ Bindings: Env; Variables: AdminVaria
       // not a valid URL — treat as non-local
     }
     if (isLocal) {
-      console.warn('[admin-auth] DEV MODE — localhost detected, allowing access without authentication');
+      structuredLog('warn', 'admin_auth_dev_mode_bypass', { stage: 'admin' });
       c.set('adminEmail', 'dev@localhost');
       return next();
     }
@@ -174,13 +175,9 @@ export const adminAuth: MiddlewareHandler<{ Bindings: Env; Variables: AdminVaria
   }
 
   if (!teamDomain) {
-    console.warn('[admin-auth] CF_ACCESS_TEAM_DOMAIN not set, falling back to payload-only check');
-    const payload = parseJWTPayload(jwt);
-    if (!payload?.email) {
-      return c.html('<h1>401 Unauthorized</h1><p>Invalid JWT.</p>', 401);
-    }
-    c.set('adminEmail', payload.email);
-    return next();
+    // CF_ACCESS_TEAM_DOMAIN not set in production — deny all access.
+    // JWT signature cannot be verified without the team domain.
+    return c.html('<h1>401 Unauthorized</h1><p>CF_ACCESS_TEAM_DOMAIN not configured. Contact the administrator.</p>', 401);
   }
 
   const payload = await verifyJWT(jwt, teamDomain, c.env.CACHE);

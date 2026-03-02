@@ -61,7 +61,7 @@ BASE_URL = "https://ai-grija.ro"
 [triggers]
 crons = ["0 0 * * *", "0 1 * * *", "0 2 * * 1-5", "0 6 * * 1", "0 0 1 * *"]
 # 00:00 daily = campaign scraper
-# 01:00 daily = R2 share card cleanup
+# 01:00 daily = R2 share card cleanup + draft generation + Sanity publish
 # 02:00 weekdays = AI educational content generation
 # 06:00 Monday = weekly digest
 # 00:00 1st of month = GDPR auto-purge inactive subscribers

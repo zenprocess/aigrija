@@ -55,14 +55,22 @@ newsletter.post('/api/newsletter/subscribe', async (c) => {
     return c.json({ error: { code: 'MISCONFIGURED', message: 'Serviciul nu este configurat.' } }, 503);
   }
 
-  const bdRes = await fetch(`${BUTTONDOWN_BASE}/subscribers`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Token ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ email, type: 'regular' }),
-  });
+  const controller1 = new AbortController();
+  const timeout1 = setTimeout(() => controller1.abort(), 5000);
+  let bdRes: Response;
+  try {
+    bdRes = await fetch(`${BUTTONDOWN_BASE}/subscribers`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, type: 'regular' }),
+      signal: controller1.signal,
+    });
+  } finally {
+    clearTimeout(timeout1);
+  }
 
   if (!bdRes.ok) {
     // 400 from Buttondown usually means already subscribed or invalid email
@@ -122,12 +130,20 @@ newsletter.post('/api/newsletter/unsubscribe', async (c) => {
     return c.json({ error: { code: 'MISCONFIGURED', message: 'Serviciul nu este configurat.' } }, 503);
   }
 
-  const bdRes = await fetch(`${BUTTONDOWN_BASE}/subscribers/${encodeURIComponent(email)}`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Token ${apiKey}`,
-    },
-  });
+  const controller2 = new AbortController();
+  const timeout2 = setTimeout(() => controller2.abort(), 5000);
+  let bdRes: Response;
+  try {
+    bdRes = await fetch(`${BUTTONDOWN_BASE}/subscribers/${encodeURIComponent(email)}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Token ${apiKey}`,
+      },
+      signal: controller2.signal,
+    });
+  } finally {
+    clearTimeout(timeout2);
+  }
 
   if (bdRes.status === 404) {
     return c.json({ error: { code: 'NOT_FOUND', message: 'Aceasta adresa nu este abonata.' } }, 404);

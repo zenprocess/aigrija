@@ -53,8 +53,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  e2e-tests:
-    name: E2E Playwright tests
+  e2e-api:
+    name: E2E API tests
+    needs: [typecheck, unit-tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -64,14 +65,29 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - name: Start dev server
-        run: npx wrangler dev --port 8787 &
+      - name: Build SPA assets
+        run: npm run build
+      - name: Run API E2E tests
+        run: npx playwright test e2e/api.spec.ts e2e/health.spec.ts e2e/telegram-webhook.spec.ts --project=chromium
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      - name: Wait for server
-        run: for i in $(seq 1 30); do curl -sf http://localhost:8787 && break || sleep 1; done
-      - name: Run Playwright tests
-        run: npx playwright test
+          BASE_URL: http://localhost:8787
+
+  e2e-browser:
+    name: E2E browser tests
+    needs: [typecheck, unit-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Build SPA assets
+        run: npm run build
+      - name: Run browser E2E tests
+        run: npx playwright test --ignore-pattern='**/api.spec.ts' --ignore-pattern='**/health.spec.ts' --ignore-pattern='**/telegram-webhook.spec.ts'
         env:
           BASE_URL: http://localhost:8787
       - uses: actions/upload-artifact@v4
@@ -101,19 +117,14 @@ jobs:
       - name: Validate infra config
         run: bash scripts/validate-infra.sh
       - uses: actions/setup-node@v4
-        if: env.PULUMI_ACCESS_TOKEN != ''
         with:
           node-version: '22'
           cache: 'npm'
       - run: cd infra && npm ci
-        if: env.PULUMI_ACCESS_TOKEN != ''
       - name: Install policy pack
-        if: env.PULUMI_ACCESS_TOKEN != ''
         run: cd infra/policy && npm ci
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-      - uses: pulumi/actions@v6
-        if: env.PULUMI_ACCESS_TOKEN != ''
+      - name: Pulumi preview with CrossGuard
+        uses: pulumi/actions@v6
         with:
           command: preview
           stack-name: dev

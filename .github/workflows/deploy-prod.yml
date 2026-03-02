@@ -86,13 +86,36 @@ jobs:
       - run: npm ci
       - run: npm audit --audit-level=high
 
+  infra-validate:
+    name: Infrastructure validation
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_tests }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate infra config
+        run: bash scripts/validate-infra.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: cd infra && npm ci
+      - name: Install policy pack
+        run: cd infra/policy && npm ci
+      - name: Pulumi preview with CrossGuard
+        uses: pulumi/actions@v6
+        with:
+          command: preview
+          stack-name: production
+          work-dir: infra
+          policyPacks: infra/policy
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
   deploy:
     name: Deploy to Cloudflare Workers
-    needs: [typecheck, test, secret-scan, dependency-audit]
-    if: ${{ always() && (needs.typecheck.result == 'success' || needs.typecheck.result == 'skipped') && (needs.test.result == 'success' || needs.test.result == 'skipped') && (needs.secret-scan.result == 'success' || needs.secret-scan.result == 'skipped') && (needs.dependency-audit.result == 'success' || needs.dependency-audit.result == 'skipped') }}
+    needs: [typecheck, test, secret-scan, dependency-audit, infra-validate]
+    if: ${{ always() && (needs.typecheck.result == 'success' || needs.typecheck.result == 'skipped') && (needs.test.result == 'success' || needs.test.result == 'skipped') && (needs.secret-scan.result == 'success' || needs.secret-scan.result == 'skipped') && (needs.dependency-audit.result == 'success' || needs.dependency-audit.result == 'skipped') && (needs.infra-validate.result == 'success' || needs.infra-validate.result == 'skipped') }}
     runs-on: ubuntu-latest
-    outputs:
-      deploy-url: ${{ steps.deploy.outputs.deployment-url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -100,7 +123,7 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
-      - run: npm run build --if-present
+      - run: npm run build
       - name: Deploy to Cloudflare
         id: deploy
         uses: cloudflare/wrangler-action@v3
@@ -118,9 +141,25 @@ jobs:
           echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
           echo "| URL | https://ai-grija.ro |" >> $GITHUB_STEP_SUMMARY
 
+  health-check:
+    name: Production health check
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for production to be ready
+        run: |
+          for i in $(seq 1 30); do
+            STATUS=$(curl -sf -o /dev/null -w '%{http_code}' https://ai-grija.ro/health 2>/dev/null || echo "000")
+            if [ "$STATUS" = "200" ]; then echo "Production healthy"; exit 0; fi
+            echo "Attempt $i: status=$STATUS, retrying..."
+            sleep 5
+          done
+          echo "ERROR: Production not healthy after 150s"
+          exit 1
+
   post-deploy-bdd:
     name: Post-deploy BDD verification
-    needs: deploy
+    needs: health-check
     runs-on: ubuntu-latest
     container: mcr.microsoft.com/playwright:v1.50.0-noble
     permissions:
@@ -149,14 +188,24 @@ jobs:
         run: |
           for result_file in e2e/results/*.json; do
             [ -f "$result_file" ] || continue
-            story_name=$(jq -r '.story' "$result_file")
-            verdict=$(jq -r '[.passes | to_entries[] | select(.value == "fail")] | length' "$result_file")
+            story_name=$(jq -r '.story // empty' "$result_file" 2>/dev/null) || continue
+            [ -z "$story_name" ] && continue
+            verdict=$(jq -r '[.passes | to_entries[] | select(.value == "fail")] | length' "$result_file" 2>/dev/null) || continue
             if [ "$verdict" -gt "0" ]; then
               failed_passes=$(jq -r '[.passes | to_entries[] | select(.value == "fail") | .key] | join(", ")' "$result_file")
               existing=$(gh issue list --search "QA: $story_name" --label "qa:story" --json number --jq '.[0].number' 2>/dev/null || echo "")
               if [ -z "$existing" ]; then
-                issue_body="## Post-Deploy BDD Failure\n\nStory: $story_name\nURL: https://ai-grija.ro\nFailed passes: $failed_passes\nCommit: $COMMIT_SHA\n\nAuto-created by post-deploy BDD verification."
-                gh issue create                   --title "QA: $story_name - $failed_passes failed"                   --label "qa:fail,qa:story,auto-detected"                   --body "$issue_body"
+                gh issue create \
+                  --title "QA: $story_name - $failed_passes failed" \
+                  --label "qa:fail,qa:story,auto-detected" \
+                  --body "## Post-Deploy BDD Failure
+
+Story: $story_name
+URL: https://ai-grija.ro
+Failed passes: $failed_passes
+Commit: $COMMIT_SHA
+
+Auto-created by post-deploy BDD verification."
               fi
             fi
           done

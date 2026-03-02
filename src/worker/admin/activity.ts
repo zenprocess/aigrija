@@ -1,11 +1,12 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import { getRecentActivity } from '../lib/activity-log';
+import { escapeHtml } from '../lib/escape-html';
 
 const activity = new Hono<{ Bindings: Env }>();
 
 activity.get('/admin/activity', async (c) => {
-  const apiKey = c.req.header('x-admin-key') || c.req.query('key');
+  const apiKey = c.req.header('x-admin-key');
   if (apiKey !== c.env.ADMIN_API_KEY) return c.text('Unauthorized', 401);
 
   if (!c.env.ADMIN_DB) {
@@ -26,12 +27,12 @@ activity.get('/admin/activity', async (c) => {
 
   const rows = activities
     .map(a => `<tr>
-      <td>${a.created_at}</td>
-      <td>${a.action}</td>
-      <td>${a.entity_type}</td>
-      <td>${a.entity_id ?? '-'}</td>
-      <td>${a.admin_email}</td>
-      <td><pre style="margin:0;font-size:11px;">${a.details ?? '-'}</pre></td>
+      <td>${escapeHtml(String(a.created_at ?? ''))}</td>
+      <td>${escapeHtml(String(a.action ?? ''))}</td>
+      <td>${escapeHtml(String(a.entity_type ?? ''))}</td>
+      <td>${escapeHtml(String(a.entity_id ?? '-'))}</td>
+      <td>${escapeHtml(String(a.admin_email ?? ''))}</td>
+      <td><pre style="margin:0;font-size:11px;">${escapeHtml(String(a.details ?? '-'))}</pre></td>
     </tr>`)
     .join('');
 

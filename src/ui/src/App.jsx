@@ -40,21 +40,17 @@ function App() {
 
   if (hash === '#/confidentialitate') {
     return (
-      <div className="min-h-screen flex flex-col relative selection:bg-blue-500/30 selection:text-white">
-        <div className={`fixed inset-0 bg-[url('${BG_PATTERN}')] opacity-30 pointer-events-none z-0`} />
+      <PageShell>
         <PrivacyPolicy />
-        <Footer />
-      </div>
+      </PageShell>
     );
   }
 
   if (hash === '#/termeni') {
     return (
-      <div className="min-h-screen flex flex-col relative selection:bg-blue-500/30 selection:text-white">
-        <div className={`fixed inset-0 bg-[url('${BG_PATTERN}')] opacity-30 pointer-events-none z-0`} />
+      <PageShell>
         <TermsOfService />
-        <Footer />
-      </div>
+      </PageShell>
     );
   }
 

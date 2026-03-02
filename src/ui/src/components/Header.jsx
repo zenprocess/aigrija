@@ -20,7 +20,16 @@ export default function Header() {
   const scrollTo = (id) => {
     setIsMobileMenuOpen(false);
     const element = document.getElementById(id);
-    if (element) element.scrollIntoView({ behavior: 'smooth' });
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      // Not on the home page — navigate home first, then scroll to section
+      window.location.hash = '';
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
   };
 
   const navigateTo = (hash) => {

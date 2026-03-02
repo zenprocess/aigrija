@@ -50,35 +50,46 @@ export default function ActiveAlerts() {
           </div>
         ) : (
           <div className="space-y-4">
-            {alerts.map((alert, idx) => (
-              <div key={idx} className={`glass-card p-6 border-l-4 ${getSeverityStyles(alert.severity).border} transition-all hover:bg-white/10`}>
-                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-3">
-                  <div>
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                      {alert.severity === 'high' && <ShieldAlert className="w-5 h-5 text-red-400" />}
-                      {alert.name}
-                    </h3>
-                    <p className="text-sm text-gray-400 mt-1">{t('alerts.target')} <span className="text-gray-300 font-medium">{alert.entity}</span></p>
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    <span className={`px-2.5 py-1 rounded text-xs font-bold border ${getSeverityStyles(alert.severity).badge}`}>
-                      {alert.severity.toUpperCase()}
-                    </span>
-                    {alert.status === 'active' && (
-                      <span className="px-2.5 py-1 rounded text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
-                        {t('alerts.active')}
+            {alerts.map((alert, idx) => {
+              const slug = alert.slug || alert.id || idx;
+              return (
+                <div
+                  key={idx}
+                  data-testid={`alert-card-${idx}`}
+                  className={`glass-card p-6 border-l-4 ${getSeverityStyles(alert.severity).border} transition-all hover:bg-white/10 cursor-pointer`}
+                  onClick={() => { window.location.hash = `/alerte/${slug}`; }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location.hash = `/alerte/${slug}`; } }}
+                >
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-3">
+                    <div>
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                        {alert.severity === 'high' && <ShieldAlert className="w-5 h-5 text-red-400" />}
+                        {alert.name}
+                      </h3>
+                      <p className="text-sm text-gray-400 mt-1">{t('alerts.target')} <span className="text-gray-300 font-medium">{alert.entity}</span></p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <span className={`px-2.5 py-1 rounded text-xs font-bold border ${getSeverityStyles(alert.severity).badge}`}>
+                        {alert.severity.toUpperCase()}
                       </span>
-                    )}
+                      {alert.status === 'active' && (
+                        <span className="px-2.5 py-1 rounded text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
+                          {t('alerts.active')}
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  <p className="text-gray-300 text-sm leading-relaxed">{alert.description}</p>
                 </div>
-                <p className="text-gray-300 text-sm leading-relaxed">{alert.description}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
         <div className="mt-8 text-center">
-          <button data-testid="alerts-view-all-btn" className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-medium transition-colors group">
+          <button data-testid="alerts-view-all-btn" onClick={() => { window.location.hash = '/alerte'; }} className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-medium transition-colors group">
             {t('alerts.view_all')}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>

@@ -123,10 +123,14 @@ const workerHandler = {
       host === 'pre-admin.ai-grija.ro' ||
       (host === 'localhost' && url.pathname.startsWith('/admin'));
     if (isAdminHost) {
-      const adminReq = host === 'localhost'
-        ? request
-        : new Request(url.toString().replace(url.pathname, url.pathname.replace(/^\/admin/, '') || '/'), request);
-      return admin.fetch(host === 'localhost' ? request : adminReq, env, ctx);
+      if (host === 'localhost') {
+        // Strip /admin prefix for local dev routing
+        const adminUrl = new URL(request.url);
+        adminUrl.pathname = adminUrl.pathname.replace(/^\/admin/, '') || '/';
+        return admin.fetch(new Request(adminUrl.toString(), request), env, ctx);
+      }
+      // admin.ai-grija.ro / pre-admin.ai-grija.ro — pass through as-is
+      return admin.fetch(request, env, ctx);
     }
     return mainFetch(request, env, ctx);
   },

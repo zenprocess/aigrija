@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # pre-push hook: detect lockfile drift before pushing
-# Prevents CI failures from pnpm-lock.yaml being out of sync with package.json
-
 set -euo pipefail
 
 echo "🔒 Checking lockfile drift..."
@@ -11,18 +9,16 @@ if ! command -v pnpm &>/dev/null; then
   exit 0
 fi
 
-if ! pnpm install --frozen-lockfile --dry-run 2>/dev/null; then
+# pnpm v10+ doesn't support --dry-run; use --frozen-lockfile alone
+# but redirect to /dev/null and check exit code only
+if ! pnpm install --frozen-lockfile > /dev/null 2>&1; then
   echo ""
   echo "❌ Lockfile drift detected!"
   echo ""
   echo "   pnpm-lock.yaml is out of sync with package.json."
   echo "   CI will fail with --frozen-lockfile."
   echo ""
-  echo "   Fix it by running:"
-  echo ""
-  echo "     pnpm install"
-  echo ""
-  echo "   Then commit the updated pnpm-lock.yaml and push again."
+  echo "   Fix: pnpm install && git add pnpm-lock.yaml && git commit --amend"
   echo ""
   exit 1
 fi

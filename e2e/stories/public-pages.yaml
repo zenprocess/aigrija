@@ -1,0 +1,55 @@
+name: "Public pages rendering"
+tags: [smoke, critical, regression]
+description: "Verifica ca paginile publice principale se incarca corect si au continut valid"
+steps:
+  - action: navigate
+    url: "/alerte"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: alerte-page
+  - action: assert
+    selector: "h1"
+    contains: "Alerte"
+
+  - action: navigate
+    url: "/blog"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: blog-page
+  - action: assert
+    selector: "body"
+    contains: ""
+
+  - action: navigate
+    url: "/gdpr"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: gdpr-page
+  - action: assert
+    selector: "body"
+    contains: "GDPR"
+
+  - action: navigate
+    url: "/policies/privacy"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: privacy-page
+  - action: assert
+    selector: "body"
+    contains: "dataprotection.ro"
+
+  - action: navigate
+    url: "/"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: homepage-final

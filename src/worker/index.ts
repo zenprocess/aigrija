@@ -28,13 +28,29 @@ import { metrics } from './routes/metrics';
 import { quiz } from './routes/quiz';
 import { translationReport } from './routes/translation-report';
 import { newsletter } from './routes/newsletter';
+import { gepa } from './routes/gepa';
 import { handleScheduled } from './lib/cron-handler';
 import { cdnProtection } from './middleware/cdn-protection';
 import { admin } from './admin';
 import { createOpenAPIApp } from './lib/openapi';
 import { CheckEndpoint } from './routes/openapi-check';
 import { AlertsEndpoint } from './routes/openapi-alerts';
-import { HealthEndpoint } from './routes/openapi-health';
+import { HealthEndpoint, DeepHealthEndpoint } from './routes/openapi-health';
+import { CheckImageEndpoint } from './routes/openapi-check-image';
+import { CheckQrEndpoint } from './routes/openapi-check-qr';
+import { CounterEndpoint } from './routes/openapi-counter';
+import { ReportsEndpoint } from './routes/openapi-reports';
+import { VoteEndpoint } from './routes/openapi-vote';
+import { FeedEndpoint } from './routes/openapi-feed';
+import { StatsEndpoint } from './routes/openapi-stats';
+import { BadgesEndpoint } from './routes/openapi-badges';
+import { DigestLatestEndpoint, DigestSubscribeEndpoint, DigestUnsubscribeEndpoint } from './routes/openapi-digest';
+import { NewsletterSubscribeEndpoint, NewsletterUnsubscribeEndpoint } from './routes/openapi-newsletter';
+import { TranslationReportEndpoint } from './routes/openapi-translation-report';
+import { QuizEndpoint, QuizCheckEndpoint } from './routes/openapi-quiz';
+import { MetricsEndpoint } from './routes/openapi-metrics';
+import { ShareEndpoint } from './routes/openapi-share';
+import { renderErrorPage } from './lib/error-pages';
 
 const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
@@ -73,6 +89,10 @@ app.onError((err, c) => {
     error: err.message,
     stack: err.stack,
   });
+  const accept = c.req.header('Accept') || '';
+  if (accept.includes('text/html') && !accept.includes('application/json')) {
+    return c.html(renderErrorPage(500, err.message, rid), 500);
+  }
   return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Eroare interna. Va rugam incercati din nou.', request_id: rid } }, 500);
 });
 
@@ -122,6 +142,25 @@ const openapi = createOpenAPIApp(app);
 openapi.post('/api/check', CheckEndpoint);
 openapi.get('/api/alerts', AlertsEndpoint);
 openapi.get('/health', HealthEndpoint);
+openapi.get('/health/deep', DeepHealthEndpoint);
+openapi.post('/api/check/image', CheckImageEndpoint);
+openapi.post('/api/check-qr', CheckQrEndpoint);
+openapi.get('/api/counter', CounterEndpoint);
+openapi.get('/api/reports', ReportsEndpoint);
+openapi.post('/api/reports/:id/vote', VoteEndpoint);
+openapi.get('/api/feed/latest', FeedEndpoint);
+openapi.get('/api/stats', StatsEndpoint);
+openapi.get('/api/badges', BadgesEndpoint);
+openapi.get('/api/digest/latest', DigestLatestEndpoint);
+openapi.post('/api/digest/subscribe', DigestSubscribeEndpoint);
+openapi.post('/api/digest/unsubscribe', DigestUnsubscribeEndpoint);
+openapi.post('/api/newsletter/subscribe', NewsletterSubscribeEndpoint);
+openapi.post('/api/newsletter/unsubscribe', NewsletterUnsubscribeEndpoint);
+openapi.post('/api/translation-report', TranslationReportEndpoint);
+openapi.get('/api/quiz', QuizEndpoint);
+openapi.post('/api/quiz/check', QuizCheckEndpoint);
+openapi.get('/api/health/metrics', MetricsEndpoint);
+openapi.get('/api/share/:id', ShareEndpoint);
 
 // Admin feature flag routes
 app.route('/', adminFlags);
@@ -149,6 +188,24 @@ app.route('/', metrics);
 app.route('/', quiz);
 app.route('/', translationReport);
 app.route('/', newsletter);
+app.route('/', gepa);
+
+// Asset fallback: for any route not matched by Hono, try the ASSETS binding.
+// This is required because run_worker_first = true intercepts all requests before
+// Cloudflare's asset handler, so static files (index.html, JS, CSS, etc.) would
+// otherwise return 404.
+app.notFound(async (c) => {
+  const response = await c.env.ASSETS.fetch(c.req.raw);
+  if (response.status !== 404) {
+    return response;
+  }
+  const rid = c.get('requestId') || 'unknown';
+  const accept = c.req.header('Accept') || '';
+  if (accept.includes('text/html') && !accept.includes('application/json')) {
+    return c.html(renderErrorPage(404, 'Pagina nu a fost gasita.', rid), 404);
+  }
+  return c.json({ error: { code: 'NOT_FOUND', message: 'Pagina nu a fost gasita.' }, request_id: rid }, 404);
+});
 
 // Admin host routing
 // Requests from admin.ai-grija.ro are handled by the admin app

@@ -1,4 +1,5 @@
 name: "Admin panel navigation"
+tags: [admin, regression]
 description: "Verify every admin subpage loads correctly — dashboard, campaigns, drafts, scraper, weights, translations, config, content"
 steps:
   - action: navigate

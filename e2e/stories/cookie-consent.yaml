@@ -1,4 +1,5 @@
 name: "cookie-consent"
+tags: [regression]
 description: "Verifica ca pagina principala se incarca si ca paginile SSR sunt accesibile — bannerul cookie este SPA-only si nu poate fi testat fara build"
 steps:
   - action: navigate

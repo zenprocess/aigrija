@@ -1,0 +1,17 @@
+# Maps changed file paths to Bowser test tags.
+# If no mapping matches or >5 files changed, all tests run.
+# "smoke" always runs regardless of mapping.
+
+mappings:
+  - paths: ["src/worker/routes/**", "src/worker/middleware/**"]
+    tags: [api]
+  - paths: ["src/ui/**"]
+    tags: [smoke, a11y]
+  - paths: ["src/worker/admin/**"]
+    tags: [admin]
+  - paths: ["src/worker/lib/**"]
+    tags: [critical, api]
+  - paths: ["e2e/**", "playwright.config.ts"]
+    tags: []  # empty = run all (test infra changes)
+  - paths: ["wrangler.toml", "infra/**"]
+    tags: [smoke, api]

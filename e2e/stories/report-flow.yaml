@@ -1,4 +1,5 @@
 name: "Generare raport autoritati"
+tags: [regression, critical]
 description: "Utilizatorul acceseaza pagina de raportare a incidentelor la autoritati si verifica continutul paginii"
 steps:
   - action: navigate

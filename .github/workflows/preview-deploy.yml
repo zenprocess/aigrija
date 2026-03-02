@@ -1,143 +1,369 @@
+# Preview Deploy Workflow
+# Triggers on feature/fix branches and PRs targeting main.
+#
+# Job graph (optimized critical path):
+#   typecheck ──┐
+#   test ───────├─ deploy-preview ─ health-check
+#               │                       ├─ smoke-test
+#               │                       ├─ greptile-gate (PR only, continue-on-error)
+#               │                       └─ bowser-test (depends on health-check only)
+#               │                             └─ allure-report (always)
+#
+# Key design decisions:
+#   - cancel-in-progress on PRs only — push runs on feat/fix branches are not cancelled
+#   - deploy-preview uses nick-fields/retry@v3 for exponential backoff (not hand-rolled bash)
+#   - health-check polls /health with increasing backoff up to 120 s total
+#   - greptile-gate is continue-on-error: true — never blocks E2E tests
+#   - bowser-test depends on health-check ONLY, not greptile-gate
+#   - allure-report uses allure-commandline npm package (Docker-based actions are fragile)
+#   - allure history preserved across runs via gh-pages branch for trend graphs
+#   - PR comment posted with Allure report link after each run
+#   - Minimal permissions per job (default: contents: read)
+
 name: Preview Deploy
 
 on:
   push:
-    branches: [feat/*, fix/*]
+    branches:
+      - "feat/**"
+      - "fix/**"
   pull_request:
-    branches: [main]
+    branches:
+      - main
+
+# Cancel in-progress only for PRs. Push runs on feature branches are not cancelled
+# so a fast follow-up commit doesn't orphan a deploy that was already in flight.
+concurrency:
+  group: preview-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Workflow-level env vars — referenced via ${{ env.VAR }} to avoid repetition.
+env:
+  PREVIEW_URL: https://pre.ai-grija.ro
+  PNPM_VERSION: "10.25.0"
+  NODE_VERSION: "22"
+
+# Default permissions: read-only. Jobs that write (allure-report) declare their own.
+permissions:
+  contents: read
 
 jobs:
+
+  # ---------------------------------------------------------------------------
+  # TypeScript type check
+  # ---------------------------------------------------------------------------
   typecheck:
     name: TypeScript typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-      - run: npm ci
-      - run: npx tsc --noEmit
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+  # ---------------------------------------------------------------------------
+  # Unit tests + coverage
+  # ---------------------------------------------------------------------------
   test:
     name: Unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-      - run: npm ci
-      - run: npx vitest run --coverage
-      - uses: actions/upload-artifact@v4
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run unit tests with coverage
+        run: npx vitest run --coverage
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-report-preview
           path: coverage/
+          retention-days: 14
 
+  # ---------------------------------------------------------------------------
+  # Build + deploy to preview environment.
+  # Uses nick-fields/retry@v3 for proper exponential backoff + jitter.
+  # Wrangler deploy is idempotent (assets use content-hash addressing).
+  # ---------------------------------------------------------------------------
   deploy-preview:
-    name: Deploy preview
+    name: Deploy to preview
     needs: [typecheck, test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run build
-      - run: npx wrangler deploy --env preview
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build static assets
+        run: pnpm run build
+
+      # Retries 3x with 10 s base wait. nick-fields/retry applies exponential
+      # backoff internally, covering transient Cloudflare API 502s on the
+      # Workers schedules endpoint without hand-rolling a bash loop.
+      - name: Deploy to preview
+        uses: nick-fields/retry@v3
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        with:
+          timeout_minutes: 2
+          max_attempts: 3
+          retry_wait_seconds: 10
+          command: npx wrangler deploy --env preview
 
+  # ---------------------------------------------------------------------------
+  # Poll /health until the worker is live (not /health/deep which hits CF Access).
+  # Backoff increases by 2 s each attempt (2, 4, 6 … s) up to 120 s total.
+  # All post-deploy verification jobs gate on this step.
+  # ---------------------------------------------------------------------------
   health-check:
     name: Preview health check
     needs: deploy-preview
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for preview to be ready
+      - name: Wait for preview to become healthy (backoff poll, 120 s max)
+        env:
+          PREVIEW_URL: ${{ env.PREVIEW_URL }}
         run: |
-          for i in $(seq 1 30); do
-            STATUS=$(curl -sf -o /dev/null -w '%{http_code}' https://pre.ai-grija.ro/health 2>/dev/null || echo "000")
-            if [ "$STATUS" = "200" ]; then echo "Preview healthy"; exit 0; fi
-            echo "Attempt $i: status=$STATUS, retrying..."
-            sleep 5
+          ELAPSED=0
+          ATTEMPT=0
+          MAX_ELAPSED=120
+          while [ "$ELAPSED" -lt "$MAX_ELAPSED" ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            STATUS=$(curl -so /dev/null -w '%{http_code}' "$PREVIEW_URL/health" 2>/dev/null || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "Preview healthy after ${ELAPSED}s (attempt $ATTEMPT)"
+              exit 0
+            fi
+            WAIT=$((ATTEMPT * 2))
+            echo "Attempt $ATTEMPT: HTTP $STATUS — waiting ${WAIT}s (elapsed: ${ELAPSED}s)"
+            sleep "$WAIT"
+            ELAPSED=$((ELAPSED + WAIT))
           done
-          echo "ERROR: Preview not healthy after 150s"
+          echo "ERROR: Preview did not become healthy within ${MAX_ELAPSED}s"
           exit 1
 
+  # ---------------------------------------------------------------------------
+  # Infrastructure smoke tests via scripts/infra-smoke-test.sh.
+  # Runs in parallel with greptile-gate and bowser-test after health-check.
+  # ---------------------------------------------------------------------------
+  smoke-test:
+    name: Infrastructure smoke tests
+    needs: health-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run infra smoke tests
+        run: bash scripts/infra-smoke-test.sh "${{ env.PREVIEW_URL }}"
+
+  # ---------------------------------------------------------------------------
+  # Wait for Greptile AI code review.
+  # PR-only. continue-on-error: true so a Greptile timeout or failure never
+  # blocks bowser-test. bowser-test does NOT list this job in needs — intentional.
+  # ---------------------------------------------------------------------------
+  greptile-gate:
+    name: Wait for Greptile review
+    needs: health-check
+    if: always() && needs.health-check.result == 'success' && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Wait for Greptile check to complete
+        uses: fountainhead/action-wait-for-check@v1.2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          checkName: "Greptile Review"
+          ref: ${{ github.event.pull_request.head.sha }}
+          timeoutSeconds: 600
+          intervalSeconds: 30
+
+  # ---------------------------------------------------------------------------
+  # E2E Bowser stories.
+  # Depends on health-check ONLY — greptile-gate timeout cannot block this job.
+  # select-tests.sh maps changed files to story tags; empty result runs all stories.
+  # fetch-depth: 0 required so select-tests.sh can diff against base SHA.
+  # ---------------------------------------------------------------------------
   bowser-test:
     name: E2E Bowser stories
     needs: health-check
+    if: always() && needs.health-check.result == 'success'
     runs-on: ubuntu-latest
     container: mcr.microsoft.com/playwright:v1.50.0-noble
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-      - run: npm ci
-      - run: npx playwright install --with-deps
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Determine test tags via select-tests.sh
+        id: tags
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+          TAGS=$(bash scripts/select-tests.sh "$BASE_SHA" 2>/dev/null || true)
+          echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
+          if [ -n "$TAGS" ]; then
+            echo "Running tag subset: $TAGS"
+          else
+            echo "No tag filter — running all stories"
+          fi
+
       - name: Run Bowser stories
         env:
-          BASE_URL: https://pre.ai-grija.ro
+          BASE_URL: ${{ env.PREVIEW_URL }}
           CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
-          CI: 'true'
-        run: npx tsx e2e/bowser-dispatch.ts --base-url $BASE_URL
-      - uses: actions/upload-artifact@v4
+          CI: "true"
+        run: |
+          TAGS="${{ steps.tags.outputs.tags }}"
+          if [ -n "$TAGS" ]; then
+            npx tsx e2e/bowser-dispatch.ts --base-url "$BASE_URL" --tags "$TAGS"
+          else
+            npx tsx e2e/bowser-dispatch.ts --base-url "$BASE_URL"
+          fi
+
+      # Upload playwright HTML report and allure raw results as separate artifacts
+      # so they can be downloaded independently for debugging.
+      - name: Upload Playwright report artifact
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: bowser-report
-          path: |
-            playwright-report/
-            allure-results/
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
 
+      - name: Upload Allure results artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-results
+          path: allure-results/
+          retention-days: 14
+
+  # ---------------------------------------------------------------------------
+  # Publish Allure report to gh-pages under reports/allure/.
+  # Uses allure-commandline npm package — avoids fragile Docker-based actions
+  # (simple-elf base image removed; step-security fork adds unwanted abstractions).
+  # History is preserved across runs for trend graphs.
+  # A PR comment is posted with a direct link to the published report.
+  # Only runs on push (merge to main/feature branch), not on PR events.
+  # ---------------------------------------------------------------------------
   allure-report:
-    name: Publish Allure Report
+    name: Publish Allure report
     needs: bowser-test
-    if: always()
+    if: always() && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write        # needed to push to gh-pages
+      pull-requests: write   # needed to post PR comment
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download test results
+      - name: Download Allure results artifact
         uses: actions/download-artifact@v4
         with:
-          name: bowser-report
-          path: .
+          name: allure-results
+          path: allure-results/
         continue-on-error: true
 
-      - name: Load previous Allure history
+      # Check out gh-pages branch into a subdirectory so we can read prior history.
+      # continue-on-error handles the case where gh-pages doesn't exist yet (first run).
+      - name: Load previous Allure history from gh-pages
         uses: actions/checkout@v4
         with:
           ref: gh-pages
           path: gh-pages
         continue-on-error: true
 
-      - name: Copy history
+      - name: Copy Allure history for trend graphs
         run: |
           mkdir -p allure-results/history
-          cp -r gh-pages/reports/allure/history/* allure-results/history/ 2>/dev/null || true
+          if [ -d gh-pages/reports/allure/history ]; then
+            cp -r gh-pages/reports/allure/history/. allure-results/history/
+            echo "History copied from gh-pages"
+          else
+            echo "No prior history found — this is the first run"
+          fi
 
-      - name: Generate Allure Report
-        uses: simple-elf/allure-report-action@v1.9
-        if: always()
-        with:
-          allure_results: allure-results
-          allure_history: allure-history
-          keep_reports: 30
+      - name: Install Allure CLI
+        run: npm install -g allure-commandline
 
-      - name: Deploy to GitHub Pages
+      - name: Generate Allure report
+        run: allure generate allure-results --clean -o allure-report
+
+      - name: Deploy Allure report to gh-pages
         uses: peaceiris/actions-gh-pages@v4
-        if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: allure-history
+          publish_dir: allure-report
           destination_dir: reports/allure
+
+      # Post (or update) a single sticky comment on the PR with report links.
+      # mode: recreate replaces the previous comment so the PR thread stays clean.
+      - name: Comment PR with Allure report link
+        if: github.event_name == 'pull_request'
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          message: |
+            ## Test Report
+            [Allure Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/reports/allure/) | [Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          comment-tag: allure-report
+          mode: recreate

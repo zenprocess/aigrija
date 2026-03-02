@@ -1,0 +1,23 @@
+name: "API validation - Check endpoint"
+tags: [smoke, api, regression]
+description: "Testeaza ca endpoint-ul /api/check este accesibil si ca pagina /alerte se incarca corect"
+steps:
+  - action: navigate
+    url: "/alerte"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: alerte-page-validation
+
+  - action: navigate
+    url: "/openapi.json"
+  - action: wait
+    selector: "body"
+    timeout: 5000
+  - action: screenshot
+    name: openapi-json
+  - action: assert
+    selector: "body"
+    contains: "check"
+

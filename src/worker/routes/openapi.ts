@@ -7,12 +7,26 @@ const OPENAPI_SPEC = {
   openapi: '3.1.0',
   info: {
     title: 'AI Grija API',
-    version: '2026-03-01',
+    version: '2026-03-02',
     description: 'Romanian anti-phishing API — verifica mesaje si URL-uri suspecte',
   },
+  tags: [
+    { name: 'Analysis', description: 'Analiza mesaje, URL-uri si imagini' },
+    { name: 'Community', description: 'Rapoarte si voturi din comunitate' },
+    { name: 'Feed', description: 'Feed de verdicte in timp real' },
+    { name: 'Statistics', description: 'Statistici si metrici ale platformei' },
+    { name: 'Quiz', description: 'Quiz anti-frauda educativ' },
+    { name: 'Digest', description: 'Digest saptamanal de securitate' },
+    { name: 'Newsletter', description: 'Abonare/dezabonare newsletter' },
+    { name: 'Share', description: 'Carduri de distribuire' },
+    { name: 'Feedback', description: 'Rapoarte erori de traducere' },
+    { name: 'Alerts', description: 'Campanii de phishing active' },
+    { name: 'System', description: 'Health check si metrici' },
+  ],
   paths: {
     '/api/check': {
       post: {
+        tags: ['Analysis'],
         summary: 'Verifica un mesaj sau URL suspect',
         requestBody: {
           required: true,
@@ -30,144 +44,179 @@ const OPENAPI_SPEC = {
           },
         },
         responses: {
-          '200': {
-            description: 'Rezultatul analizei',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    request_id: { type: 'string' },
-                    classification: {
-                      type: 'object',
-                      properties: {
-                        verdict: { type: 'string', enum: ['phishing', 'suspicious', 'likely_safe'] },
-                        confidence: { type: 'number' },
-                        scam_type: { type: 'string' },
-                        red_flags: { type: 'array', items: { type: 'string' } },
-                        explanation: { type: 'string' },
-                        recommended_actions: { type: 'array', items: { type: 'string' } },
-                      },
-                    },
-                    rate_limit: {
-                      type: 'object',
-                      properties: {
-                        remaining: { type: 'number' },
-                        limit: { type: 'number' },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
+          '200': { description: 'Rezultatul analizei' },
+          '400': { description: 'Date invalide' },
+          '429': { description: 'Limita de cereri depasita' },
+        },
+      },
+    },
+    '/api/check/image': {
+      post: {
+        tags: ['Analysis'],
+        summary: 'Analizeaza o imagine pentru detectia fraudelor',
+        requestBody: {
+          required: true,
+          content: { 'multipart/form-data': { schema: { type: 'object', properties: { image: { type: 'string', format: 'binary' }, text: { type: 'string' } } } } },
+        },
+        responses: {
+          '200': { description: 'Rezultatul analizei imaginii' },
+          '400': { description: 'Date invalide' },
+          '429': { description: 'Limita de cereri depasita' },
+        },
+      },
+    },
+    '/api/check-qr': {
+      post: {
+        tags: ['Analysis'],
+        summary: 'Analizeaza URL-ul dintr-un cod QR',
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { type: 'object', required: ['qr_data'], properties: { qr_data: { type: 'string' } } } } },
+        },
+        responses: {
+          '200': { description: 'Rezultatul analizei URL-ului din QR' },
+          '400': { description: 'Date invalide' },
+          '422': { description: 'QR-ul nu contine un URL valid' },
+          '429': { description: 'Limita de cereri depasita' },
         },
       },
     },
     '/api/alerts': {
       get: {
+        tags: ['Alerts'],
         summary: 'Lista alertelor active de phishing',
-        responses: {
-          '200': {
-            description: 'Lista de alerte',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      id: { type: 'string' },
-                      title: { type: 'string' },
-                      severity: { type: 'string' },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+        parameters: [{ name: 'status', in: 'query', schema: { type: 'string', enum: ['active', 'declining', 'resolved'] } }],
+        responses: { '200': { description: 'Lista campaniilor' }, '400': { description: 'Status invalid' } },
       },
     },
     '/api/counter': {
       get: {
+        tags: ['Statistics'],
         summary: 'Numarul total de verificari efectuate',
-        responses: {
-          '200': {
-            description: 'Contor',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: { count: { type: 'number' } },
-                },
-              },
-            },
-          },
-        },
+        responses: { '200': { description: 'Contor', content: { 'application/json': { schema: { type: 'object', properties: { total_checks: { type: 'number' } } } } } } },
       },
     },
-    '/api/report/{type}': {
-      post: {
-        summary: 'Raporteaza un continut fals/periculos',
-        parameters: [
-          { name: 'type', in: 'path', required: true, schema: { type: 'string' } },
-        ],
-        responses: {
-          '200': {
-            description: 'Confirmare raport',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: { success: { type: 'boolean' } },
-                },
-              },
-            },
-          },
-        },
+    '/api/reports': {
+      get: {
+        tags: ['Community'],
+        summary: 'Lista rapoartelor comunitatii',
+        parameters: [{ name: 'page', in: 'query', schema: { type: 'integer' } }],
+        responses: { '200': { description: 'Lista de rapoarte' } },
       },
     },
-    '/api/share': {
+    '/api/reports/{id}/vote': {
       post: {
-        summary: 'Creeaza un link de partajare',
-        responses: {
-          '200': {
-            description: 'Link generat',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    id: { type: 'string' },
-                    url: { type: 'string' },
-                  },
-                },
-              },
-            },
-          },
-        },
+        tags: ['Community'],
+        summary: 'Voteaza un raport din comunitate',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['vote'], properties: { vote: { type: 'string', enum: ['up', 'down'] } } } } } },
+        responses: { '200': { description: 'Voturile actualizate' }, '404': { description: 'Raport negasit' }, '429': { description: 'Limita de voturi depasita' } },
+      },
+    },
+    '/api/feed/latest': {
+      get: {
+        tags: ['Feed'],
+        summary: 'Ultimele verdicte de analiza',
+        responses: { '200': { description: 'Lista ultimelor 5 verdicte' } },
+      },
+    },
+    '/api/stats': {
+      get: {
+        tags: ['Statistics'],
+        summary: 'Statistici ale platformei',
+        responses: { '200': { description: 'Statisticile agregate' } },
+      },
+    },
+    '/api/badges': {
+      get: {
+        tags: ['Statistics'],
+        summary: 'Insignele si certificarile platformei',
+        responses: { '200': { description: 'Insignele platformei' } },
+      },
+    },
+    '/api/digest/latest': {
+      get: {
+        tags: ['Digest'],
+        summary: 'Ultimul digest saptamanal',
+        responses: { '200': { description: 'Digestul saptamanal' }, '503': { description: 'Indisponibil' } },
+      },
+    },
+    '/api/digest/subscribe': {
+      post: {
+        tags: ['Digest'],
+        summary: 'Abonare la digestul saptamanal',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['email'], properties: { email: { type: 'string', format: 'email' } } } } } },
+        responses: { '200': { description: 'Abonare reusita' }, '400': { description: 'Deja abonat' }, '429': { description: 'Prea multe cereri' } },
+      },
+    },
+    '/api/digest/unsubscribe': {
+      post: {
+        tags: ['Digest'],
+        summary: 'Dezabonare de la digestul saptamanal',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['email'], properties: { email: { type: 'string', format: 'email' } } } } } },
+        responses: { '200': { description: 'Dezabonare reusita' }, '404': { description: 'Nu este abonat' } },
+      },
+    },
+    '/api/newsletter/subscribe': {
+      post: {
+        tags: ['Newsletter'],
+        summary: 'Abonare la newsletter',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['email'], properties: { email: { type: 'string', format: 'email' } } } } } },
+        responses: { '200': { description: 'Abonare reusita' }, '400': { description: 'Deja abonat' }, '429': { description: 'Prea multe incercari' } },
+      },
+    },
+    '/api/newsletter/unsubscribe': {
+      post: {
+        tags: ['Newsletter'],
+        summary: 'Dezabonare de la newsletter',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['email'], properties: { email: { type: 'string', format: 'email' } } } } } },
+        responses: { '200': { description: 'Dezabonare reusita' }, '404': { description: 'Nu este abonat' } },
+      },
+    },
+    '/api/translation-report': {
+      post: {
+        tags: ['Feedback'],
+        summary: 'Raporteaza o eroare de traducere',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['lang', 'comment'], properties: { lang: { type: 'string' }, key: { type: 'string' }, currentText: { type: 'string' }, suggestedText: { type: 'string' }, comment: { type: 'string' }, page: { type: 'string' } } } } } },
+        responses: { '200': { description: 'Raport inregistrat' }, '400': { description: 'Date invalide' }, '429': { description: 'Prea multe rapoarte' } },
+      },
+    },
+    '/api/quiz': {
+      get: {
+        tags: ['Quiz'],
+        summary: 'Obtine intrebari de quiz',
+        parameters: [{ name: 'lang', in: 'query', schema: { type: 'string', enum: ['ro', 'en', 'bg', 'hu', 'uk'] } }],
+        responses: { '200': { description: '10 intrebari aleatoare' }, '429': { description: 'Prea multe cereri' } },
+      },
+    },
+    '/api/quiz/check': {
+      post: {
+        tags: ['Quiz'],
+        summary: 'Verifica raspunsul la o intrebare de quiz',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['questionId', 'answer'], properties: { questionId: { type: 'string' }, answer: {} } } } } },
+        responses: { '200': { description: 'Rezultatul verificarii' }, '404': { description: 'Intrebare inexistenta' } },
+      },
+    },
+    '/api/health/metrics': {
+      get: {
+        tags: ['System'],
+        summary: 'Metrici de sanatate ale platformei',
+        responses: { '200': { description: 'Metrici detaliate (uptime, bindings, stats)' } },
+      },
+    },
+    '/api/share/{id}': {
+      get: {
+        tags: ['Share'],
+        summary: 'Obtine cardul de distribuire',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { '200': { description: 'Imaginea cardului (SVG/PNG)' }, '400': { description: 'ID invalid' }, '404': { description: 'Card negasit' } },
       },
     },
     '/health': {
       get: {
-        summary: 'Starea serviciului',
-        responses: {
-          '200': {
-            description: 'Serviciu functional',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    status: { type: 'string' },
-                    version: { type: 'string' },
-                  },
-                },
-              },
-            },
-          },
-        },
+        tags: ['System'],
+        summary: 'Health check',
+        responses: { '200': { description: 'Serviciu functional' }, '503': { description: 'Serviciu degradat' } },
       },
     },
   },

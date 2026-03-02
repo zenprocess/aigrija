@@ -1,6 +1,7 @@
 {
   "name": "ai-grija-ro",
   "private": true,
+  "packageManager": "pnpm@10.25.0",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
@@ -21,6 +22,8 @@
     "test:explore": "tsx e2e/bowser-explore.ts"
   },
   "dependencies": {
+    "@dicebear/collection": "^9.3.2",
+    "@dicebear/core": "^9.3.2",
     "chanfana": "^3.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -39,6 +42,7 @@
     "@types/pngjs": "^6.0.5",
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/coverage-v8": "^3.2.4",
+    "allure-commandline": "^2.37.0",
     "allure-js-commons": "^3.5.0",
     "allure-playwright": "^3.5.0",
     "autoprefixer": "^10.4.27",

@@ -2,7 +2,16 @@ name: Bowser Weekly
 on:
   schedule:
     - cron: '0 2 * * 0'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Test tags to run (comma-separated, empty = all)'
+        required: false
+        default: ''
+      base_url:
+        description: 'Target URL'
+        required: false
+        default: 'https://ai-grija.ro'
 
 jobs:
   exploratory:
@@ -10,17 +19,22 @@ jobs:
     container: mcr.microsoft.com/playwright:v1.50.0-noble
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.25.0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
       - run: npx playwright install --with-deps
       - name: Run Bowser stories against production
         id: bowser
         env:
-          BASE_URL: https://ai-grija.ro
+          BASE_URL: ${{ github.event.inputs.base_url || 'https://ai-grija.ro' }}
           CI: 'true'
-        run: npx tsx e2e/bowser-dispatch.ts --base-url $BASE_URL
+        run: |
+          TAGS="${{ github.event.inputs.tags || '' }}"
+          npx tsx e2e/bowser-dispatch.ts --base-url "$BASE_URL" ${TAGS:+--tags "$TAGS"}
         continue-on-error: true
       - uses: actions/upload-artifact@v4
         if: always()

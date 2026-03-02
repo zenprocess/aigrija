@@ -1,4 +1,5 @@
 name: "Navigare alerte active"
+tags: [smoke, regression]
 description: "Utilizatorul consulta campaniile de phishing active, deschide o alerta si revine la lista"
 steps:
   - action: navigate

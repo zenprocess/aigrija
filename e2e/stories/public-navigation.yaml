@@ -1,4 +1,5 @@
 name: "Public site navigation"
+tags: [smoke, critical, regression]
 description: "Ca utilizator, verific ca paginile principale SSR si navigarea functioneaza corect"
 steps:
   - action: navigate

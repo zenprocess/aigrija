@@ -5,6 +5,17 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      full_regression:
+        description: 'Run full Bowser regression suite'
+        type: boolean
+        default: false
+      tags:
+        description: 'Bowser story tags to run (comma-separated, empty = all)'
+        type: string
+        default: ''
+
 
 jobs:
   typecheck:
@@ -143,3 +154,33 @@ jobs:
         run: echo "::warning::PULUMI_CONFIG_PASSPHRASE not set — infrastructure validation skipped. Add it to GitHub secrets."
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+
+  bowser-regression:
+    name: Bowser full regression
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_regression == true }}
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.50.0-noble
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pnpm install --frozen-lockfile
+      - run: npx playwright install --with-deps
+      - name: Run Bowser regression suite
+        continue-on-error: true
+        env:
+          CI: 'true'
+        run: |
+          TAGS="${{ inputs.tags }}"
+          npx tsx e2e/bowser-dispatch.ts --base-url "https://ai-grija.ro" ${TAGS:+--tags "$TAGS"}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bowser-regression-report
+          path: |
+            playwright-report/
+            allure-results/

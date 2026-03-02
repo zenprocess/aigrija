@@ -24,6 +24,14 @@ vi.mock('./layout', () => ({
   adminLayout: vi.fn((title: string, content: string) => `<html>${title}${content}</html>`),
 }));
 
+vi.mock('./drafts', () => ({
+  drafts: (() => {
+    const r = new Hono();
+    r.get('/', (c: any) => c.html('<html>Drafturi</html>'));
+    return r;
+  })(),
+}));
+
 // Mock campaigns module to avoid real DB calls in admin/index tests
 vi.mock('./campaigns', () => ({
   campaignRoutes: (() => {
@@ -70,7 +78,7 @@ describe('admin/index', () => {
     expect(html).toContain('Campanii');
   });
 
-  it('GET /drafturi renders placeholder page', async () => {
+  it('GET /drafturi renders drafts page', async () => {
     const { admin } = await import('./index');
     const req = new Request('http://localhost/drafturi');
     const res = await admin.fetch(req, makeEnv(), makeCtx());
@@ -86,5 +94,18 @@ describe('admin/index', () => {
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('Scraper');
+  });
+
+  it('GET / sets Content-Security-Policy header on HTML responses', async () => {
+    const { admin } = await import('./index');
+    const req = new Request('http://localhost/');
+    const res = await admin.fetch(req, makeEnv(), makeCtx());
+    expect(res.status).toBe(200);
+    const csp = res.headers.get('Content-Security-Policy');
+    expect(csp).toBeTruthy();
+    expect(csp).toContain("default-src 'self'");
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).toContain('https://cdn.ai-grija.ro');
+    expect(csp).toContain('https://cdn.tailwindcss.com');
   });
 });

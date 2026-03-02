@@ -293,7 +293,7 @@ weekly.get('/api/weekly', async (c) => {
 
 weekly.post('/api/digest/subscribe', async (c) => {
   // Rate limit: 5 req/hr per IP
-  const subIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'unknown';
+  const subIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (c.env.CACHE) {
     const subRl = await checkRateLimit(c.env.CACHE, `digest-sub:${subIp}`, 5, 3600).catch(() => ({ allowed: true }));
     if (!subRl.allowed) {
@@ -339,7 +339,7 @@ weekly.post('/api/digest/subscribe', async (c) => {
 
 weekly.post('/api/digest/unsubscribe', async (c) => {
   // Rate limit: 5 req/hr per IP
-  const unsubIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'unknown';
+  const unsubIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (c.env.CACHE) {
     const unsubRl = await checkRateLimit(c.env.CACHE, `digest-unsub:${unsubIp}`, 5, 3600).catch(() => ({ allowed: true }));
     if (!unsubRl.allowed) {

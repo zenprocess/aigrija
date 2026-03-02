@@ -11,6 +11,13 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+
+/** Compute the KV key for the current fixed window. */
+function rlKey(identifier: string, windowSeconds: number): string {
+  const now = Math.floor(Date.now() / 1000);
+  const windowSlot = Math.floor(now / windowSeconds);
+  return `rl:${identifier}:${windowSlot}`;
+}
 function makeKV(data: Record<string, string> = {}): KVNamespace {
   const store = new Map(Object.entries(data));
   return {
@@ -141,7 +148,7 @@ describe("POST /api/check", () => {
   });
 
   it("returns 429 when rate limited", async () => {
-    const kv = makeKV({ "rl:unknown": "20" }); // at check limit (20 req/hr)
+    const kv = makeKV({ [rlKey('unknown', 3600)]: '20' }); // at check limit (20 req/hr)
     const app = buildApp();
     const res = await post(app, { text: "Click here to claim your prize immediately" }, makeEnv({ CACHE: kv }), makeCtx());
     expect(res.status).toBe(429);

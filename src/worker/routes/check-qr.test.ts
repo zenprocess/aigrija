@@ -8,6 +8,13 @@ afterEach(() => {
 });
 import { checkQr } from "./check-qr";
 
+
+/** Compute the KV key for the current fixed window. */
+function rlKey(identifier: string, windowSeconds: number): string {
+  const now = Math.floor(Date.now() / 1000);
+  const windowSlot = Math.floor(now / windowSeconds);
+  return `rl:${identifier}:${windowSlot}`;
+}
 function makeKV(data: Record<string, string> = {}): KVNamespace {
   const store = new Map(Object.entries(data));
   return {
@@ -83,7 +90,7 @@ describe("POST /api/check-qr", () => {
 
   it("returns 429 when rate limited", async () => {
     // Seed counter at the check-qr limit (30) so next request is rejected
-    const kv = makeKV({ "rl:unknown": "30" }); // at check-qr limit
+    const kv = makeKV({ [rlKey('unknown', 3600)]: '30' }); // at check-qr limit
     const env = makeEnv({ CACHE: kv });
     const req = new Request("http://localhost/api/check-qr", {
       method: "POST",

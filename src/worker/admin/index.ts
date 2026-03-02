@@ -10,6 +10,7 @@ import { translationReportsAdmin } from './translation-reports';
 import { escapeHtml } from '../lib/escape-html';
 import { analytics } from './analytics';
 import { activity } from './activity';
+import { drafts } from './drafts';
 import { generateStandalonePostWithOverrides } from '../lib/draft-generator';
 import { structuredLog } from '../lib/logger';
 
@@ -19,6 +20,24 @@ const admin = new Hono<AdminEnv>();
 
 // Apply CF Access auth to all admin routes
 admin.use('*', adminAuth);
+
+// Content-Security-Policy middleware for all admin HTML responses
+const ADMIN_CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: https://cdn.ai-grija.ro",
+  "connect-src 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+
+admin.use('*', async (c, next) => {
+  await next();
+  const ct = c.res.headers.get('Content-Type') ?? '';
+  if (ct.includes('text/html')) {
+    c.res.headers.set('Content-Security-Policy', ADMIN_CSP);
+  }
+});
 
 // --- Dashboard ---
 admin.get('/', (c) => {
@@ -48,21 +67,6 @@ admin.get('/', (c) => {
     </div>`;
   return c.html(adminLayout('Dashboard', content, 'dashboard', email));
 });
-
-// --- Drafturi (placeholder) ---
-const drafturiRouter = new Hono<AdminEnv>();
-drafturiRouter.get('/', (c) => {
-  const email = c.get('adminEmail');
-  const content = `
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 class="text-gray-700 font-medium mb-2">Drafturi</h2>
-      <p class="text-gray-500 text-sm">Drafturile generate de AI pentru aprobare vor aparea aici.</p>
-    </div>`;
-  return c.html(adminLayout('Drafturi', content, 'drafturi', email));
-});
-
-
-
 
 // --- Generate Content API ---
 admin.post('/api/generate-content', async (c) => {
@@ -99,12 +103,12 @@ admin.get('/api/admin/drafts/ai-generated', async (c) => {
 // --- Generare Continut HTML page ---
 admin.get('/generare-continut', async (c) => {
   const email = c.get('adminEmail');
-  let drafts: { id: string; title: string; threat_type: string | null; draft_status: string; created_at: string }[] = [];
+  let recentDrafts: { id: string; title: string; threat_type: string | null; draft_status: string; created_at: string }[] = [];
   try {
     const rows = await c.env.DB.prepare(
       "SELECT id, title, threat_type, draft_status, created_at FROM campaigns WHERE source = 'ai-generated' ORDER BY created_at DESC LIMIT 10"
     ).all<{ id: string; title: string; threat_type: string | null; draft_status: string; created_at: string }>();
-    drafts = rows.results;
+    recentDrafts = rows.results;
   } catch (err) {
     structuredLog('error', '[admin/generare-continut] DB error', { error: err instanceof Error ? err.message : String(err) });
   }
@@ -127,8 +131,8 @@ admin.get('/generare-continut', async (c) => {
     return `<span class="px-2 py-0.5 rounded-full text-xs ${cls}">${s}</span>`;
   };
 
-  const draftsHtml = drafts.length
-    ? drafts.map(d => `
+  const draftsHtml = recentDrafts.length
+    ? recentDrafts.map(d => `
       <tr class="border-b hover:bg-gray-50">
         <td class="py-2 px-3 text-sm"><a href="/admin/campanii/${escapeHtml(d.id)}" class="text-blue-600 hover:underline">${escapeHtml(d.title)}</a></td>
         <td class="py-2 px-3 text-xs text-gray-500">${escapeHtml(categoryLabels[d.threat_type ?? ''] ?? (d.threat_type ?? '-'))}</td>
@@ -230,7 +234,7 @@ admin.get('/generare-continut', async (c) => {
 // Mount sub-routers — API routes must be mounted before HTML routes to avoid param conflicts
 admin.route('/campanii/api', campaignApiRoutes);
 admin.route('/campanii', campaignRoutes);
-admin.route('/drafturi', drafturiRouter);
+admin.route('/drafturi', drafts);
 admin.route('/scrapere', scraperRoutes);
 admin.route('/ponderi', weightsAdmin);
 admin.route('/traduceri', translationsAdmin);

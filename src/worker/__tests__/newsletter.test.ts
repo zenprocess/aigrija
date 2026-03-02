@@ -21,6 +21,12 @@ function makeEnv(kvStore?: Record<string, string>) {
 }
 
 const ctx = { waitUntil: vi.fn(), passThroughOnException: vi.fn() } as any;
+/** Compute the KV key for the current fixed window. */
+function rlKey(identifier: string, windowSeconds: number): string {
+  const now = Math.floor(Date.now() / 1000);
+  const windowSlot = Math.floor(now / windowSeconds);
+  return `rl:${identifier}:${windowSlot}`;
+}
 
 describe('POST /api/newsletter/subscribe', () => {
   beforeEach(() => {
@@ -76,7 +82,7 @@ describe('POST /api/newsletter/subscribe', () => {
       body: JSON.stringify({ email: 'user@example.com' }),
     });
 
-    const res = await app.fetch(req, makeEnv({ 'rl:newsletter:9.9.9.9': '5' }) as any, ctx);
+    const res = await app.fetch(req, makeEnv({ [rlKey('newsletter:9.9.9.9', 60)]: '5' }) as any, ctx);
     expect(res.status).toBe(429);
     const body = await res.json() as { error: { code: string } };
     expect(body.error.code).toBe('RATE_LIMITED');
@@ -156,7 +162,7 @@ describe('POST /api/newsletter/unsubscribe', () => {
       body: JSON.stringify({ email: 'user@example.com' }),
     });
 
-    const res = await app.fetch(req, makeEnv({ 'rl:newsletter:8.8.8.8': '5' }) as any, ctx);
+    const res = await app.fetch(req, makeEnv({ [rlKey('newsletter:8.8.8.8', 60)]: '5' }) as any, ctx);
     expect(res.status).toBe(429);
   });
 });

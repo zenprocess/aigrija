@@ -22,6 +22,8 @@
     "test:explore": "tsx e2e/bowser-explore.ts"
   },
   "dependencies": {
+    "@dicebear/collection": "^9.3.2",
+    "@dicebear/core": "^9.3.2",
     "chanfana": "^3.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

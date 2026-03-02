@@ -13,6 +13,7 @@
 export { errorResponse, setRateLimitHeaders } from './error-response';
 
 import type { Context } from 'hono';
+import { renderErrorPage } from './error-pages';
 
 type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500 | 503;
 
@@ -67,5 +68,9 @@ export function serviceUnavailable(c: Context, message: string, code = 'SERVICE_
 
 function jsonError(c: Context, status: ErrorStatus, code: string, message: string) {
   const requestId = (c.get('requestId')) || 'unknown';
+  const accept = c.req.header('Accept') || '';
+  if (accept.includes('text/html') && !accept.includes('application/json')) {
+    return c.html(renderErrorPage(status, message, requestId), status);
+  }
   return c.json({ error: { code, message }, request_id: requestId }, status);
 }

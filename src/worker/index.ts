@@ -36,6 +36,7 @@ import { createOpenAPIApp } from './lib/openapi';
 import { CheckEndpoint } from './routes/openapi-check';
 import { AlertsEndpoint } from './routes/openapi-alerts';
 import { HealthEndpoint } from './routes/openapi-health';
+import { renderErrorPage } from './lib/error-pages';
 
 const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
@@ -74,6 +75,10 @@ app.onError((err, c) => {
     error: err.message,
     stack: err.stack,
   });
+  const accept = c.req.header('Accept') || '';
+  if (accept.includes('text/html') && !accept.includes('application/json')) {
+    return c.html(renderErrorPage(500, err.message, rid), 500);
+  }
   return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Eroare interna. Va rugam incercati din nou.', request_id: rid } }, 500);
 });
 
@@ -162,6 +167,10 @@ app.notFound(async (c) => {
     return response;
   }
   const rid = c.get('requestId') || 'unknown';
+  const accept = c.req.header('Accept') || '';
+  if (accept.includes('text/html') && !accept.includes('application/json')) {
+    return c.html(renderErrorPage(404, 'Pagina nu a fost gasita.', rid), 404);
+  }
   return c.json({ error: { code: 'NOT_FOUND', message: 'Pagina nu a fost gasita.' }, request_id: rid }, 404);
 });
 

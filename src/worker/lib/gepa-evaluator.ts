@@ -29,7 +29,7 @@ export interface ReadabilityDetails {
 }
 
 export interface AccuracyDetails {
-  hallucationMarkerCount: number;
+  hallucinationMarkerCount: number;
   fabricatedStatCount: number;
   unsourcedPercentageClaimCount: number;
   score: number;
@@ -159,7 +159,7 @@ export function evaluateAccuracy(content: string): AccuracyDetails {
   const plain = stripMarkdown(content).toLowerCase();
 
   // Count hallucination marker phrases
-  const hallucationMarkerCount = HALLUCINATION_MARKERS.filter(marker =>
+  const hallucinationMarkerCount = HALLUCINATION_MARKERS.filter(marker =>
     plain.includes(marker.toLowerCase())
   ).length;
 
@@ -179,12 +179,12 @@ export function evaluateAccuracy(content: string): AccuracyDetails {
   // Score: each hallucination marker = -0.15, each unsourced stat = -0.10, each fabricated = -0.20
   const score = Math.max(0, Math.min(1,
     1
-    - hallucationMarkerCount * 0.15
+    - hallucinationMarkerCount * 0.15
     - unsourcedPercentageClaimCount * 0.10
     - fabricatedStatCount * 0.20
   ));
 
-  return { hallucationMarkerCount, fabricatedStatCount, unsourcedPercentageClaimCount, score };
+  return { hallucinationMarkerCount, fabricatedStatCount, unsourcedPercentageClaimCount, score };
 }
 
 export function evaluateSeo(content: string, keywords: string[] = []): SeoDetails {

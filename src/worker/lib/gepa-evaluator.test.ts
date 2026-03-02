@@ -53,7 +53,7 @@ describe('evaluateAccuracy', () => {
   it('returns score 1.0 for content with no hallucination markers', () => {
     const content = '# Articol curat\nNu accesa link-uri suspecte. Raporteaza la DNSC.';
     const result = evaluateAccuracy(content);
-    expect(result.hallucationMarkerCount).toBe(0);
+    expect(result.hallucinationMarkerCount).toBe(0);
     expect(result.fabricatedStatCount).toBe(0);
     expect(result.score).toBe(1.0);
   });
@@ -61,7 +61,7 @@ describe('evaluateAccuracy', () => {
   it('penalizes hallucination marker phrases', () => {
     const content = 'Conform statisticilor, phishing-ul a crescut. Studii arată că 90% din romani sunt afectati.';
     const result = evaluateAccuracy(content);
-    expect(result.hallucationMarkerCount).toBeGreaterThanOrEqual(1);
+    expect(result.hallucinationMarkerCount).toBeGreaterThanOrEqual(1);
     expect(result.score).toBeLessThan(0.9);
   });
 

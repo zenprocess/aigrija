@@ -1,4 +1,5 @@
 name: "API validation - Check endpoint"
+tags: [smoke, api, regression]
 description: "Testeaza ca endpoint-ul /api/check este accesibil si ca pagina /alerte se incarca corect"
 steps:
   - action: navigate

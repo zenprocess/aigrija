@@ -1,4 +1,5 @@
 name: "Public pages rendering"
+tags: [smoke, critical, regression]
 description: "Verifica ca paginile publice principale se incarca corect si au continut valid"
 steps:
   - action: navigate

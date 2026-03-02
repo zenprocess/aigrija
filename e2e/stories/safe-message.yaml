@@ -1,4 +1,5 @@
 name: "Verificare mesaj sigur"
+tags: [regression, api]
 description: "Testeaza paginile SSR accesibile — verificarea mesajelor via API /api/check necesita POST si nu poate fi efectuata prin navigate"
 steps:
   - action: navigate

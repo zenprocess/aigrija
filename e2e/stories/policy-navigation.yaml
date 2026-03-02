@@ -1,4 +1,5 @@
 name: "Navigare politici legale"
+tags: [regression, a11y]
 description: "Utilizatorul viziteaza toate paginile legale disponibile ca SSR: GDPR, politica de confidentialitate, termeni si conditii"
 steps:
   - action: navigate

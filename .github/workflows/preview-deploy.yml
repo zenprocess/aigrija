@@ -62,7 +62,6 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-
   smoke-test:
     name: Infrastructure smoke tests
     needs: deploy-preview
@@ -90,9 +89,25 @@ jobs:
           echo "ERROR: Preview not healthy after 150s"
           exit 1
 
+  greptile-gate:
+    name: Wait for Greptile review
+    needs: health-check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Greptile check
+        uses: fountainhead/action-wait-for-check@v1.2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          checkName: "Greptile Review"
+          ref: ${{ github.event.pull_request.head.sha }}
+          timeoutSeconds: 600
+          intervalSeconds: 30
+
   bowser-test:
     name: E2E Bowser stories
-    needs: health-check
+    needs: [health-check, greptile-gate]
+    if: always() && needs.health-check.result == 'success'
     runs-on: ubuntu-latest
     container: mcr.microsoft.com/playwright:v1.50.0-noble
     steps:
@@ -106,13 +121,21 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: npx playwright install --with-deps
+      - name: Determine test tags
+        id: tags
+        run: |
+          TAGS=$(bash scripts/select-tests.sh "${{ github.event.pull_request.base.sha || 'HEAD~1' }}")
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          echo "Selected tags: $TAGS"
       - name: Run Bowser stories
         env:
           BASE_URL: https://pre.ai-grija.ro
           CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
           CI: 'true'
-        run: npx tsx e2e/bowser-dispatch.ts --base-url $BASE_URL
+        run: |
+          TAGS="${{ steps.tags.outputs.tags }}"
+          npx tsx e2e/bowser-dispatch.ts --base-url "$BASE_URL" ${TAGS:+--tags "$TAGS"}
       - uses: actions/upload-artifact@v4
         if: always()
         with:

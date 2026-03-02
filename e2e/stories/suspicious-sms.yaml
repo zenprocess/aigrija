@@ -1,4 +1,5 @@
 name: "Verificare SMS suspect"
+tags: [regression, api]
 description: "Testeaza pagina de raportare si alertele SSR — verificarea mesajelor via API necesita POST si nu poate fi efectuata cu navigate"
 steps:
   - action: navigate

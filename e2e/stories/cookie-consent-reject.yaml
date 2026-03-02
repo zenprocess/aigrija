@@ -1,4 +1,5 @@
 name: "cookie-consent-reject"
+tags: [regression]
 description: "Verifica ca paginile de politici se incarca corect — bannerul cookie este SPA-only si nu poate fi testat fara build"
 steps:
   - action: navigate

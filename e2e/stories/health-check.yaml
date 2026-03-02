@@ -1,4 +1,5 @@
 name: "Health check - API endpoints"
+tags: [smoke, critical, api, regression]
 description: "Verifica ca toate endpoint-urile principale returneza 200 OK si sunt functionale"
 steps:
   - action: navigate

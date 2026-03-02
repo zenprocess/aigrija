@@ -63,6 +63,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^3.2.4
         version: 3.2.4(vitest@3.2.4(@types/node@25.3.3)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.2))
+      allure-commandline:
+        specifier: ^2.37.0
+        version: 2.37.0
       allure-js-commons:
         specifier: ^3.5.0
         version: 3.5.0(allure-playwright@3.5.0(@playwright/test@1.58.2))
@@ -1020,6 +1023,10 @@ packages:
 
   '@vitest/utils@3.2.4':
     resolution: {integrity: sha512-fB2V0JFrQSMsCo9HiSq3Ezpdv4iYaXRG1Sx8edX3MwxfyNn83mKiGzOcH+Fkxt4MHxr3y42fQi1oeAInqgX2QA==}
+
+  allure-commandline@2.37.0:
+    resolution: {integrity: sha512-s3zZ8zjqo2U3i5Lb3iLOCjwWQCtGK58GVpScTnZddOpgTXBDXAbXn+pT7QXN4NiY7pho6xw+UgyREyCRnx/9ug==}
+    hasBin: true
 
   allure-js-commons@3.5.0:
     resolution: {integrity: sha512-iBVFNQkX5i48QGlb5U3iWm+NiNOl/ucxv6dvEJBNeJTPMI8t0Dn0CuXMQEiv4forSSAppD7FB9uGal2JwunH/A==}
@@ -2696,6 +2703,8 @@ snapshots:
       '@vitest/pretty-format': 3.2.4
       loupe: 3.2.1
       tinyrainbow: 2.0.0
+
+  allure-commandline@2.37.0: {}
 
   allure-js-commons@3.5.0(allure-playwright@3.5.0(@playwright/test@1.58.2)):
     dependencies:

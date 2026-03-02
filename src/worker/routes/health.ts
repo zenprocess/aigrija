@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
+import { structuredLog } from '../lib/logger';
 
 interface HealthCheck {
   status: 'ok' | 'fail' | 'skip';
@@ -20,7 +21,8 @@ health.get('/health', async (c) => {
     const start = Date.now();
     await c.env.CACHE.get('health-probe');
     checks.kv = { status: 'ok', latency_ms: Date.now() - start };
-  } catch {
+  } catch (err) {
+    structuredLog('error', 'health_check_kv_failed', { error: String(err), stack: err instanceof Error ? err.stack : undefined });
     checks.kv = { status: 'fail' };
   }
 
@@ -32,7 +34,8 @@ health.get('/health', async (c) => {
     const start = Date.now();
     await c.env.STORAGE.head('health-probe');
     checks.r2 = { status: 'ok', latency_ms: Date.now() - start };
-  } catch {
+  } catch (err) {
+    structuredLog('error', 'health_check_r2_failed', { error: String(err), stack: err instanceof Error ? err.stack : undefined });
     checks.r2 = { status: 'fail' };
   }
 

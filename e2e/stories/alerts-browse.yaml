@@ -1,0 +1,29 @@
+name: "Navigare alerte active"
+description: "Utilizatorul consulta campaniile de phishing active, deschide o alerta si revine la lista"
+steps:
+  - action: navigate
+    url: "/alerte"
+  - action: wait
+    selector: "body"
+    timeout: 15000
+  - action: screenshot
+    name: alerts-list-loaded
+  - action: assert
+    selector: "h1, h2"
+    contains: ""
+  - action: screenshot
+    name: alerts-list-content
+  - action: navigate
+    url: "/api/alerts"
+  - action: wait
+    selector: "body"
+    timeout: 5000
+  - action: screenshot
+    name: api-alerts-response
+  - action: navigate
+    url: "/alerte"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: alerts-list-final

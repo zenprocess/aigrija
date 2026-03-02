@@ -8,10 +8,12 @@
     background-color: #0A0A0F;
     color: #ffffff;
   }
-  
+
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
+    line-height: 1.5;
+    font-size: 1rem;
   }
 }
 
@@ -19,13 +21,60 @@
   .glass-card {
     @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl;
   }
-  
+
   .glass-panel {
     @apply bg-black/50 backdrop-blur-xl border-b border-white/10;
   }
 
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r;
+  }
+}
+
+/* Focus visible — WCAG 2.2 AA */
+:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Skip to content — visually hidden until focused */
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.skip-to-content:focus {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  padding: 0.75rem 1.5rem;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  z-index: 9999;
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-spin {
+    animation: none !important;
+    opacity: 0.7;
   }
 }
 
@@ -90,4 +139,30 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* shadcn/ui CSS variables — dark theme */
+@layer base {
+  :root {
+    --background: 240 10% 4%;
+    --foreground: 0 0% 100%;
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 100%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 15%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 5% 15%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 5% 15%;
+    --input: 240 5% 15%;
+    --ring: 221 83% 53%;
+    --radius: 0.5rem;
+  }
 }

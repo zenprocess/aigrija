@@ -1,0 +1,30 @@
+name: "cookie-consent-reject"
+description: "Verifica ca paginile de politici se incarca corect — bannerul cookie este SPA-only si nu poate fi testat fara build"
+steps:
+  - action: navigate
+    url: "/"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: homepage-loaded
+  - action: navigate
+    url: "/policies/privacy"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: privacy-page
+  - action: assert
+    selector: "body"
+    contains: "contact@ai-grija.ro"
+  - action: navigate
+    url: "/policies/general-terms"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: terms-page
+  - action: assert
+    selector: "body"
+    contains: "Zen Labs"

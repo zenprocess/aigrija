@@ -1,0 +1,6 @@
+name: ai-grija-infra
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+description: Cloudflare infrastructure for ai-grija.ro

@@ -1,0 +1,30 @@
+name: "cookie-consent"
+description: "Verifica ca pagina principala se incarca si ca paginile SSR sunt accesibile — bannerul cookie este SPA-only si nu poate fi testat fara build"
+steps:
+  - action: navigate
+    url: "/"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: homepage-loaded
+  - action: navigate
+    url: "/gdpr"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: gdpr-page
+  - action: assert
+    selector: "body"
+    contains: "GDPR"
+  - action: navigate
+    url: "/policies/privacy"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: privacy-page
+  - action: assert
+    selector: "body"
+    contains: "ai-grija.ro"

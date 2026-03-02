@@ -1,0 +1,38 @@
+name: Bowser Weekly
+on:
+  schedule:
+    - cron: '0 2 * * 0'
+  workflow_dispatch: {}
+
+jobs:
+  exploratory:
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.50.0-noble
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Run Bowser stories against production
+        id: bowser
+        env:
+          BASE_URL: https://ai-grija.ro
+          CI: 'true'
+        run: npx tsx e2e/bowser-dispatch.ts --base-url $BASE_URL
+        continue-on-error: true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bowser-weekly-report
+          path: playwright-report/
+      - name: Create issue on failure
+        if: steps.bowser.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "Bowser weekly run failed $(date -u +%Y-%m-%d)" \
+            --body "$(cat playwright-report/bowser-summary.json 2>/dev/null || echo 'No summary available')" \
+            --label auto-detected

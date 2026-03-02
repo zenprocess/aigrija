@@ -1,0 +1,42 @@
+name: "Generare raport autoritati"
+description: "Utilizatorul acceseaza pagina de raportare a incidentelor la autoritati si verifica continutul paginii"
+steps:
+  - action: navigate
+    url: "/raport"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: raport-page
+  - action: assert
+    selector: "body"
+    contains: "Generator Raport Incident"
+  - action: assert
+    selector: "body"
+    contains: "1911"
+  - action: assert
+    selector: "body"
+    contains: "DNSC"
+  - action: assert
+    selector: "body"
+    contains: "CERT-RO"
+  - action: navigate
+    url: "/api/alerts"
+  - action: wait
+    selector: "body"
+    timeout: 5000
+  - action: screenshot
+    name: api-alerts
+  - action: assert
+    selector: "body"
+    contains: "campaigns"
+  - action: navigate
+    url: "/gdpr"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: gdpr-page
+  - action: assert
+    selector: "body"
+    contains: "GDPR"

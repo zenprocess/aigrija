@@ -1,0 +1,10 @@
+{
+  "check-textarea": { "primary": "[data-testid='check-textarea']", "fallback": "textarea[placeholder*='Lipește']" },
+  "check-submit-btn": { "primary": "[data-testid='check-submit-btn']", "fallback": "button:has-text('Verifică')" },
+  "verdict-card": { "primary": "[data-testid='verdict-card']", "fallback": ".verdict-container, [class*='verdict']" },
+  "alert-card": { "primary": "[data-testid='alert-card']", "fallback": "[class*='alert-card'], [class*='campaign']" },
+  "nav-menu": { "primary": "[data-testid='nav-menu']", "fallback": "nav, [role='navigation']" },
+  "hero-counter": { "primary": "[data-testid='hero-counter']", "fallback": "[class*='counter'], [class*='stats']" },
+  "share-modal": { "primary": "[data-testid='share-modal']", "fallback": "[class*='share'], [role='dialog']" },
+  "footer": { "primary": "[data-testid='footer']", "fallback": "footer, [class*='footer']" }
+}

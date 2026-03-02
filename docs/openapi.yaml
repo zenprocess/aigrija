@@ -1,0 +1,912 @@
+openapi: 3.0.3
+info:
+  title: AI-Grija API
+  version: 1.0.0
+  description: |
+    API public pentru platforma ai-grija.ro — detectie phishing, fraude online si mesaje
+    suspecte in Romania. Toate analizele sunt realizate prin modele AI (Workers AI / Llama 3.1).
+
+    **Limite de rata**: 20 de cereri per ora per IP pentru endpoint-urile de analiza.
+    Limita este returnata in headerele `X-RateLimit-Limit` si `X-RateLimit-Remaining`.
+  contact:
+    name: Zen Labs
+    url: https://ai-grija.ro
+  license:
+    name: MIT
+
+servers:
+  - url: https://ai-grija.ro
+    description: Productie
+  - url: http://localhost:8787
+    description: Dezvoltare locala (wrangler dev)
+
+tags:
+  - name: Analiza
+    description: Verificarea mesajelor, URL-urilor si imaginilor suspecte
+  - name: Rapoarte
+    description: Generarea documentelor oficiale de sesizare
+  - name: Distribuire
+    description: Carduri de distribuire pe retele sociale
+  - name: Alerte
+    description: Campanii de frauda active
+  - name: Statistici
+    description: Date publice despre utilizarea platformei
+  - name: Sistem
+    description: Health check si metadate
+  - name: SEO
+    description: Sitemap, robots.txt si pagini OG pentru crawlere
+
+paths:
+
+  /api/check:
+    post:
+      tags: [Analiza]
+      summary: Verifica un mesaj sau URL suspect
+      description: |
+        Analizeaza textul primit folosind AI (Llama 3.1 8B) pentru a detecta phishing,
+        escrocherii si mesaje suspecte. Daca se trimite si un URL, se ruleaza analiza
+        domeniului (varsta, Google Safe Browsing, VirusTotal, URLhaus).
+
+        Raspunsul include un share_id si share_url pentru cardul SVG de distribuire.
+      operationId: checkText
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckRequest'
+            examples:
+              mesaj_sms:
+                summary: SMS suspect cu link bancar
+                value:
+                  text: "Contul dvs. BRD a fost blocat. Accesati urgent: http://brd-secure.xyz/verificare"
+                  url: "http://brd-secure.xyz/verificare"
+      responses:
+        '200':
+          description: Rezultatul analizei AI
+          headers:
+            X-RateLimit-Limit:
+              description: Numarul maxim de cereri permise per ora
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: Numarul de cereri ramase in fereastra curenta
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/check-qr:
+    post:
+      tags: [Analiza]
+      summary: Verifica URL-ul extras dintr-un cod QR
+      description: |
+        Primeste URL-ul deja decodat din codul QR si ruleaza acelasi pipeline de
+        analiza URL ca si /api/check. Daca qr_data nu contine un URL valid (http/https),
+        se returneaza 422.
+      operationId: checkQr
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckQrRequest'
+      responses:
+        '200':
+          description: Rezultatul analizei URL din QR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckQrResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '422':
+          description: QR-ul nu contine un URL valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    $ref: '#/components/schemas/ErrorDetail'
+                  is_url:
+                    type: boolean
+                    example: false
+                  raw_data:
+                    type: string
+                  request_id:
+                    type: string
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/check/image:
+    post:
+      tags: [Analiza]
+      summary: Verifica o captura de ecran sau imagine suspecta
+      description: |
+        Incarca o imagine (PNG, JPEG sau WEBP, maxim 5 MB) si o analizeaza folosind
+        modelul de viziune LLaVA 1.5 7B. Daca se trimite si campul text cu context,
+        se ruleaza si clasificatorul text Llama 3.1.
+      operationId: checkImage
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Fisierul imagine (PNG, JPEG sau WEBP, max 5 MB)
+                text:
+                  type: string
+                  maxLength: 5000
+                  description: Context textual optional
+      responses:
+        '200':
+          description: Rezultatul analizei vizuale si textuale
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageCheckResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/report/{type}:
+    get:
+      tags: [Rapoarte]
+      summary: Genereaza un document oficial de sesizare
+      description: |
+        Genereaza textul unui document oficial (plangere penala, petitie politie,
+        raport DNSC sau sesizare banca). Limita: 100 de cereri per ora per IP.
+      operationId: generateReport
+      parameters:
+        - name: type
+          in: path
+          required: true
+          description: Tipul documentului de generat
+          schema:
+            type: string
+            enum:
+              - plangere-penala
+              - petitie-politie
+              - raport-dnsc
+              - sesizare-banca
+        - name: scam_type
+          in: query
+          description: Tipul de frauda detectat
+          schema:
+            type: string
+            maxLength: 200
+            default: "frauda online"
+        - name: text
+          in: query
+          description: Extras din mesajul original (max 200 caractere)
+          schema:
+            type: string
+            maxLength: 200
+        - name: url
+          in: query
+          description: URL-ul suspect identificat
+          schema:
+            type: string
+            maxLength: 2048
+        - name: bank
+          in: query
+          description: Banca impersonata (pentru sesizare-banca)
+          schema:
+            type: string
+            maxLength: 100
+        - name: verdict
+          in: query
+          description: Verdictul analizei AI
+          schema:
+            type: string
+            maxLength: 50
+            default: "suspicious"
+        - name: date
+          in: query
+          description: Data incidentului
+          schema:
+            type: string
+            maxLength: 30
+      responses:
+        '200':
+          description: Documentul generat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/share/{id}:
+    get:
+      tags: [Distribuire]
+      summary: Returneaza cardul SVG/PNG de distribuire
+      description: |
+        Returneaza imaginea SVG (sau PNG pentru carduri vechi) generata la analiza.
+        ID-ul este un UUID v4 obtinut din campul share_id al raspunsului /api/check.
+      operationId: getShareCard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID v4 al cardului
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Imaginea cardului (SVG sau PNG)
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: "public, max-age=86400"
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          description: Cardul nu a fost gasit (expirat sau ID invalid)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/alerts:
+    get:
+      tags: [Alerte]
+      summary: Lista campaniilor de frauda active
+      description: |
+        Returneaza campaniile de frauda curente (curate de echipa ai-grija.ro) si
+        campaniile emergente detectate automat. Poate fi filtrata dupa status.
+      operationId: listAlerts
+      parameters:
+        - name: status
+          in: query
+          description: Filtreaza dupa starea campaniei
+          schema:
+            type: string
+            enum: [active, declining, resolved]
+      responses:
+        '200':
+          description: Lista campaniilor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertsResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/alerts/emerging:
+    get:
+      tags: [Alerte]
+      summary: Campanii emergente detectate din semnalele comunitatii
+      description: |
+        Returneaza campaniile detectate automat prin agregatorul de semnale.
+        Aceste campanii nu sunt validate de echipa si pot contine fals-pozitive.
+      operationId: getEmergingAlerts
+      responses:
+        '200':
+          description: Campanii emergente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  emerging:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EmergingCampaign'
+
+  /api/alerts/{slug}:
+    get:
+      tags: [Alerte]
+      summary: Detalii campanie dupa slug
+      operationId: getAlert
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Slug-ul campaniei (ex. "brd-phishing-sms")
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalii campanie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampaignSummary'
+        '404':
+          description: Campania nu a fost gasita
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/counter:
+    get:
+      tags: [Statistici]
+      summary: Numar total de verificari efectuate
+      description: Returneaza contorul public al verificarilor totale de la lansare.
+      operationId: getCounter
+      responses:
+        '200':
+          description: Contorul curent
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [total_checks]
+                properties:
+                  total_checks:
+                    type: integer
+                    example: 42371
+
+  /health:
+    get:
+      tags: [Sistem]
+      summary: Health check al serviciului
+      description: |
+        Verifica starea KV, AI si R2. Returneaza 200 daca totul functioneaza sau
+        503 daca KV sau R2 sunt in stare fail.
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Toate serviciile functioneaza
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Cel putin un serviciu este degradat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /og/{type}:
+    get:
+      tags: [SEO]
+      summary: Pagina HTML cu meta OG pentru crawlere sociale
+      description: |
+        Pagina HTML cu tag-uri og:image, og:title si og:description pentru preview-uri
+        corecte pe Facebook, Twitter/X si WhatsApp. Redirectioneaza automat la ai-grija.ro.
+        Tipuri suportate: verdict si alert.
+      operationId: ogPage
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [verdict, alert]
+        - name: verdict
+          in: query
+          schema:
+            type: string
+            enum: [phishing, suspicious, likely_safe]
+        - name: confidence
+          in: query
+          schema:
+            type: number
+        - name: scam_type
+          in: query
+          schema:
+            type: string
+        - name: title
+          in: query
+          schema:
+            type: string
+        - name: description
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pagina HTML cu meta OG si redirect automat
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /og/image:
+    get:
+      tags: [SEO]
+      summary: Imagine SVG dinamica pentru verdict (1200x630)
+      description: Genereaza SVG 1200x630 px cu verdictul, nivelul de incredere si tipul de frauda.
+      operationId: ogImage
+      parameters:
+        - name: verdict
+          in: query
+          schema:
+            type: string
+            enum: [phishing, suspicious, likely_safe]
+            default: suspicious
+        - name: confidence
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 100
+            default: 75
+        - name: scam_type
+          in: query
+          schema:
+            type: string
+            default: "Continut suspect"
+      responses:
+        '200':
+          description: Imagine SVG
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+
+  /og/alert:
+    get:
+      tags: [SEO]
+      summary: Imagine SVG dinamica pentru alerta (1200x630)
+      description: Genereaza SVG de tip alerta activa pentru partajare pe retele sociale.
+      operationId: ogAlert
+      parameters:
+        - name: title
+          in: query
+          schema:
+            type: string
+            default: "Alerta Frauda"
+        - name: description
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Imagine SVG alerta
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+
+  /sitemap.xml:
+    get:
+      tags: [SEO]
+      summary: Sitemap XML
+      description: Sitemap XML standard (pagina principala + alerte per campanie).
+      operationId: getSitemap
+      responses:
+        '200':
+          description: Sitemap XML
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: "public, max-age=3600"
+          content:
+            application/xml:
+              schema:
+                type: string
+
+  /robots.txt:
+    get:
+      tags: [SEO]
+      summary: Robots.txt
+      description: Permite indexarea tuturor paginilor si indica locatia sitemap-ului.
+      operationId: getRobots
+      responses:
+        '200':
+          description: Continutul robots.txt
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "User-agent: *\nAllow: /\nSitemap: https://ai-grija.ro/sitemap.xml\n"
+
+components:
+
+  schemas:
+
+    CheckRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          minLength: 3
+          maxLength: 5000
+          description: Textul mesajului suspect (SMS, email, WhatsApp etc.)
+          example: "Contul dvs. BRD a fost blocat. Accesati urgent link-ul de mai jos."
+        url:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: URL-ul suspect din mesaj (optional)
+          example: "http://brd-secure.xyz/verificare"
+
+    CheckQrRequest:
+      type: object
+      required: [qr_data]
+      properties:
+        qr_data:
+          type: string
+          minLength: 1
+          description: Continutul decodat al codului QR (trebuie sa fie URL http/https)
+          example: "https://brd-secure.xyz/verificare"
+
+    Classification:
+      type: object
+      required: [verdict, confidence, scam_type, red_flags, explanation, recommended_actions, model_used, ai_disclaimer]
+      properties:
+        verdict:
+          type: string
+          enum: [phishing, suspicious, likely_safe]
+          description: "Verdictul AI: phishing=frauda confirmata, suspicious=suspect, likely_safe=probabil sigur"
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Nivelul de incredere al modelului (0=nesigur, 1=foarte sigur)
+          example: 0.92
+        scam_type:
+          type: string
+          description: Tipul de frauda detectat
+          example: "Phishing bancar"
+        impersonated_entity:
+          type: string
+          description: Entitatea impersonata (ex. BRD, BNR, FanCourier)
+        red_flags:
+          type: array
+          items:
+            type: string
+          description: Semnale de alarma identificate in text
+        explanation:
+          type: string
+          description: Explicatia in romana a motivului verdictului
+        recommended_actions:
+          type: array
+          items:
+            type: string
+          description: Actiuni recomandate utilizatorului
+        model_used:
+          type: string
+          description: Modelul AI folosit pentru analiza
+          example: "@cf/meta/llama-3.1-8b-instruct"
+        ai_disclaimer:
+          type: string
+          description: Disclaimer privind natura orientativa a analizei AI
+
+    UrlAnalysis:
+      type: object
+      required: [url, is_suspicious, risk_score, flags, safe_browsing_match, safe_browsing_threats]
+      properties:
+        url:
+          type: string
+        domain:
+          type: string
+          example: "brd-secure.xyz"
+        is_suspicious:
+          type: boolean
+        risk_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        flags:
+          type: array
+          items:
+            type: string
+          example: ["domeniu nou (<30 zile)", "gasit in URLhaus"]
+        safe_browsing_match:
+          type: boolean
+        safe_browsing_threats:
+          type: array
+          items:
+            type: string
+        domain_age_days:
+          type: integer
+          nullable: true
+        registrar:
+          type: string
+          nullable: true
+        creation_date:
+          type: string
+          nullable: true
+        is_new_domain:
+          type: boolean
+
+    MatchedCampaign:
+      type: object
+      required: [campaign_id, campaign_name, slug, score]
+      properties:
+        campaign_id:
+          type: string
+        campaign_name:
+          type: string
+          example: "Phishing BRD prin SMS"
+        slug:
+          type: string
+          example: "brd-phishing-sms"
+        score:
+          type: number
+
+    BankPlaybook:
+      type: object
+      required: [entity, official_domain, fraud_phone, fraud_page, if_compromised]
+      properties:
+        entity:
+          type: string
+          example: "BRD"
+        official_domain:
+          type: string
+          example: "brd.ro"
+        fraud_phone:
+          type: string
+          example: "0800 800 272"
+        fraud_page:
+          type: string
+          example: "https://www.brd.ro/securitate/frauda"
+        if_compromised:
+          type: array
+          items:
+            type: string
+          description: Pasii de urmat daca utilizatorul a fost victima fraudei
+
+    ScamPattern:
+      type: object
+      required: [name, category, description]
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+          enum: [courier, tax, marketplace, bank, utility]
+        description:
+          type: string
+
+    RateLimit:
+      type: object
+      required: [remaining, limit]
+      properties:
+        remaining:
+          type: integer
+        limit:
+          type: integer
+          example: 20
+
+    CheckResponse:
+      type: object
+      required: [request_id, classification, matched_campaigns, rate_limit]
+      properties:
+        request_id:
+          type: string
+          format: uuid
+        classification:
+          $ref: '#/components/schemas/Classification'
+        url_analysis:
+          $ref: '#/components/schemas/UrlAnalysis'
+        matched_campaigns:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchedCampaign'
+        bank_playbook:
+          $ref: '#/components/schemas/BankPlaybook'
+        rate_limit:
+          $ref: '#/components/schemas/RateLimit'
+        share_id:
+          type: string
+          description: Hash-ul cardului SVG (folosit in /card/:hash)
+        share_url:
+          type: string
+          format: uri
+          description: URL-ul complet al cardului pentru distributie pe retele sociale
+        matched_scam_pattern:
+          $ref: '#/components/schemas/ScamPattern'
+
+    CheckQrResponse:
+      type: object
+      required: [request_id, url_analysis, rate_limit]
+      properties:
+        request_id:
+          type: string
+        url_analysis:
+          $ref: '#/components/schemas/UrlAnalysis'
+        rate_limit:
+          $ref: '#/components/schemas/RateLimit'
+
+    ImageCheckResponse:
+      type: object
+      required: [request_id, classification, image_analysis, rate_limit]
+      properties:
+        request_id:
+          type: string
+        classification:
+          $ref: '#/components/schemas/Classification'
+        image_analysis:
+          type: string
+          description: Descrierea generata de modelul de viziune LLaVA
+        rate_limit:
+          $ref: '#/components/schemas/RateLimit'
+
+    ReportResponse:
+      type: object
+      description: Documentul oficial generat. Structura depinde de tipul ales.
+      properties:
+        title:
+          type: string
+          example: "Plangere penala — Frauda informatica"
+        body:
+          type: string
+        institution:
+          type: string
+          example: "Politia Romana"
+        zen_labs_credit:
+          type: string
+          example: "ai-grija.ro — Proiect civic Zen Labs"
+
+    HealthCheck:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok, fail, skip]
+        latency_ms:
+          type: integer
+
+    HealthResponse:
+      type: object
+      required: [status, version, timestamp, checks]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        version:
+          type: string
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          required: [kv, ai, r2]
+          properties:
+            kv:
+              $ref: '#/components/schemas/HealthCheck'
+            ai:
+              $ref: '#/components/schemas/HealthCheck'
+            r2:
+              $ref: '#/components/schemas/HealthCheck'
+
+    CampaignSummary:
+      type: object
+      required: [id, slug, name, status, severity, impersonated_entity, first_seen, source]
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+        name:
+          type: string
+          description: Numele campaniei in romana
+        status:
+          type: string
+          enum: [active, declining, resolved]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        impersonated_entity:
+          type: string
+        first_seen:
+          type: string
+        source:
+          type: string
+          enum: [curated]
+
+    EmergingCampaign:
+      type: object
+      description: Campanie detectata automat (nevalidata de echipa)
+      properties:
+        scam_type:
+          type: string
+        report_count:
+          type: integer
+        first_seen:
+          type: integer
+          description: Timestamp Unix in milisecunde
+        url_domain:
+          type: string
+          nullable: true
+
+    AlertsResponse:
+      type: object
+      required: [campaigns, emerging_campaigns]
+      properties:
+        campaigns:
+          type: array
+          items:
+            $ref: '#/components/schemas/CampaignSummary'
+          description: Campaniile validate de echipa ai-grija.ro
+        emerging_campaigns:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmergingCampaign'
+
+    ErrorDetail:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Textul este prea scurt pentru analiza (minim 3 caractere)."
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+        request_id:
+          type: string
+
+  responses:
+    ValidationError:
+      description: Date invalide trimise de client
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: VALIDATION_ERROR
+              message: "Textul este prea scurt pentru analiza (minim 3 caractere)."
+
+    RateLimited:
+      description: Limita de cereri per ora depasita
+      headers:
+        Retry-After:
+          description: Secunde pana la urmatoarea fereastra
+          schema:
+            type: integer
+            example: 3600
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+            example: 0
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: RATE_LIMITED
+              message: "Limita de verificari depasita. Incercati din nou mai tarziu."

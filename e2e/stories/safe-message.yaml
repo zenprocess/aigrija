@@ -1,0 +1,33 @@
+name: "Verificare mesaj sigur"
+description: "Testeaza paginile SSR accesibile — verificarea mesajelor via API /api/check necesita POST si nu poate fi efectuata prin navigate"
+steps:
+  - action: navigate
+    url: "/raport"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: raport-page
+  - action: assert
+    selector: "body"
+    contains: "Generator Raport Incident"
+  - action: navigate
+    url: "/alerte"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: alerte-page
+  - action: assert
+    selector: "body"
+    contains: "ai-grija.ro"
+  - action: navigate
+    url: "/gdpr"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: gdpr-page
+  - action: assert
+    selector: "body"
+    contains: "GDPR"

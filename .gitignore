@@ -6,3 +6,19 @@ dist/
 *.pem
 *.key
 .wrangler/
+
+# Added by ggshield
+.cache_ggshield
+resources/
+
+# Playwright
+playwright-report/
+test-results/
+
+# Extension packaged builds
+extension/*.zip
+
+# Build artifacts
+build/
+coverage/
+research/

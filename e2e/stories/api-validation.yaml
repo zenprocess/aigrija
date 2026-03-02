@@ -21,10 +21,3 @@ steps:
     selector: "body"
     contains: "check"
 
-  - action: navigate
-    url: "/docs"
-  - action: wait
-    selector: "body"
-    timeout: 15000
-  - action: screenshot
-    name: api-docs

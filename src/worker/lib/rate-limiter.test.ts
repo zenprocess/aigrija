@@ -1,15 +1,22 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from "../lib/rate-limiter";
 
-function makeKV(): KVNamespace {
+function makeKV(): KVNamespace & { _store: Map<string, string>; _lastTtl: number | undefined } {
   const store = new Map<string, string>();
-  return {
+  let lastTtl: number | undefined;
+  const kv = {
+    _store: store,
+    get _lastTtl() { return lastTtl; },
     get: async (key: string) => store.get(key) ?? null,
-    put: async (key: string, value: string, _opts?: any) => { store.set(key, value); },
+    put: async (key: string, value: string, opts?: { expirationTtl?: number }) => {
+      store.set(key, value);
+      if (opts?.expirationTtl !== undefined) lastTtl = opts.expirationTtl;
+    },
     delete: async () => {},
     list: async () => ({ keys: [], list_complete: true, cacheStatus: null }),
     getWithMetadata: async () => ({ value: null, metadata: null, cacheStatus: null }),
-  } as unknown as KVNamespace;
+  } as unknown as KVNamespace & { _store: Map<string, string>; _lastTtl: number | undefined };
+  return kv;
 }
 
 afterEach(() => {
@@ -64,13 +71,19 @@ describe("checkRateLimit", () => {
     expect(result.limit).toBe(20);
   });
 
-  it("includes reset timestamp approximately equal to now + windowSeconds", async () => {
+  it("reset timestamp is at the fixed window boundary, not now + windowSeconds", async () => {
+    const windowSeconds = 3600;
     const kv = makeKV();
     const before = Math.floor(Date.now() / 1000);
-    const result = await checkRateLimit(kv, "5.5.5.5", 10, 3600);
+    const result = await checkRateLimit(kv, "5.5.5.5", 10, windowSeconds);
     const after = Math.floor(Date.now() / 1000);
-    expect(result.reset).toBeGreaterThanOrEqual(before + 3600);
-    expect(result.reset).toBeLessThanOrEqual(after + 3600);
+    // Fixed window: reset = (floor(now/window) + 1) * window
+    const expectedSlotBefore = Math.floor(before / windowSeconds);
+    const expectedSlotAfter = Math.floor(after / windowSeconds);
+    expect(result.reset).toBeGreaterThanOrEqual((expectedSlotBefore + 1) * windowSeconds);
+    expect(result.reset).toBeLessThanOrEqual((expectedSlotAfter + 1) * windowSeconds);
+    // reset must be strictly in the future
+    expect(result.reset).toBeGreaterThan(before);
   });
 
   it("reset is set even when rate limited (allowed: false)", async () => {
@@ -81,6 +94,74 @@ describe("checkRateLimit", () => {
     const result = await checkRateLimit(kv, "6.6.6.6", 3, 3600);
     expect(result.allowed).toBe(false);
     expect(result.reset).toBeGreaterThan(0);
+  });
+});
+
+// ── Fixed-window expiry behaviour ───────────────────────────────────────────
+
+describe("checkRateLimit — fixed-window expiry", () => {
+  it("uses a key that encodes the window slot so counters reset across windows", async () => {
+    const windowSeconds = 60;
+    vi.useFakeTimers();
+
+    // Window slot 0
+    vi.setSystemTime(new Date(0 * windowSeconds * 1000));
+    const kv = makeKV();
+    for (let i = 0; i < 3; i++) {
+      await checkRateLimit(kv, "exp-test", 3, windowSeconds);
+    }
+    const blocked = await checkRateLimit(kv, "exp-test", 3, windowSeconds);
+    expect(blocked.allowed).toBe(false);
+
+    // Advance to the next window slot — old KV key is no longer used
+    vi.setSystemTime(new Date(1 * windowSeconds * 1000));
+    const newWindow = await checkRateLimit(kv, "exp-test", 3, windowSeconds);
+    expect(newWindow.allowed).toBe(true);
+    expect(newWindow.remaining).toBe(2);
+  });
+
+  it("sets expirationTtl to remaining time in the window (not full windowSeconds)", async () => {
+    const windowSeconds = 3600;
+    vi.useFakeTimers();
+    // Set time to 900 seconds into a window (3600 s window), so 2700 s remain
+    const slotStart = Math.floor(Date.now() / 1000 / windowSeconds) * windowSeconds;
+    vi.setSystemTime(new Date((slotStart + 900) * 1000));
+
+    const kv = makeKV();
+    await checkRateLimit(kv, "ttl-test", 10, windowSeconds);
+    // TTL should be ~2700 (remaining time), not 3600 (full window)
+    expect(kv._lastTtl).toBeDefined();
+    expect(kv._lastTtl!).toBeLessThanOrEqual(2700);
+    expect(kv._lastTtl!).toBeGreaterThanOrEqual(2699);
+  });
+
+  it("reset equals window boundary, consistent across multiple requests in same window", async () => {
+    const windowSeconds = 3600;
+    vi.useFakeTimers();
+    // Use a time that is exactly at the start of a slot to maximise headroom.
+    const slotStart = Math.floor(1700000000 / windowSeconds) * windowSeconds; // 1699999200
+    vi.setSystemTime(new Date(slotStart * 1000));
+
+    const kv = makeKV();
+    const r1 = await checkRateLimit(kv, "reset-check", 5, windowSeconds);
+    vi.setSystemTime(new Date((slotStart + 1800) * 1000)); // 1800 s later, still same slot
+    const r2 = await checkRateLimit(kv, "reset-check", 5, windowSeconds);
+
+    expect(r1.reset).toBe(r2.reset); // same window slot → same boundary
+    expect(r1.reset).toBe(slotStart + windowSeconds);
+  });
+
+  it("two different identifiers in the same window are independent", async () => {
+    const kv = makeKV();
+    const windowSeconds = 60;
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(0));
+
+    for (let i = 0; i < 3; i++) await checkRateLimit(kv, "A", 3, windowSeconds);
+    const a = await checkRateLimit(kv, "A", 3, windowSeconds);
+    const b = await checkRateLimit(kv, "B", 3, windowSeconds);
+    expect(a.allowed).toBe(false);
+    expect(b.allowed).toBe(true);
   });
 });
 

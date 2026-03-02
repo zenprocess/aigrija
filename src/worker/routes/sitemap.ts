@@ -22,7 +22,8 @@ sitemap.get('/sitemap.xml', (c) => {
 sitemap.get('/robots.txt', (c) => {
   const base = c.env.BASE_URL;
   c.header('Content-Type', 'text/plain');
-  return c.body(`User-agent: *\nAllow: /\nSitemap: ${base}/sitemap.xml\n`);
+  c.header("Cache-Control", "public, max-age=86400");
+  return c.body(`User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /api/\n\nSitemap: ${base}/sitemap.xml\n`);
 });
 
 export { sitemap };

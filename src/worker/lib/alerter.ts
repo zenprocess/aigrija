@@ -1,4 +1,5 @@
 import type { Env } from './types';
+import { withCircuitBreaker, CircuitOpenError } from './circuit-breaker';
 
 type AlertLevel = 'warn' | 'error' | 'critical';
 
@@ -23,16 +24,43 @@ export async function sendAlert(
     await env.CACHE.put(dedupKey, '1', { expirationTtl: 900 });
   }
 
-  const emoji = level === 'critical' ? '\uD83D\uDEA8' : '\u26A0\uFE0F';
-  const text = `${emoji} [ai-grija ${level.toUpperCase()}]\n${message}${context ? '\n' + JSON.stringify(context, null, 2) : ''}`;
+  const text = `[ai-grija ${level.toUpperCase()}]\n${message}${context ? '\n' + JSON.stringify(context, null, 2) : ''}`;
 
+  if (!env.CACHE) {
+    await sendTelegramMessage(token, chatId, text, level);
+    return;
+  }
+
+  try {
+    await withCircuitBreaker(env.CACHE, 'telegram', async () => {
+      await sendTelegramMessage(token, chatId, text, level);
+    }, { failureThreshold: 5, resetTimeout: 30_000 });
+  } catch (err) {
+    if (err instanceof CircuitOpenError) {
+      console.warn('[alerter] Telegram circuit OPEN -- skipping alert:', message.substring(0, 80));
+      return;
+    }
+    throw err;
+  }
+}
+
+async function sendTelegramMessage(
+  token: string,
+  chatId: string,
+  text: string,
+  level: string
+): Promise<void> {
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
   });
 
-  if (level === 'critical' && res.ok) {
+  if (!res.ok) {
+    throw new Error(`Telegram sendMessage failed: ${res.status}`);
+  }
+
+  if (level === 'critical') {
     const data = await res.json() as { result?: { message_id?: number } };
     try {
       const pinAbort = new AbortController();

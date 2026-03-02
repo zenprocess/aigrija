@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import { checkRateLimit, applyRateLimitHeaders } from '../lib/rate-limiter';
+import { idempotency } from '../middleware/idempotency';
 
 const translationReport = new Hono<{ Bindings: Env }>();
 
@@ -13,7 +14,7 @@ interface TranslationReportBody {
   page?: string;
 }
 
-translationReport.post('/api/translation-report', async (c) => {
+translationReport.post('/api/translation-report', idempotency(), async (c) => {
   const ip =
     c.req.header('cf-connecting-ip') ||
     c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||

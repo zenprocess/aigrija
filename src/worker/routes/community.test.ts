@@ -2,6 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { storeCommunityReport, type CommunityReport } from './community';
 import app from '../index';
 
+
+/** Compute the KV key for the current fixed window. */
+function rlKey(identifier: string, windowSeconds: number): string {
+  const now = Math.floor(Date.now() / 1000);
+  const windowSlot = Math.floor(now / windowSeconds);
+  return `rl:${identifier}:${windowSlot}`;
+}
 // Minimal KV mock
 function makeKV(store: Record<string, string> = {}): KVNamespace {
   const data = { ...store };
@@ -137,7 +144,7 @@ describe('POST /api/reports/:id/vote', () => {
   it('rate limits after 10 votes per IP', async () => {
     const report: CommunityReport = { id: 'r1', text_snippet: 'test', votes_up: 1, votes_down: 0, created_at: '2026-01-01T00:00:00.000Z', verdict: 'phishing' };
     // Simulate rate limit already hit (counter at 10)
-    const kv = makeKV({ 'report:r1': JSON.stringify(report), 'rl:vote:5.5.5.5': '10' });
+    const kv = makeKV({ 'report:r1': JSON.stringify(report), [rlKey('vote:5.5.5.5', 3600)]: '10' });
     const env = {
       CACHE: kv,
       ASSETS: { fetch: vi.fn() },

@@ -211,17 +211,11 @@ jobs:
               failed_passes=$(jq -r '[.passes | to_entries[] | select(.value == "fail") | .key] | join(", ")' "$result_file")
               existing=$(gh issue list --search "QA: $story_name" --label "qa:story" --json number --jq '.[0].number' 2>/dev/null || echo "")
               if [ -z "$existing" ]; then
+                ISSUE_BODY=$(printf '## Post-Deploy BDD Failure\n\nStory: %s\nURL: https://ai-grija.ro\nFailed passes: %s\nCommit: %s\n\nAuto-created by post-deploy BDD verification.' "$story_name" "$failed_passes" "$COMMIT_SHA")
                 gh issue create \
                   --title "QA: $story_name - $failed_passes failed" \
                   --label "qa:fail,qa:story,auto-detected" \
-                  --body "## Post-Deploy BDD Failure
-
-Story: $story_name
-URL: https://ai-grija.ro
-Failed passes: $failed_passes
-Commit: $COMMIT_SHA
-
-Auto-created by post-deploy BDD verification."
+                  --body "$ISSUE_BODY"
               fi
             fi
           done

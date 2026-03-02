@@ -25,12 +25,12 @@ steps:
     selector: "body"
     contains: "DNSC"
   - action: navigate
-    url: "/api/alerts"
+    url: "/alerte"
   - action: wait
     selector: "body"
-    timeout: 5000
+    timeout: 10000
   - action: screenshot
-    name: api-alerts-response
+    name: alerte-index
   - action: assert
-    selector: "body"
-    contains: "campaigns"
+    selector: "h1"
+    contains: "Alerte phishing"

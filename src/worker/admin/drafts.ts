@@ -8,21 +8,6 @@ import { adminLayout } from './layout';
 
 const drafts = new Hono<{ Bindings: Env }>();
 
-// Auth middleware
-drafts.use('*', async (c, next) => {
-  if (!c.env.ADMIN_API_KEY) {
-    return c.text('Admin not configured', 503);
-  }
-  const authHeader = c.req.header('Authorization') ?? '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-  // Also allow session cookie or query param for browser access
-  const queryKey = new URL(c.req.url).searchParams.get('key') ?? '';
-  if ((!token || token !== c.env.ADMIN_API_KEY) && queryKey !== c.env.ADMIN_API_KEY) {
-    return c.text('Unauthorized', 401);
-  }
-  return next();
-});
-
 // GET /admin/drafts — list campaigns with draft_status in (generated, approved)
 drafts.get('/', async (c) => {
   const status = new URL(c.req.url).searchParams.get('status') || '';

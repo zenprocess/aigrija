@@ -21,15 +21,15 @@ steps:
     selector: "body"
     contains: "CERT-RO"
   - action: navigate
-    url: "/api/alerts"
+    url: "/alerte"
   - action: wait
     selector: "body"
-    timeout: 5000
+    timeout: 10000
   - action: screenshot
-    name: api-alerts
+    name: alerte-index
   - action: assert
-    selector: "body"
-    contains: "campaigns"
+    selector: "h1"
+    contains: "Alerte phishing"
   - action: navigate
     url: "/gdpr"
   - action: wait

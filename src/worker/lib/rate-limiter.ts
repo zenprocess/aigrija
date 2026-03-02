@@ -49,6 +49,14 @@ export interface RateLimitResult {
 /**
  * Check and increment the rate limit counter for a given identifier.
  *
+ * Uses a fixed-window strategy: the KV key encodes the window slot so each
+ * window gets a fresh key with a TTL equal to windowSeconds. The key expires
+ * automatically at the end of the window — no sliding-window accumulation.
+ *
+ * Key format: `rl:{identifier}:{windowSlot}` where windowSlot is
+ * `Math.floor(now / windowSeconds)`. This means every windowSeconds seconds a
+ * new slot begins and the previous key is garbage-collected by KV TTL.
+ *
  * @param cache          KV namespace used to store counters.
  * @param identifier     Unique key for this client (e.g. IP, user ID).
  * @param limit          Maximum requests allowed within the window.
@@ -61,16 +69,21 @@ export async function checkRateLimit(
   limit: number = ROUTE_RATE_LIMITS['check'].limit,
   windowSeconds: number = ROUTE_RATE_LIMITS['check'].windowSeconds,
 ): Promise<RateLimitResult> {
-  const key = `rl:${identifier}`;
   const now = Math.floor(Date.now() / 1000);
-  // Approximate reset: current time + full window.
-  // Because KV put always resets TTL (sliding window), this is an approximation.
-  const reset = now + windowSeconds;
+  // Fixed-window slot: increments every windowSeconds seconds.
+  const windowSlot = Math.floor(now / windowSeconds);
+  // The window resets at the start of the next slot.
+  const reset = (windowSlot + 1) * windowSeconds;
+  // TTL is the remaining time until the window boundary (minimum 1 second).
+  const ttl = Math.max(1, reset - now);
+
+  const key = `rl:${identifier}:${windowSlot}`;
 
   const raw = await cache.get(key);
 
   if (raw === null) {
-    await cache.put(key, '1', { expirationTtl: windowSeconds });
+    // First request in this window — create key with TTL anchored to window end.
+    await cache.put(key, '1', { expirationTtl: ttl });
     return { allowed: true, remaining: limit - 1, limit, reset };
   }
 
@@ -79,9 +92,9 @@ export async function checkRateLimit(
     return { allowed: false, remaining: 0, limit, reset };
   }
 
-  // Increment counter — note: KV put always resets TTL, creating a sliding window.
-  // We accept this tradeoff. For strict fixed windows, use Durable Objects instead.
-  await cache.put(key, String(current + 1), { expirationTtl: windowSeconds });
+  // Increment counter. TTL is re-set to remaining window time so KV expiry
+  // tracks the fixed window boundary, not the time of the last request.
+  await cache.put(key, String(current + 1), { expirationTtl: ttl });
   return { allowed: true, remaining: limit - current - 1, limit, reset };
 }
 

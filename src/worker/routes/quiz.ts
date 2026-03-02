@@ -51,7 +51,7 @@ const SUPPORTED_LANGS = ['ro', 'en', 'bg', 'hu', 'uk'] as const;
 // GET /api/quiz — 10 random questions without answers
 // Optional ?lang=ro|en|bg|hu|uk (default: ro)
 quiz.get('/api/quiz', async (c) => {
-  const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For') ?? 'unknown';
+  const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For')?.split(',')[0]?.trim() ?? 'unknown';
   const rl = await checkRateLimit(c.env.CACHE, `quiz:${ip}`, QUIZ_LIMIT, QUIZ_WINDOW);
   applyRateLimitHeaders((name, value) => c.header(name, value), rl);
 
@@ -91,7 +91,7 @@ interface CheckBody {
 
 // POST /api/quiz/check — check answer
 quiz.post('/api/quiz/check', async (c) => {
-  const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For') ?? 'unknown';
+  const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For')?.split(',')[0]?.trim() ?? 'unknown';
   const rl = await checkRateLimit(c.env.CACHE, `quiz-check:${ip}`, QUIZ_LIMIT, QUIZ_WINDOW);
   applyRateLimitHeaders((name, value) => c.header(name, value), rl);
 

@@ -1,6 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 import { upload } from "./upload";
 
+
+/** Compute the KV key for the current fixed window. */
+function rlKey(identifier: string, windowSeconds: number): string {
+  const now = Math.floor(Date.now() / 1000);
+  const windowSlot = Math.floor(now / windowSeconds);
+  return `rl:${identifier}:${windowSlot}`;
+}
 function makeKV(data: Record<string, string> = {}): KVNamespace {
   const store = new Map(Object.entries(data));
   return {
@@ -125,7 +132,7 @@ describe("POST /api/check/image", () => {
   });
 
   it("returns 429 when rate limited", async () => {
-    const kv = makeKV({ "rl:unknown": "20" });
+    const kv = makeKV({ [rlKey('unknown', 3600)]: '20' });
     const env = makeEnv({ CACHE: kv });
     const fd = new FormData();
     fd.append("image", makeImageFile());

@@ -11,7 +11,7 @@ export const gepa = new Hono<{ Bindings: Env; Variables: AppVariables }>();
  * Requires ADMIN_API_KEY header for access.
  */
 gepa.get('/gepa/evaluations', async (c) => {
-  const apiKey = c.req.header('x-admin-api-key') ?? c.req.query('api_key');
+  const apiKey = c.req.header('x-admin-api-key');
   if (!apiKey || apiKey !== c.env.ADMIN_API_KEY) {
     return c.json({ error: { code: 'UNAUTHORIZED', message: 'Acces interzis.' } }, 401);
   }

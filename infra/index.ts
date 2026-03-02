@@ -155,7 +155,7 @@ const previewKv = new cloudflare.WorkersKvNamespace("ai-grija-cache-preview", {
 const previewR2 = new cloudflare.R2Bucket("ai-grija-share-cards-preview", {
   accountId,
   name: "ai-grija-share-cards-preview",
-  location: "ENAM",
+  location: "EEUR",
 });
 
 const previewDb = new cloudflare.D1Database("ai-grija-admin-preview", {

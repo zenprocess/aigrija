@@ -1,5 +1,6 @@
 import type { Env, Campaign } from './types';
 import { structuredLog } from './logger';
+import { withCircuitBreaker, CircuitOpenError } from './circuit-breaker';
 
 const SANITY_API_VERSION = 'v2024-01-01';
 
@@ -71,39 +72,58 @@ export async function publishToSanity(
     : buildBlogPostDoc(campaign, draftContent, contentType);
 
   const url = `https://${projectId}.api.sanity.io/${SANITY_API_VERSION}/data/mutate/${dataset}`;
+  const body = { mutations: [{ createOrReplace: doc }] };
 
-  const body = {
-    mutations: [{ createOrReplace: doc }],
+  const doFetch = async (): Promise<{ id: string }> => {
+    const swController = new AbortController();
+    const swTimeoutId = setTimeout(() => swController.abort(), 5000);
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+        signal: swController.signal,
+      });
+    } finally {
+      clearTimeout(swTimeoutId);
+    }
+
+    if (!res.ok) {
+      const text = await res.text();
+      structuredLog('error', '[sanity-writer] Publish failed', { status: res.status, body: text.slice(0, 200) });
+      throw new Error(`Sanity publish failed: ${res.status}`);
+    }
+
+    const data = await res.json() as { results?: { id: string }[] };
+    const id = data?.results?.[0]?.id || (doc._id as string);
+
+    structuredLog('info', '[sanity-writer] Published', { id, contentType, campaignId: campaign.id });
+    return { id };
   };
 
-  const swController = new AbortController();
-  const swTimeoutId = setTimeout(() => swController.abort(), 5000);
-  let res: Response;
+  if (!env.CACHE) {
+    return doFetch();
+  }
+
   try {
-    res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(body),
-      signal: swController.signal,
+    return await withCircuitBreaker(env.CACHE, 'sanity', doFetch, {
+      failureThreshold: 5,
+      resetTimeout: 30_000,
     });
-  } finally {
-    clearTimeout(swTimeoutId);
+  } catch (err) {
+    if (err instanceof CircuitOpenError) {
+      structuredLog('warn', '[sanity-writer] Circuit OPEN -- skipping publish', {
+        campaignId: campaign.id,
+        contentType,
+      });
+      throw err;
+    }
+    throw err;
   }
-
-  if (!res.ok) {
-    const text = await res.text();
-    structuredLog('error', '[sanity-writer] Publish failed', { status: res.status, body: text.slice(0, 200) });
-    throw new Error(`Sanity publish failed: ${res.status}`);
-  }
-
-  const data = await res.json() as { results?: { id: string }[] };
-  const id = data?.results?.[0]?.id || (doc._id as string);
-
-  structuredLog('info', '[sanity-writer] Published', { id, contentType, campaignId: campaign.id });
-  return { id };
 }
 
 export { buildThreatReportDoc, buildBlogPostDoc };

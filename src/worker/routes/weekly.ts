@@ -5,6 +5,7 @@ import { generateWeeklyDigest, type WeeklyDigest } from '../lib/weekly-digest';
 import { structuredLog } from '../lib/logger';
 import { checkRateLimit } from '../lib/rate-limiter';
 import { recordConsent, revokeConsent } from '../lib/gdpr-consent';
+import { idempotency } from '../middleware/idempotency';
 
 const BUTTONDOWN_BASE = 'https://api.buttondown.com/v1';
 
@@ -291,7 +292,7 @@ weekly.get('/api/weekly', async (c) => {
 
 // ─── Email subscription endpoints (via Buttondown API, tag: digest) ───────────
 
-weekly.post('/api/digest/subscribe', async (c) => {
+weekly.post('/api/digest/subscribe', idempotency(), async (c) => {
   // Rate limit: 5 req/hr per IP
   const subIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (c.env.CACHE) {
@@ -337,7 +338,7 @@ weekly.post('/api/digest/subscribe', async (c) => {
   return c.json({ ok: true, message: 'Verifica email-ul pentru confirmare.' });
 });
 
-weekly.post('/api/digest/unsubscribe', async (c) => {
+weekly.post('/api/digest/unsubscribe', idempotency(), async (c) => {
   // Rate limit: 5 req/hr per IP
   const unsubIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (c.env.CACHE) {

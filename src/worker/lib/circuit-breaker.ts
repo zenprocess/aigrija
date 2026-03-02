@@ -32,7 +32,7 @@ export class CircuitBreaker {
   constructor(name: string, kv: KVNamespace, config: CircuitBreakerConfig = {}) {
     this.name = name;
     this.kv = kv;
-    this.failureThreshold = config.failureThreshold ?? 3;
+    this.failureThreshold = config.failureThreshold ?? 5;
     this.resetTimeout = config.resetTimeout ?? 30_000;
     this.halfOpenMax = config.halfOpenMax ?? 1;
   }

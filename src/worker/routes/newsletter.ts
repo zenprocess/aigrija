@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Env } from '../lib/types';
 import { checkRateLimit, applyRateLimitHeaders } from '../lib/rate-limiter';
 import { recordConsent, revokeConsent } from '../lib/gdpr-consent';
+import { withCircuitBreaker, CircuitOpenError } from '../lib/circuit-breaker';
 
 const BUTTONDOWN_BASE = 'https://api.buttondown.com/v1';
 
@@ -55,21 +56,37 @@ newsletter.post('/api/newsletter/subscribe', async (c) => {
     return c.json({ error: { code: 'MISCONFIGURED', message: 'Serviciul nu este configurat.' } }, 503);
   }
 
-  const controller1 = new AbortController();
-  const timeout1 = setTimeout(() => controller1.abort(), 5000);
   let bdRes: Response;
   try {
-    bdRes = await fetch(`${BUTTONDOWN_BASE}/subscribers`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, type: 'regular' }),
-      signal: controller1.signal,
-    });
-  } finally {
-    clearTimeout(timeout1);
+    bdRes = await withCircuitBreaker(c.env.CACHE, 'buttondown', async () => {
+      const controller1 = new AbortController();
+      const timeout1 = setTimeout(() => controller1.abort(), 5000);
+      try {
+        const res = await fetch(`${BUTTONDOWN_BASE}/subscribers`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Token ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, type: 'regular' }),
+          signal: controller1.signal,
+        });
+        return res;
+      } finally {
+        clearTimeout(timeout1);
+      }
+    }, { failureThreshold: 5, resetTimeout: 30_000 });
+  } catch (err) {
+    if (err instanceof CircuitOpenError) {
+      return c.json(
+        { error: { code: 'SERVICE_UNAVAILABLE', message: 'Serviciul de newsletter este temporar indisponibil. Incearca din nou mai tarziu.' } },
+        503
+      );
+    }
+    return c.json(
+      { error: { code: 'UPSTREAM_ERROR', message: 'Eroare la procesarea abonarii. Incearca din nou.' } },
+      502
+    );
   }
 
   if (!bdRes.ok) {
@@ -130,19 +147,35 @@ newsletter.post('/api/newsletter/unsubscribe', async (c) => {
     return c.json({ error: { code: 'MISCONFIGURED', message: 'Serviciul nu este configurat.' } }, 503);
   }
 
-  const controller2 = new AbortController();
-  const timeout2 = setTimeout(() => controller2.abort(), 5000);
   let bdRes: Response;
   try {
-    bdRes = await fetch(`${BUTTONDOWN_BASE}/subscribers/${encodeURIComponent(email)}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Token ${apiKey}`,
-      },
-      signal: controller2.signal,
-    });
-  } finally {
-    clearTimeout(timeout2);
+    bdRes = await withCircuitBreaker(c.env.CACHE, 'buttondown', async () => {
+      const controller2 = new AbortController();
+      const timeout2 = setTimeout(() => controller2.abort(), 5000);
+      try {
+        const res = await fetch(`${BUTTONDOWN_BASE}/subscribers/${encodeURIComponent(email)}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Token ${apiKey}`,
+          },
+          signal: controller2.signal,
+        });
+        return res;
+      } finally {
+        clearTimeout(timeout2);
+      }
+    }, { failureThreshold: 5, resetTimeout: 30_000 });
+  } catch (err) {
+    if (err instanceof CircuitOpenError) {
+      return c.json(
+        { error: { code: 'SERVICE_UNAVAILABLE', message: 'Serviciul de newsletter este temporar indisponibil. Incearca din nou mai tarziu.' } },
+        503
+      );
+    }
+    return c.json(
+      { error: { code: 'UPSTREAM_ERROR', message: 'Eroare la procesarea dezabonarii. Incearca din nou.' } },
+      502
+    );
   }
 
   if (bdRes.status === 404) {

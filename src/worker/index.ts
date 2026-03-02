@@ -111,7 +111,7 @@ app.use('/card/*', async (c, next) => {
 app.use('/api/*', cors({
   origin: ['https://ai-grija.ro', 'https://www.ai-grija.ro', 'https://pre.ai-grija.ro', 'https://admin.ai-grija.ro'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key'],
   maxAge: 86400,
 }));
 

@@ -161,7 +161,8 @@ app.notFound(async (c) => {
   if (response.status !== 404) {
     return response;
   }
-  return c.json({ error: { code: 'NOT_FOUND', message: 'Pagina nu a fost gasita.' } }, 404);
+  const rid = c.get('requestId') || 'unknown';
+  return c.json({ error: { code: 'NOT_FOUND', message: 'Pagina nu a fost gasita.' }, request_id: rid }, 404);
 });
 
 // Admin host routing

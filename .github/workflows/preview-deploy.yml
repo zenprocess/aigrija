@@ -12,7 +12,7 @@
 # Key design decisions:
 #   - cancel-in-progress on PRs only — push runs on feat/fix branches are not cancelled
 #   - deploy-preview uses nick-fields/retry@v3 for exponential backoff (not hand-rolled bash)
-#   - health-check polls /health/deep with increasing backoff up to 120 s total
+#   - health-check polls /health with increasing backoff up to 120 s total
 #   - greptile-gate is continue-on-error: true — never blocks E2E tests
 #   - bowser-test depends on health-check ONLY, not greptile-gate
 #   - allure-report uses allure-commandline npm package (Docker-based actions are fragile)
@@ -153,7 +153,7 @@ jobs:
           command: npx wrangler deploy --env preview
 
   # ---------------------------------------------------------------------------
-  # Poll /health/deep until the worker is live.
+  # Poll /health until the worker is live (not /health/deep which hits CF Access).
   # Backoff increases by 2 s each attempt (2, 4, 6 … s) up to 120 s total.
   # All post-deploy verification jobs gate on this step.
   # ---------------------------------------------------------------------------
@@ -171,7 +171,7 @@ jobs:
           MAX_ELAPSED=120
           while [ "$ELAPSED" -lt "$MAX_ELAPSED" ]; do
             ATTEMPT=$((ATTEMPT + 1))
-            STATUS=$(curl -sf -o /dev/null -w '%{http_code}' "$PREVIEW_URL/health/deep" 2>/dev/null || echo "000")
+            STATUS=$(curl -so /dev/null -w '%{http_code}' "$PREVIEW_URL/health" 2>/dev/null || echo "000")
             if [ "$STATUS" = "200" ]; then
               echo "Preview healthy after ${ELAPSED}s (attempt $ATTEMPT)"
               exit 0

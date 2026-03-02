@@ -29,6 +29,13 @@ export const ROUTE_RATE_LIMITS: Record<string, RouteRateLimitConfig> = {
   'whatsapp':       { limit: 50,  windowSeconds: 3600 },
   // Counter endpoint — very generous
   'counter':        { limit: 200, windowSeconds: 3600 },
+  // Alerts / blog / card / og — read-heavy, generous
+  'alerts':         { limit: 60,  windowSeconds: 60 },
+  'blog':           { limit: 60,  windowSeconds: 60 },
+  'card':           { limit: 60,  windowSeconds: 60 },
+  'og':             { limit: 60,  windowSeconds: 60 },
+  // RSS feeds — crawlers hammer these; stricter
+  'feed':           { limit: 30,  windowSeconds: 60 },
 };
 
 export interface RateLimitResult {

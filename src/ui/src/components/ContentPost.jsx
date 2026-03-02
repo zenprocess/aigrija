@@ -72,13 +72,15 @@ export default function ContentPost({ slug, category }) {
 
   useEffect(() => {
     if (!slug) return;
+    const ctrl = new AbortController();
     setLoading(true);
     setError(null);
-    fetch(`${baseEndpoint}/${slug}`)
+    fetch(`${baseEndpoint}/${slug}`, { signal: ctrl.signal })
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((data) => { setPost(data.post || data); setRelated(data.related || []); })
-      .catch((err) => setError(err.message))
+      .catch((err) => { if (err.name !== 'AbortError') setError(err.message); })
       .finally(() => setLoading(false));
+    return () => ctrl.abort();
   }, [slug, category]);
 
   const handleShare = () => {
@@ -120,7 +122,7 @@ export default function ContentPost({ slug, category }) {
 
         {!loading && error && (
           <div className="text-center py-20 text-gray-400">
-            <p className="text-red-400 mb-2">Articolul nu a putut fi incarcat.</p>
+            <p className="text-red-400 mb-2">{t('blog.post_load_error')}</p>
             <p className="text-sm">{error}</p>
           </div>
         )}
@@ -171,7 +173,7 @@ export default function ContentPost({ slug, category }) {
             </div>
             {related.length > 0 && (
               <div className="mt-12">
-                <h2 className="text-xl font-bold text-white mb-4">Articole similare</h2>
+                <h2 className="text-xl font-bold text-white mb-4">{t('blog.related_articles')}</h2>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {related.map((rel) => (
                     <a key={rel.slug} data-testid={`content-related-${rel.slug}`} href={`#/${category}/${rel.slug}`} className="glass-card border border-white/10 rounded-xl p-4 hover:border-blue-500/40 transition-colors group">

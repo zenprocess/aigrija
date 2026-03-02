@@ -1,7 +1,27 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import type { Env } from '../lib/types';
 import { sanityFetch } from '../lib/sanity';
 import { structuredLog } from '../lib/logger';
+import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+
+const VALID_BLOG_LANGS = ['ro', 'en', 'bg', 'hu', 'uk'] as const;
+
+const BlogQuerySchema = z.object({
+  lang: z.enum(VALID_BLOG_LANGS).optional().default('ro'),
+  page: z.coerce.number().int().positive().optional().default(1),
+});
+
+type BlogQueryParsed = z.infer<typeof BlogQuerySchema>;
+
+function parseBlogQuery(langRaw?: string, pageRaw?: string): { ok: true; data: BlogQueryParsed } | { ok: false; message: string } {
+  const result = BlogQuerySchema.safeParse({ lang: langRaw || undefined, page: pageRaw || undefined });
+  if (!result.success) {
+    const msg = result.error.issues.map((i: { message: string }) => i.message).join('; ');
+    return { ok: false, message: msg };
+  }
+  return { ok: true, data: result.data };
+}
 
 const blog = new Hono<{ Bindings: Env }>();
 
@@ -92,8 +112,9 @@ function buildRss(posts: RssPost[], base: string, feedPath: string, title: strin
 // ─── /amenintari — Threat Reports ────────────────────────────────────────────
 
 blog.get('/amenintari', async (c) => {
-  const lang = c.req.query('lang') || 'ro';
-  const page = parseInt(c.req.query('page') || '1', 10);
+  const _qp = parseBlogQuery(c.req.query('lang') || undefined, c.req.query('page') || undefined);
+  if (!_qp.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _qp.message, request_id: 'unknown' } }, 400);
+  const { lang, page } = _qp.data;
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
   const cacheKey = `amenintari:list:${lang}:${page}`;
@@ -112,7 +133,9 @@ blog.get('/amenintari', async (c) => {
 });
 
 blog.get('/amenintari/feed.xml', async (c) => {
-  const lang = c.req.query('lang') || 'ro';
+  const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
+  if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
+  const lang = _lq.data.lang;
   const cacheKey = `amenintari:feed:${lang}`;
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
@@ -131,7 +154,9 @@ blog.get('/amenintari/feed.xml', async (c) => {
 
 blog.get('/amenintari/:slug', async (c) => {
   const slug = c.req.param('slug');
-  const lang = c.req.query('lang') || 'ro';
+  const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
+  if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
+  const lang = _lq.data.lang;
   const cacheKey = `amenintari:post:${lang}:${slug}`;
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
@@ -151,8 +176,9 @@ blog.get('/amenintari/:slug', async (c) => {
 // ─── /ghid — Guides (blogPost category=ghid + bankGuide) ─────────────────────
 
 blog.get('/ghid', async (c) => {
-  const lang = c.req.query('lang') || 'ro';
-  const page = parseInt(c.req.query('page') || '1', 10);
+  const _qp = parseBlogQuery(c.req.query('lang') || undefined, c.req.query('page') || undefined);
+  if (!_qp.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _qp.message, request_id: 'unknown' } }, 400);
+  const { lang, page } = _qp.data;
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
   const cacheKey = `ghid:list:${lang}:${page}`;
@@ -171,7 +197,9 @@ blog.get('/ghid', async (c) => {
 });
 
 blog.get('/ghid/feed.xml', async (c) => {
-  const lang = c.req.query('lang') || 'ro';
+  const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
+  if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
+  const lang = _lq.data.lang;
   const cacheKey = `ghid:feed:${lang}`;
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
@@ -190,7 +218,9 @@ blog.get('/ghid/feed.xml', async (c) => {
 
 blog.get('/ghid/:slug', async (c) => {
   const slug = c.req.param('slug');
-  const lang = c.req.query('lang') || 'ro';
+  const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
+  if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
+  const lang = _lq.data.lang;
   const cacheKey = `ghid:post:${lang}:${slug}`;
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
@@ -210,8 +240,9 @@ blog.get('/ghid/:slug', async (c) => {
 // ─── /educatie — Education posts ─────────────────────────────────────────────
 
 blog.get('/educatie', async (c) => {
-  const lang = c.req.query('lang') || 'ro';
-  const page = parseInt(c.req.query('page') || '1', 10);
+  const _qp = parseBlogQuery(c.req.query('lang') || undefined, c.req.query('page') || undefined);
+  if (!_qp.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _qp.message, request_id: 'unknown' } }, 400);
+  const { lang, page } = _qp.data;
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
   const cacheKey = `educatie:list:${lang}:${page}`;
@@ -230,7 +261,9 @@ blog.get('/educatie', async (c) => {
 });
 
 blog.get('/educatie/feed.xml', async (c) => {
-  const lang = c.req.query('lang') || 'ro';
+  const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
+  if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
+  const lang = _lq.data.lang;
   const cacheKey = `educatie:feed:${lang}`;
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
@@ -249,7 +282,9 @@ blog.get('/educatie/feed.xml', async (c) => {
 
 blog.get('/educatie/:slug', async (c) => {
   const slug = c.req.param('slug');
-  const lang = c.req.query('lang') || 'ro';
+  const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
+  if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
+  const lang = _lq.data.lang;
   const cacheKey = `educatie:post:${lang}:${slug}`;
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
@@ -269,8 +304,9 @@ blog.get('/educatie/:slug', async (c) => {
 // ─── /rapoarte — Weekly Digest ────────────────────────────────────────────────
 
 blog.get('/rapoarte', async (c) => {
-  const lang = c.req.query('lang') || 'ro';
-  const page = parseInt(c.req.query('page') || '1', 10);
+  const _qp = parseBlogQuery(c.req.query('lang') || undefined, c.req.query('page') || undefined);
+  if (!_qp.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _qp.message, request_id: 'unknown' } }, 400);
+  const { lang, page } = _qp.data;
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
   const cacheKey = `rapoarte:list:${lang}:${page}`;
@@ -290,7 +326,9 @@ blog.get('/rapoarte', async (c) => {
 
 blog.get('/rapoarte/:slug', async (c) => {
   const slug = c.req.param('slug');
-  const lang = c.req.query('lang') || 'ro';
+  const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
+  if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
+  const lang = _lq.data.lang;
   const cacheKey = `rapoarte:post:${lang}:${slug}`;
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
@@ -310,8 +348,9 @@ blog.get('/rapoarte/:slug', async (c) => {
 // ─── /povesti — Community Stories ────────────────────────────────────────────
 
 blog.get('/povesti', async (c) => {
-  const lang = c.req.query('lang') || 'ro';
-  const page = parseInt(c.req.query('page') || '1', 10);
+  const _qp = parseBlogQuery(c.req.query('lang') || undefined, c.req.query('page') || undefined);
+  if (!_qp.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _qp.message, request_id: 'unknown' } }, 400);
+  const { lang, page } = _qp.data;
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
   const cacheKey = `povesti:list:${lang}:${page}`;
@@ -331,7 +370,9 @@ blog.get('/povesti', async (c) => {
 
 blog.get('/povesti/:slug', async (c) => {
   const slug = c.req.param('slug');
-  const lang = c.req.query('lang') || 'ro';
+  const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
+  if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
+  const lang = _lq.data.lang;
   const cacheKey = `povesti:post:${lang}:${slug}`;
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
@@ -351,8 +392,9 @@ blog.get('/povesti/:slug', async (c) => {
 // ─── /presa — Press Releases ──────────────────────────────────────────────────
 
 blog.get('/presa', async (c) => {
-  const lang = c.req.query('lang') || 'ro';
-  const page = parseInt(c.req.query('page') || '1', 10);
+  const _qp = parseBlogQuery(c.req.query('lang') || undefined, c.req.query('page') || undefined);
+  if (!_qp.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _qp.message, request_id: 'unknown' } }, 400);
+  const { lang, page } = _qp.data;
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
   const cacheKey = `presa:list:${lang}:${page}`;
@@ -372,7 +414,9 @@ blog.get('/presa', async (c) => {
 
 blog.get('/presa/:slug', async (c) => {
   const slug = c.req.param('slug');
-  const lang = c.req.query('lang') || 'ro';
+  const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
+  if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
+  const lang = _lq.data.lang;
   const cacheKey = `presa:post:${lang}:${slug}`;
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
@@ -392,7 +436,9 @@ blog.get('/presa/:slug', async (c) => {
 // ─── /feed.xml — Combined RSS feed ───────────────────────────────────────────
 
 blog.get('/feed.xml', async (c) => {
-  const lang = c.req.query('lang') || 'ro';
+  const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
+  if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
+  const lang = _lq.data.lang;
   const cacheKey = `feed:all:${lang}`;
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
@@ -449,6 +495,12 @@ blog.get('/feed.xml', async (c) => {
 // ─── /sitemap-content.xml ─────────────────────────────────────────────────────
 
 blog.get('/sitemap-content.xml', async (c) => {
+  const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['blog'].limit, ROUTE_RATE_LIMITS['blog'].windowSeconds);
+  applyRateLimitHeaders((k, v) => c.header(k, v), rl);
+  if (!rl.allowed) {
+    return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.' }, request_id: 'unknown' }, 429);
+  }
   const cacheKey = 'sitemap:content';
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('Content-Type', 'application/xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }

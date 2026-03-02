@@ -42,6 +42,10 @@ export default function PrivacyPolicy() {
                 <li>{t('privacy.s2_li3')}</li>
                 <li>{t('privacy.s2_li4')}</li>
                 <li>{t('privacy.s2_li5')}</li>
+                <li>{t('privacy.s2_li6')}</li>
+                <li>{t('privacy.s2_li7')}</li>
+                <li>{t('privacy.s2_li8')}</li>
+                <li>{t('privacy.s2_li9')}</li>
               </ul>
             </div>
           </section>
@@ -55,6 +59,8 @@ export default function PrivacyPolicy() {
               <li>{t('privacy.s3_li3')}</li>
               <li>{t('privacy.s3_li4')}</li>
               <li>{t('privacy.s3_li5')}</li>
+              <li>{t('privacy.s3_li6')}</li>
+              <li>{t('privacy.s3_li7')}</li>
             </ul>
             <p className="text-gray-400 text-sm">{t('privacy.s3_note')}</p>
           </section>
@@ -84,6 +90,54 @@ export default function PrivacyPolicy() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold text-white">{t('privacy.s7_title')}</h2>
             <p className="text-gray-300 leading-relaxed">{t('privacy.s7_body')}</p>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-white">{t('privacy.s8_title')}</h2>
+            <p className="text-gray-300 leading-relaxed">{t('privacy.s8_body')}</p>
+            <ul className="text-gray-300 space-y-1 list-disc list-inside text-sm">
+              <li>{t('privacy.s8_li1')}</li>
+              <li>{t('privacy.s8_li2')}</li>
+              <li>{t('privacy.s8_li3')}</li>
+              <li>{t('privacy.s8_li4')}</li>
+              <li>{t('privacy.s8_li5')}</li>
+            </ul>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-white">{t('privacy.s9_title')}</h2>
+            <p className="text-gray-300 leading-relaxed">{t('privacy.s9_body')}</p>
+            <ul className="text-gray-300 space-y-1 list-disc list-inside text-sm">
+              <li>{t('privacy.s9_li1')}</li>
+              <li>{t('privacy.s9_li2')}</li>
+              <li>{t('privacy.s9_li3')}</li>
+              <li>{t('privacy.s9_li4')}</li>
+            </ul>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-white">{t('privacy.s10_title')}</h2>
+            <p className="text-gray-300 leading-relaxed">{t('privacy.s10_body')}</p>
+            <ul className="text-gray-300 space-y-1 list-disc list-inside text-sm">
+              <li>{t('privacy.s10_li1')}</li>
+              <li>{t('privacy.s10_li2')}</li>
+              <li>{t('privacy.s10_li3')}</li>
+              <li>{t('privacy.s10_li4')}</li>
+            </ul>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-white">{t('privacy.s11_title')}</h2>
+            <p className="text-gray-300 leading-relaxed">{t('privacy.s11_body')}</p>
+            <ul className="text-gray-300 space-y-1 list-disc list-inside text-sm">
+              <li>{t('privacy.s11_li1')}</li>
+              <li>{t('privacy.s11_li2')}</li>
+              <li>{t('privacy.s11_li3')}</li>
+              <li>{t('privacy.s11_li4')}</li>
+              <li>{t('privacy.s11_li5')}</li>
+            </ul>
+            <p className="text-gray-300 text-sm">{t('privacy.s11_contact')}</p>
+            <p className="text-gray-400 text-sm">{t('privacy.s11_anspdcp')}</p>
           </section>
           {lang !== 'ro' && (
             <div

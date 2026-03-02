@@ -1,12 +1,13 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
+import type { AppVariables } from '../lib/request-id';
 import { getFlag, setFlag, FLAG_DEFAULTS, type FeatureFlag } from '../lib/feature-flags';
 
-const adminFlags = new Hono<{ Bindings: Env }>();
+const adminFlags = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
 // Auth middleware: require Authorization: Bearer <ADMIN_API_KEY>
 adminFlags.use('/api/admin/*', async (c, next) => {
-  const rid = (c.get('requestId' as never) as string) || 'unknown';
+  const rid = (c.get('requestId')) || 'unknown';
   if (!c.env.ADMIN_API_KEY || c.env.ADMIN_API_KEY.trim() === '') {
     return c.json(
       { error: { code: 'SERVICE_UNAVAILABLE', message: 'API de administrare nu este configurat.' }, request_id: rid },
@@ -35,7 +36,7 @@ adminFlags.get('/api/admin/flags', async (c) => {
 
 // POST /api/admin/flags/:name — set a feature flag value
 adminFlags.post('/api/admin/flags/:name', async (c) => {
-  const rid = (c.get('requestId' as never) as string) || 'unknown';
+  const rid = (c.get('requestId')) || 'unknown';
   const name = c.req.param('name');
   let body: { enabled: boolean };
   try {

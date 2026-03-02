@@ -2,6 +2,8 @@
 
 **Platforma civică anti-phishing pentru România** — verifică linkuri, mesaje și coduri QR suspecte folosind inteligență artificială.
 
+[![Deploy Production](https://github.com/zenprocess/aigrija/actions/workflows/deploy-prod.yml/badge.svg)](https://github.com/zenprocess/aigrija/actions/workflows/deploy-prod.yml)
+
 ## Stack
 
 | Component | Technology |

@@ -123,7 +123,7 @@ export default function Header() {
               <button
                 data-testid="header-lang-switcher-mobile"
                 onClick={() => setIsLangOpen(!isLangOpen)}
-                className="text-gray-300 hover:text-white p-2 flex items-center gap-1"
+                className="text-gray-300 hover:text-white p-3 min-h-[44px] flex items-center gap-1"
                 aria-label={t('lang_switcher.label')}
               >
                 <Globe className="w-5 h-5" />
@@ -148,7 +148,7 @@ export default function Header() {
             <button
               data-testid="header-hamburger-btn"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-gray-300 hover:text-white p-2"
+              className="text-gray-300 hover:text-white p-3 min-h-[44px] min-w-[44px] flex items-center justify-center"
               aria-label={t('header.menu_aria')}
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

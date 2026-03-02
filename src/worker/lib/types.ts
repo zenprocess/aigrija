@@ -26,6 +26,14 @@ export interface Env {
   ANALYTICS?: AnalyticsEngineDataset;
   TELEGRAM_ADMIN_CHAT_ID?: string;
   LAUNCHDARKLY_SDK_KEY?: string;
+  /** Comma-separated list of allowed CORS origins. Falls back to hardcoded defaults if unset. */
+  CORS_ORIGINS?: string;
+  BUTTONDOWN_API_KEY?: string;
+}
+
+/** Hono context variables set by middleware (available via c.get()). */
+export interface Variables {
+  requestId: string;
 }
 
 export interface Campaign {

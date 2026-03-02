@@ -1,6 +1,12 @@
 import { Hono } from 'hono';
+import { structuredLog } from '../lib/logger';
+import { z } from 'zod';
 import type { Env } from '../lib/types';
 import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+
+const CommunityQuerySchema = z.object({
+  page: z.coerce.number().int().positive().optional().default(1),
+});
 
 const community = new Hono<{ Bindings: Env }>();
 
@@ -46,6 +52,8 @@ export async function storeCommunityReport(
 }
 
 community.get('/api/reports', async (c) => {
+  const _cq = CommunityQuerySchema.safeParse({ page: c.req.query('page') });
+  if (!_cq.success) return c.json({ error: { code: 'VALIDATION_ERROR', message: _cq.error.issues.map((i: { message: string }) => i.message).join('; ') } }, 400);
   const cacheKey = 'community-reports-list';
   const cached = await c.env.CACHE.get(cacheKey);
   if (cached) {
@@ -63,8 +71,8 @@ community.get('/api/reports', async (c) => {
     if (raw) {
       try {
         reports.push(JSON.parse(raw));
-      } catch {
-        // skip malformed
+      } catch (err) {
+        structuredLog('error', 'community_report_parse_error', { error: String(err), id });
       }
     }
   }
@@ -120,7 +128,8 @@ community.post('/api/reports/:id/vote', async (c) => {
   let report: CommunityReport;
   try {
     report = JSON.parse(raw);
-  } catch {
+  } catch (err) {
+    structuredLog('error', 'community_vote_parse_error', { error: String(err), id });
     return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Eroare interna.' } }, 500);
   }
 

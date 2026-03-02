@@ -5,9 +5,10 @@ type Lang = 'ro' | 'en' | 'bg' | 'hu' | 'uk';
 
 const LANGS: Lang[] = ['ro', 'en', 'bg', 'hu', 'uk'];
 
-function getLang(raw: string | undefined): Lang {
-  if (raw && (LANGS as string[]).includes(raw)) return raw as Lang;
-  return 'ro';
+function getLang(raw: string | undefined): Lang | null {
+  if (raw === undefined || raw === '') return 'ro';
+  if ((LANGS as string[]).includes(raw)) return raw as Lang;
+  return null;
 }
 
 const disclaimers: Record<Exclude<Lang, 'ro'>, string> = {
@@ -120,16 +121,19 @@ const policies = new Hono<{ Bindings: Env }>();
 
 policies.get('/policies/privacy', (c) => {
   const lang = getLang(c.req.query('lang'));
+  if (lang === null) return c.json({ error: { code: 'VALIDATION_ERROR', message: `Limba invalida. Valori acceptate: ${LANGS.join(', ')}` } }, 400);
   return c.html(buildPage({ lang, path: '/policies/privacy', title: pageTitles.privacy[lang], content: privacyContent(lang) }));
 });
 
 policies.get('/policies/general-terms', (c) => {
   const lang = getLang(c.req.query('lang'));
+  if (lang === null) return c.json({ error: { code: 'VALIDATION_ERROR', message: `Limba invalida. Valori acceptate: ${LANGS.join(', ')}` } }, 400);
   return c.html(buildPage({ lang, path: '/policies/general-terms', title: pageTitles.terms[lang], content: termsContent(lang) }));
 });
 
 policies.get('/gdpr', (c) => {
   const lang = getLang(c.req.query('lang'));
+  if (lang === null) return c.json({ error: { code: 'VALIDATION_ERROR', message: `Limba invalida. Valori acceptate: ${LANGS.join(', ')}` } }, 400);
   return c.html(buildPage({ lang, path: '/gdpr', title: pageTitles.gdpr[lang], content: gdprContent(lang) }));
 });
 

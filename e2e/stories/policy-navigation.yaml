@@ -4,7 +4,10 @@ steps:
   - action: navigate
     url: "/#/confidentialitate"
   - action: wait
-    selector: "button[data-testid='privacy-back-btn']"
+    selector: body
+    timeout: 10000
+  - action: wait
+    selector: "[data-testid='privacy-back-btn']"
     timeout: 15000
   - action: screenshot
     name: privacy-ro
@@ -12,12 +15,12 @@ steps:
     selector: body
     contains: "Confidențialitate"
   - action: assert
-    selector: "button[data-testid='privacy-back-btn']"
+    selector: "[data-testid='privacy-back-btn']"
     contains: "napoi"
   - action: navigate
     url: "/#/termeni"
   - action: wait
-    selector: body
+    selector: "[data-testid='terms-back-btn']"
     timeout: 10000
   - action: screenshot
     name: termeni-ro

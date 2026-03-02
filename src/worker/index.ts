@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { secureHeaders } from 'hono/secure-headers';
 import type { Env } from './lib/types';
+import type { AppVariables } from './lib/request-id';
 import { requestId } from './lib/request-id';
 import { structuredLog } from './lib/logger';
 import { counter } from './routes/counter';
@@ -23,6 +24,9 @@ import { feed } from './routes/feed';
 import { weekly } from './routes/weekly';
 import { reportGenerator } from './routes/report-generator';
 import { metrics } from './routes/metrics';
+import { quiz } from './routes/quiz';
+import { translationReport } from './routes/translation-report';
+import { newsletter } from './routes/newsletter';
 import { handleScheduled } from './lib/cron-handler';
 import { admin } from './admin';
 import { createOpenAPIApp } from './lib/openapi';
@@ -30,14 +34,14 @@ import { CheckEndpoint } from './routes/openapi-check';
 import { AlertsEndpoint } from './routes/openapi-alerts';
 import { HealthEndpoint } from './routes/openapi-health';
 
-const app = new Hono<{ Bindings: Env }>();
+const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
 // Request ID on all routes
 app.use('*', requestId);
 
 // Structured logging middleware — log request start and end with duration
 app.use('*', async (c, next) => {
-  const rid = c.get('requestId' as never) as string;
+  const rid = c.get('requestId');
   const start = Date.now();
   structuredLog('info', 'request_start', {
     request_id: rid,
@@ -58,7 +62,7 @@ app.use('*', async (c, next) => {
 
 // Global error handler
 app.onError((err, c) => {
-  const rid = c.get('requestId' as never) as string || crypto.randomUUID();
+  const rid = c.get('requestId') || crypto.randomUUID();
   structuredLog('error', 'unhandled_error', {
     request_id: rid,
     stage: 'error',
@@ -73,6 +77,33 @@ app.onError((err, c) => {
 // Security headers for SSR pages
 app.use('/alerte/*', secureHeaders());
 app.use('/alerte', secureHeaders());
+
+// Content-Security-Policy for SSR pages
+const CSP_VALUE = "default-src 'self'; script-src 'self' https://cloud.umami.is; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self';";
+app.use('/alerte/*', async (c, next) => {
+  await next();
+  c.res.headers.set('Content-Security-Policy', CSP_VALUE);
+});
+app.use('/alerte', async (c, next) => {
+  await next();
+  c.res.headers.set('Content-Security-Policy', CSP_VALUE);
+});
+app.use('/policies/*', async (c, next) => {
+  await next();
+  c.res.headers.set('Content-Security-Policy', CSP_VALUE);
+});
+app.use('/gdpr', async (c, next) => {
+  await next();
+  c.res.headers.set('Content-Security-Policy', CSP_VALUE);
+});
+app.use('/og/*', async (c, next) => {
+  await next();
+  c.res.headers.set('Content-Security-Policy', CSP_VALUE);
+});
+app.use('/card/*', async (c, next) => {
+  await next();
+  c.res.headers.set('Content-Security-Policy', CSP_VALUE);
+});
 
 // CORS only on public API routes
 app.use('/api/*', cors({ origin: '*' }));
@@ -107,6 +138,9 @@ app.route('/', feed);
 app.route('/', weekly);
 app.route('/', reportGenerator);
 app.route('/', metrics);
+app.route('/', quiz);
+app.route('/', translationReport);
+app.route('/', newsletter);
 
 // Admin host routing
 // Requests from admin.ai-grija.ro are handled by the admin app

@@ -2,6 +2,7 @@ import { OpenAPIRoute } from 'chanfana';
 import { z } from 'zod';
 import type { Context } from 'hono';
 import type { Env } from '../lib/types';
+import type { AppVariables } from '../lib/request-id';
 import { CheckRequestSchema, MAX_TEXT_LENGTH, MAX_URL_LENGTH, formatZodError } from '../lib/schemas';
 import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { classify } from '../lib/classifier';
@@ -10,6 +11,7 @@ import { matchCampaigns } from '../lib/campaign-matcher';
 import { BANK_PLAYBOOKS } from '../data/bank-playbooks';
 import { getFlag } from '../lib/feature-flags';
 import { matchScamPattern } from '../data/scam-patterns';
+import { isGibberish } from '../lib/gibberish-detector';
 import type { ScamPatternMatch } from '../data/scam-patterns';
 import { storeReportSignal } from '../lib/campaign-aggregator';
 import { storeCommunityReport } from './community';
@@ -180,8 +182,8 @@ export class CheckEndpoint extends OpenAPIRoute {
     },
   };
 
-  async handle(c: Context<{ Bindings: Env }>) {
-    const rid = c.get('requestId' as never) as string;
+  async handle(c: Context<{ Bindings: Env; Variables: AppVariables }>) {
+    const rid = c.get('requestId');
 
     const ip = c.req.header('cf-connecting-ip')
       || c.req.header('x-forwarded-for')?.split(',')[0]?.trim()
@@ -208,6 +210,34 @@ export class CheckEndpoint extends OpenAPIRoute {
       return c.json({ error: { code: 'VALIDATION_ERROR', message: formatZodError(parsed.error), request_id: rid } }, 400);
     }
     const body = parsed.data;
+
+    // Honeypot: bots fill hidden fields, real users do not
+    if (body.website) {
+      return c.json({
+        request_id: rid,
+        classification: {
+          verdict: 'likely_safe',
+          confidence: 0.95,
+          scam_type: 'Necunoscut',
+          red_flags: [],
+          explanation: 'Mesajul pare legitim.',
+          recommended_actions: [],
+          model_used: 'none',
+          ai_disclaimer: 'Analiza generata de AI.',
+        },
+        matched_campaigns: [],
+        rate_limit: { remaining, limit },
+      });
+    }
+
+    // Gibberish detection — reject garbage before calling AI
+    const gibberishCheck = isGibberish(body.text);
+    if (gibberishCheck.gibberish) {
+      return c.json(
+        { error: { code: 'GIBBERISH_INPUT', message: 'Textul introdus nu pare a fi un mesaj valid.', request_id: rid } },
+        400
+      );
+    }
 
     // Load feature flags
     const [gemmaFallbackEnabled, phishtankEnabled, safeBrowsingEnabled] = await Promise.all([

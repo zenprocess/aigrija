@@ -2,23 +2,23 @@ name: "Generare raport autoritati"
 description: "Utilizatorul verifica un mesaj suspect si acceseaza sectiunea de raportare"
 steps:
   - action: navigate
-    url: /
+    url: "/#/"
   - action: wait
-    selector: "textarea[data-testid='checker-textarea']"
+    selector: "[data-testid='checker-textarea']"
     timeout: 15000
   - action: fill
-    selector: "textarea[data-testid='checker-textarea']"
+    selector: "[data-testid='checker-textarea']"
     value: "Contul dvs ING a fost blocat. Accesati urgent: http://ing-verify.com/deblocare"
   - action: click
-    selector: "button[data-testid='checker-submit-btn']"
+    selector: "[data-testid='checker-submit-btn']"
   - action: wait
-    selector: "button[data-testid='checker-action-share']"
-    timeout: 15000
+    selector: "[data-testid='checker-action-share']"
+    timeout: 30000
   - action: screenshot
     name: report-prefilled
   - action: assert
     selector: body
     contains: "phishing"
   - action: assert
-    selector: "a[data-testid='checker-action-dnsc']"
+    selector: "[data-testid='checker-action-dnsc']"
     contains: "1911"

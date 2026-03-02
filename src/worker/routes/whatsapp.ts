@@ -3,6 +3,7 @@ import type { Env } from '../lib/types';
 import { classify } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
 import { checkRateLimit } from '../lib/rate-limiter';
+import { recordConsent, revokeConsent, updateLastActive } from '../lib/gdpr-consent';
 
 const whatsapp = new Hono<{ Bindings: Env }>();
 
@@ -275,6 +276,36 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
         const text = message.text.body.trim();
 
         await markMessageRead(accessToken, phoneNumberId, messageId);
+
+        const upperText = text.toUpperCase();
+
+        // GDPR: first-time opt-in
+        if (upperText === 'START') {
+          await recordConsent(c.env, 'wa', from);
+          await sendWhatsAppMessage(
+            accessToken,
+            phoneNumberId,
+            from,
+            'Bine ai venit la ai-grija.ro! Prin trimiterea acestui mesaj ti-ai dat consimtamantul pentru prelucrarea datelor (GDPR). Trimite STERGE oricand pentru a-ti sterge datele.'
+          );
+          continue;
+        }
+
+        // GDPR: opt-out / delete
+        if (upperText === 'STERGE' || upperText === 'STOP') {
+          await revokeConsent(c.env, 'wa', from);
+          await sendWhatsAppMessage(
+            accessToken,
+            phoneNumberId,
+            from,
+            'Datele tale au fost sterse. Nu vei mai primi alerte de la ai-grija.ro.'
+          );
+          continue;
+        }
+
+        // Record consent on first message (implicit opt-in) and update last_active
+        await recordConsent(c.env, 'wa', from);
+        await updateLastActive(c.env, 'wa', from);
 
         const rl = await checkRateLimit(c.env.CACHE, `wa:${from}`, 50, 3600);
         if (!rl.allowed) {

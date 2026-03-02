@@ -2,7 +2,9 @@ import { OpenAPIRoute } from 'chanfana';
 import { z } from 'zod';
 import type { Context } from 'hono';
 import type { Env } from '../lib/types';
+import type { AppVariables } from '../lib/request-id';
 import { CAMPAIGNS } from '../data/campaigns';
+import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 
 const VALID_STATUSES = ['active', 'declining', 'resolved'] as const;
 
@@ -45,8 +47,16 @@ export class AlertsEndpoint extends OpenAPIRoute {
     },
   };
 
-  async handle(c: Context<{ Bindings: Env }>) {
-    const rid = c.get('requestId' as never) as string;
+  async handle(c: Context<{ Bindings: Env; Variables: AppVariables }>) {
+    const rid = c.get('requestId');
+    if (c.env?.CACHE) {
+      const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+      const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['alerts'].limit, ROUTE_RATE_LIMITS['alerts'].windowSeconds);
+      applyRateLimitHeaders((k, v) => c.header(k, v), rl);
+      if (!rl.allowed) {
+        return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.', request_id: rid } }, 429);
+      }
+    }
     const status = c.req.query('status');
 
     if (status && !VALID_STATUSES.includes(status as typeof VALID_STATUSES[number])) {

@@ -1,12 +1,14 @@
 import { Hono } from 'hono';
 import { structuredLog } from '../lib/logger';
 import type { Env } from '../lib/types';
+import type { AppVariables } from '../lib/request-id';
 import { classify } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
 import { checkRateLimit } from '../lib/rate-limiter';
 import { CAMPAIGNS } from '../data/campaigns';
+import { recordConsent, revokeConsent, updateLastActive } from '../lib/gdpr-consent';
 
-const telegram = new Hono<{ Bindings: Env }>();
+const telegram = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
 // ── Telegram Bot API types (minimal) ────────────────────────────────────────
 
@@ -222,7 +224,7 @@ function formatAnalysisReply(
 // ── Route ────────────────────────────────────────────────────────────────────
 
 telegram.post('/webhook/telegram', async (c) => {
-  const rid = c.get('requestId' as never) as string;
+  const rid = c.get('requestId');
 
   // Verify secret token
   const secret = c.req.header('x-telegram-bot-api-secret-token');
@@ -317,10 +319,21 @@ telegram.post('/webhook/telegram', async (c) => {
   // ── Commands ──────────────────────────────────────────────────────────────
 
   if (text === '/start' || text.startsWith('/start ')) {
+    await recordConsent(c.env, 'tg', String(chatId));
     await sendMessage(
       token,
       chatId,
-      'Bine ai venit la ai-grija.ro Bot! Trimite-mi orice mesaj suspect si il verific instant. Foloseste /help pentru instructiuni complete.'
+      'Bine ai venit la ai-grija.ro Bot! Trimite-mi orice mesaj suspect si il verific instant. Prin utilizarea acestui bot iti dai consimtamantul pentru prelucrarea datelor (GDPR). Foloseste /sterge pentru a-ti sterge datele. Foloseste /help pentru instructiuni complete.'
+    );
+    return c.json({ ok: true });
+  }
+
+  if (text === '/sterge' || text.startsWith('/sterge ')) {
+    await revokeConsent(c.env, 'tg', String(chatId));
+    await sendMessage(
+      token,
+      chatId,
+      'Datele tale au fost sterse. Nu vei mai primi alerte.'
     );
     return c.json({ ok: true });
   }
@@ -355,6 +368,9 @@ telegram.post('/webhook/telegram', async (c) => {
     );
     return c.json({ ok: true });
   }
+
+  // ── Update last_active ───────────────────────────────────────────────────
+  await updateLastActive(c.env, 'tg', String(chatId));
 
   // ── Rate limit ────────────────────────────────────────────────────────────
 

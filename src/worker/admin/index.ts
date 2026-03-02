@@ -6,6 +6,7 @@ import { weightsAdmin } from './weights';
 import { translationsAdmin } from './translations';
 import { configAdmin } from './config';
 import { campaignRoutes, campaignApiRoutes, scraperRoutes } from './campaigns';
+import { translationReportsAdmin } from './translation-reports';
 
 type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 
@@ -99,5 +100,6 @@ admin.route('/scrapere', scraperRoutes);
 admin.route('/ponderi', weightsAdmin);
 admin.route('/traduceri', translationsAdmin);
 admin.route('/config', configAdmin);
+admin.route('/rapoarte-traduceri', translationReportsAdmin);
 
 export { admin };

@@ -3,12 +3,31 @@ name: Deploy Production
 on:
   push:
     branches: [main]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      skip_tests:
+        description: 'Skip test gates (emergency only)'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
 
 jobs:
   typecheck:
     name: TypeScript typecheck
     runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_tests }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,6 +40,7 @@ jobs:
   test:
     name: Unit tests with coverage
     runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_tests }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,6 +60,7 @@ jobs:
   secret-scan:
     name: Secret scanning
     runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_tests }}
     permissions:
       contents: read
       pull-requests: read
@@ -55,6 +76,7 @@ jobs:
   dependency-audit:
     name: Dependency audit
     runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_tests }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -67,7 +89,10 @@ jobs:
   deploy:
     name: Deploy to Cloudflare Workers
     needs: [typecheck, test, secret-scan, dependency-audit]
+    if: ${{ always() && (needs.typecheck.result == 'success' || needs.typecheck.result == 'skipped') && (needs.test.result == 'success' || needs.test.result == 'skipped') && (needs.secret-scan.result == 'success' || needs.secret-scan.result == 'skipped') && (needs.dependency-audit.result == 'success' || needs.dependency-audit.result == 'skipped') }}
     runs-on: ubuntu-latest
+    outputs:
+      deploy-url: ${{ steps.deploy.outputs.deployment-url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -77,10 +102,22 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
       - name: Deploy to Cloudflare
+        id: deploy
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Deployment summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Key | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ inputs.environment || 'production' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit SHA | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| URL | https://ai-grija.ro |" >> $GITHUB_STEP_SUMMARY
+
   post-deploy-bdd:
     name: Post-deploy BDD verification
     needs: deploy

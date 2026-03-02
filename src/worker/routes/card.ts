@@ -1,8 +1,14 @@
 import { Hono } from 'hono';
+import { structuredLog } from '../lib/logger';
+import { z } from 'zod';
 import type { Env } from '../lib/types';
+import type { AppVariables } from '../lib/request-id';
 import { escapeHtml } from '../lib/escape-html';
+import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 
-const card = new Hono<{ Bindings: Env }>();
+const CardHashSchema = z.string().min(6, 'Hash prea scurt.').max(128, 'Hash prea lung.');
+
+const card = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
 interface CardMeta {
   verdict: string;
@@ -11,10 +17,15 @@ interface CardMeta {
 
 
 card.get('/card/:hash/image', async (c) => {
-  const hash = c.req.param('hash');
+  const _hashResult = CardHashSchema.safeParse(c.req.param('hash'));
+  if (!_hashResult.success) {
+    const rid = (c.get('requestId')) || 'unknown';
+    return c.json({ error: { code: 'VALIDATION_ERROR', message: _hashResult.error.issues.map((i: { message: string }) => i.message).join('; ') }, request_id: rid }, 400);
+  }
+  const hash = _hashResult.data;
   const obj = await c.env.STORAGE.get(`cards/${hash}.svg`);
   if (!obj) {
-    const rid = (c.get('requestId' as never) as string) || 'unknown';
+    const rid = (c.get('requestId')) || 'unknown';
     return c.json({ error: { code: 'NOT_FOUND', message: 'Imaginea cardului nu a fost gasita.' }, request_id: rid }, 404);
   }
   const svg = await obj.text();
@@ -22,15 +33,20 @@ card.get('/card/:hash/image', async (c) => {
 });
 
 card.get('/card/:hash', async (c) => {
-  const hash = c.req.param('hash');
+  const _hashResult2 = CardHashSchema.safeParse(c.req.param('hash'));
+  if (!_hashResult2.success) {
+    const rid = (c.get('requestId')) || 'unknown';
+    return c.json({ error: { code: 'VALIDATION_ERROR', message: _hashResult2.error.issues.map((i: { message: string }) => i.message).join('; ') }, request_id: rid }, 400);
+  }
+  const hash = _hashResult2.data;
   const baseUrl = c.env.BASE_URL ?? 'https://ai-grija.ro';
   const raw = await c.env.CACHE.get(`cards:meta:${hash}`);
   let meta: CardMeta = { verdict: 'safe', scam_type: 'unknown' };
   if (raw) {
     try {
       meta = JSON.parse(raw) as CardMeta;
-    } catch {
-      // use defaults
+    } catch (err) {
+      structuredLog('error', 'card_meta_parse_error', { error: String(err), hash });
     }
   }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import Checker from './components/Checker';
@@ -6,11 +6,24 @@ import HowItWorks from './components/HowItWorks';
 import ActiveAlerts from './components/ActiveAlerts';
 import Footer from './components/Footer';
 import About from './components/About';
-import PrivacyPolicy from './components/PrivacyPolicy';
-import TermsOfService from './components/TermsOfService';
-import ContentList from './components/ContentList';
-import ContentPost from './components/ContentPost';
-import ThreatReports from './components/ThreatReports';
+import ErrorBoundary from './components/ErrorBoundary';
+
+const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./components/TermsOfService'));
+const ContentList = lazy(() => import('./components/ContentList'));
+const ContentPost = lazy(() => import('./components/ContentPost'));
+const Quiz = lazy(() => import('./components/Quiz'));
+
+function LoadingSkeleton() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-950">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-gray-400 text-sm font-mono">Se incarca...</p>
+      </div>
+    </div>
+  );
+}
 
 const BG_PATTERN = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=";
 
@@ -18,14 +31,18 @@ const CONTENT_CATEGORIES = ['amenintari', 'ghid', 'educatie', 'povesti', 'rapoar
 
 function PageShell({ children }) {
   return (
-    <div className="min-h-screen flex flex-col relative selection:bg-blue-500/30 selection:text-white">
-      <div className={`fixed inset-0 bg-[url('${BG_PATTERN}')] opacity-30 pointer-events-none z-0`} />
-      <Header />
-      <main className="flex-grow">
-        {children}
-      </main>
-      <Footer />
-    </div>
+    <ErrorBoundary>
+      <div className="min-h-screen flex flex-col relative selection:bg-blue-500/30 selection:text-white overflow-x-hidden">
+        <div className={`fixed inset-0 bg-[url('${BG_PATTERN}')] opacity-30 pointer-events-none z-0`} />
+        <Header />
+        <main className="flex-grow">
+          <Suspense fallback={<LoadingSkeleton />}>
+            {children}
+          </Suspense>
+        </main>
+        <Footer />
+      </div>
+    </ErrorBoundary>
   );
 }
 
@@ -37,6 +54,14 @@ function App() {
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
+
+  if (hash === '#/quiz') {
+    return (
+      <PageShell>
+        <Quiz />
+      </PageShell>
+    );
+  }
 
   if (hash === '#/confidentialitate') {
     return (
@@ -74,22 +99,24 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative selection:bg-blue-500/30 selection:text-white">
-      <a href="#main-content" className="skip-to-content">Treci la continut principal</a>
-      <div className={`fixed inset-0 bg-[url('${BG_PATTERN}')] opacity-30 pointer-events-none z-0`} />
-      
-      <Header />
-      
-      <main id="main-content" className="flex-grow pt-16">
-        <Hero />
-        <Checker />
-        <HowItWorks />
-        <ActiveAlerts />
-      </main>
-      
-      <About />
-      <Footer />
-    </div>
+    <ErrorBoundary>
+      <div className="min-h-screen flex flex-col relative selection:bg-blue-500/30 selection:text-white overflow-x-hidden">
+        <a href="#main-content" className="skip-to-content">Treci la continut principal</a>
+        <div className={`fixed inset-0 bg-[url('${BG_PATTERN}')] opacity-30 pointer-events-none z-0`} />
+
+        <Header />
+
+        <main id="main-content" className="flex-grow pt-16">
+          <Hero />
+          <Checker />
+          <HowItWorks />
+          <ActiveAlerts />
+        </main>
+
+        <About />
+        <Footer />
+      </div>
+    </ErrorBoundary>
   );
 }
 

@@ -1,16 +1,30 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import type { Env, EmergingCampaign } from '../lib/types';
+import type { AppVariables } from '../lib/request-id';
 import { CAMPAIGNS } from '../data/campaigns';
 import { renderAlertPage, renderAlertsIndex } from '../templates/alert-page';
 import { aggregateSignals } from '../lib/campaign-aggregator';
+import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { structuredLog } from '../lib/logger';
+
+const AlertsQuerySchema = z.object({
+  page: z.coerce.number().int().positive().optional().default(1),
+  lang: z.enum(['ro', 'en', 'bg', 'hu', 'uk'] as const).optional().default('ro'),
+});
 
 const VALID_STATUSES = ['active', 'declining', 'resolved'] as const;
 
-const alerts = new Hono<{ Bindings: Env }>();
+const alerts = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
 alerts.get('/api/alerts', async (c) => {
-  const rid = c.get('requestId' as never) as string;
+  const rid = c.get('requestId');
+  const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['alerts'].limit, ROUTE_RATE_LIMITS['alerts'].windowSeconds);
+  applyRateLimitHeaders((k, v) => c.header(k, v), rl);
+  if (!rl.allowed) {
+    return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.', request_id: rid } }, 429);
+  }
   const status = c.req.query('status');
   if (status && !VALID_STATUSES.includes(status as typeof VALID_STATUSES[number])) {
     return c.json({ error: { code: 'VALIDATION_ERROR', message: `Status invalid. Valori acceptate: ${VALID_STATUSES.join(', ')}`, request_id: rid } }, 400);
@@ -42,6 +56,13 @@ alerts.get('/api/alerts', async (c) => {
 });
 
 alerts.get('/api/alerts/emerging', async (c) => {
+  const rid = c.get('requestId');
+  const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['alerts'].limit, ROUTE_RATE_LIMITS['alerts'].windowSeconds);
+  applyRateLimitHeaders((k, v) => c.header(k, v), rl);
+  if (!rl.allowed) {
+    return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.', request_id: rid } }, 429);
+  }
   try {
     const result = await aggregateSignals(c.env);
     return c.json(result);
@@ -53,7 +74,7 @@ alerts.get('/api/alerts/emerging', async (c) => {
 
 
 alerts.get('/api/alerts/:slug', async (c) => {
-  const rid = c.get('requestId' as never) as string;
+  const rid = c.get('requestId');
   const slug = c.req.param('slug');
   const campaign = CAMPAIGNS.find(ca => ca.slug === slug);
   if (!campaign) {
@@ -84,7 +105,7 @@ alerts.get('/alerte', async (c) => {
 });
 
 alerts.get('/alerte/:slug', async (c) => {
-  const rid = c.get('requestId' as never) as string;
+  const rid = c.get('requestId');
   const slug = c.req.param('slug');
   const campaign = CAMPAIGNS.find(ca => ca.slug === slug);
   if (!campaign) {

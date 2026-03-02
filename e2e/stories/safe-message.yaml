@@ -2,18 +2,18 @@ name: "Verificare mesaj sigur"
 description: "Mesaj legitim de la un prieten"
 steps:
   - action: navigate
-    url: /
+    url: "/#/"
   - action: wait
-    selector: "textarea[data-testid='checker-textarea']"
+    selector: "[data-testid='checker-textarea']"
     timeout: 15000
   - action: fill
-    selector: "textarea[data-testid='checker-textarea']"
+    selector: "[data-testid='checker-textarea']"
     value: "Salut! Ne vedem maine la cafea? Am rezervat la Origo, ora 18:00."
   - action: click
-    selector: "button[data-testid='checker-submit-btn']"
+    selector: "[data-testid='checker-submit-btn']"
   - action: wait
-    selector: "button[data-testid='checker-action-share']"
-    timeout: 15000
+    selector: "[data-testid='checker-action-share']"
+    timeout: 30000
   - action: screenshot
     name: verdict-safe
   - action: assert

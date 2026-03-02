@@ -1,13 +1,14 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
+import type { AppVariables } from '../lib/request-id';
 
-const share = new Hono<{ Bindings: Env }>();
+const share = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 share.get('/api/share/:id', async (c) => {
   const id = c.req.param('id');
-  const rid = (c.get('requestId' as never) as string) || 'unknown';
+  const rid = (c.get('requestId')) || 'unknown';
 
   if (!UUID_RE.test(id)) {
     return c.json(

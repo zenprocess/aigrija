@@ -9,7 +9,7 @@ export function errorResponse(
   return c.json(
     {
       error: { code, message },
-      request_id: (c.get('requestId' as never) as string) || 'unknown',
+      request_id: (c.get('requestId')) || 'unknown',
     },
     status as 400 | 401 | 403 | 404 | 429 | 500
   );

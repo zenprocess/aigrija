@@ -1,8 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { og } from "./og";
 
+function makeCacheMock(value: string | null = null) {
+  return { get: async () => value, put: async () => {} };
+}
+
 function makeEnv(overrides: Record<string, unknown> = {}): any {
-  return { BASE_URL: "https://ai-grija.ro", ...overrides };
+  return { BASE_URL: "https://ai-grija.ro", CACHE: makeCacheMock(), ...overrides };
 }
 
 function makeCtx(): ExecutionContext {

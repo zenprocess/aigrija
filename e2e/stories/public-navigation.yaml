@@ -4,7 +4,7 @@ steps:
   - action: navigate
     url: "/#/"
   - action: wait
-    selector: "[data-testid='hero-section']"
+    selector: "[data-testid='hero-cta-btn']"
     timeout: 10000
   - action: screenshot
     name: homepage
@@ -31,7 +31,7 @@ steps:
   - action: navigate
     url: "/#/"
   - action: wait
-    selector: body
-    timeout: 5000
+    selector: "[data-testid='hero-cta-btn']"
+    timeout: 10000
   - action: screenshot
     name: back-to-home

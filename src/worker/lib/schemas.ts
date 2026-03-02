@@ -21,6 +21,8 @@ export const CheckRequestSchema = z.object({
     .max(MAX_URL_LENGTH, `URL-ul depaseste limita de ${MAX_URL_LENGTH} caractere.`)
     .url('URL-ul nu este valid.')
     .optional(),
+  /** Honeypot field — hidden from real users. Non-empty value signals a bot. */
+  website: z.string().optional(),
 });
 
 export type CheckRequest = z.infer<typeof CheckRequestSchema>;

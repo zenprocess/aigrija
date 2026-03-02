@@ -35,7 +35,7 @@ Evita cuvinte straine fara explicatii. Foloseste limbaj de zi cu zi, pe intelesu
 Vorbeste la forma activa. Fii direct si clar.`;
 
 async function runModel(ai: Ai, model: string, messages: { role: string; content: string }[]): Promise<{ response?: string }> {
-  return ai.run(model as any, { messages }) as Promise<{ response?: string }>;
+  return (ai.run as (model: string, input: { messages: { role: string; content: string }[] }) => Promise<{ response?: string }>)(model, { messages });
 }
 
 function parseAiResponse(raw: string | undefined): Omit<ClassificationResult, 'model_used' | 'ai_disclaimer'> | null {

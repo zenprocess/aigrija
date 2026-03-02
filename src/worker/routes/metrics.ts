@@ -1,14 +1,15 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
+import type { AppVariables } from '../lib/request-id';
 import { structuredLog } from '../lib/logger';
 
-const metrics = new Hono<{ Bindings: Env }>();
+const metrics = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
 // Worker start time approximation — module-level variable, resets on cold start
 const WORKER_START_MS = Date.now();
 
 metrics.get('/api/health/metrics', async (c) => {
-  const rid = c.get('requestId' as never) as string;
+  const rid = c.get('requestId');
   const uptimeMs = Date.now() - WORKER_START_MS;
 
   let totalChecks = 0;

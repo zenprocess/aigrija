@@ -46,11 +46,11 @@ describe('policies routes', () => {
       expect(html).toContain('hreflang="uk"');
     });
 
-    it('falls back to ro for unknown lang', async () => {
+    it('returns 400 for unknown/invalid lang', async () => {
       const res = await get('/policies/privacy?lang=fr');
-      expect(res.status).toBe(200);
-      const html = await res.text();
-      expect(html).toContain('lang="ro"');
+      expect(res.status).toBe(400);
+      const body = await res.json() as any;
+      expect(body.error.code).toBe('VALIDATION_ERROR');
     });
   });
 

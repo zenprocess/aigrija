@@ -5,6 +5,15 @@ import { withRetry } from './retry';
 import { structuredLog } from './logger';
 import { getDomainIntel } from './domain-intel';
 
+class HttpError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
+
 const SAFE_BROWSING_THREAT_TYPES = [
   'MALWARE',
   'SOCIAL_ENGINEERING',
@@ -47,8 +56,7 @@ async function checkPhishTank(url: string, apiKey: string, kv?: KVNamespace): Pr
 
     if (!res.ok) {
       if (res.status >= 500) {
-        const e = new Error(`PhishTank API ${res.status}`);
-        (e as any).status = res.status;
+        const e = new HttpError(`PhishTank API ${res.status}`, res.status);
         throw e;
       }
       structuredLog('warn', '[url-analyzer] PhishTank API non-ok', { status: res.status });
@@ -121,8 +129,7 @@ async function checkSafeBrowsing(url: string, apiKey: string, kv?: KVNamespace):
 
     if (!res.ok) {
       if (res.status >= 500) {
-        const e = new Error(`Safe Browsing API ${res.status}`);
-        (e as any).status = res.status;
+        const e = new HttpError(`Safe Browsing API ${res.status}`, res.status);
         throw e;
       }
       structuredLog('warn', '[url-analyzer] Safe Browsing API non-ok', { status: res.status });
@@ -172,8 +179,7 @@ async function checkURLhaus(url: string, authKey?: string, kv?: KVNamespace): Pr
 
     if (!res.ok) {
       if (res.status >= 500) {
-        const e = new Error(`URLhaus API ${res.status}`);
-        (e as any).status = res.status;
+        const e = new HttpError(`URLhaus API ${res.status}`, res.status);
         throw e;
       }
       structuredLog('warn', '[url-analyzer] URLhaus API non-ok', { status: res.status });
@@ -226,8 +232,7 @@ async function checkVirusTotal(url: string, apiKey: string, kv?: KVNamespace): P
         return { match: false };
       }
       if (res.status >= 500) {
-        const e = new Error(`VirusTotal API ${res.status}`);
-        (e as any).status = res.status;
+        const e = new HttpError(`VirusTotal API ${res.status}`, res.status);
         throw e;
       }
       structuredLog('warn', '[url-analyzer] VirusTotal API non-ok', { status: res.status });

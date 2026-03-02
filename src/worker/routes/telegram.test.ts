@@ -22,7 +22,7 @@ function makeEnv(): Env {
   return {
     ASSETS: {} as Fetcher,
     AI: {} as Ai,
-    CACHE: {} as KVNamespace,
+    CACHE: { get: vi.fn().mockResolvedValue(null), put: vi.fn().mockResolvedValue(undefined), delete: vi.fn().mockResolvedValue(undefined), list: vi.fn().mockResolvedValue({ keys: [], list_complete: true }) } as unknown as KVNamespace,
     STORAGE: {} as R2Bucket,
     BASE_URL: 'https://ai-grija.ro',
     GOOGLE_SAFE_BROWSING_KEY: '',

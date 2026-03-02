@@ -4,9 +4,9 @@ import { structuredLog } from './logger';
 
 export type AppVariables = { requestId: string };
 
-export async function requestId(c: Context, next: Next) {
+export async function requestId(c: Context<{ Variables: AppVariables }>, next: Next) {
   const id = crypto.randomUUID();
-  c.set('requestId' as never, id as never);
+  c.set('requestId', id);
   c.header('X-Request-Id', id);
 
   const start = Date.now();

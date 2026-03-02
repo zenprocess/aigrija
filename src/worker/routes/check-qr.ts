@@ -8,12 +8,13 @@
 
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
+import type { AppVariables } from '../lib/request-id';
 import { analyzeUrl } from '../lib/url-analyzer';
 import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { getFlag } from '../lib/feature-flags';
 import { CheckQrRequestSchema, formatZodError } from '../lib/schemas';
 
-const checkQr = new Hono<{ Bindings: Env }>();
+const checkQr = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
 function isValidUrl(value: string): boolean {
   try {
@@ -25,7 +26,7 @@ function isValidUrl(value: string): boolean {
 }
 
 checkQr.post('/api/check-qr', async (c) => {
-  const rid = c.get('requestId' as never) as string;
+  const rid = c.get('requestId');
 
   const ip =
     c.req.header('cf-connecting-ip') ||

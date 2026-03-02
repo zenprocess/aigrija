@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { href: '/admin/ponderi', label: 'Ponderi', icon: '⚖️', key: 'ponderi' },
   { href: '/admin/traduceri', label: 'Traduceri', icon: '🌐', key: 'traduceri' },
   { href: '/admin/config', label: 'Config', icon: '⚙️', key: 'config' },
+  { href: '/admin/rapoarte-traduceri', label: 'Rapoarte trad.', icon: '🗒️', key: 'rapoarte-traduceri' },
   { href: '/studio', label: 'Studio', icon: '🎨', key: 'studio', external: true },
 ] as const;
 

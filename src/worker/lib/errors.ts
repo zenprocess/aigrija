@@ -66,6 +66,6 @@ export function serviceUnavailable(c: Context, message: string, code = 'SERVICE_
 }
 
 function jsonError(c: Context, status: ErrorStatus, code: string, message: string) {
-  const requestId = (c.get('requestId' as never) as string) || 'unknown';
+  const requestId = (c.get('requestId')) || 'unknown';
   return c.json({ error: { code, message }, request_id: requestId }, status);
 }

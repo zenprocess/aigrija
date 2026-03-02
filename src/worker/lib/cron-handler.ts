@@ -4,6 +4,10 @@ import { dnscScraper } from './scrapers/dnsc';
 import { structuredLog } from './logger';
 import { generateMultipleDrafts } from './draft-generator';
 import { publishToSanity } from './sanity-writer';
+import { generateWeeklyDigest, getISOWeek } from './weekly-digest';
+import { sendDigestToTelegram } from './telegram-digest';
+import { sendDigestEmail } from './email-digest';
+import { purgeInactiveSubscribers } from './gdpr-consent';
 
 const BATCH_LIMIT = 5;
 
@@ -91,6 +95,46 @@ async function runSanityPublish(env: Env): Promise<void> {
   }
 }
 
+async function runWeeklyDigest(env: Env): Promise<void> {
+  structuredLog('info', 'cron_weekly_digest_start', { stage: 'cron' });
+
+  const weekOf = getISOWeek(new Date());
+
+  // generateWeeklyDigest handles KV caching internally and returns WeeklyDigest
+  let digest;
+  try {
+    digest = await generateWeeklyDigest(env);
+  } catch (err) {
+    structuredLog('error', 'cron_weekly_digest_generate_failed', {
+      stage: 'cron',
+      error: String(err),
+    });
+    return;
+  }
+
+  // Send to Telegram
+  try {
+    await sendDigestToTelegram(env, digest);
+  } catch (err) {
+    structuredLog('error', 'cron_weekly_digest_telegram_failed', {
+      stage: 'cron',
+      error: String(err),
+    });
+  }
+
+  // Send email to subscribers
+  try {
+    await sendDigestEmail(env, digest);
+  } catch (err) {
+    structuredLog('error', 'cron_weekly_digest_email_failed', {
+      stage: 'cron',
+      error: String(err),
+    });
+  }
+
+  structuredLog('info', 'cron_weekly_digest_done', { stage: 'cron', weekOf });
+}
+
 export async function handleScheduled(event: ScheduledEvent, env: Env): Promise<void> {
   structuredLog('info', 'cron_start', { stage: 'cron', cron: event.cron });
 
@@ -116,9 +160,16 @@ export async function handleScheduled(event: ScheduledEvent, env: Env): Promise<
     await runDraftGeneration(env);
     await runSanityPublish(env);
   } else if (event.cron === '0 6 * * 1') {
-    // Monday 06:00 — weekly digest (placeholder)
-    structuredLog('info', 'cron_weekly_digest_start', { stage: 'cron' });
-    // TODO: wire weekly digest route
+    // Monday 06:00 — weekly digest distribution
+    await runWeeklyDigest(env);
+  } else if (event.cron === '0 0 1 * *') {
+    // First of month — purge inactive subscribers (GDPR)
+    try {
+      const result = await purgeInactiveSubscribers(env);
+      structuredLog('info', 'cron_gdpr_purge_done', { stage: 'cron', purged: result.purged });
+    } catch (err) {
+      structuredLog('error', 'cron_gdpr_purge_failed', { stage: 'cron', error: String(err) });
+    }
   } else {
     structuredLog('warn', 'cron_unknown', { stage: 'cron', cron: event.cron });
   }

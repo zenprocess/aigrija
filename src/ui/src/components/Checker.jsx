@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { AlertCircle, ShieldAlert, AlertTriangle, ShieldCheck, CheckCircle, ExternalLink, Phone, Share2, Copy, X, Loader2, Link2, AlertOctagon, ImageIcon, Eye } from 'lucide-react';
+import { AlertCircle, ShieldAlert, AlertTriangle, ShieldCheck, CheckCircle, ExternalLink, Phone, Share2, Copy, X, Loader2, Link2, AlertOctagon, ImageIcon, Eye, FileText, Scale, Building2, Landmark } from 'lucide-react';
 import { checkContent, checkImage } from '../utils/api';
 import { redactPII } from '../lib/redactor';
 import ReportForm from './ReportForm';
@@ -19,10 +19,12 @@ export default function Checker() {
   const [imageSizeError, setImageSizeError] = useState(null);
   const [imageAnalysis, setImageAnalysis] = useState(null);
   const [rateLimitSeconds, setRateLimitSeconds] = useState(0);
+  const [socialProofCount, setSocialProofCount] = useState(null);
   
   const { t } = useTranslation();
   const resultRef = useRef(null);
   const countdownRef = useRef(null);
+  const submitAbortRef = useRef(null);
 
   const charCount = text.length;
   const isNearLimit = charCount > 4900;
@@ -41,6 +43,15 @@ export default function Checker() {
     }, 1000);
     return () => clearInterval(countdownRef.current);
   }, [rateLimitSeconds]);
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetch('/api/counter', { signal: ctrl.signal })
+      .then(r => r.json())
+      .then(data => setSocialProofCount(data.total_checks))
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, []);
 
   const handleImageChange = (file) => {
     setImageSizeError(null);
@@ -70,6 +81,10 @@ export default function Checker() {
 
     const { redacted, changed } = redactPII(text);
     setPiiNotice(changed);
+
+    if (submitAbortRef.current) submitAbortRef.current.abort();
+    const abortCtrl = new AbortController();
+    submitAbortRef.current = abortCtrl;
 
     setLoading(true);
     setError(null);
@@ -117,6 +132,14 @@ export default function Checker() {
     }
   };
 
+  const buildShareUrl = () => {
+    if (!result) return 'https://ai-grija.ro';
+    const v = result.classification.verdict;
+    const conf = result.classification.confidence;
+    const type = encodeURIComponent(result.classification.scam_type);
+    return `https://ai-grija.ro/og/verdict?verdict=${v}&confidence=${conf}&scam_type=${type}`;
+  };
+
   return (
     <section id="verifica" className="py-20 relative z-20">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -138,7 +161,7 @@ export default function Checker() {
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   placeholder={t('checker.placeholder_message')}
-                  className="w-full bg-[#0A0A0F]/80 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none"
+                  className="w-full bg-[#0A0A0F]/80 border border-white/10 rounded-xl p-4 text-base text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none"
                 />
                 <div className={`absolute bottom-3 right-3 text-xs ${isOverLimit ? 'text-red-500 font-bold' : isNearLimit ? 'text-yellow-500' : 'text-gray-500'}`}>
                   {charCount} / 5000
@@ -170,7 +193,7 @@ export default function Checker() {
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full bg-[#0A0A0F]/80 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  className="w-full bg-[#0A0A0F]/80 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-base text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                 />
               </div>
             </div>
@@ -196,7 +219,7 @@ export default function Checker() {
                 />
                 {imagePreview ? (
                   <div className="flex items-center gap-4" onClick={(ev) => ev.stopPropagation()}>
-                    <img src={imagePreview} alt="Preview" className="w-16 h-16 object-cover rounded-lg border border-white/10" />
+                    <img src={imagePreview} alt="Preview" loading="lazy" className="w-16 h-16 object-cover rounded-lg border border-white/10" />
                     <div className="flex-1 text-left">
                       <p className="text-sm text-gray-300 truncate">{imageFile?.name}</p>
                       <p className="text-xs text-gray-500">{(imageFile?.size / 1024).toFixed(0)} KB</p>
@@ -204,7 +227,7 @@ export default function Checker() {
                     <button
                       type="button"
                       onClick={() => { setImageFile(null); setImagePreview(null); setImageSizeError(null); }}
-                      className="p-1 rounded text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                      className="p-2 rounded text-gray-400 hover:text-white hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -248,6 +271,15 @@ export default function Checker() {
             </button>
           </form>
         </div>
+
+        {/* Social Proof Counter */}
+        {socialProofCount !== null && (
+          <div className="mt-4 text-center" data-testid="social-proof-counter">
+            <span className="text-sm text-gray-500">
+              {t('checker.social_proof', { count: socialProofCount.toLocaleString('ro-RO') })}
+            </span>
+          </div>
+        )}
 
         {/* Verdict Section */}
         {result && (
@@ -467,6 +499,98 @@ export default function Checker() {
               </button>
             </div>
 
+            {/* Legal Templates */}
+            {(result.classification.verdict === 'phishing' || result.classification.verdict === 'suspicious') && (
+              <div data-testid="legal-templates-section" className="glass-card p-6 border-l-4 border-l-indigo-500">
+                <div className="flex items-start gap-3 mb-4">
+                  <FileText className="w-6 h-6 text-indigo-400 shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="text-lg font-bold text-white">{t('checker.legal_templates_title')}</h3>
+                    <p className="text-sm text-gray-400 mt-0.5">{t('checker.legal_templates_subtitle')}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <a
+                    data-testid="template-plangere-penala"
+                    href={`/#/raport?template=plangere-penala&verdict=${result.classification.verdict}&scam_type=${encodeURIComponent(result.classification.scam_type)}`}
+                    className="flex items-start gap-3 p-4 rounded-xl bg-[#0A0A0F]/60 border border-white/10 hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all group"
+                  >
+                    <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors shrink-0">
+                      <Scale className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white">{t('checker.template_plangere_title')}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{t('checker.template_plangere_desc')}</p>
+                    </div>
+                  </a>
+                  <a
+                    data-testid="template-petitie-politie"
+                    href={`/#/raport?template=petitie-politie&verdict=${result.classification.verdict}&scam_type=${encodeURIComponent(result.classification.scam_type)}`}
+                    className="flex items-start gap-3 p-4 rounded-xl bg-[#0A0A0F]/60 border border-white/10 hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all group"
+                  >
+                    <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors shrink-0">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white">{t('checker.template_petitie_title')}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{t('checker.template_petitie_desc')}</p>
+                    </div>
+                  </a>
+                  <a
+                    data-testid="template-raport-dnsc"
+                    href={`/#/raport?template=raport-dnsc&verdict=${result.classification.verdict}&scam_type=${encodeURIComponent(result.classification.scam_type)}`}
+                    className="flex items-start gap-3 p-4 rounded-xl bg-[#0A0A0F]/60 border border-white/10 hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all group"
+                  >
+                    <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors shrink-0">
+                      <Building2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white">{t('checker.template_dnsc_title')}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{t('checker.template_dnsc_desc')}</p>
+                    </div>
+                  </a>
+                  {result.bank_playbook && (
+                    <a
+                      data-testid="template-sesizare-banca"
+                      href={`/#/raport?template=sesizare-banca&verdict=${result.classification.verdict}&scam_type=${encodeURIComponent(result.classification.scam_type)}`}
+                      className="flex items-start gap-3 p-4 rounded-xl bg-[#0A0A0F]/60 border border-white/10 hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all group"
+                    >
+                      <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors shrink-0">
+                        <Landmark className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{t('checker.template_banca_title')}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{t('checker.template_banca_desc')}</p>
+                      </div>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Family CTA */}
+            {(result.classification.verdict === 'phishing' || result.classification.verdict === 'suspicious') && (
+              <div className="glass-card p-6 border border-green-500/30 bg-green-500/5 rounded-2xl text-center">
+                <p className="text-2xl mb-1">&#128106;</p>
+                <h3 className="text-lg font-bold text-white mb-1">{t('checker.family_cta_title')}</h3>
+                <p className="text-sm text-gray-400 mb-4">{t('checker.family_cta_subtitle')}</p>
+                <a
+                  data-testid="family-cta-whatsapp"
+                  href={(() => {
+                    const shareUrl = buildShareUrl();
+                    const msg = `Atentie! Am descoperit o tentativa de frauda (${result.classification.scam_type}). Verifica mesajele suspecte pe ai-grija.ro: ${shareUrl}`;
+                    return `https://wa.me/?text=${encodeURIComponent(msg)}`;
+                  })()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 px-6 py-4 rounded-xl bg-[#25D366] hover:bg-[#20ba57] text-white font-bold text-base transition-colors shadow-lg shadow-green-500/20"
+                >
+                  <Share2 className="w-5 h-5" />
+                  {t('checker.family_cta_button')}
+                </a>
+              </div>
+            )}
+
             {/* Report Packet Generator */}
             {(result.classification.verdict === 'phishing' || result.classification.verdict === 'suspicious') && (
               <ReportForm result={result} />
@@ -483,7 +607,7 @@ export default function Checker() {
             <button 
               data-testid="checker-share-close-btn"
               onClick={() => setShareModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <X className="w-6 h-6" />
             </button>
@@ -492,7 +616,14 @@ export default function Checker() {
             <div className="space-y-3">
               <a 
                 data-testid="checker-share-whatsapp"
-                href={`https://wa.me/?text=${encodeURIComponent(`⚠️ Am verificat un mesaj suspect pe ai-grija.ro — e ${result?.classification.verdict === 'phishing' ? t('checker.share_msg_phishing') : t('checker.share_msg_suspicious')}! Verifică și tu: https://ai-grija.ro`)}`}
+                href={(() => {
+                  const shareUrl = buildShareUrl();
+                  const isScam = result?.classification.verdict !== 'likely_safe';
+                  const msg = isScam
+                    ? `${t('checker.share_whatsapp_scam', { type: result?.classification.scam_type })} ${shareUrl}`
+                    : `${t('checker.share_whatsapp_safe')} ${shareUrl}`;
+                  return `https://wa.me/?text=${encodeURIComponent(msg)}`;
+                })()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center gap-3 p-4 rounded-xl bg-[#25D366]/20 border border-[#25D366]/30 text-white hover:bg-[#25D366]/30 transition-colors"

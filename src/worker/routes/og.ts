@@ -1,8 +1,22 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import type { Env } from '../lib/types';
+import type { AppVariables } from '../lib/request-id';
 import { escapeHtml } from '../lib/escape-html';
+import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 
-const og = new Hono<{ Bindings: Env }>();
+const OgImageQuerySchema = z.object({
+  verdict: z.string().max(64).optional(),
+  scam_type: z.string().max(256).optional(),
+  confidence: z.coerce.number().min(0).max(100).optional(),
+});
+
+const OgAlertQuerySchema = z.object({
+  title: z.string().max(200).optional(),
+  description: z.string().max(500).optional(),
+});
+
+const og = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
 type VerdictType = 'phishing' | 'suspicious' | 'likely_safe';
 
@@ -36,7 +50,7 @@ const VERDICT_STYLES: Record<VerdictType, VerdictStyle> = {
 
 
 
-function buildVerdictSvg(verdict: VerdictType, confidence: number, scam_type: string): string {
+function buildVerdictSvg(verdict: VerdictType, confidence: number, scam_type: string, counter?: number): string {
   const style = VERDICT_STYLES[verdict] || VERDICT_STYLES['suspicious'];
   const confidencePct = Math.round(Math.min(100, Math.max(0, confidence)));
   const barWidth = Math.round((confidencePct / 100) * 720);
@@ -101,6 +115,7 @@ function buildVerdictSvg(verdict: VerdictType, confidence: number, scam_type: st
   <rect x="0" y="590" width="1200" height="40" fill="#0f172a" opacity="0.8"/>
   <text x="60" y="614" font-family="system-ui, -apple-system, sans-serif" font-size="13" fill="#475569">Generat automat de AI-GRIJA.RO — Nu înlocuiește sfatul juridic profesional</text>
   <text x="900" y="614" font-family="system-ui, -apple-system, sans-serif" font-size="13" fill="#475569" text-anchor="end">Proiect civic de Zen Labs</text>
+  ${counter ? `<text x="600" y="580" font-family="system-ui, -apple-system, sans-serif" font-size="13" fill="#334155" text-anchor="middle" opacity="0.7">1 din ${counter.toLocaleString('ro-RO')} verificări pe ai-grija.ro</text>` : ""}
 </svg>`;
 }
 
@@ -154,8 +169,16 @@ function buildAlertSvg(title: string, description: string): string {
 }
 
 // GET /og/image — dynamic SVG for social sharing (verdict)
-og.get('/og/image', (c) => {
-  const rawVerdict = c.req.query('verdict') || 'suspicious';
+og.get('/og/image', async (c) => {
+  const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['og'].limit, ROUTE_RATE_LIMITS['og'].windowSeconds);
+  applyRateLimitHeaders((k, v) => c.header(k, v), rl);
+  if (!rl.allowed) {
+    return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.' }, request_id: 'unknown' }, 429);
+  }
+  const _ogq = OgImageQuerySchema.safeParse({ verdict: c.req.query('verdict'), scam_type: c.req.query('scam_type'), confidence: c.req.query('confidence') });
+  if (!_ogq.success) return c.json({ error: { code: 'VALIDATION_ERROR', message: _ogq.error.issues.map((i: { message: string }) => i.message).join('; ') } }, 400);
+  const rawVerdict = _ogq.data.verdict || 'suspicious';
   const verdict: VerdictType = (['phishing', 'suspicious', 'likely_safe'] as const).includes(rawVerdict as VerdictType)
     ? (rawVerdict as VerdictType)
     : 'suspicious';
@@ -164,7 +187,9 @@ og.get('/og/image', (c) => {
   const rawConfidence = parseFloat(c.req.query('confidence') || '75');
   const confidence = rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence;
   const scam_type = c.req.query('scam_type') || 'Conținut suspect';
-  const svg = buildVerdictSvg(verdict, confidence, scam_type);
+  const rawCounter = await c.env.CACHE.get('stats:total_checks');
+  const counter = rawCounter ? Number(rawCounter) : undefined;
+  const svg = buildVerdictSvg(verdict, confidence, scam_type, counter);
 
   return new Response(svg, {
     headers: {
@@ -176,8 +201,10 @@ og.get('/og/image', (c) => {
 
 // GET /og/alert — SVG for alert campaign sharing
 og.get('/og/alert', (c) => {
-  const title = c.req.query('title') || 'Alertă Fraudă';
-  const description = c.req.query('description') || 'O nouă campanie de fraudă a fost detectată în România.';
+  const _alq = OgAlertQuerySchema.safeParse({ title: c.req.query('title'), description: c.req.query('description') });
+  if (!_alq.success) return c.json({ error: { code: 'VALIDATION_ERROR', message: _alq.error.issues.map((i: { message: string }) => i.message).join('; ') } }, 400);
+  const title = _alq.data.title || 'Alertă Fraudă';
+  const description = _alq.data.description || 'O nouă campanie de fraudă a fost detectată în România.';
 
   const svg = buildAlertSvg(title, description);
 
@@ -219,7 +246,7 @@ og.get('/og/:type', (c) => {
     pageTitle = escapeHtml(c.req.query('title') || 'Alertă Fraudă — ai-grija.ro');
     pageDescription = escapeHtml(c.req.query('description') || 'Alertă de securitate activă pe ai-grija.ro.');
   } else {
-    const rid = (c.get('requestId' as never) as string) || 'unknown'; return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Tip OG invalid. Folositi: verdict sau alert.' }, request_id: rid }, 400);
+    const rid = (c.get('requestId')) || 'unknown'; return c.json({ error: { code: 'VALIDATION_ERROR', message: 'Tip OG invalid. Folositi: verdict sau alert.' }, request_id: rid }, 400);
   }
 
   const html = `<!DOCTYPE html>
@@ -253,3 +280,4 @@ og.get('/og/:type', (c) => {
 });
 
 export { og };
+

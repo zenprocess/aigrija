@@ -1,5 +1,6 @@
 import type { MiddlewareHandler } from 'hono';
 import type { Env } from './types';
+import { toUint8Array } from './crypto-utils';
 
 interface CFAccessCert {
   kid: string;
@@ -86,7 +87,7 @@ async function verifyJWT(token: string, teamDomain: string, kv: KVNamespace): Pr
 
   let cryptoKey: CryptoKey;
   try {
-    const derBytes = base64urlDecode(pemBody);
+    const derBytes = toUint8Array(base64urlDecode(pemBody));
     cryptoKey = await crypto.subtle.importKey(
       'spki',
       derBytes,
@@ -97,7 +98,7 @@ async function verifyJWT(token: string, teamDomain: string, kv: KVNamespace): Pr
   } catch {
     // Try EC key fallback
     try {
-      const derBytes = base64urlDecode(pemBody);
+      const derBytes = toUint8Array(base64urlDecode(pemBody));
       cryptoKey = await crypto.subtle.importKey(
         'spki',
         derBytes,
@@ -110,8 +111,8 @@ async function verifyJWT(token: string, teamDomain: string, kv: KVNamespace): Pr
     }
   }
 
-  const signedData = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
-  const signature = base64urlDecode(parts[2]);
+  const signedData = toUint8Array(new TextEncoder().encode(`${parts[0]}.${parts[1]}`));
+  const signature = toUint8Array(base64urlDecode(parts[2]));
 
   let valid = false;
   try {

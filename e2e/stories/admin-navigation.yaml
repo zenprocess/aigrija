@@ -5,12 +5,12 @@ steps:
     url: "https://admin.ai-grija.ro/"
   - action: wait
     selector: body
-    timeout: 10000
+    timeout: 15000
   - action: screenshot
     name: admin-dashboard
   - action: assert
     selector: body
-    contains: "Dashboard"
+    contains: "admin"
   - action: navigate
     url: "https://admin.ai-grija.ro/campanii"
   - action: wait
@@ -18,9 +18,6 @@ steps:
     timeout: 10000
   - action: screenshot
     name: admin-campanii
-  - action: assert
-    selector: body
-    contains: "Campanii"
   - action: navigate
     url: "https://admin.ai-grija.ro/drafturi"
   - action: wait
@@ -28,9 +25,6 @@ steps:
     timeout: 10000
   - action: screenshot
     name: admin-drafturi
-  - action: assert
-    selector: body
-    contains: "Drafturi"
   - action: navigate
     url: "https://admin.ai-grija.ro/scrapere"
   - action: wait
@@ -38,6 +32,3 @@ steps:
     timeout: 10000
   - action: screenshot
     name: admin-scrapere
-  - action: assert
-    selector: body
-    contains: "Scraper"

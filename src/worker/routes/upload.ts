@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { Env, ClassificationResult } from '../lib/types';
+import type { AppVariables } from '../lib/request-id';
 import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { classify } from '../lib/classifier';
 import { structuredLog } from '../lib/logger';
@@ -7,7 +8,7 @@ import { ImageUploadSchema, formatZodError } from '../lib/schemas';
 
 const VISION_MODEL = '@cf/meta/llava-1.5-7b-hf';
 
-const upload = new Hono<{ Bindings: Env }>();
+const upload = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
 export interface ImageCheckResponse {
   request_id: string;
@@ -17,7 +18,7 @@ export interface ImageCheckResponse {
 }
 
 upload.post('/api/check/image', async (c) => {
-  const rid = c.get('requestId' as never) as string;
+  const rid = c.get('requestId');
 
   const ip = c.req.header('cf-connecting-ip')
     || c.req.header('x-forwarded-for')?.split(',')[0]?.trim()
@@ -75,7 +76,7 @@ upload.post('/api/check/image', async (c) => {
   let visionVerdict: 'phishing' | 'suspicious' | 'likely_safe' = 'suspicious';
 
   try {
-    const visionResult = await (c.env.AI.run as any)(VISION_MODEL, {
+    const visionResult = await (c.env.AI.run as unknown as (model: string, input: { image: number[]; prompt: string; max_tokens: number }) => Promise<{ description?: string; response?: string }>)(VISION_MODEL, {
       image: Array.from(imageBytes),
       prompt: visionPrompt,
       max_tokens: 512,

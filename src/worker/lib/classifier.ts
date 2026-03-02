@@ -93,7 +93,7 @@ function validateAndSanitizeInput(text: string): string {
   if (trimmed.length < MIN_TEXT_LENGTH) {
     throw new ClassificationValidationError(`Textul este prea scurt pentru analiza (minim ${MIN_TEXT_LENGTH} caractere).`);
   }
-  if (text.length > MAX_TEXT_LENGTH) {
+  if (stripped.length > MAX_TEXT_LENGTH) {
     throw new ClassificationValidationError(`Textul depaseste limita de ${MAX_TEXT_LENGTH} caractere.`);
   }
 

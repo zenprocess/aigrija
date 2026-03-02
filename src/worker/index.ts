@@ -29,6 +29,7 @@ import { quiz } from './routes/quiz';
 import { translationReport } from './routes/translation-report';
 import { newsletter } from './routes/newsletter';
 import { handleScheduled } from './lib/cron-handler';
+import { cdnProtection } from './middleware/cdn-protection';
 import { admin } from './admin';
 import { createOpenAPIApp } from './lib/openapi';
 import { CheckEndpoint } from './routes/openapi-check';
@@ -107,7 +108,12 @@ app.use('/card/*', async (c, next) => {
 });
 
 // CORS only on public API routes
-app.use('/api/*', cors({ origin: ['https://ai-grija.ro', 'https://pre.ai-grija.ro'] }));
+app.use('/api/*', cors({
+  origin: ['https://ai-grija.ro', 'https://www.ai-grija.ro', 'https://pre.ai-grija.ro', 'https://admin.ai-grija.ro'],
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400,
+}));
 
 // Wrap with chanfana for OpenAPI docs at /docs
 const openapi = createOpenAPIApp(app);
@@ -149,10 +155,20 @@ app.route('/', newsletter);
 // On localhost, requests to /admin/* are also routed to the admin app
 const mainFetch = app.fetch.bind(app);
 
+// CDN host — apply WAF-like protection middleware for all R2 asset routes
+const cdnApp = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+cdnApp.use('*', cdnProtection);
+// Pass through to main app for actual R2 asset serving (share route)
+cdnApp.all('*', (c) => mainFetch(c.req.raw, c.env, c.executionCtx));
+
 const workerHandler = {
   fetch: async function(request: Request, env: Parameters<typeof app.fetch>[1], ctx: ExecutionContext) {
     const url = new URL(request.url);
     const host = url.hostname;
+    const isCdnHost = host === 'cdn.ai-grija.ro' || host === 'pre-cdn.ai-grija.ro';
+    if (isCdnHost) {
+      return cdnApp.fetch(request, env, ctx);
+    }
     const isAdminHost = host === 'admin.ai-grija.ro' ||
       host === 'pre-admin.ai-grija.ro' ||
       (host === 'localhost' && url.pathname.startsWith('/admin'));

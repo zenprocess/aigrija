@@ -2,6 +2,18 @@ import { PolicyPack, validateResourceOfType } from "@pulumi/policy";
 
 new PolicyPack("ai-grija-infra", {
   policies: [
+    // R2 buckets must have a location explicitly set (not left as CF default)
+    {
+      name: "r2-bucket-location-required",
+      description: "R2 buckets must have an explicit location set — relying on CF default is not allowed",
+      enforcementLevel: "mandatory",
+      validateResource: validateResourceOfType("cloudflare:index/r2Bucket:R2Bucket", (args, reportViolation) => {
+        if (!args.props.location) {
+          reportViolation(`R2 bucket '${args.props.name}' has no location set. Specify EEUR, WEUR, or another valid region.`);
+        }
+      }),
+    },
+
     // R2 buckets must be in European regions
     {
       name: "r2-bucket-european-region",

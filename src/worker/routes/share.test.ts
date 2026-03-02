@@ -43,7 +43,7 @@ describe("GET /api/share/:id", () => {
     const res = await share.fetch(new Request(`http://localhost/api/share/${VALID_UUID}`), makeEnv({ STORAGE: r2 }), makeCtx());
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("image/svg+xml");
-    expect(res.headers.get("Cache-Control")).toContain("max-age=86400");
+    expect(res.headers.get("Cache-Control")).toContain("max-age=2592000");
   });
 
   it("falls back to PNG when SVG is missing", async () => {

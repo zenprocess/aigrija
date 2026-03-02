@@ -17,6 +17,27 @@ const kvNamespace = new cloudflare.WorkersKvNamespace("ai-grija-cache", {
 });
 
 // ---------------------------------------------------------------------------
+// R2 Bucket — Pulumi state backend
+// Stores encrypted Pulumi state for this stack. Created here to bring it
+// under IaC management (previously created manually — ADR-0015).
+//
+// TODO(versioning): R2 object versioning must be enabled manually in the
+// Cloudflare dashboard. There is no API/Pulumi support as of 2026-03.
+// Dashboard path: R2 → ai-grija-pulumi-state → Settings → Versioning → Enable
+//
+// TODO(lifecycle): R2 lifecycle rules (expire noncurrent versions after 30 days)
+// are not yet supported by the @pulumi/cloudflare provider. Once the provider
+// exposes cloudflare.R2BucketLifecycle or equivalent, add a rule here:
+//   noncurrentVersionExpiration: { noncurrentDays: 30 }
+// Track: https://github.com/pulumi/pulumi-cloudflare/issues
+// ---------------------------------------------------------------------------
+const stateBucket = new cloudflare.R2Bucket("pulumi-state-bucket", {
+  accountId,
+  name: "ai-grija-pulumi-state",
+  location: "EEUR",
+});
+
+// ---------------------------------------------------------------------------
 // R2 Bucket — share cards storage, closest region to Romania
 // ---------------------------------------------------------------------------
 const r2Bucket = new cloudflare.R2Bucket("ai-grija-share-cards", {
@@ -206,3 +227,4 @@ export const previewKvId = previewKv.id;
 export const previewDbId = previewDb.id;
 export const previewR2BucketName = previewR2.name;
 export const previewQueueId = previewQueue.id;
+export const stateBucketName = stateBucket.name;

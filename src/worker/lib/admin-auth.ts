@@ -175,9 +175,10 @@ export const adminAuth: MiddlewareHandler<{ Bindings: Env; Variables: AdminVaria
   }
 
   if (!teamDomain) {
-    // CF_ACCESS_TEAM_DOMAIN not set in production — deny all access.
-    // JWT signature cannot be verified without the team domain.
-    return c.html('<h1>401 Unauthorized</h1><p>CF_ACCESS_TEAM_DOMAIN not configured. Contact the administrator.</p>', 401);
+    // CF_ACCESS_TEAM_DOMAIN not set — admin authentication cannot function.
+    // Returning 503 (not 401) to distinguish misconfiguration from an auth failure.
+    // Never fall back to unverified JWT parsing.
+    return c.html('<h1>503 Service Unavailable</h1><p>Admin authentication not configured. Set CF_ACCESS_TEAM_DOMAIN.</p>', 503);
   }
 
   const payload = await verifyJWT(jwt, teamDomain, c.env.CACHE);

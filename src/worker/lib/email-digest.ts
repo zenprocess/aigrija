@@ -111,6 +111,7 @@ export function buildEmailHtml(digest: WeeklyDigest, email: string, baseUrl: str
       </table>
     </td></tr>
   </table>
+  <img src="https://cloud.umami.is/p/3ZlQkyHqz" width="1" height="1" alt="" style="display:block" />
 </body>
 </html>`;
 }

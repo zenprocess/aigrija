@@ -9,6 +9,7 @@ import { counter } from './routes/counter';
 import { alerts } from './routes/alerts';
 import { share } from './routes/share';
 import { sitemap } from './routes/sitemap';
+import { seo } from './routes/seo';
 import { telegram } from './routes/telegram';
 import { whatsapp } from './routes/whatsapp';
 import { report } from './routes/report';
@@ -124,6 +125,7 @@ app.route('/', counter);
 app.route('/', alerts);   // keeps /alerte SSR + legacy /api/alerts (chanfana takes priority)
 app.route('/', share);
 app.route('/', sitemap);
+app.route('/', seo);
 app.route('/', telegram);
 app.route('/', whatsapp);
 app.route('/', report);

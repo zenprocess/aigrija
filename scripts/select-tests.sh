@@ -20,10 +20,10 @@ TAGS=""
 while IFS= read -r file; do
   [ -z "$file" ] && continue
   case "$file" in
-    src/routes/api/*|src/middleware/*) TAGS="$TAGS,api,backend" ;;
-    src/routes/pages/*|src/ui/*) TAGS="$TAGS,smoke,a11y,homepage" ;;
+    src/routes/api/*|src/middleware/*) TAGS="$TAGS,api" ;;
+    src/routes/pages/*|src/ui/*) TAGS="$TAGS,smoke,a11y" ;;
     src/routes/admin/*) TAGS="$TAGS,admin" ;;
-    src/services/ai/*) TAGS="$TAGS,ai,backend" ;;
+    src/services/ai/*) TAGS="$TAGS,critical,api" ;;
     e2e/*|playwright.config.ts) echo ""; exit 0 ;;  # test infra = run all
     wrangler.toml|infra/*) TAGS="$TAGS,smoke,api" ;;
   esac

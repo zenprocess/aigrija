@@ -15,10 +15,7 @@
     "title_highlight": "suspicious message?",
     "subtitle": "Check in 30 seconds if it's a fraud attempt. Free, anonymous, no account needed.",
     "cta": "Check now",
-    "tagline": "check · report · protect",
-    "shield_verify": "VERIFY NOW",
-    "shield_report": "REPORT FRAUD",
-    "shield_protect": "PROTECT YOU"
+    "tagline": "check · report · protect"
   },
   "checker": {
     "label_message": "Suspicious message text",

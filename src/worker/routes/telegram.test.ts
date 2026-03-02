@@ -6,6 +6,16 @@ import type { Env } from '../lib/types';
 const mockFetch = vi.fn().mockResolvedValue(new Response('{"ok":true}'));
 vi.stubGlobal('fetch', mockFetch);
 
+// Mock gdpr-consent
+const mockRecordConsent = vi.fn().mockResolvedValue(undefined);
+const mockRevokeConsent = vi.fn().mockResolvedValue(undefined);
+const mockUpdateLastActive = vi.fn().mockResolvedValue(undefined);
+vi.mock('../lib/gdpr-consent', () => ({
+  recordConsent: (...args: unknown[]) => mockRecordConsent(...args),
+  revokeConsent: (...args: unknown[]) => mockRevokeConsent(...args),
+  updateLastActive: (...args: unknown[]) => mockUpdateLastActive(...args),
+}));
+
 // Mock classify
 vi.mock('../lib/classifier', () => ({
   classify: vi.fn().mockResolvedValue({
@@ -53,7 +63,7 @@ function makeTelegramRequest(body: unknown, secret = 'test-secret') {
 }
 
 describe('Telegram webhook — auth', () => {
-  beforeEach(() => { mockFetch.mockClear(); });
+  beforeEach(() => { mockFetch.mockClear(); mockRecordConsent.mockClear(); mockUpdateLastActive.mockClear(); });
 
   it('returns 401 without secret', async () => {
     const telegram = await importTelegram();
@@ -81,7 +91,7 @@ describe('Telegram webhook — auth', () => {
 });
 
 describe('Telegram webhook — forwarded message detection', () => {
-  beforeEach(() => { mockFetch.mockClear(); });
+  beforeEach(() => { mockFetch.mockClear(); mockRecordConsent.mockClear(); mockUpdateLastActive.mockClear(); });
 
   it('analyzes forwarded message and sends verdict', async () => {
     const telegram = await importTelegram();
@@ -136,8 +146,60 @@ describe('Telegram webhook — forwarded message detection', () => {
   });
 });
 
+describe('Telegram webhook — GDPR consent on regular messages', () => {
+  beforeEach(() => { mockFetch.mockClear(); mockRecordConsent.mockClear(); mockUpdateLastActive.mockClear(); });
+
+  it('calls recordConsent for every regular message (not just /start)', async () => {
+    const telegram = await importTelegram();
+    const app = new Hono<{ Bindings: Env }>();
+    app.route('/', telegram);
+
+    const update = {
+      update_id: 10,
+      message: {
+        message_id: 10,
+        chat: { id: 111222, type: 'private' },
+        from: { id: 333, username: 'testuser' },
+        text: 'Contul meu a fost blocat, ajutor!',
+      },
+    };
+
+    const req = makeTelegramRequest(update);
+    const res = await app.fetch(req, makeEnv());
+    expect(res.status).toBe(200);
+    expect(mockRecordConsent).toHaveBeenCalledWith(
+      expect.anything(),
+      'tg',
+      '111222'
+    );
+  });
+
+  it('calls recordConsent before updateLastActive for regular messages', async () => {
+    const telegram = await importTelegram();
+    const app = new Hono<{ Bindings: Env }>();
+    app.route('/', telegram);
+
+    const callOrder: string[] = [];
+    mockRecordConsent.mockImplementation(async () => { callOrder.push('recordConsent'); });
+    mockUpdateLastActive.mockImplementation(async () => { callOrder.push('updateLastActive'); });
+
+    const update = {
+      update_id: 11,
+      message: {
+        message_id: 11,
+        chat: { id: 444555, type: 'private' },
+        from: { id: 666 },
+        text: 'Mesaj suspect de test',
+      },
+    };
+
+    await app.fetch(makeTelegramRequest(update), makeEnv());
+    expect(callOrder.indexOf('recordConsent')).toBeLessThan(callOrder.indexOf('updateLastActive'));
+  });
+});
+
 describe('Telegram webhook — callback query', () => {
-  beforeEach(() => { mockFetch.mockClear(); });
+  beforeEach(() => { mockFetch.mockClear(); mockRecordConsent.mockClear(); });
 
   it('handles help callback', async () => {
     const telegram = await importTelegram();

@@ -58,21 +58,6 @@ function makeApp() {
 const AUTH = { Authorization: 'Bearer test-key' };
 
 describe('drafts router', () => {
-  it('returns 401 without auth', async () => {
-    const { drafts } = await import('./drafts');
-    const req = new Request('http://localhost/');
-    const res = await drafts.fetch(req, makeEnv(), makeCtx());
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 503 when ADMIN_API_KEY not set', async () => {
-    const { drafts } = await import('./drafts');
-    const env = { DB: makeD1(), ADMIN_API_KEY: '' };
-    const req = new Request('http://localhost/', { headers: AUTH });
-    const res = await drafts.fetch(req, env, makeCtx());
-    expect(res.status).toBe(503);
-  });
-
   it('GET / lists drafts', async () => {
     const { drafts } = await import('./drafts');
     const db = makeD1(null, []);

@@ -24,7 +24,7 @@ admin.use('*', adminAuth);
 // Content-Security-Policy middleware for all admin HTML responses
 const ADMIN_CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com",
+  "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com/htmx.org@",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https://cdn.ai-grija.ro",
   "connect-src 'self'",

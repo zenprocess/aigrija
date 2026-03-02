@@ -28,6 +28,7 @@ import { metrics } from './routes/metrics';
 import { quiz } from './routes/quiz';
 import { translationReport } from './routes/translation-report';
 import { newsletter } from './routes/newsletter';
+import { gepa } from './routes/gepa';
 import { handleScheduled } from './lib/cron-handler';
 import { cdnProtection } from './middleware/cdn-protection';
 import { admin } from './admin';
@@ -149,6 +150,7 @@ app.route('/', metrics);
 app.route('/', quiz);
 app.route('/', translationReport);
 app.route('/', newsletter);
+app.route('/', gepa);
 
 // Admin host routing
 // Requests from admin.ai-grija.ro are handled by the admin app

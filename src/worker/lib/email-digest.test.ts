@@ -63,6 +63,12 @@ describe('buildEmailHtml', () => {
     expect(html).toContain('test%40example.com');
   });
 
+
+  it('includes Umami tracking pixel', () => {
+    const html = buildEmailHtml(mockDigest, 'user@example.com', 'https://ai-grija.ro');
+    expect(html).toContain('https://cloud.umami.is/p/3ZlQkyHqz');
+    expect(html).toContain('display:none');
+  });
   it('is valid HTML with doctype', () => {
     const html = buildEmailHtml(mockDigest, 'user@example.com', 'https://ai-grija.ro');
     expect(html).toContain('<!DOCTYPE html>');

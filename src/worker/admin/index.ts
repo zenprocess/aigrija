@@ -13,6 +13,9 @@ import { activity } from './activity';
 import { drafts } from './drafts';
 import { generateStandalonePostWithOverrides } from '../lib/draft-generator';
 import { structuredLog } from '../lib/logger';
+import { gdprAdmin } from './gdpr';
+import { flagsAdmin } from './flags';
+import { newsletterAdmin } from './newsletter';
 
 type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 
@@ -242,5 +245,8 @@ admin.route('/config', configAdmin);
 admin.route('/rapoarte-traduceri', translationReportsAdmin);
 admin.route('/analytics', analytics);
 admin.route('/activity', activity);
+admin.route("/gdpr", gdprAdmin);
+admin.route("/flags", flagsAdmin);
+admin.route('/abonati', newsletterAdmin);
 
 export { admin };

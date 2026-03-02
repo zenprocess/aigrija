@@ -1,5 +1,5 @@
 name: "Public site navigation"
-description: "Ca utilizator, verific ca paginile principale si navigarea functioneaza corect"
+description: "Ca utilizator, verific ca paginile principale SSR si navigarea functioneaza corect"
 steps:
   - action: navigate
     url: "/"
@@ -8,9 +8,6 @@ steps:
     timeout: 15000
   - action: screenshot
     name: homepage
-  - action: assert
-    selector: "body"
-    contains: "ai-grija"
   - action: navigate
     url: "/alerte"
   - action: wait
@@ -19,25 +16,8 @@ steps:
   - action: screenshot
     name: alerte-page
   - action: assert
-    selector: "h1, h2, body"
-    contains: ""
-  - action: navigate
-    url: "/blog"
-  - action: wait
     selector: "body"
-    timeout: 10000
-  - action: screenshot
-    name: blog-page
-  - action: navigate
-    url: "/raportare"
-  - action: wait
-    selector: "body"
-    timeout: 10000
-  - action: screenshot
-    name: raportare-page
-  - action: assert
-    selector: "body"
-    contains: ""
+    contains: "ai-grija.ro"
   - action: navigate
     url: "/gdpr"
   - action: wait
@@ -48,6 +28,26 @@ steps:
   - action: assert
     selector: "body"
     contains: "GDPR"
+  - action: navigate
+    url: "/policies/privacy"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: privacy-page
+  - action: assert
+    selector: "body"
+    contains: "Zen Labs"
+  - action: navigate
+    url: "/policies/general-terms"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: terms-page
+  - action: assert
+    selector: "body"
+    contains: "Termeni"
   - action: navigate
     url: "/"
   - action: wait

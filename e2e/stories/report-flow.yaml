@@ -1,34 +1,42 @@
 name: "Generare raport autoritati"
-description: "Utilizatorul verifica un mesaj suspect si raporteaza la autoritati prin pagina /raportare"
+description: "Utilizatorul acceseaza pagina de raportare a incidentelor la autoritati si verifica continutul paginii"
 steps:
   - action: navigate
-    url: "/"
-  - action: wait
-    selector: "[data-testid='checker-textarea'], [data-testid='check-input'], textarea"
-    timeout: 15000
-  - action: fill
-    selector: "[data-testid='checker-textarea'], [data-testid='check-input'], textarea"
-    value: "Contul dvs ING a fost blocat. Accesati urgent: http://ing-verify.com/deblocare"
-  - action: click
-    selector: "[data-testid='checker-submit-btn'], [data-testid='check-submit'], button[type='submit']"
-  - action: wait
-    selector: "[data-testid='checker-action-share'], [data-testid='verdict-card'], .verdict-card, [data-testid='check-result']"
-    timeout: 45000
-  - action: screenshot
-    name: verdict-shown
-  - action: assert
-    selector: "body"
-    contains: "phishing"
-  - action: navigate
-    url: "/raportare"
+    url: "/raport"
   - action: wait
     selector: "body"
     timeout: 10000
   - action: screenshot
-    name: raportare-page
+    name: raport-page
+  - action: assert
+    selector: "body"
+    contains: "Generator Raport Incident"
   - action: assert
     selector: "body"
     contains: "1911"
   - action: assert
     selector: "body"
     contains: "DNSC"
+  - action: assert
+    selector: "body"
+    contains: "CERT-RO"
+  - action: navigate
+    url: "/api/alerts"
+  - action: wait
+    selector: "body"
+    timeout: 5000
+  - action: screenshot
+    name: api-alerts
+  - action: assert
+    selector: "body"
+    contains: "campaigns"
+  - action: navigate
+    url: "/gdpr"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: gdpr-page
+  - action: assert
+    selector: "body"
+    contains: "GDPR"

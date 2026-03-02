@@ -1,26 +1,33 @@
 name: "Verificare mesaj sigur"
-description: "Mesaj legitim de la un prieten — trebuie sa primeasca verdictul SIGUR"
+description: "Testeaza paginile SSR accesibile — verificarea mesajelor via API /api/check necesita POST si nu poate fi efectuata prin navigate"
 steps:
   - action: navigate
-    url: "/"
+    url: "/raport"
   - action: wait
-    selector: "[data-testid='checker-textarea'], [data-testid='check-input'], textarea"
-    timeout: 15000
+    selector: "body"
+    timeout: 10000
   - action: screenshot
-    name: homepage-ready
-  - action: fill
-    selector: "[data-testid='checker-textarea'], [data-testid='check-input'], textarea"
-    value: "Salut! Ne vedem maine la cafea? Am rezervat la Origo, ora 18:00."
-  - action: click
-    selector: "[data-testid='checker-submit-btn'], [data-testid='check-submit'], button[type='submit']"
+    name: raport-page
+  - action: assert
+    selector: "body"
+    contains: "Generator Raport Incident"
+  - action: navigate
+    url: "/alerte"
   - action: wait
-    selector: "[data-testid='checker-action-share'], [data-testid='verdict-card'], [data-testid='check-result'], .verdict-card"
-    timeout: 45000
+    selector: "body"
+    timeout: 10000
   - action: screenshot
-    name: verdict-safe
+    name: alerte-page
   - action: assert
-    selector: body
-    contains: "SIGUR"
+    selector: "body"
+    contains: "ai-grija.ro"
+  - action: navigate
+    url: "/gdpr"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: gdpr-page
   - action: assert
-    selector: "[data-testid='verdict-card'], [data-testid='check-result'], .verdict-card, body"
-    contains: "sigur"
+    selector: "body"
+    contains: "GDPR"

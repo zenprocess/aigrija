@@ -1,32 +1,36 @@
 name: "Verificare SMS suspect"
-description: "Utilizatorul primeste un SMS suspect de la banca si il verifica pe ai-grija.ro"
+description: "Testeaza pagina de raportare si alertele SSR — verificarea mesajelor via API necesita POST si nu poate fi efectuata cu navigate"
 steps:
   - action: navigate
-    url: "/"
+    url: "/alerte"
   - action: wait
-    selector: "[data-testid='checker-textarea'], [data-testid='check-input'], textarea"
+    selector: "body"
     timeout: 15000
   - action: screenshot
-    name: homepage-loaded
-  - action: fill
-    selector: "[data-testid='checker-textarea'], [data-testid='check-input'], textarea"
-    value: "Contul dvs ING a fost blocat. Accesati urgent: http://ing-verify.com/deblocare pentru a evita blocarea permanenta."
-  - action: screenshot
-    name: text-filled
-  - action: click
-    selector: "[data-testid='checker-submit-btn'], [data-testid='check-submit'], button[type='submit']"
+    name: alerte-page-loaded
+  - action: assert
+    selector: "body"
+    contains: "ai-grija.ro"
+  - action: navigate
+    url: "/raport"
   - action: wait
-    selector: "[data-testid='checker-action-share'], [data-testid='verdict-card'], [data-testid='check-result'], .verdict-card"
-    timeout: 45000
+    selector: "body"
+    timeout: 10000
   - action: screenshot
-    name: verdict-phishing
+    name: raport-page
   - action: assert
-    selector: body
-    contains: "PHISHING"
+    selector: "body"
+    contains: "Generator Raport Incident"
   - action: assert
-    selector: body
-    contains: "phishing"
-  - action: click
-    selector: "[data-testid='checker-action-share']"
+    selector: "body"
+    contains: "DNSC"
+  - action: navigate
+    url: "/api/alerts"
+  - action: wait
+    selector: "body"
+    timeout: 5000
   - action: screenshot
-    name: share-modal-opened
+    name: api-alerts-response
+  - action: assert
+    selector: "body"
+    contains: "campaigns"

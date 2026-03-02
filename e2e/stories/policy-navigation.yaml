@@ -1,5 +1,5 @@
 name: "Navigare politici legale"
-description: "Utilizatorul viziteaza toate paginile legale: GDPR, cookie-uri, termeni"
+description: "Utilizatorul viziteaza toate paginile legale disponibile ca SSR: GDPR, politica de confidentialitate, termeni si conditii"
 steps:
   - action: navigate
     url: "/gdpr"
@@ -12,17 +12,17 @@ steps:
     selector: "body"
     contains: "GDPR"
   - action: navigate
-    url: "/politica-cookies"
+    url: "/policies/privacy"
   - action: wait
     selector: "body"
     timeout: 10000
   - action: screenshot
-    name: politica-cookies-page
+    name: privacy-page
   - action: assert
     selector: "body"
-    contains: "cookie"
+    contains: "Politica de"
   - action: navigate
-    url: "/termeni"
+    url: "/policies/general-terms"
   - action: wait
     selector: "body"
     timeout: 10000

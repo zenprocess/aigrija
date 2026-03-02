@@ -74,7 +74,13 @@ const MIN_TEXT_LENGTH = 3;
 const MAX_TEXT_LENGTH = 5000;
 
 function stripHtml(text: string): string {
-  return text.replace(/<[^>]*>/g, '');
+  let result = text;
+  let prev: string;
+  do {
+    prev = result;
+    result = result.replace(/<[^>]*>/g, '');
+  } while (result !== prev);
+  return result;
 }
 
 function validateAndSanitizeInput(text: string): string {

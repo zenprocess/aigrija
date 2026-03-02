@@ -4,6 +4,7 @@ import type { Env } from '../lib/types';
 import { generateWeeklyDigest, type WeeklyDigest } from '../lib/weekly-digest';
 import { structuredLog } from '../lib/logger';
 import { checkRateLimit } from '../lib/rate-limiter';
+import { recordConsent, revokeConsent } from '../lib/gdpr-consent';
 
 const BUTTONDOWN_BASE = 'https://api.buttondown.com/v1';
 
@@ -332,6 +333,7 @@ weekly.post('/api/digest/subscribe', async (c) => {
     return c.json({ ok: false, error: 'Eroare la procesarea abonarii. Incearca din nou.' }, 502);
   }
 
+  await recordConsent(c.env, 'email', parsed.data.email).catch(() => {});
   return c.json({ ok: true, message: 'Verifica email-ul pentru confirmare.' });
 });
 
@@ -375,6 +377,7 @@ weekly.post('/api/digest/unsubscribe', async (c) => {
     return c.json({ ok: false, error: 'Eroare la procesarea dezabonarii. Incearca din nou.' }, 502);
   }
 
+  await revokeConsent(c.env, 'email', parsed.data.email).catch(() => {});
   return c.json({ ok: true, message: 'Ai fost dezabonat cu succes.' });
 });
 

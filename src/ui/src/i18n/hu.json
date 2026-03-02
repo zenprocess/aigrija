@@ -308,5 +308,17 @@
     "choose_correct": "Válassza ki az összes helyes műveletet:",
     "feedback_correct": "✓ Helyes!",
     "feedback_incorrect": "✗ Helytelen"
+  },
+  "consent": {
+    "banner_text": "Alapvető sütiket használunk az oldal működéséhez. Az analitikai sütik segítenek megérteni, hogyan használják az oldalt.",
+    "accept_all": "Mindet elfogadom",
+    "reject_all": "Csak alapvetők",
+    "settings": "Beállítások",
+    "save": "Preferenciák mentése",
+    "essential_title": "Alapvető",
+    "essential_desc": "Az oldal működéséhez szükséges. Nem tiltható le.",
+    "analytics_title": "Analitikai",
+    "analytics_desc": "Segít megérteni az oldal használatát a fejlesztés érdekében.",
+    "privacy_link": "Adatvédelmi tájékoztató"
   }
 }

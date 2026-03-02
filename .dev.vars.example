@@ -1,24 +1,29 @@
 # ai-grija.ro — Local Development Secrets
 # Copy to .dev.vars and fill in real values
-# .dev.vars is gitignored — never commit secrets
+# See: https://github.com/zenprocess/aigrija/wiki/Setup
 
-# Google Safe Browsing API (https://console.cloud.google.com/apis/credentials)
-GOOGLE_SAFE_BROWSING_KEY=
+# Google Safe Browsing API
+GOOGLE_SAFE_BROWSING_KEY=your-google-safe-browsing-key
 
-# VirusTotal API (https://www.virustotal.com/gui/my-apikey)
-VIRUSTOTAL_API_KEY=
+# VirusTotal API
+VIRUSTOTAL_API_KEY=your-virustotal-api-key
 
-# URLhaus Auth Key (https://auth.abuse.ch — free registration)
-URLHAUS_AUTH_KEY=
+# URLhaus (abuse.ch) — no key needed, free API
+# URLHAUS_API_KEY=not-required
 
-# Telegram Bot (https://t.me/BotFather)
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_WEBHOOK_SECRET=
+# Telegram Bot
+TELEGRAM_BOT_TOKEN=123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
+TELEGRAM_WEBHOOK_SECRET=your-webhook-secret
 
-# WhatsApp Business API (https://developers.facebook.com)
-WHATSAPP_ACCESS_TOKEN=
-WHATSAPP_VERIFY_TOKEN=
-WHATSAPP_PHONE_NUMBER_ID=
+# WhatsApp (Meta Cloud API)
+WHATSAPP_TOKEN=your-whatsapp-token
+WHATSAPP_VERIFY_TOKEN=your-verify-token
+WHATSAPP_PHONE_ID=your-phone-number-id
 
-# Admin API (generate with: openssl rand -hex 32)
-ADMIN_API_KEY=
+# Admin API Key (for /api/admin/* endpoints on localhost)
+ADMIN_API_KEY=dev-admin-key-change-me
+
+# Buttondown Newsletter API
+BUTTONDOWN_API_KEY=your-buttondown-api-key
+
+# Workers AI is auto-bound by wrangler dev, no key needed

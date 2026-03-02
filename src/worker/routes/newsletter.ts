@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../lib/types';
 import { checkRateLimit, applyRateLimitHeaders } from '../lib/rate-limiter';
+import { recordConsent, revokeConsent } from '../lib/gdpr-consent';
 
 const BUTTONDOWN_BASE = 'https://api.buttondown.com/v1';
 
@@ -78,6 +79,7 @@ newsletter.post('/api/newsletter/subscribe', async (c) => {
     );
   }
 
+  await recordConsent(c.env, 'email', parsed.data.email).catch(() => {});
   return c.json({ ok: true, message: 'Verifica email-ul pentru confirmare.' });
 });
 
@@ -135,6 +137,7 @@ newsletter.post('/api/newsletter/unsubscribe', async (c) => {
     return c.json({ error: { code: 'UPSTREAM_ERROR', message: 'Eroare la procesarea dezabonarii. Incearca din nou.' } }, 502);
   }
 
+  await revokeConsent(c.env, 'email', parsed.data.email).catch(() => {});
   return c.json({ ok: true, message: 'Ai fost dezabonat cu succes.' });
 });
 

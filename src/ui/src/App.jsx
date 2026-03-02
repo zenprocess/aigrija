@@ -13,6 +13,7 @@ const TermsOfService = lazy(() => import('./components/TermsOfService'));
 const ContentList = lazy(() => import('./components/ContentList'));
 const ContentPost = lazy(() => import('./components/ContentPost'));
 const Quiz = lazy(() => import('./components/Quiz'));
+const CookieConsent = lazy(() => import('./components/CookieConsent'));
 
 function LoadingSkeleton() {
   return (
@@ -41,6 +42,7 @@ function PageShell({ children }) {
           </Suspense>
         </main>
         <Footer />
+        <Suspense fallback={null}><CookieConsent /></Suspense>
       </div>
     </ErrorBoundary>
   );
@@ -115,6 +117,7 @@ function App() {
 
         <About />
         <Footer />
+        <Suspense fallback={null}><CookieConsent /></Suspense>
       </div>
     </ErrorBoundary>
   );

@@ -308,5 +308,17 @@
     "choose_correct": "Alege toate acțiunile corecte:",
     "feedback_correct": "✓ Corect!",
     "feedback_incorrect": "✗ Incorect"
+  },
+  "consent": {
+    "banner_text": "Folosim cookie-uri esențiale pentru funcționarea site-ului. Cookie-urile analitice ne ajută să înțelegem cum este utilizat site-ul.",
+    "accept_all": "Acceptă toate",
+    "reject_all": "Doar esențiale",
+    "settings": "Setări",
+    "save": "Salvează preferințele",
+    "essential_title": "Esențiale",
+    "essential_desc": "Necesare pentru funcționarea site-ului. Nu pot fi dezactivate.",
+    "analytics_title": "Analitice",
+    "analytics_desc": "Ne ajută să înțelegem cum este utilizat site-ul pentru a-l îmbunătăți.",
+    "privacy_link": "Politica de confidențialitate"
   }
 }

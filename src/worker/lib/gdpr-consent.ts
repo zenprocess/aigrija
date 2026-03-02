@@ -66,7 +66,7 @@ export async function updateLastActive(env: Env, channel: ConsentChannel, id: st
 }
 
 export async function purgeInactiveSubscribers(env: Env): Promise<{ purged: number }> {
-  const channels: ConsentChannel[] = ['tg', 'wa'];
+  const channels: ConsentChannel[] = ['tg', 'wa', 'email'];
   let purged = 0;
 
   for (const channel of channels) {

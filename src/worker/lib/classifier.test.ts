@@ -17,7 +17,13 @@ describe('ClassificationValidationError', () => {
 // Test the validation logic via a thin wrapper that re-implements what classify() does
 // (avoids needing an AI binding in unit tests)
 function stripHtml(text: string): string {
-  return text.replace(/<[^>]*>/g, '');
+  let result = text;
+  let prev: string;
+  do {
+    prev = result;
+    result = result.replace(/<[^>]*>/g, '');
+  } while (result !== prev);
+  return result;
 }
 
 function validateAndSanitizeInput(text: string): string {

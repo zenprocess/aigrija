@@ -227,7 +227,7 @@ async function checkLinks(page: Page, pageUrl: string, baseUrl: string): Promise
   const internal: string[] = [];
 
   for (const href of hrefs) {
-    if (!href || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) continue;
+    if (!href || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:') || href.startsWith('data:') || href.startsWith('vbscript:')) continue;
 
     if (isInternal(href, baseUrl)) {
       const norm = normalizeUrl(href, baseUrl);

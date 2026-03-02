@@ -221,7 +221,7 @@ export default function Footer() {
               {t('footer.report_translation')}
             </button>
 
-            <a data-testid="footer-link-github" href="https://github.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
+            <a data-testid="footer-link-github" href="https://github.com/zenprocess/aigrija" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
               <Github className="w-4 h-4" />
               <span>{t('footer.github')}</span>
             </a>

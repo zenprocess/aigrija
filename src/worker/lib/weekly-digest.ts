@@ -106,10 +106,14 @@ export function getISOWeek(date: Date): string {
   return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
 }
 
-/** Returns "YYYY-WW" digest cache key for the current week */
+/** Returns "YYYY-WW" digest cache key for the current week (ISO year) */
 export function currentWeekKey(date: Date = new Date()): string {
+  // Apply Thursday rule to get correct ISO year at year boundaries
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const week = getISOWeekNumber(date);
-  return `${date.getFullYear()}-${String(week).padStart(2, '0')}`;
+  return `${d.getUTCFullYear()}-${String(week).padStart(2, '0')}`;
 }
 
 /** Human-readable week range: "24 Feb - 2 Mar 2026" */

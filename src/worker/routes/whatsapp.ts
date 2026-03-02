@@ -4,6 +4,7 @@ import { classify } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
 import { checkRateLimit } from '../lib/rate-limiter';
 import { recordConsent, revokeConsent, updateLastActive } from '../lib/gdpr-consent';
+import { structuredLog } from '../lib/logger';
 
 const whatsapp = new Hono<{ Bindings: Env }>();
 
@@ -134,7 +135,7 @@ async function sendWhatsAppMessage(
       }),
     });
   } catch (err) {
-    console.error('[whatsapp] sendWhatsAppMessage failed:', err);
+    structuredLog('error', 'whatsapp_send_failed', { error: String(err) });
   }
 }
 
@@ -169,7 +170,7 @@ async function sendWhatsAppInteractive(
       }),
     });
   } catch (err) {
-    console.error('[whatsapp] sendWhatsAppInteractive failed:', err);
+    structuredLog('error', 'whatsapp_interactive_failed', { error: String(err) });
   }
 }
 
@@ -192,7 +193,7 @@ async function markMessageRead(
       }),
     });
   } catch (err) {
-    console.error('[whatsapp] markMessageRead failed:', err);
+    structuredLog('error', 'whatsapp_mark_read_failed', { error: String(err) });
   }
 }
 
@@ -254,7 +255,7 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
   const phoneNumberId = c.env.WHATSAPP_PHONE_NUMBER_ID;
 
   if (!accessToken || !phoneNumberId) {
-    console.error('[whatsapp] WHATSAPP_ACCESS_TOKEN or WHATSAPP_PHONE_NUMBER_ID not set');
+    structuredLog('error', 'whatsapp_config_missing', { detail: 'WHATSAPP_ACCESS_TOKEN or WHATSAPP_PHONE_NUMBER_ID not set' });
     return c.json({ ok: true });
   }
 
@@ -325,7 +326,7 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
         try {
           classification = await classify(c.env.AI, text, firstUrl);
         } catch (err) {
-          console.error('[whatsapp] classify error:', err);
+          structuredLog('error', 'whatsapp_classify_error', { error: String(err) });
           await sendWhatsAppMessage(
             accessToken,
             phoneNumberId,
@@ -343,7 +344,7 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
               urlFlags.push(...analysis.flags.map((f: string) => `[URL] ${f}`));
             }
           } catch (err) {
-            console.error(`[whatsapp] URL analysis failed for ${url}:`, err);
+            structuredLog('error', 'whatsapp_url_analysis_failed', { url, error: String(err) });
             // Continue to next URL
           }
         }

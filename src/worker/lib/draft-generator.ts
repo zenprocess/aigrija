@@ -35,7 +35,7 @@ export async function generateDraft(campaignId: string, env: Env): Promise<void>
   ];
 
   try {
-    const result = await (env.AI.run as Function)(DRAFT_MODEL, { messages, max_tokens: 1500 }) as { response?: string };
+    const result = await (env.AI.run as (model: string, inputs: { messages: { role: string; content: string }[]; max_tokens: number }) => Promise<{ response?: string }>)(DRAFT_MODEL, { messages, max_tokens: 1500 });
     const content = result?.response || '';
 
     await env.DB.prepare(
@@ -71,7 +71,7 @@ export async function generateMultipleDrafts(campaignId: string, env: Env): Prom
       { role: 'user', content: userMessage },
     ];
     try {
-      const result = await (env.AI.run as Function)(DRAFT_MODEL, { messages, max_tokens: 1500 }) as { response?: string };
+      const result = await (env.AI.run as (model: string, inputs: { messages: { role: string; content: string }[]; max_tokens: number }) => Promise<{ response?: string }>)(DRAFT_MODEL, { messages, max_tokens: 1500 });
       drafts.push({ type: variant.type, slug: variant.slug, content: result?.response || '' });
       structuredLog('info', '[draft-generator] Variant generated', { campaignId, type: variant.type });
     } catch (err) {

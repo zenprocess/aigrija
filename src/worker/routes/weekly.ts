@@ -1,8 +1,15 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import type { Env } from '../lib/types';
 import { generateWeeklyDigest, type WeeklyDigest } from '../lib/weekly-digest';
 import { structuredLog } from '../lib/logger';
 import { checkRateLimit } from '../lib/rate-limiter';
+
+const BUTTONDOWN_BASE = 'https://api.buttondown.com/v1';
+
+const DigestEmailSchema = z.object({
+  email: z.string().email('Adresa de e-mail invalida.'),
+});
 
 const weekly = new Hono<{ Bindings: Env }>();
 
@@ -281,21 +288,16 @@ weekly.get('/api/weekly', async (c) => {
   return c.json({ ok: true, items: [] });
 });
 
-// ─── Email subscription endpoints ─────────────────────────────────────────────
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const SUBSCRIBERS_KEY = 'email:subscribers';
+// ─── Email subscription endpoints (via Buttondown API, tag: digest) ───────────
 
 weekly.post('/api/digest/subscribe', async (c) => {
-  if (!c.env.CACHE) {
-    return c.json({ ok: false, error: 'Serviciu indisponibil momentan.' }, 503);
-  }
-
   // Rate limit: 5 req/hr per IP
   const subIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'unknown';
-  const subRl = await checkRateLimit(c.env.CACHE, `digest-sub:${subIp}`, 5, 3600).catch(() => ({ allowed: true }));
-  if (!subRl.allowed) {
-    return c.json({ ok: false, error: 'Prea multe cereri. Încearcă din nou mai târziu.' }, 429);
+  if (c.env.CACHE) {
+    const subRl = await checkRateLimit(c.env.CACHE, `digest-sub:${subIp}`, 5, 3600).catch(() => ({ allowed: true }));
+    if (!subRl.allowed) {
+      return c.json({ ok: false, error: 'Prea multe cereri. Încearcă din nou mai târziu.' }, 429);
+    }
   }
 
   let body: unknown;
@@ -305,31 +307,42 @@ weekly.post('/api/digest/subscribe', async (c) => {
     return c.json({ ok: false, error: 'JSON invalid.' }, 400);
   }
 
-  const email = typeof body === 'object' && body !== null ? (body as Record<string, unknown>).email : undefined;
-  if (typeof email !== 'string' || !EMAIL_REGEX.test(email)) {
-    return c.json({ ok: false, error: 'Adresa de e-mail invalida.' }, 422);
+  const parsed = DigestEmailSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ ok: false, error: parsed.error.issues.map(i => i.message).join('; ') }, 422);
   }
 
-  const raw = await c.env.CACHE.get(SUBSCRIBERS_KEY);
-  const subscribers: string[] = raw ? (JSON.parse(raw) as string[]) : [];
-  if (!subscribers.includes(email.toLowerCase())) {
-    subscribers.push(email.toLowerCase());
-    await c.env.CACHE.put(SUBSCRIBERS_KEY, JSON.stringify(subscribers));
+  const apiKey = c.env.BUTTONDOWN_API_KEY;
+  if (!apiKey) {
+    return c.json({ ok: false, error: 'Serviciu indisponibil momentan.' }, 503);
   }
 
-  return c.json({ ok: true });
+  const bdRes = await fetch(`${BUTTONDOWN_BASE}/subscribers`, {
+    method: 'POST',
+    headers: { 'Authorization': `Token ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: parsed.data.email, type: 'regular', tags: ['digest'] }),
+  });
+
+  if (!bdRes.ok) {
+    if (bdRes.status === 400) {
+      return c.json({ ok: false, error: 'Aceasta adresa este deja abonata sau invalida.' }, 400);
+    }
+    const bdBody = await bdRes.json().catch(() => ({})) as Record<string, unknown>;
+    structuredLog('error', 'digest_subscribe_upstream_error', { status: bdRes.status, body: bdBody });
+    return c.json({ ok: false, error: 'Eroare la procesarea abonarii. Incearca din nou.' }, 502);
+  }
+
+  return c.json({ ok: true, message: 'Verifica email-ul pentru confirmare.' });
 });
 
 weekly.post('/api/digest/unsubscribe', async (c) => {
-  if (!c.env.CACHE) {
-    return c.json({ ok: false, error: 'Serviciu indisponibil momentan.' }, 503);
-  }
-
   // Rate limit: 5 req/hr per IP
   const unsubIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'unknown';
-  const unsubRl = await checkRateLimit(c.env.CACHE, `digest-unsub:${unsubIp}`, 5, 3600).catch(() => ({ allowed: true }));
-  if (!unsubRl.allowed) {
-    return c.json({ ok: false, error: 'Prea multe cereri. Încearcă din nou mai târziu.' }, 429);
+  if (c.env.CACHE) {
+    const unsubRl = await checkRateLimit(c.env.CACHE, `digest-unsub:${unsubIp}`, 5, 3600).catch(() => ({ allowed: true }));
+    if (!unsubRl.allowed) {
+      return c.json({ ok: false, error: 'Prea multe cereri. Încearcă din nou mai târziu.' }, 429);
+    }
   }
 
   let body: unknown;
@@ -339,17 +352,30 @@ weekly.post('/api/digest/unsubscribe', async (c) => {
     return c.json({ ok: false, error: 'JSON invalid.' }, 400);
   }
 
-  const email = typeof body === 'object' && body !== null ? (body as Record<string, unknown>).email : undefined;
-  if (typeof email !== 'string' || !EMAIL_REGEX.test(email)) {
-    return c.json({ ok: false, error: 'Adresa de e-mail invalida.' }, 422);
+  const parsed = DigestEmailSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ ok: false, error: parsed.error.issues.map(i => i.message).join('; ') }, 422);
   }
 
-  const raw = await c.env.CACHE.get(SUBSCRIBERS_KEY);
-  const subscribers: string[] = raw ? (JSON.parse(raw) as string[]) : [];
-  const updated = subscribers.filter(e => e !== email.toLowerCase());
-  await c.env.CACHE.put(SUBSCRIBERS_KEY, JSON.stringify(updated));
+  const apiKey = c.env.BUTTONDOWN_API_KEY;
+  if (!apiKey) {
+    return c.json({ ok: false, error: 'Serviciu indisponibil momentan.' }, 503);
+  }
 
-  return c.json({ ok: true });
+  const bdRes = await fetch(`${BUTTONDOWN_BASE}/subscribers/${encodeURIComponent(parsed.data.email)}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Token ${apiKey}` },
+  });
+
+  if (bdRes.status === 404) {
+    return c.json({ ok: false, error: 'Aceasta adresa nu este abonata.' }, 404);
+  }
+
+  if (!bdRes.ok) {
+    return c.json({ ok: false, error: 'Eroare la procesarea dezabonarii. Incearca din nou.' }, 502);
+  }
+
+  return c.json({ ok: true, message: 'Ai fost dezabonat cu succes.' });
 });
 
 

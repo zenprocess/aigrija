@@ -107,9 +107,9 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
     const isOverride = overrides.has(key);
     const isRo = activeLang === 'ro';
     return `
-    <tr class="border-b border-gray-100 hover:bg-gray-50" data-key="${key}">
+    <tr class="border-b border-white/10 hover:bg-gray-50" data-key="${escHtml(key)}">
       <td class="py-2 px-3 align-top">
-        <div class="text-xs font-mono text-gray-500">${key}</div>
+        <div class="text-xs font-mono text-gray-500">${escHtml(key)}</div>
         ${isOverride ? '<span class="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">override KV</span>' : ''}
       </td>
       <td class="py-2 px-3 align-top text-sm text-gray-400 max-w-xs">${escHtml(roVal)}</td>
@@ -117,14 +117,14 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
         ${isRo
           ? `<span class="text-sm text-gray-700">${escHtml(roVal)}</span>`
           : `<div class="flex gap-2 items-start">
-              <input type="text" value="${currentVal.replace(/"/g, '&quot;')}" data-key="${key}" data-lang="${activeLang}"
+              <input type="text" value="${escHtml(currentVal)}" data-key="${escHtml(key)}" data-lang="${activeLang}"
                      class="flex-1 border border-gray-200 rounded px-2 py-1 text-sm translation-input"
                      placeholder="Traducere...">
-              <button onclick="saveSingle('${activeLang}','${key}',this)"
+              <button onclick="saveSingle('${activeLang}','${escHtml(key)}',this)"
                       class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs shrink-0">Salv</button>
-              <button onclick="autoTranslateSingle('${activeLang}','${key}',this)"
+              <button onclick="autoTranslateSingle('${activeLang}','${escHtml(key)}',this)"
                       class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs shrink-0" title="Auto-traducere AI">AI</button>
-              ${isOverride ? `<button onclick="deleteOverride('${activeLang}','${key}',this)"
+              ${isOverride ? `<button onclick="deleteOverride('${activeLang}','${escHtml(key)}',this)"
                       class="bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded text-xs shrink-0">X</button>` : ''}
             </div>`
         }
@@ -161,7 +161,7 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
 
     <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <table class="w-full">
-        <thead><tr class="text-xs text-gray-400 border-b border-gray-100 bg-gray-50">
+        <thead><tr class="text-xs text-gray-400 border-b border-white/10 bg-gray-50">
           <th class="text-left py-2 px-3 w-1/4">Cheie</th>
           <th class="text-left py-2 px-3 w-1/4">Romana (referinta)</th>
           <th class="text-left py-2 px-3">Valoare curenta</th>

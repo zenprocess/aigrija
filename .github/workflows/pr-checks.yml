@@ -90,3 +90,32 @@ jobs:
       - run: npm ci
       - name: Run npm audit
         run: npm audit --audit-level=high
+
+  infra-validate:
+    name: Infrastructure validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate infra config
+        run: bash scripts/validate-infra.sh
+      - uses: actions/setup-node@v4
+        if: env.PULUMI_ACCESS_TOKEN != ''
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: cd infra && npm ci
+        if: env.PULUMI_ACCESS_TOKEN != ''
+      - name: Install policy pack
+        if: env.PULUMI_ACCESS_TOKEN != ''
+        run: cd infra/policy && npm ci
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+      - uses: pulumi/actions@v6
+        if: env.PULUMI_ACCESS_TOKEN != ''
+        with:
+          command: preview
+          stack-name: dev
+          work-dir: infra
+          policyPacks: infra/policy
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}

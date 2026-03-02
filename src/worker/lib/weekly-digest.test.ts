@@ -79,6 +79,13 @@ describe('currentWeekKey', () => {
     const d = new Date('2026-03-02');
     expect(currentWeekKey(d)).toBe(currentWeekKey(d));
   });
+
+  it('returns correct ISO year at year boundary (Dec 31 2025 = 2026-W01)', () => {
+    // Dec 31, 2025 falls in ISO week 2026-W01
+    const dec31 = new Date(2025, 11, 31);
+    const key = currentWeekKey(dec31);
+    expect(key).toBe('2026-01');
+  });
 });
 
 // ─── weekLabel ────────────────────────────────────────────────────────────────

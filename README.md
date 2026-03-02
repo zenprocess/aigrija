@@ -1,127 +1,90 @@
 # ai-grija.ro
 
-**Platforma civică anti-phishing pentru România** — verifică linkuri, mesaje și coduri QR suspecte folosind inteligență artificială.
+**Verifică. Raportează. Protejează.**
 
-[![Deploy Production](https://github.com/zenprocess/aigrija/actions/workflows/deploy-prod.yml/badge.svg)](https://github.com/zenprocess/aigrija/actions/workflows/deploy-prod.yml)
+Platforma românească anti-phishing powered by AI. / The Romanian anti-phishing civic tool powered by AI.
 
-## Stack
+---
 
-| Component | Technology |
-|-----------|-----------|
-| Runtime | Cloudflare Workers (TypeScript) |
-| Router | Hono v4 |
-| AI | Workers AI (Llama 3.1 8B Instruct) |
-| Storage | KV (cache), R2 (share cards), D1 (admin DB) |
-| Queue | Cloudflare Queues (draft generation) |
-| IaC | Pulumi (infra/) |
-| Tests | Vitest (unit) + Playwright (e2e) |
-| CI/CD | GitHub Actions (3 workflows) |
+## What is ai-grija.ro?
+
+A **civic action tool** — not just "is this a scam?" but "it's a scam — now do this." Built for Romania, open-source from day one.
+
+The name is a pun: "ai grijă" means "be careful / take care" in Romanian, and it literally contains "AI."
+
+| | Traditional tools | ai-grija.ro |
+|---|---|---|
+| Output | Conversational verdict | Verdict + Report packet + Share card |
+| Reporting | None | One-click DNSC 1911 / Police / Bank |
+| Local context | None | Active RO campaigns, per-bank playbooks |
+| Friction | Account required, daily limits | No account, unlimited |
+| Viral loop | None | Branded share card on WhatsApp/FB |
+| Post-verdict | "Be careful" | Pre-filled legal complaint, bank fraud hotline |
+
+## Origin Story
+
+The founder received a phishing call spoofing ING Romania. The callers had his full name, old ID card number, and an email address provided exclusively to TAROM — indicating a data breach. A LinkedIn post about the experience went viral, demonstrating massive demand for tools that help ordinary Romanians respond to fraud.
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Runtime | Cloudflare Workers (V8 isolates, global edge) |
+| Framework | Hono (TypeScript) |
+| AI | Workers AI (Llama 3.1 8B) |
+| Frontend | React SPA |
+| Storage | KV (cache), R2 (share cards), D1 (admin) |
+| Messaging | Telegram Bot, WhatsApp Business API |
+| Infrastructure | Pulumi (IaC) |
+| CI/CD | GitHub Actions |
+
+**Privacy by design:** ai-grija.ro stores no user-submitted text, no classification results, no personal data. The only persistent state is operational (rate-limit counters, cached HTML, share card images).
 
 ## Quick Start
 
 ```bash
-# Install dependencies
-npm install
+# Clone
+git clone https://github.com/zenprocess/aigrija.git
+cd aigrija
 
-# Local development (requires .dev.vars with secrets)
-npx wrangler dev
+# Install dependencies
+npm ci
+
+# Local development
+cp .dev.vars.example .dev.vars  # Add your API keys
+npx wrangler dev                # http://localhost:8787
 
 # Run tests
-npx vitest run          # Unit tests (403+)
-npx playwright test     # E2E tests (11 specs)
-
-# Type check
-npx tsc --noEmit
-
-# Deploy
-npx wrangler deploy                # Production
-npx wrangler deploy --env preview  # Preview (pre.ai-grija.ro)
+npx vitest run                  # Unit tests
+npx playwright test             # E2E tests
+npx tsc --noEmit                # Type check
 ```
 
 ## Project Structure
 
 ```
 src/
-├── worker/
-│   ├── index.ts              # Main Hono router + cron/queue handlers
-│   ├── routes/               # API endpoints
-│   │   ├── check-qr.ts       # POST /api/check-qr — QR code analysis
-│   │   ├── check-text.ts     # POST /api/check-text — message analysis
-│   │   ├── report.ts         # POST /api/report — user reports
-│   │   ├── counter.ts        # GET/POST /api/counter — stats
-│   │   ├── share.ts          # POST /api/share — share card generation
-│   │   ├── card.ts           # GET /card/:hash — OG share pages
-│   │   ├── og.ts             # GET /og/* — OG image SVG generation
-│   │   ├── telegram.ts       # Telegram bot webhook
-│   │   ├── whatsapp.ts       # WhatsApp webhook
-│   │   └── ...
-│   ├── lib/                  # Shared utilities
-│   │   ├── url-analyzer.ts   # URL threat analysis engine
-│   │   ├── ai-verdict.ts     # AI-powered verdict generation
-│   │   ├── rate-limiter.ts   # KV-based rate limiting
-│   │   ├── scraper.ts        # Campaign scraper base
-│   │   └── ...
-│   ├── admin/                # Admin panel (HTML-over-the-wire)
-│   │   ├── campaigns.ts      # Campaign management
-│   │   ├── drafts.ts         # Draft review/approval
-│   │   ├── translations.ts   # i18n management
-│   │   └── ...
-│   └── templates/            # HTML templates
-├── ui/                       # Frontend (static assets → dist/)
-infra/                        # Pulumi IaC (KV, R2, D1, DNS, Zero Trust)
-e2e/                          # Playwright E2E tests
-```
-
-## API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/api/check-qr` | Analyze QR code content for threats |
-| POST | `/api/check-text` | Analyze text message for scam patterns |
-| POST | `/api/report` | Submit user report |
-| POST | `/api/share` | Generate shareable verdict card |
-| GET | `/api/counter` | Get total checks count |
-| GET | `/card/:hash` | Share card OG page |
-| GET | `/og/verdict/:verdict` | OG image generation |
-| POST | `/webhook/telegram` | Telegram bot integration |
-| POST | `/webhook/whatsapp` | WhatsApp bot integration |
-| GET | `/admin/*` | Admin panel (Zero Trust protected) |
-
-## Environments
-
-| Environment | URL | Deploy |
-|------------|-----|--------|
-| Production | https://ai-grija.ro | `npx wrangler deploy` |
-| Preview | https://pre.ai-grija.ro | `npx wrangler deploy --env preview` |
-| Admin | https://admin.ai-grija.ro | Cloudflare Zero Trust |
-| Preview Admin | https://pre-admin.ai-grija.ro | Cloudflare Zero Trust |
-
-## Infrastructure (Pulumi)
-
-```bash
-cd infra/
-pulumi up        # Provision all resources
-pulumi preview   # Dry run
-```
-
-Manages: KV namespaces, R2 buckets, D1 databases, Queues, DNS records, Zero Trust Access apps, Worker secrets.
-
-## Secrets
-
-All secrets stored in Infisical (`sec.zp.digital`). Never hardcode.
-
-```bash
-npx wrangler secret put SECRET_NAME   # Bind to Worker
+├── worker/           # Cloudflare Worker (Hono API)
+│   ├── routes/       # API endpoints
+│   ├── admin/        # Admin panel (CF Access protected)
+│   └── lib/          # Shared utilities, AI, cron
+├── ui/               # React SPA frontend
+│   └── src/
+│       ├── components/
+│       └── i18n/     # Romanian, English, Hungarian
+infra/                # Pulumi infrastructure-as-code
+e2e/                  # Playwright E2E tests + BDD stories
+scripts/              # Setup and utility scripts
 ```
 
 ## Contributing
 
-1. Create a branch from `main`
-2. Write tests for new functionality
-3. Ensure `npx vitest run` and `npx tsc --noEmit` pass
-4. Open PR — Greptile will review
-5. Address all review comments before merge
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. We welcome contributions from the Code4Romania community and beyond.
+
+## Sustainability
+
+ai-grija.ro is a free civic tool with no revenue model. Future sustainability through EU cybersecurity grants, Code4Romania partnership, and voluntary donations.
 
 ## License
 
-Private — Zen Labs SRL
+[European Union Public License 1.2](LICENSE) (EUPL-1.2)

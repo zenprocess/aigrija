@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import type { AdminVariables } from '../lib/admin-auth';
 import { adminLayout } from './layout';
+import { escapeHtml } from '../lib/escape-html';
 
 type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 
@@ -45,10 +46,6 @@ function statusPill(s: string): string {
   };
   const cls = map[s] || 'bg-gray-100 text-gray-800';
   return `<span class="px-2 py-0.5 rounded-full text-xs ${cls}">${s}</span>`;
-}
-
-function escHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // ---- JSON API routes -------------------------------------------------------
@@ -225,7 +222,7 @@ campaignRoutes.get('/', async (c) => {
 
   const rowsHtml = rows.results.map(r => `
     <tr class="border-b hover:bg-gray-50">
-      <td class="py-2 px-3"><a href="/campanii/${r.id}" class="text-blue-600 hover:underline text-sm">${escHtml(r.title)}</a></td>
+      <td class="py-2 px-3"><a href="/campanii/${r.id}" class="text-blue-600 hover:underline text-sm">${escapeHtml(r.title)}</a></td>
       <td class="py-2 px-3 text-xs text-gray-500">${r.source ?? ''}</td>
       <td class="py-2 px-3">${severityBadge(r.severity)}</td>
       <td class="py-2 px-3">${statusPill(r.draft_status)}</td>
@@ -246,7 +243,7 @@ campaignRoutes.get('/', async (c) => {
       <a href="/campanii/new" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">+ Campanie noua</a>
     </div>
     <div class="flex gap-2 mb-4 flex-wrap">
-      <input type="text" name="q" value="${escHtml(q)}" placeholder="Cauta..."
+      <input type="text" name="q" value="${escapeHtml(q)}" placeholder="Cauta..."
         class="border rounded px-3 py-1.5 text-sm w-64"
         hx-get="/campanii${qs({})}" hx-target="#campaign-table-wrapper"
         hx-trigger="keyup changed delay:300ms" hx-push-url="true"/>
@@ -333,13 +330,13 @@ campaignRoutes.get('/:id', async (c) => {
 
   const body = `
     <div class="mb-4"><a href="/campanii" class="text-blue-500 text-sm hover:underline">&larr; Inapoi</a></div>
-    <h1 class="text-xl font-bold mb-4">${escHtml(row.title)}</h1>
+    <h1 class="text-xl font-bold mb-4">${escapeHtml(row.title)}</h1>
     <div class="grid grid-cols-2 gap-6">
       <div class="bg-white rounded shadow p-4">
         <h2 class="font-semibold mb-3">Detalii</h2>
         <dl class="text-sm space-y-2">
           <dt class="text-gray-500">Sursa</dt><dd>${row.source ?? '-'}</dd>
-          <dt class="text-gray-500">URL Sursa</dt><dd>${row.source_url ? `<a href="${escHtml(row.source_url)}" target="_blank" class="text-blue-500 hover:underline text-xs break-all">${escHtml(row.source_url)}</a>` : '-'}</dd>
+          <dt class="text-gray-500">URL Sursa</dt><dd>${row.source_url ? `<a href="${escapeHtml(row.source_url)}" target="_blank" class="text-blue-500 hover:underline text-xs break-all">${escapeHtml(row.source_url)}</a>` : '-'}</dd>
           <dt class="text-gray-500">Publicat la</dt><dd>${row.published_at?.slice(0, 10) ?? '-'}</dd>
           <dt class="text-gray-500">Tip amenintare</dt><dd>${row.threat_type ?? '-'}</dd>
           <dt class="text-gray-500">Branduri afectate</dt><dd>${brands.join(', ') || '-'}</dd>
@@ -357,7 +354,7 @@ campaignRoutes.get('/:id', async (c) => {
           </div>
           <div>
             <label class="block text-gray-500 mb-1">Tip amenintare</label>
-            <input type="text" name="threat_type" value="${escHtml(row.threat_type ?? '')}" class="border rounded px-2 py-1.5 w-full"/>
+            <input type="text" name="threat_type" value="${escapeHtml(row.threat_type ?? '')}" class="border rounded px-2 py-1.5 w-full"/>
           </div>
           <div>
             <label class="block text-gray-500 mb-1">Status draft</label>
@@ -373,13 +370,13 @@ campaignRoutes.get('/:id', async (c) => {
     <div class="bg-white rounded shadow p-4 mt-4">
       <h2 class="font-semibold mb-3">IOC-uri detectate</h2>
       <ul class="text-xs space-y-1 font-mono">
-        ${iocs.map(i => `<li class="break-all text-red-700">${escHtml(i)}</li>`).join('')}
+        ${iocs.map(i => `<li class="break-all text-red-700">${escapeHtml(i)}</li>`).join('')}
       </ul>
     </div>` : ''}
     ${row.body_text ? `
     <div class="bg-white rounded shadow p-4 mt-4">
       <h2 class="font-semibold mb-3">Continut extras</h2>
-      <p class="text-sm text-gray-700 leading-relaxed">${escHtml(row.body_text.slice(0, 2000))}${row.body_text.length > 2000 ? '...' : ''}</p>
+      <p class="text-sm text-gray-700 leading-relaxed">${escapeHtml(row.body_text.slice(0, 2000))}${row.body_text.length > 2000 ? '...' : ''}</p>
     </div>` : ''}`;
 
   return c.html(adminLayout(row.title, body, 'campanii', email));

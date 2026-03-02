@@ -1,6 +1,7 @@
 {
   "name": "ai-grija-ro",
   "private": true,
+  "packageManager": "pnpm@10.25.0",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",

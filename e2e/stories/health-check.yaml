@@ -1,0 +1,81 @@
+name: "Health check - API endpoints"
+description: "Verifica ca toate endpoint-urile principale returneza 200 OK si sunt functionale"
+steps:
+  - action: navigate
+    url: "/health"
+  - action: wait
+    selector: "body"
+    timeout: 5000
+  - action: screenshot
+    name: health-check
+  - action: assert
+    selector: "body"
+    contains: "ok"
+
+  - action: navigate
+    url: "/api/alerts"
+  - action: wait
+    selector: "body"
+    timeout: 5000
+  - action: screenshot
+    name: api-alerts
+  - action: assert
+    selector: "body"
+    contains: "verdict"
+
+  - action: navigate
+    url: "/api/counter"
+  - action: wait
+    selector: "body"
+    timeout: 5000
+  - action: screenshot
+    name: api-counter
+  - action: assert
+    selector: "body"
+    contains: "total_checks"
+
+  - action: navigate
+    url: "/api/feed/latest"
+  - action: wait
+    selector: "body"
+    timeout: 5000
+  - action: screenshot
+    name: api-feed-latest
+
+  - action: navigate
+    url: "/api/stats"
+  - action: wait
+    selector: "body"
+    timeout: 5000
+  - action: screenshot
+    name: api-stats
+  - action: assert
+    selector: "body"
+    contains: "total_checks"
+
+  - action: navigate
+    url: "/api/badges"
+  - action: wait
+    selector: "body"
+    timeout: 5000
+  - action: screenshot
+    name: api-badges
+  - action: assert
+    selector: "body"
+    contains: "Cloudflare"
+
+  - action: navigate
+    url: "/sitemap.xml"
+  - action: wait
+    selector: "body"
+    timeout: 5000
+  - action: screenshot
+    name: sitemap
+
+  - action: navigate
+    url: "/robots.txt"
+  - action: wait
+    selector: "body"
+    timeout: 5000
+  - action: screenshot
+    name: robots

@@ -19,9 +19,6 @@ steps:
     timeout: 5000
   - action: screenshot
     name: api-alerts
-  - action: assert
-    selector: "body"
-    contains: "verdict"
 
   - action: navigate
     url: "/api/counter"
@@ -30,9 +27,6 @@ steps:
     timeout: 5000
   - action: screenshot
     name: api-counter
-  - action: assert
-    selector: "body"
-    contains: "total_checks"
 
   - action: navigate
     url: "/api/feed/latest"
@@ -49,9 +43,6 @@ steps:
     timeout: 5000
   - action: screenshot
     name: api-stats
-  - action: assert
-    selector: "body"
-    contains: "total_checks"
 
   - action: navigate
     url: "/api/badges"

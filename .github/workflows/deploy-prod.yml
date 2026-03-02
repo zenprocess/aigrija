@@ -81,3 +81,50 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  post-deploy-bdd:
+    name: Post-deploy BDD verification
+    needs: deploy
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.50.0-noble
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Run BDD stories against production
+        id: bdd
+        continue-on-error: true
+        env:
+          BASE_URL: https://ai-grija.ro
+          CI: 'true'
+        run: npx tsx e2e/bowser-dispatch.ts --base-url $BASE_URL 2>&1 | tee bdd-output.txt
+      - name: Create GitHub issues for failures
+        if: steps.bdd.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          for result_file in e2e/results/*.json; do
+            [ -f "$result_file" ] || continue
+            story_name=$(jq -r '.story' "$result_file")
+            verdict=$(jq -r '[.passes | to_entries[] | select(.value == "fail")] | length' "$result_file")
+            if [ "$verdict" -gt "0" ]; then
+              failed_passes=$(jq -r '[.passes | to_entries[] | select(.value == "fail") | .key] | join(", ")' "$result_file")
+              existing=$(gh issue list --search "QA: $story_name" --label "qa:story" --json number --jq '.[0].number' 2>/dev/null || echo "")
+              if [ -z "$existing" ]; then
+                issue_body="## Post-Deploy BDD Failure\n\nStory: $story_name\nURL: https://ai-grija.ro\nFailed passes: $failed_passes\nCommit: $COMMIT_SHA\n\nAuto-created by post-deploy BDD verification."
+                gh issue create                   --title "QA: $story_name - $failed_passes failed"                   --label "qa:fail,qa:story,auto-detected"                   --body "$issue_body"
+              fi
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bdd-report
+          path: playwright-report/

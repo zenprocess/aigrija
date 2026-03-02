@@ -5,6 +5,7 @@ import { adminLayout } from './layout';
 import { weightsAdmin } from './weights';
 import { translationsAdmin } from './translations';
 import { configAdmin } from './config';
+import { campaignRoutes, campaignApiRoutes, scraperRoutes } from './campaigns';
 
 type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 
@@ -42,18 +43,6 @@ admin.get('/', (c) => {
   return c.html(adminLayout('Dashboard', content, 'dashboard', email));
 });
 
-// --- Campanii (placeholder) ---
-const campaniiRouter = new Hono<AdminEnv>();
-campaniiRouter.get('/', (c) => {
-  const email = c.get('adminEmail');
-  const content = `
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 class="text-gray-700 font-medium mb-2">Campanii</h2>
-      <p class="text-gray-500 text-sm">Lista campaniilor de phishing va aparea aici.</p>
-    </div>`;
-  return c.html(adminLayout('Campanii', content, 'campanii', email));
-});
-
 // --- Drafturi (placeholder) ---
 const drafturiRouter = new Hono<AdminEnv>();
 drafturiRouter.get('/', (c) => {
@@ -64,18 +53,6 @@ drafturiRouter.get('/', (c) => {
       <p class="text-gray-500 text-sm">Drafturile generate de AI pentru aprobare vor aparea aici.</p>
     </div>`;
   return c.html(adminLayout('Drafturi', content, 'drafturi', email));
-});
-
-// --- Scraper-e (placeholder) ---
-const scrapereRouter = new Hono<AdminEnv>();
-scrapereRouter.get('/', (c) => {
-  const email = c.get('adminEmail');
-  const content = `
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 class="text-gray-700 font-medium mb-2">Scraper-e</h2>
-      <p class="text-gray-500 text-sm">Istoricul si configuratia scraperelor va aparea aici.</p>
-    </div>`;
-  return c.html(adminLayout('Scraper-e', content, 'scrapere', email));
 });
 
 // --- Ponderi (placeholder) ---
@@ -114,10 +91,11 @@ configRouter.get('/', (c) => {
   return c.html(adminLayout('Config', content, 'config', email));
 });
 
-// Mount sub-routers
-admin.route('/campanii', campaniiRouter);
+// Mount sub-routers — API routes must be mounted before HTML routes to avoid param conflicts
+admin.route('/campanii/api', campaignApiRoutes);
+admin.route('/campanii', campaignRoutes);
 admin.route('/drafturi', drafturiRouter);
-admin.route('/scrapere', scrapereRouter);
+admin.route('/scrapere', scraperRoutes);
 admin.route('/ponderi', weightsAdmin);
 admin.route('/traduceri', translationsAdmin);
 admin.route('/config', configAdmin);

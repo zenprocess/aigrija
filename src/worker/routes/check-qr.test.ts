@@ -1,4 +1,11 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+beforeEach(() => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status: 404 })));
+});
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 import { checkQr } from "./check-qr";
 
 function makeKV(data: Record<string, string> = {}): KVNamespace {

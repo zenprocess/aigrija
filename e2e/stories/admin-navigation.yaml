@@ -1,0 +1,43 @@
+name: "Admin panel navigation"
+description: "As an admin, verify all admin subpages load correctly"
+steps:
+  - action: navigate
+    url: "https://admin.ai-grija.ro/"
+  - action: wait
+    selector: body
+    timeout: 10000
+  - action: screenshot
+    name: admin-dashboard
+  - action: assert
+    selector: body
+    contains: "Dashboard"
+  - action: navigate
+    url: "https://admin.ai-grija.ro/campanii"
+  - action: wait
+    selector: body
+    timeout: 10000
+  - action: screenshot
+    name: admin-campanii
+  - action: assert
+    selector: body
+    contains: "Campanii"
+  - action: navigate
+    url: "https://admin.ai-grija.ro/drafturi"
+  - action: wait
+    selector: body
+    timeout: 10000
+  - action: screenshot
+    name: admin-drafturi
+  - action: assert
+    selector: body
+    contains: "Drafturi"
+  - action: navigate
+    url: "https://admin.ai-grija.ro/scrapere"
+  - action: wait
+    selector: body
+    timeout: 10000
+  - action: screenshot
+    name: admin-scrapere
+  - action: assert
+    selector: body
+    contains: "Scraper"

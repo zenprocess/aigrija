@@ -1,5 +1,9 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
+import type { AdminVariables } from '../lib/admin-auth';
+import { adminLayout } from './layout';
+
+type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 
 // ---- Types ----------------------------------------------------------------
 
@@ -18,32 +22,6 @@ interface DbCampaign {
   draft_status: string;
   archived: number;
   created_at: string;
-}
-
-// ---- Auth middleware -------------------------------------------------------
-
-function adminAuth(app: Hono<{ Bindings: Env }>) {
-  app.use('*', async (c, next) => {
-    if (!c.env.ADMIN_API_KEY) return c.json({ error: 'Admin not configured' }, 503);
-    const auth = c.req.header('Authorization') ?? '';
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-    // For HTML page routes also check cookie or query param for browser access
-    const cookieToken = getCookieValue(c.req.header('Cookie') ?? '', 'admin_key');
-    const provided = token || cookieToken;
-    if (!provided || provided !== c.env.ADMIN_API_KEY) {
-      // Return login prompt for HTML routes
-      if (!c.req.path.includes('/api/')) {
-        return c.html(loginPage(), 401);
-      }
-      return c.json({ error: 'Unauthorized' }, 401);
-    }
-    return next();
-  });
-}
-
-function getCookieValue(cookieHeader: string, name: string): string {
-  const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : '';
 }
 
 // ---- Helpers ---------------------------------------------------------------
@@ -69,45 +47,15 @@ function statusPill(s: string): string {
   return `<span class="px-2 py-0.5 rounded-full text-xs ${cls}">${s}</span>`;
 }
 
-function adminLayout(title: string, body: string): string {
-  return `<!DOCTYPE html>
-<html lang="ro">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>${title} — Admin ai-grija.ro</title>
-  <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@3/dist/tailwind.min.css"/>
-</head>
-<body class="bg-gray-50 min-h-screen">
-  <nav class="bg-gray-900 text-white px-6 py-3 flex items-center gap-6">
-    <span class="font-bold text-lg">ai-grija admin</span>
-    <a href="/admin/campaigns" class="text-gray-300 hover:text-white text-sm">Campanii</a>
-    <a href="/admin/scrapers" class="text-gray-300 hover:text-white text-sm">Scrapers</a>
-  </nav>
-  <main class="p-6">${body}</main>
-</body>
-</html>`;
+function escHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function loginPage(): string {
-  return `<!DOCTYPE html>
-<html><body>
-<form method="post" action="/admin/login">
-  <label>Admin Key: <input type="password" name="admin_key"/></label>
-  <button type="submit">Login</button>
-</form>
-</body></html>`;
-}
+// ---- JSON API routes -------------------------------------------------------
 
-// ---- Router ----------------------------------------------------------------
+export const campaignApiRoutes = new Hono<AdminEnv>();
 
-// CSRF mitigated by CF Access Zero Trust — only authenticated users can reach admin routes
-export const campaignsRouter = new Hono<{ Bindings: Env }>();
-adminAuth(campaignsRouter);
-
-// --- API: list with pagination, search, filters ---
-campaignsRouter.get('/campaigns/api/list', async (c) => {
+campaignApiRoutes.get('/list', async (c) => {
   const { page = '1', limit = '20', q = '', source = '', severity = '', status = '' } = Object.fromEntries(new URL(c.req.url).searchParams);
   const pageNum = Math.max(1, parseInt(page));
   const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
@@ -151,8 +99,7 @@ campaignsRouter.get('/campaigns/api/list', async (c) => {
   });
 });
 
-// --- API: single campaign ---
-campaignsRouter.get('/campaigns/api/:id', async (c) => {
+campaignApiRoutes.get('/:id', async (c) => {
   let row: DbCampaign | null = null;
   try {
     row = await c.env.DB.prepare(
@@ -172,8 +119,7 @@ campaignsRouter.get('/campaigns/api/:id', async (c) => {
   return c.json({ ...row, affected_brands, iocs });
 });
 
-// --- API: update campaign ---
-campaignsRouter.put('/campaigns/api/:id', async (c) => {
+campaignApiRoutes.put('/:id', async (c) => {
   const id = c.req.param('id');
   let body: Partial<{ severity: string; threat_type: string; affected_brands: string[]; iocs: string[]; archived: number; draft_status: string }>;
   try { body = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON' }, 400); }
@@ -203,8 +149,7 @@ campaignsRouter.put('/campaigns/api/:id', async (c) => {
   return c.json({ ok: true, id });
 });
 
-// --- API: create campaign manually ---
-campaignsRouter.post('/campaigns/api/create', async (c) => {
+campaignApiRoutes.post('/create', async (c) => {
   let body: Partial<{ title: string; slug: string; source: string; source_url: string; threat_type: string; severity: string }>;
   try { body = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON' }, 400); }
   if (!body.title) return c.json({ error: 'title required' }, 400);
@@ -225,8 +170,7 @@ campaignsRouter.post('/campaigns/api/create', async (c) => {
   return c.json({ ok: true, id }, 201);
 });
 
-// --- API: soft delete (archive) ---
-campaignsRouter.delete('/campaigns/api/:id', async (c) => {
+campaignApiRoutes.delete('/:id', async (c) => {
   try {
     await c.env.DB.prepare('UPDATE campaigns SET archived = 1 WHERE id = ?').bind(c.req.param('id')).run();
   } catch (err) {
@@ -236,8 +180,12 @@ campaignsRouter.delete('/campaigns/api/:id', async (c) => {
   return c.json({ ok: true });
 });
 
-// --- HTML: campaign list page ---
-campaignsRouter.get('/admin/campaigns', async (c) => {
+// ---- HTML page routes ------------------------------------------------------
+
+export const campaignRoutes = new Hono<AdminEnv>();
+
+campaignRoutes.get('/', async (c) => {
+  const email = c.get('adminEmail');
   const url = new URL(c.req.url);
   const q = url.searchParams.get('q') ?? '';
   const source = url.searchParams.get('source') ?? '';
@@ -265,60 +213,52 @@ campaignsRouter.get('/admin/campaigns', async (c) => {
     ).bind(...params, limit, offset).all<DbCampaign>();
   } catch (err) {
     console.error('[admin/campaigns] D1 HTML list query failed:', err);
-    return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>'), 500);
+    return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>', 'campanii', email), 500);
   }
   const total = countRow?.total ?? 0;
   const pages = Math.ceil(total / limit);
 
-  const adminKey = getCookieValue(c.req.header('Cookie') ?? '', 'admin_key') || url.searchParams.get('admin_key') || '';
   const qs = (extra: Record<string, string>) => {
-    const p = new URLSearchParams({ ...(q && { q }), ...(source && { source }), ...(severity && { severity }), ...(status && { status }), ...(adminKey && { admin_key: adminKey }), ...extra });
+    const p = new URLSearchParams({ ...(q && { q }), ...(source && { source }), ...(severity && { severity }), ...(status && { status }), ...extra });
     return p.toString() ? `?${p.toString()}` : '';
   };
 
   const rowsHtml = rows.results.map(r => `
     <tr class="border-b hover:bg-gray-50">
-      <td class="py-2 px-3"><a href="/admin/campaigns/${r.id}${adminKey ? '?admin_key=' + adminKey : ''}" class="text-blue-600 hover:underline text-sm">${escHtml(r.title)}</a></td>
+      <td class="py-2 px-3"><a href="/campanii/${r.id}" class="text-blue-600 hover:underline text-sm">${escHtml(r.title)}</a></td>
       <td class="py-2 px-3 text-xs text-gray-500">${r.source ?? ''}</td>
       <td class="py-2 px-3">${severityBadge(r.severity)}</td>
       <td class="py-2 px-3">${statusPill(r.draft_status)}</td>
       <td class="py-2 px-3 text-xs text-gray-400">${(r.published_at ?? r.created_at ?? '').slice(0, 10)}</td>
       <td class="py-2 px-3 flex gap-2">
-        <a href="/admin/campaigns/${r.id}${adminKey ? '?admin_key=' + adminKey : ''}" class="text-xs text-blue-500 hover:underline">Edit</a>
-        <button hx-delete="/campaigns/api/${r.id}" hx-target="closest tr" hx-swap="outerHTML" hx-headers='{"Authorization":"Bearer ${adminKey}"}' class="text-xs text-red-500 hover:underline">Archive</button>
+        <a href="/campanii/${r.id}" class="text-xs text-blue-500 hover:underline">Edit</a>
+        <button hx-delete="/campanii/api/${r.id}" hx-target="closest tr" hx-swap="outerHTML" class="text-xs text-red-500 hover:underline">Archive</button>
       </td>
     </tr>`).join('');
 
   const paginationHtml = Array.from({ length: pages }, (_, i) => i + 1).map(p => `
-    <a href="/admin/campaigns${qs({ page: String(p) })}" class="px-3 py-1 rounded border text-sm ${p === page ? 'bg-gray-900 text-white' : 'hover:bg-gray-100'}">${p}</a>
+    <a href="/campanii${qs({ page: String(p) })}" class="px-3 py-1 rounded border text-sm ${p === page ? 'bg-gray-900 text-white' : 'hover:bg-gray-100'}">${p}</a>
   `).join('');
 
   const body = `
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-xl font-bold">Campanii (${total})</h1>
-      <a href="/admin/campaigns/new${adminKey ? '?admin_key=' + adminKey : ''}" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">+ Campanie noua</a>
+      <a href="/campanii/new" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">+ Campanie noua</a>
     </div>
-
     <div class="flex gap-2 mb-4 flex-wrap">
-      <input
-        type="text" name="q" value="${escHtml(q)}"
-        placeholder="Cauta..."
+      <input type="text" name="q" value="${escHtml(q)}" placeholder="Cauta..."
         class="border rounded px-3 py-1.5 text-sm w-64"
-        hx-get="/admin/campaigns${qs({})}"
-        hx-target="#campaign-table-wrapper"
-        hx-trigger="keyup changed delay:300ms"
-        hx-push-url="true"
-      />
-      <select name="severity" class="border rounded px-2 py-1.5 text-sm" hx-get="/admin/campaigns" hx-target="#campaign-table-wrapper" hx-push-url="true">
+        hx-get="/campanii${qs({})}" hx-target="#campaign-table-wrapper"
+        hx-trigger="keyup changed delay:300ms" hx-push-url="true"/>
+      <select name="severity" class="border rounded px-2 py-1.5 text-sm" hx-get="/campanii" hx-target="#campaign-table-wrapper" hx-push-url="true">
         <option value="">Toate severit.</option>
         ${['critical','high','medium','low'].map(s => `<option value="${s}" ${severity === s ? 'selected' : ''}>${s}</option>`).join('')}
       </select>
-      <select name="status" class="border rounded px-2 py-1.5 text-sm" hx-get="/admin/campaigns" hx-target="#campaign-table-wrapper" hx-push-url="true">
+      <select name="status" class="border rounded px-2 py-1.5 text-sm" hx-get="/campanii" hx-target="#campaign-table-wrapper" hx-push-url="true">
         <option value="">Toate statusuri</option>
         ${['pending','draft','published'].map(s => `<option value="${s}" ${status === s ? 'selected' : ''}>${s}</option>`).join('')}
       </select>
     </div>
-
     <div id="campaign-table-wrapper">
       <table class="w-full bg-white rounded shadow text-sm">
         <thead class="bg-gray-100 text-left">
@@ -336,101 +276,16 @@ campaignsRouter.get('/admin/campaigns', async (c) => {
       <div class="flex gap-2 mt-4">${paginationHtml}</div>
     </div>`;
 
-  return c.html(adminLayout('Campanii', body));
+  return c.html(adminLayout('Campanii', body, 'campanii', email));
 });
 
-// --- HTML: campaign detail/edit ---
-campaignsRouter.get('/admin/campaigns/:id', async (c) => {
-  if (c.req.param('id') === 'new') return c.redirect('/admin/campaigns/new');
-  let row: DbCampaign | null = null;
-  try {
-    row = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(c.req.param('id')).first<DbCampaign>();
-  } catch (err) {
-    console.error('[admin/campaigns] D1 detail query failed:', err);
-    return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>'), 500);
-  }
-  if (!row) return c.html(adminLayout('Not Found', '<p>Campanie negasita.</p>'), 404);
-
-  let brands: string[] = [];
-  let iocs: string[] = [];
-  try { brands = row.affected_brands ? JSON.parse(row.affected_brands) : []; } catch { brands = []; }
-  try { iocs = row.iocs ? JSON.parse(row.iocs) : []; } catch { iocs = []; }
-  const adminKey = new URL(c.req.url).searchParams.get('admin_key') ?? '';
-
+campaignRoutes.get('/new', async (c) => {
+  const email = c.get('adminEmail');
   const body = `
-    <div class="mb-4"><a href="/admin/campaigns${adminKey ? '?admin_key=' + adminKey : ''}" class="text-blue-500 text-sm hover:underline">&larr; Inapoi</a></div>
-    <h1 class="text-xl font-bold mb-4">${escHtml(row.title)}</h1>
-
-    <div class="grid grid-cols-2 gap-6">
-      <div class="bg-white rounded shadow p-4">
-        <h2 class="font-semibold mb-3">Detalii</h2>
-        <dl class="text-sm space-y-2">
-          <dt class="text-gray-500">Sursa</dt><dd>${row.source ?? '-'}</dd>
-          <dt class="text-gray-500">URL Sursa</dt><dd>${row.source_url ? `<a href="${escHtml(row.source_url)}" target="_blank" class="text-blue-500 hover:underline text-xs break-all">${escHtml(row.source_url)}</a>` : '-'}</dd>
-          <dt class="text-gray-500">Publicat la</dt><dd>${row.published_at?.slice(0, 10) ?? '-'}</dd>
-          <dt class="text-gray-500">Tip amenintare</dt><dd>${row.threat_type ?? '-'}</dd>
-          <dt class="text-gray-500">Branduri afectate</dt><dd>${brands.join(', ') || '-'}</dd>
-          <dt class="text-gray-500">Status draft</dt><dd>${statusPill(row.draft_status)}</dd>
-        </dl>
-      </div>
-
-      <div class="bg-white rounded shadow p-4">
-        <h2 class="font-semibold mb-3">Editeaza</h2>
-        <form
-          hx-put="/campaigns/api/${row.id}"
-          hx-headers='{"Authorization":"Bearer ${adminKey}","Content-Type":"application/json"}'
-          hx-swap="none"
-          class="space-y-3 text-sm"
-        >
-          <div>
-            <label class="block text-gray-500 mb-1">Severitate</label>
-            <select name="severity" class="border rounded px-2 py-1.5 w-full">
-              ${['critical','high','medium','low'].map(s => `<option value="${s}" ${row.severity === s ? 'selected' : ''}>${s}</option>`).join('')}
-            </select>
-          </div>
-          <div>
-            <label class="block text-gray-500 mb-1">Tip amenintare</label>
-            <input type="text" name="threat_type" value="${escHtml(row.threat_type ?? '')}" class="border rounded px-2 py-1.5 w-full"/>
-          </div>
-          <div>
-            <label class="block text-gray-500 mb-1">Status draft</label>
-            <select name="draft_status" class="border rounded px-2 py-1.5 w-full">
-              ${['pending','draft','published'].map(s => `<option value="${s}" ${row.draft_status === s ? 'selected' : ''}>${s}</option>`).join('')}
-            </select>
-          </div>
-          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full">Salveaza</button>
-        </form>
-      </div>
-    </div>
-
-    ${iocs.length ? `
-    <div class="bg-white rounded shadow p-4 mt-4">
-      <h2 class="font-semibold mb-3">IOC-uri detectate</h2>
-      <ul class="text-xs space-y-1 font-mono">
-        ${iocs.map(i => `<li class="break-all text-red-700">${escHtml(i)}</li>`).join('')}
-      </ul>
-    </div>` : ''}
-
-    ${row.body_text ? `
-    <div class="bg-white rounded shadow p-4 mt-4">
-      <h2 class="font-semibold mb-3">Continut extras</h2>
-      <p class="text-sm text-gray-700 leading-relaxed">${escHtml(row.body_text.slice(0, 2000))}${row.body_text.length > 2000 ? '...' : ''}</p>
-    </div>` : ''}`;
-
-  return c.html(adminLayout(row.title, body));
-});
-
-// --- HTML: new campaign form ---
-campaignsRouter.get('/admin/campaigns/new', async (c) => {
-  const adminKey = new URL(c.req.url).searchParams.get('admin_key') ?? '';
-  const body = `
-    <div class="mb-4"><a href="/admin/campaigns${adminKey ? '?admin_key=' + adminKey : ''}" class="text-blue-500 text-sm hover:underline">&larr; Inapoi</a></div>
+    <div class="mb-4"><a href="/campanii" class="text-blue-500 text-sm hover:underline">&larr; Inapoi</a></div>
     <h1 class="text-xl font-bold mb-4">Campanie noua</h1>
     <div class="bg-white rounded shadow p-6 max-w-lg">
-      <form hx-post="/campaigns/api/create"
-            hx-headers='{"Authorization":"Bearer ${adminKey}","Content-Type":"application/json"}'
-            hx-swap="none"
-            class="space-y-4 text-sm">
+      <form hx-post="/campanii/api/create" hx-ext="json-enc" hx-swap="none" class="space-y-4 text-sm">
         <div>
           <label class="block text-gray-500 mb-1">Titlu *</label>
           <input type="text" name="title" required class="border rounded px-3 py-2 w-full"/>
@@ -456,12 +311,86 @@ campaignsRouter.get('/admin/campaigns/new', async (c) => {
         <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 w-full">Creeaza</button>
       </form>
     </div>`;
-  return c.html(adminLayout('Campanie noua', body));
+  return c.html(adminLayout('Campanie noua', body, 'campanii', email));
 });
 
-// --- scraper runs page (redirect from /admin/scrapers) ---
-campaignsRouter.get('/admin/scrapers', async (c) => {
-  const adminKey = new URL(c.req.url).searchParams.get('admin_key') ?? '';
+campaignRoutes.get('/:id', async (c) => {
+  if (c.req.param('id') === 'new') return c.redirect('/campanii/new');
+  const email = c.get('adminEmail');
+  let row: DbCampaign | null = null;
+  try {
+    row = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(c.req.param('id')).first<DbCampaign>();
+  } catch (err) {
+    console.error('[admin/campaigns] D1 detail query failed:', err);
+    return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>', 'campanii', email), 500);
+  }
+  if (!row) return c.html(adminLayout('Not Found', '<p>Campanie negasita.</p>', 'campanii', email), 404);
+
+  let brands: string[] = [];
+  let iocs: string[] = [];
+  try { brands = row.affected_brands ? JSON.parse(row.affected_brands) : []; } catch { brands = []; }
+  try { iocs = row.iocs ? JSON.parse(row.iocs) : []; } catch { iocs = []; }
+
+  const body = `
+    <div class="mb-4"><a href="/campanii" class="text-blue-500 text-sm hover:underline">&larr; Inapoi</a></div>
+    <h1 class="text-xl font-bold mb-4">${escHtml(row.title)}</h1>
+    <div class="grid grid-cols-2 gap-6">
+      <div class="bg-white rounded shadow p-4">
+        <h2 class="font-semibold mb-3">Detalii</h2>
+        <dl class="text-sm space-y-2">
+          <dt class="text-gray-500">Sursa</dt><dd>${row.source ?? '-'}</dd>
+          <dt class="text-gray-500">URL Sursa</dt><dd>${row.source_url ? `<a href="${escHtml(row.source_url)}" target="_blank" class="text-blue-500 hover:underline text-xs break-all">${escHtml(row.source_url)}</a>` : '-'}</dd>
+          <dt class="text-gray-500">Publicat la</dt><dd>${row.published_at?.slice(0, 10) ?? '-'}</dd>
+          <dt class="text-gray-500">Tip amenintare</dt><dd>${row.threat_type ?? '-'}</dd>
+          <dt class="text-gray-500">Branduri afectate</dt><dd>${brands.join(', ') || '-'}</dd>
+          <dt class="text-gray-500">Status draft</dt><dd>${statusPill(row.draft_status)}</dd>
+        </dl>
+      </div>
+      <div class="bg-white rounded shadow p-4">
+        <h2 class="font-semibold mb-3">Editeaza</h2>
+        <form hx-put="/campanii/api/${row.id}" hx-ext="json-enc" hx-swap="none" class="space-y-3 text-sm">
+          <div>
+            <label class="block text-gray-500 mb-1">Severitate</label>
+            <select name="severity" class="border rounded px-2 py-1.5 w-full">
+              ${['critical','high','medium','low'].map(s => `<option value="${s}" ${row!.severity === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="block text-gray-500 mb-1">Tip amenintare</label>
+            <input type="text" name="threat_type" value="${escHtml(row.threat_type ?? '')}" class="border rounded px-2 py-1.5 w-full"/>
+          </div>
+          <div>
+            <label class="block text-gray-500 mb-1">Status draft</label>
+            <select name="draft_status" class="border rounded px-2 py-1.5 w-full">
+              ${['pending','draft','published'].map(s => `<option value="${s}" ${row!.draft_status === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full">Salveaza</button>
+        </form>
+      </div>
+    </div>
+    ${iocs.length ? `
+    <div class="bg-white rounded shadow p-4 mt-4">
+      <h2 class="font-semibold mb-3">IOC-uri detectate</h2>
+      <ul class="text-xs space-y-1 font-mono">
+        ${iocs.map(i => `<li class="break-all text-red-700">${escHtml(i)}</li>`).join('')}
+      </ul>
+    </div>` : ''}
+    ${row.body_text ? `
+    <div class="bg-white rounded shadow p-4 mt-4">
+      <h2 class="font-semibold mb-3">Continut extras</h2>
+      <p class="text-sm text-gray-700 leading-relaxed">${escHtml(row.body_text.slice(0, 2000))}${row.body_text.length > 2000 ? '...' : ''}</p>
+    </div>` : ''}`;
+
+  return c.html(adminLayout(row.title, body, 'campanii', email));
+});
+
+// ---- Scraper routes --------------------------------------------------------
+
+export const scraperRoutes = new Hono<AdminEnv>();
+
+scraperRoutes.get('/', async (c) => {
+  const email = c.get('adminEmail');
   let rows: { results: { id: string; source: string; items_found: number; items_new: number; errors: string | null; run_at: string }[] } = { results: [] };
   try {
     rows = await c.env.DB.prepare(
@@ -469,7 +398,7 @@ campaignsRouter.get('/admin/scrapers', async (c) => {
     ).all<{ id: string; source: string; items_found: number; items_new: number; errors: string | null; run_at: string }>();
   } catch (err) {
     console.error('[admin/scrapers] D1 query failed:', err);
-    return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>'), 500);
+    return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>', 'scrapere', email), 500);
   }
 
   const tableRows = rows.results.map(r => `
@@ -483,7 +412,7 @@ campaignsRouter.get('/admin/scrapers', async (c) => {
 
   const body = `
     <h1 class="text-xl font-bold mb-4">Scraper Runs</h1>
-    <form method="post" action="/admin/scrapers/run${adminKey ? '?admin_key=' + adminKey : ''}">
+    <form method="post" action="/scrapere/run">
       <button type="submit" class="mb-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">Ruleaza DNSC acum</button>
     </form>
     <table class="w-full bg-white rounded shadow text-sm">
@@ -499,17 +428,12 @@ campaignsRouter.get('/admin/scrapers', async (c) => {
       <tbody>${tableRows || '<tr><td colspan="5" class="py-8 text-center text-gray-400">Nicio rulare</td></tr>'}</tbody>
     </table>`;
 
-  return c.html(adminLayout('Scrapers', body));
+  return c.html(adminLayout('Scraper-e', body, 'scrapere', email));
 });
 
-// --- Manual scraper trigger ---
-campaignsRouter.post('/admin/scrapers/run', async (c) => {
+scraperRoutes.post('/run', async (c) => {
   const { runScraper } = await import('../lib/scraper-runner');
   const { dnscScraper } = await import('../lib/scrapers/dnsc');
   const result = await runScraper(dnscScraper, c.env);
   return c.json(result);
 });
-
-function escHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}

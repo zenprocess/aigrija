@@ -1,0 +1,37 @@
+name: "Public site navigation"
+description: "As a user, verify main site pages and navigation work"
+steps:
+  - action: navigate
+    url: "/#/"
+  - action: wait
+    selector: "[data-testid='hero-section']"
+    timeout: 10000
+  - action: screenshot
+    name: homepage
+  - action: assert
+    selector: body
+    contains: "ai-grija"
+  - action: navigate
+    url: "/#/amenintari"
+  - action: wait
+    selector: body
+    timeout: 10000
+  - action: screenshot
+    name: amenintari
+  - action: assert
+    selector: body
+    contains: "meninț"
+  - action: navigate
+    url: "/#/alerte"
+  - action: wait
+    selector: body
+    timeout: 10000
+  - action: screenshot
+    name: alerte-page
+  - action: navigate
+    url: "/#/"
+  - action: wait
+    selector: body
+    timeout: 5000
+  - action: screenshot
+    name: back-to-home

@@ -24,6 +24,21 @@ vi.mock('./layout', () => ({
   adminLayout: vi.fn((title: string, content: string) => `<html>${title}${content}</html>`),
 }));
 
+// Mock campaigns module to avoid real DB calls in admin/index tests
+vi.mock('./campaigns', () => ({
+  campaignRoutes: (() => {
+    const r = new Hono();
+    r.get('/', (c: any) => c.html('<html>Campanii</html>'));
+    return r;
+  })(),
+  campaignApiRoutes: new Hono(),
+  scraperRoutes: (() => {
+    const r = new Hono();
+    r.get('/', (c: any) => c.html('<html>Scraper-e</html>'));
+    return r;
+  })(),
+}));
+
 function makeCtx(): ExecutionContext {
   return { waitUntil: vi.fn(), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
 }
@@ -46,7 +61,7 @@ describe('admin/index', () => {
     expect(html).toContain('test@admin.ro');
   });
 
-  it('GET /campanii renders placeholder page', async () => {
+  it('GET /campanii renders campaigns page', async () => {
     const { admin } = await import('./index');
     const req = new Request('http://localhost/campanii');
     const res = await admin.fetch(req, makeEnv(), makeCtx());
@@ -64,7 +79,7 @@ describe('admin/index', () => {
     expect(html).toContain('Drafturi');
   });
 
-  it('GET /scrapere renders placeholder page', async () => {
+  it('GET /scrapere renders scraper page', async () => {
     const { admin } = await import('./index');
     const req = new Request('http://localhost/scrapere');
     const res = await admin.fetch(req, makeEnv(), makeCtx());

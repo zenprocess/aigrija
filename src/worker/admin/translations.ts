@@ -83,6 +83,10 @@ async function getKvOverrides(kv: KVNamespace, lang: Lang): Promise<Set<string>>
   return overrides;
 }
 
+function escHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 function translationsPage(activeLang: Lang, keys: Record<string, string>, overrides: Set<string>, email: string, search = ''): string {
   const tabs = SUPPORTED_LANGS.map(l => {
     const active = l === activeLang;
@@ -108,10 +112,10 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
         <div class="text-xs font-mono text-gray-500">${key}</div>
         ${isOverride ? '<span class="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">override KV</span>' : ''}
       </td>
-      <td class="py-2 px-3 align-top text-sm text-gray-400 max-w-xs">${roVal}</td>
+      <td class="py-2 px-3 align-top text-sm text-gray-400 max-w-xs">${escHtml(roVal)}</td>
       <td class="py-2 px-3 align-top">
         ${isRo
-          ? `<span class="text-sm text-gray-700">${roVal}</span>`
+          ? `<span class="text-sm text-gray-700">${escHtml(roVal)}</span>`
           : `<div class="flex gap-2 items-start">
               <input type="text" value="${currentVal.replace(/"/g, '&quot;')}" data-key="${key}" data-lang="${activeLang}"
                      class="flex-1 border border-gray-200 rounded px-2 py-1 text-sm translation-input"

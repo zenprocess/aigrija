@@ -185,7 +185,7 @@ export default function ContentPost({ slug, category }) {
             {lang !== 'ro' && (
               <div
                 data-testid="content-post-ro-disclaimer"
-                className="text-sm text-gray-400 italic mt-6 pt-4 border-t border-gray-100"
+                className="text-sm text-gray-400 italic mt-6 pt-4 border-t border-white/10"
               >
                 {t('legal.disclaimer_ro_prevails')} / Versiunea în limba română prevalează.
               </div>

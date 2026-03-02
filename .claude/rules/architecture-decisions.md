@@ -20,6 +20,8 @@ Key architectural decisions for ai-grija.ro. Full details in `docs/adrs/`.
 | 0012 | Buttondown newsletter | Use Buttondown API with tag "digest", not KV storage |
 | 0013 | CrossGuard policies | Run `validate-infra.sh` before deploy, CrossGuard in CI |
 | 0014 | Environment isolation | Local dev NEVER touches prod. Only CI/CD deploys. No `--remote` from local. |
+| 0015 | Pulumi R2 state backend | State in `ai-grija-pulumi-state` R2 bucket; CI uses S3-compat tokens |
+| 0016 | R2 CDN architecture | Static assets via cdn.ai-grija.ro, CORS locked, WAF hardened |
 
 ## When Writing Code
 

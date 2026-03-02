@@ -108,6 +108,11 @@ jobs:
         run: pulumi login --local
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+      - name: Initialize Pulumi stack
+        if: env.PULUMI_CONFIG_PASSPHRASE != ''
+        run: cd infra && pulumi stack init dev --non-interactive || true
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
       - name: Pulumi preview with CrossGuard
         if: env.PULUMI_CONFIG_PASSPHRASE != ''
         uses: pulumi/actions@v6

@@ -1,0 +1,208 @@
+import * as pulumi from "@pulumi/pulumi";
+import * as cloudflare from "@pulumi/cloudflare";
+
+// See infra/README.md for configuration instructions.
+
+const config = new pulumi.Config();
+const accountId = config.require("cloudflareAccountId");
+const zoneId = config.require("cloudflareZoneId");
+const workerName = "ai-grija-ro";
+
+// ---------------------------------------------------------------------------
+// KV Namespace — used as CACHE binding in wrangler.toml
+// ---------------------------------------------------------------------------
+const kvNamespace = new cloudflare.WorkersKvNamespace("ai-grija-cache", {
+  accountId,
+  title: "ai-grija-cache",
+});
+
+// ---------------------------------------------------------------------------
+// R2 Bucket — share cards storage, closest region to Romania
+// ---------------------------------------------------------------------------
+const r2Bucket = new cloudflare.R2Bucket("ai-grija-share-cards", {
+  accountId,
+  name: "ai-grija-share-cards",
+  location: "EEUR",
+});
+
+// ---------------------------------------------------------------------------
+// D1 Database — admin DB for structured data (conversations, reports, audit)
+// After `pulumi up`, run: pulumi stack output d1DatabaseId
+// Then update wrangler.toml [[d1_databases]] database_id field.
+// ---------------------------------------------------------------------------
+const adminDb = new cloudflare.D1Database("ai-grija-admin", {
+  accountId,
+  name: "ai-grija-admin",
+});
+
+// ---------------------------------------------------------------------------
+// Queue — async draft generation pipeline
+// Supported in @pulumi/cloudflare v5+
+// Fallback (if provider support missing): npx wrangler queues create draft-generation
+// ---------------------------------------------------------------------------
+const draftQueue = new cloudflare.Queue("draft-generation", {
+  accountId,
+  name: "draft-generation",
+});
+
+// ---------------------------------------------------------------------------
+// Analytics Engine Dataset
+// Note: Workers Analytics Engine datasets are created automatically on first
+// write from the Worker — no Pulumi resource needed.
+// Fallback reference: wrangler analytics-engine datasets list
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// DNS Records — ai-grija.ro and admin.ai-grija.ro proxied through Cloudflare
+// ---------------------------------------------------------------------------
+new cloudflare.Record("dns-root", {
+  zoneId,
+  name: "ai-grija.ro",
+  type: "CNAME",
+  content: "ai-grija-ro.workers.dev",
+  proxied: true,
+});
+
+new cloudflare.Record("dns-admin", {
+  zoneId,
+  name: "admin",
+  type: "CNAME",
+  content: "ai-grija-ro.workers.dev",
+  proxied: true,
+});
+
+// ---------------------------------------------------------------------------
+// Zero Trust Access — protect admin.ai-grija.ro
+// ---------------------------------------------------------------------------
+const accessApp = new cloudflare.ZeroTrustAccessApplication("admin-access", {
+  zoneId,
+  name: "ai-grija Admin",
+  domain: "admin.ai-grija.ro",
+  type: "self_hosted",
+  sessionDuration: "24h",
+  autoRedirectToIdentity: false,
+});
+
+new cloudflare.ZeroTrustAccessPolicy("admin-policy", {
+  applicationId: accessApp.id,
+  zoneId,
+  name: "Allow team",
+  decision: "allow",
+  precedence: 1,
+  includes: [{ emails: ["admin@zen-labs.ro"] }],
+});
+
+// ---------------------------------------------------------------------------
+// Worker Secrets
+// All values come from Pulumi config (encrypted at rest in the state file).
+// ---------------------------------------------------------------------------
+const secretDefs: { configKey: string; secretName: string }[] = [
+  { configKey: "googleSafeBrowsingKey",  secretName: "GOOGLE_SAFE_BROWSING_KEY" },
+  { configKey: "virustotalApiKey",       secretName: "VIRUSTOTAL_API_KEY" },
+  { configKey: "urlhausAuthKey",         secretName: "URLHAUS_AUTH_KEY" },
+  { configKey: "telegramBotToken",       secretName: "TELEGRAM_BOT_TOKEN" },
+  { configKey: "telegramWebhookSecret",  secretName: "TELEGRAM_WEBHOOK_SECRET" },
+  { configKey: "whatsappAccessToken",    secretName: "WHATSAPP_ACCESS_TOKEN" },
+  { configKey: "whatsappVerifyToken",    secretName: "WHATSAPP_VERIFY_TOKEN" },
+  { configKey: "whatsappPhoneNumberId",  secretName: "WHATSAPP_PHONE_NUMBER_ID" },
+  { configKey: "adminApiKey",            secretName: "ADMIN_API_KEY" },
+  { configKey: "telegramAdminChatId",    secretName: "TELEGRAM_ADMIN_CHAT_ID" },
+  { configKey: "sanityWriteToken",       secretName: "SANITY_WRITE_TOKEN" },
+  { configKey: "launchdarklySDKKey",     secretName: "LAUNCHDARKLY_SDK_KEY" },
+];
+
+for (const { configKey, secretName } of secretDefs) {
+  new cloudflare.WorkersSecret(`secret-${secretName.toLowerCase().replace(/_/g, "-")}`, {
+    accountId,
+    scriptName: workerName,
+    name: secretName,
+    secretText: config.requireSecret(configKey),
+  });
+}
+
+
+// ---------------------------------------------------------------------------
+// Preview Environment — pre.ai-grija.ro
+// ---------------------------------------------------------------------------
+const previewWorkerName = "ai-grija-ro-preview";
+
+const previewKv = new cloudflare.WorkersKvNamespace("ai-grija-cache-preview", {
+  accountId,
+  title: "ai-grija-cache-preview",
+});
+
+const previewR2 = new cloudflare.R2Bucket("ai-grija-share-cards-preview", {
+  accountId,
+  name: "ai-grija-share-cards-preview",
+  location: "ENAM",
+});
+
+const previewDb = new cloudflare.D1Database("ai-grija-admin-preview", {
+  accountId,
+  name: "ai-grija-admin-preview",
+});
+
+const previewQueue = new cloudflare.Queue("draft-generation-preview", {
+  accountId,
+  name: "draft-generation-preview",
+});
+
+// Preview DNS
+new cloudflare.Record("dns-preview", {
+  zoneId,
+  name: "pre",
+  type: "CNAME",
+  content: `${previewWorkerName}.workers.dev`,
+  proxied: true,
+});
+
+new cloudflare.Record("dns-preview-admin", {
+  zoneId,
+  name: "pre-admin",
+  type: "CNAME",
+  content: `${previewWorkerName}.workers.dev`,
+  proxied: true,
+});
+
+// Zero Trust for preview admin
+const previewAccessApp = new cloudflare.ZeroTrustAccessApplication("preview-admin-access", {
+  zoneId,
+  name: "ai-grija Preview Admin",
+  domain: "pre-admin.ai-grija.ro",
+  type: "self_hosted",
+  sessionDuration: "24h",
+  autoRedirectToIdentity: false,
+});
+
+new cloudflare.ZeroTrustAccessPolicy("preview-admin-policy", {
+  applicationId: previewAccessApp.id,
+  zoneId,
+  name: "Allow team preview",
+  decision: "allow",
+  precedence: 1,
+  includes: [{ emails: ["admin@zen-labs.ro"] }],
+});
+
+// Preview secrets — same keys, can use test values
+for (const { configKey, secretName } of secretDefs) {
+  new cloudflare.WorkersSecret(`preview-secret-${secretName.toLowerCase().replace(/_/g, "-")}`, {
+    accountId,
+    scriptName: previewWorkerName,
+    name: secretName,
+    secretText: config.requireSecret(configKey),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Stack Outputs
+// ---------------------------------------------------------------------------
+export const kvNamespaceId = kvNamespace.id;
+export const r2BucketName = r2Bucket.name;
+export const d1DatabaseId = adminDb.id;
+export const queueId = draftQueue.id;
+export const zeroTrustAppId = accessApp.id;
+export { workerName };
+export const previewKvId = previewKv.id;
+export const previewDbId = previewDb.id;
+export const previewR2BucketName = previewR2.name;
+export const previewQueueId = previewQueue.id;

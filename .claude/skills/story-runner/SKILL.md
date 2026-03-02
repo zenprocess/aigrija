@@ -2,7 +2,7 @@
 
 ## Invocation
 
-/story-runner [local|preview|prod]
+/story-runner [local|preview|prod] [--tags <tag1,tag2>]
 
 ## Steps
 
@@ -10,14 +10,20 @@
    - local: http://localhost:8787 (start wrangler dev if not running)
    - preview: https://pre.ai-grija.ro (needs CF Access)
    - prod: https://ai-grija.ro
-2. Run `npx tsx e2e/bowser-dispatch.ts --base-url <URL>`
+2. Run `npx tsx e2e/bowser-dispatch.ts --base-url <URL> ${TAGS:+--tags "$TAGS"}`
 3. Read playwright-report/bowser-summary.json
 4. Format and display results
 5. Stop dev server if started in step 1
 
+## Arguments
+
+| Arg | Description |
+|-----|-------------|
+| `--tags <list>` | Comma-separated tags to filter stories (smoke, critical, regression, api, a11y, admin) |
+
 ## Output Format
 
-BOWSER RUN — <url>
+BOWSER RUN — <url> (tags: smoke,api)
 ════════════════════════════════
 suspicious-sms     ✅  3.2s
 safe-message       ✅  2.1s

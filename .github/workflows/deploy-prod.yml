@@ -27,7 +27,7 @@ jobs:
   typecheck:
     name: TypeScript typecheck
     runs-on: ubuntu-latest
-    if: ${{ !inputs.skip_tests }}
+    if: github.ref == 'refs/heads/main' && !inputs.skip_tests
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,7 +40,7 @@ jobs:
   test:
     name: Unit tests with coverage
     runs-on: ubuntu-latest
-    if: ${{ !inputs.skip_tests }}
+    if: github.ref == 'refs/heads/main' && !inputs.skip_tests
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -60,7 +60,7 @@ jobs:
   secret-scan:
     name: Secret scanning
     runs-on: ubuntu-latest
-    if: ${{ !inputs.skip_tests }}
+    if: github.ref == 'refs/heads/main' && !inputs.skip_tests
     permissions:
       contents: read
       pull-requests: read
@@ -76,7 +76,7 @@ jobs:
   dependency-audit:
     name: Dependency audit
     runs-on: ubuntu-latest
-    if: ${{ !inputs.skip_tests }}
+    if: github.ref == 'refs/heads/main' && !inputs.skip_tests
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -89,7 +89,7 @@ jobs:
   infra-validate:
     name: Infrastructure validation
     runs-on: ubuntu-latest
-    if: ${{ !inputs.skip_tests }}
+    if: github.ref == 'refs/heads/main' && !inputs.skip_tests
     steps:
       - uses: actions/checkout@v4
       - name: Validate infra config
@@ -101,7 +101,13 @@ jobs:
       - run: cd infra && npm ci
       - name: Install policy pack
         run: cd infra/policy && npm install
+      - name: Pulumi login (local backend)
+        if: env.PULUMI_CONFIG_PASSPHRASE != ''
+        run: pulumi login --local
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
       - name: Pulumi preview with CrossGuard
+        if: env.PULUMI_CONFIG_PASSPHRASE != ''
         uses: pulumi/actions@v6
         with:
           command: preview
@@ -109,12 +115,18 @@ jobs:
           work-dir: infra
           policyPacks: infra/policy
         env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Warn if Pulumi passphrase missing
+        if: env.PULUMI_CONFIG_PASSPHRASE == ''
+        run: echo "::warning::PULUMI_CONFIG_PASSPHRASE not set — infrastructure validation skipped. Add it to GitHub secrets."
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
 
   deploy:
     name: Deploy to Cloudflare Workers
     needs: [typecheck, test, secret-scan, dependency-audit, infra-validate]
-    if: ${{ always() && (needs.typecheck.result == 'success' || needs.typecheck.result == 'skipped') && (needs.test.result == 'success' || needs.test.result == 'skipped') && (needs.secret-scan.result == 'success' || needs.secret-scan.result == 'skipped') && (needs.dependency-audit.result == 'success' || needs.dependency-audit.result == 'skipped') && (needs.infra-validate.result == 'success' || needs.infra-validate.result == 'skipped') }}
+    if: github.ref == 'refs/heads/main' && always() && (needs.typecheck.result == 'success' || needs.typecheck.result == 'skipped') && (needs.test.result == 'success' || needs.test.result == 'skipped') && (needs.secret-scan.result == 'success' || needs.secret-scan.result == 'skipped') && (needs.dependency-audit.result == 'success' || needs.dependency-audit.result == 'skipped') && (needs.infra-validate.result == 'success' || needs.infra-validate.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -145,6 +157,7 @@ jobs:
     name: Production health check
     needs: deploy
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Wait for production to be ready
         run: |
@@ -161,6 +174,7 @@ jobs:
     name: Post-deploy BDD verification
     needs: health-check
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     container: mcr.microsoft.com/playwright:v1.50.0-noble
     permissions:
       issues: write

@@ -84,6 +84,22 @@ export class CircuitBreaker {
 
     try {
       const result = await fn();
+
+      // Treat HTTP 5xx responses as failures even though fetch() resolves successfully
+      if (result !== null && typeof result === 'object' && 'status' in result && typeof (result as { status: unknown }).status === 'number') {
+        const status = (result as { status: number }).status;
+        if (status >= 500) {
+          s.failures++;
+          s.lastFailureTime = now;
+          if (s.state === 'HALF_OPEN' || s.failures >= this.failureThreshold) {
+            s.state = 'OPEN';
+            structuredLog('warn', '[circuit-breaker] circuit tripped OPEN (HTTP 5xx)', { circuit: this.name, status, failures: s.failures });
+          }
+          await this.setState(s);
+          return result;
+        }
+      }
+
       await this.setState({ state: 'CLOSED', failures: 0, lastFailureTime: 0, halfOpenAttempts: 0 });
       return result;
     } catch (err) {

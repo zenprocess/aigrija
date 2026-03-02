@@ -138,3 +138,59 @@ describe('withCircuitBreaker', () => {
       .rejects.toBeInstanceOf(CircuitOpenError);
   });
 });
+
+describe('CircuitBreaker — HTTP 5xx handling', () => {
+  it('records a failure for a 500 response but still returns it', async () => {
+    const kv = makeKV();
+    const cb = new CircuitBreaker('http-test', kv, { failureThreshold: 3, resetTimeout: 60_000 });
+    const res500 = new Response('error', { status: 500 });
+    const result = await cb.execute(async () => res500 as unknown as never);
+    expect(result).toBe(res500);
+    // KV put should have been called with failures incremented (not reset to 0)
+    const lastPut = (kv.put as ReturnType<typeof vi.fn>).mock.calls.at(-1);
+    const saved = JSON.parse(lastPut[1]);
+    expect(saved.failures).toBe(1);
+    expect(saved.state).toBe('CLOSED');
+  });
+
+  it('trips OPEN after failureThreshold 5xx responses', async () => {
+    const kv = makeKV();
+    const cb = new CircuitBreaker('http-test2', kv, { failureThreshold: 3, resetTimeout: 60_000 });
+    const res500 = new Response('error', { status: 500 });
+    for (let i = 0; i < 3; i++) {
+      await cb.execute(async () => res500 as unknown as never);
+    }
+    // Circuit should now be OPEN
+    await expect(cb.execute(async () => new Response('ok', { status: 200 }) as unknown as never))
+      .rejects.toBeInstanceOf(CircuitOpenError);
+  });
+
+  it('does not record failure for a 200 response', async () => {
+    const kv = makeKV();
+    const cb = new CircuitBreaker('http-ok', kv, { failureThreshold: 3, resetTimeout: 60_000 });
+    const res200 = new Response('ok', { status: 200 });
+    await cb.execute(async () => res200 as unknown as never);
+    const lastPut = (kv.put as ReturnType<typeof vi.fn>).mock.calls.at(-1);
+    const saved = JSON.parse(lastPut[1]);
+    expect(saved.failures).toBe(0);
+    expect(saved.state).toBe('CLOSED');
+  });
+
+  it('trips OPEN immediately on 5xx in HALF_OPEN state', async () => {
+    const kv = makeKV();
+    const cb = new CircuitBreaker('http-half', kv, { failureThreshold: 1, resetTimeout: 60_000 });
+    // Trip the circuit via exception -> goes OPEN
+    await expect(cb.execute(async () => { throw new Error('fail'); })).rejects.toThrow('fail');
+    // Manually set state to HALF_OPEN so we can probe
+    const store = (kv.get as ReturnType<typeof vi.fn>).mock;
+    // Override KV to return HALF_OPEN state
+    const halfOpenState = JSON.stringify({ state: 'HALF_OPEN', failures: 0, lastFailureTime: 0, halfOpenAttempts: 0 });
+    (kv.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce(halfOpenState);
+    const res500 = new Response('error', { status: 500 });
+    await cb.execute(async () => res500 as unknown as never);
+    // State should now be OPEN
+    const lastPut = (kv.put as ReturnType<typeof vi.fn>).mock.calls.at(-1);
+    const saved = JSON.parse(lastPut[1]);
+    expect(saved.state).toBe('OPEN');
+  });
+});

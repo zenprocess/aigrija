@@ -206,7 +206,7 @@ jobs:
   greptile-gate:
     name: Wait for Greptile review
     needs: health-check
-    if: github.event_name == 'pull_request'
+    if: always() && needs.health-check.result == 'success' && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:

@@ -11,7 +11,7 @@ steps:
     name: health-check
   - action: assert
     selector: "body"
-    contains: "ok"
+    contains: "healthy"
 
   - action: navigate
     url: "/api/alerts"

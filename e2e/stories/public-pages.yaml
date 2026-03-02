@@ -44,7 +44,7 @@ steps:
     name: privacy-page
   - action: assert
     selector: "body"
-    contains: "Confidentialitate"
+    contains: "dataprotection.ro"
 
   - action: navigate
     url: "/"

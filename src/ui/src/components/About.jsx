@@ -5,27 +5,27 @@ import { useTranslation } from '../i18n/index.jsx';
 const STEPS = [
   {
     icon: ClipboardPaste,
-    color: "blue",
-    iconBg: "bg-blue-500/20",
-    iconColor: "text-blue-400",
-    numberBg: "bg-blue-500",
-    borderColor: "border-blue-500/30",
+    color: "green",
+    iconBg: "bg-green-500/20",
+    iconColor: "text-green-400",
+    numberBg: "bg-green-500",
+    borderColor: "border-green-500/30",
   },
   {
     icon: Brain,
-    color: "purple",
-    iconBg: "bg-purple-500/20",
-    iconColor: "text-purple-400",
-    numberBg: "bg-purple-500",
-    borderColor: "border-purple-500/30",
+    color: "green",
+    iconBg: "bg-green-500/20",
+    iconColor: "text-green-400",
+    numberBg: "bg-green-500",
+    borderColor: "border-green-500/30",
   },
   {
     icon: FileText,
-    color: "indigo",
-    iconBg: "bg-indigo-500/20",
-    iconColor: "text-indigo-400",
-    numberBg: "bg-indigo-500",
-    borderColor: "border-indigo-500/30",
+    color: "green",
+    iconBg: "bg-green-500/20",
+    iconColor: "text-green-400",
+    numberBg: "bg-green-500",
+    borderColor: "border-green-500/30",
     badges: true,
   },
   {
@@ -102,7 +102,7 @@ export default function About() {
                             return (
                               <span
                                 key={bIdx}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-medium"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/15 border border-green-500/30 text-green-300 text-xs font-medium"
                               >
                                 <BadgeIcon className="w-3 h-3" />
                                 {badge.label}

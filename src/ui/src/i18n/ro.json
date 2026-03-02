@@ -15,7 +15,13 @@
     "title_highlight": "suspect?",
     "subtitle": "Verifică în 30 de secunde dacă este o tentativă de fraudă. Gratuit, anonim, fără cont.",
     "cta": "Verifică acum",
-    "tagline": "verifică · raportează · protejează"
+    "tagline": "verifică · raportează · protejează",
+    "shield_verify": "VERIFICĂ  ACUM",
+    "shield_report": "RAPORTEAZĂ FRAUDA",
+    "shield_protect": "PROTEJEAZĂ-TE",
+    "shield_label": "SCUT DIGITAL",
+    "shield_mobile_verify": "VERIFICĂ",
+    "shield_mobile_protect": "PROTEJEAZĂ"
   },
   "checker": {
     "label_message": "Textul mesajului suspect",

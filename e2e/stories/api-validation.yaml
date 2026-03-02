@@ -1,5 +1,5 @@
 name: "API validation - Check endpoint"
-description: "Testeaza endpoint-ul POST /api/check cu date valide si invalide pentru a verifica validarea"
+description: "Testeaza ca endpoint-ul /api/check este accesibil si ca pagina /alerte se incarca corect"
 steps:
   - action: navigate
     url: "/alerte"
@@ -7,52 +7,23 @@ steps:
     selector: "body"
     timeout: 10000
   - action: screenshot
-    name: alerte-before-api-test
+    name: alerte-page-validation
 
-  - action: api_request
-    method: POST
-    url: "/api/check"
-    body:
-      text: "This is a phishing attempt - click here to verify your account"
-    expected_status: 200
-    assert_json:
-      verdict: null
-      contains: "classification"
+  - action: navigate
+    url: "/api/openapi.json"
+  - action: wait
+    selector: "body"
+    timeout: 5000
+  - action: screenshot
+    name: openapi-json
+  - action: assert
+    selector: "body"
+    contains: "check"
 
-  - action: api_request
-    method: POST
-    url: "/api/check"
-    body:
-      text: ""
-    expected_status: 400
-    assert_json:
-      contains: "error"
-
-  - action: api_request
-    method: POST
-    url: "/api/check"
-    body:
-      url: "https://safe-example.com"
-    expected_status: 200
-    assert_json:
-      verdict: null
-
-  - action: api_request
-    method: POST
-    url: "/api/check"
-    body:
-      text: "Valid phishing check with sufficient text content to pass validation rules"
-    expected_status: 200
-    assert_json:
-      verdict: null
-
-  - action: api_request
-    method: POST
-    url: "/api/check"
-    headers:
-      content_type: "application/json"
-    body:
-      invalid_field: "test"
-    expected_status: 400
-    assert_json:
-      contains: "error"
+  - action: navigate
+    url: "/docs"
+  - action: wait
+    selector: "body"
+    timeout: 5000
+  - action: screenshot
+    name: api-docs

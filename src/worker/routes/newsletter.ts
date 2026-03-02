@@ -74,7 +74,7 @@ newsletter.post('/api/newsletter/subscribe', async (c) => {
 
   if (!bdRes.ok) {
     // 400 from Buttondown usually means already subscribed or invalid email
-    const bdBody = await bdRes.json().catch(() => ({})) as Record<string, unknown>;
+    const bdBody = await bdRes.json().catch((e) => { console.error("Newsletter JSON parse error:", e); return {}; }) as Record<string, unknown>;
     if (bdRes.status === 400) {
       return c.json(
         { error: { code: 'ALREADY_SUBSCRIBED', message: 'Aceasta adresa este deja abonata sau invalida.' } },

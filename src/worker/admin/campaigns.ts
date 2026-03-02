@@ -55,8 +55,8 @@ export const campaignApiRoutes = new Hono<AdminEnv>();
 
 campaignApiRoutes.get('/list', async (c) => {
   const { page = '1', limit = '20', q = '', source = '', severity = '', status = '' } = Object.fromEntries(Array.from(new URL(c.req.url).searchParams as unknown as Iterable<[string, string]>));
-  const pageNum = Math.max(1, parseInt(page));
-  const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
   const offset = (pageNum - 1) * limitNum;
 
   const conditions: string[] = ['archived = 0'];
@@ -189,7 +189,7 @@ campaignRoutes.get('/', async (c) => {
   const source = url.searchParams.get('source') ?? '';
   const severity = url.searchParams.get('severity') ?? '';
   const status = url.searchParams.get('status') ?? '';
-  const page = parseInt(url.searchParams.get('page') ?? '1');
+  const page = parseInt(url.searchParams.get('page') ?? '1', 10) || 1;
   const limit = 20;
   const offset = (page - 1) * limit;
 

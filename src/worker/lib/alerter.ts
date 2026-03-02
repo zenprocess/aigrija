@@ -34,11 +34,19 @@ export async function sendAlert(
 
   if (level === 'critical' && res.ok) {
     const data = await res.json() as { result?: { message_id?: number } };
-    await fetch(`https://api.telegram.org/bot${token}/pinChatMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, message_id: data.result?.message_id }),
-    });
+    try {
+      const pinAbort = new AbortController();
+      const pinTimeout = setTimeout(() => pinAbort.abort(), 5000);
+      await fetch(`https://api.telegram.org/bot${token}/pinChatMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, message_id: data.result?.message_id }),
+        signal: pinAbort.signal,
+      });
+      clearTimeout(pinTimeout);
+    } catch (e) {
+      console.error('Failed to pin Telegram message:', e);
+    }
   }
 }
 

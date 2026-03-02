@@ -46,9 +46,9 @@ feed.get('/api/stats', async (c) => {
     c.env.CACHE.get('stats:active_campaigns'),
   ]);
   return c.json({
-    total_checks: parseInt(checksRaw ?? '0'),
-    threats_detected: parseInt(threatsRaw ?? '0'),
-    active_campaigns: parseInt(campaignsRaw ?? '0'),
+    total_checks: parseInt(checksRaw ?? '0', 10),
+    threats_detected: parseInt(threatsRaw ?? '0', 10),
+    active_campaigns: parseInt(campaignsRaw ?? '0', 10),
   });
 });
 

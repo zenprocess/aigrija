@@ -2,7 +2,7 @@ import type { Env, Campaign } from './types';
 import { runScraper } from './scraper-runner';
 import { dnscScraper } from './scrapers/dnsc';
 import { structuredLog } from './logger';
-import { generateMultipleDrafts } from './draft-generator';
+import { generateMultipleDrafts, generateStandalonePost } from './draft-generator';
 import { publishToSanity } from './sanity-writer';
 import { generateWeeklyDigest, getISOWeek } from './weekly-digest';
 import { sendDigestToTelegram } from './telegram-digest';
@@ -159,6 +159,14 @@ export async function handleScheduled(event: ScheduledEvent, env: Env): Promise<
     // 01:00 daily — generate drafts, then publish to Sanity
     await runDraftGeneration(env);
     await runSanityPublish(env);
+  } else if (event.cron === '0 2 * * 1-5') {
+    // Weekdays 02:00 — AI educational content generation
+    try {
+      await generateStandalonePost(env);
+      structuredLog('info', 'cron_content_generation_done', { stage: 'cron' });
+    } catch (err) {
+      structuredLog('error', 'cron_content_generation_failed', { stage: 'cron', error: String(err) });
+    }
   } else if (event.cron === '0 6 * * 1') {
     // Monday 06:00 — weekly digest distribution
     await runWeeklyDigest(env);

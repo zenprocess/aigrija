@@ -11,6 +11,10 @@ const GUIDE_SYSTEM = `Ești un expert în securitate cibernetică care scrie ghi
 
 const EDUCATION_SYSTEM = `Ești un expert în securitate cibernetică care scrie articole educaționale în limba română pentru cetățeni non-tehnici. Scrie un articol educațional: titlu informativ, ce este acest tip de amenințare (explicat ca pentru un copil de 12 ani), exemple reale din România, statistici dacă sunt disponibile, cum să recunoști atacul, resurse utile (DNSC, Politia Romana). Ton: educativ, calm, fără jargon tehnic. Returnează Markdown valid. 500-700 cuvinte.`;
 
+const STORY_SYSTEM = `Ești un jurnalist de investigație specializat în securitate cibernetică în România. Scrie o poveste reală sau bazată pe cazuri reale din România despre o victimă a unui atac cibernetic. Include: titlu emoțional, povestea victimei (anonimizată), cum s-a întâmplat atacul, ce a pierdut, cum s-a rezolvat (sau nu), lecții învățate. Ton: empatic, educativ. Returnează Markdown valid. 500-700 cuvinte.`;
+
+const REPORT_SYSTEM = `Ești un analist de securitate cibernetică care scrie rapoarte sintetice în limba română. Scrie un raport săptămânal/lunar: titlu cu perioada, rezumat executiv, top 3 tipuri de atacuri din România, statistici (poți estima pe baza tendințelor), recomandări pentru cetățeni și organizații, surse (DNSC, CERT-RO, Europol). Ton: profesional, bazat pe date. Returnează Markdown valid. 600-800 cuvinte.`;
+
 function buildUserMessage(campaign: Campaign): string {
   const brands = campaign.affected_brands || 'Nespecificat';
   const body = (campaign.body_text || '').slice(0, 2000);
@@ -90,6 +94,81 @@ export async function generateMultipleDrafts(campaignId: string, env: Env): Prom
 async function fetchCampaign(campaignId: string, env: Env): Promise<Campaign | null> {
   const row = await env.DB.prepare(`SELECT * FROM campaigns WHERE id = ?`).bind(campaignId).first<Campaign>();
   return row || null;
+}
+
+export async function generateStandalonePost(env: Env): Promise<void> {
+  const dayOfWeek = new Date().getUTCDay(); // 1=Mon, 5=Fri
+  if (dayOfWeek < 1 || dayOfWeek > 5) return; // skip weekends
+
+  const categories = ["amenintari", "ghid", "educatie", "povesti", "rapoarte"];
+  const category = categories[dayOfWeek - 1];
+
+  const systemPromptMap: Record<string, string> = {
+    amenintari: ALERT_SYSTEM,
+    ghid: GUIDE_SYSTEM,
+    educatie: EDUCATION_SYSTEM,
+    povesti: STORY_SYSTEM,
+    rapoarte: REPORT_SYSTEM,
+  };
+
+  const systemPrompt = systemPromptMap[category];
+
+  // Step 1: generate a specific topic title via meta-prompt
+  let topic = '';
+  try {
+    const topicResult = await (env.AI.run as (model: string, inputs: { messages: { role: string; content: string }[]; max_tokens: number }) => Promise<{ response?: string }>)(
+      DRAFT_MODEL,
+      {
+        messages: [
+          { role: "system", content: "You are a cybersecurity editor. Respond ONLY with a short article title in Romanian, no explanation, no punctuation beyond the title itself." },
+          { role: "user", content: `Sugerează un subiect specific de securitate cibernetică în România pentru o categorie "". Returnează DOAR titlul subiectului, fără explicații.` },
+        ],
+        max_tokens: 60,
+      }
+    );
+    topic = (topicResult?.response || '').trim().replace(/^["']+|["']+$/g, '').trim();
+  } catch (err) {
+    structuredLog('error', '[draft-generator] Failed to generate topic', { category, error: String(err) });
+    throw err;
+  }
+
+  if (!topic) {
+    structuredLog('error', '[draft-generator] Empty topic returned', { category });
+    return;
+  }
+
+  // Step 2: generate the full article
+  let articleContent = '';
+  try {
+    const articleResult = await (env.AI.run as (model: string, inputs: { messages: { role: string; content: string }[]; max_tokens: number }) => Promise<{ response?: string }>)(
+      DRAFT_MODEL,
+      {
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Scrie un articol complet despre: ${topic}` },
+        ],
+        max_tokens: 1500,
+      }
+    );
+    articleContent = articleResult?.response || '';
+  } catch (err) {
+    structuredLog('error', '[draft-generator] Failed to generate article', { category, topic, error: String(err) });
+    throw err;
+  }
+
+  // Step 3: insert into D1 as admin draft
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  try {
+    await env.DB.prepare(
+      `INSERT INTO campaigns (id, title, source, draft_status, draft_content, severity, threat_type, created_at, updated_at)
+       VALUES (?, ?, 'ai-generated', 'generated', ?, 'medium', ?, ?, ?)`
+    ).bind(id, topic, articleContent, category, now, now).run();
+    structuredLog('info', '[draft-generator] Standalone post inserted', { id, category, topic, contentLength: articleContent.length });
+  } catch (err) {
+    structuredLog('error', '[draft-generator] Failed to insert standalone post', { id, category, topic, error: String(err) });
+    throw err;
+  }
 }
 
 export { buildUserMessage, fetchCampaign };

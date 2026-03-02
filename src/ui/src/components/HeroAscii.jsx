@@ -10,50 +10,58 @@ function padCenter(text, width) {
   return ' '.repeat(left) + text + ' '.repeat(right);
 }
 
+function repeat(ch, n) { return ch.repeat(Math.max(0, n)); }
+
 function buildShieldLines(t) {
   const v = t('hero.shield_verify');
   const r = t('hero.shield_report');
   const p = t('hero.shield_protect');
   const label = t('hero.shield_label');
-  const W = 20;
+  const maxLen = Math.max(v.length, r.length, p.length);
+  const boxW = maxLen + 8;
+  const frameW = boxW + 6;
+  const topW = frameW + 4;
   return [
-    '    ╔══════════════════════════╗    ',
-    '   ╔╝  [ AI·GRIJA  v2.0 ]     ╚╗   ',
-    '  ║   ┌──────────────────────┐   ║  ',
-    '  ║   │  ░ ' + padCenter(v, W-6) + ' ░  │   ║  ',
-    '  ║   │  ░ ' + padCenter(r, W-6) + ' │   ║  ',
-    '  ║   │  ░ ' + padCenter(p, W-6) + ' ░░  │   ║  ',
-    '  ║   └──────────────────────┘   ║  ',
-    '  ║   ◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆   ║  ',
-    '  ║   STATUS: [ACTIV] ████████   ║  ',
-    '   ╚╗                           ╔╝  ',
-    '    ╚╗    ◈ ' + padCenter(label, 14) + ' ◈     ╔╝   ',
-    '     ╚╗                        ╔╝   ',
+    '    ╔' + repeat('═', topW) + '╗    ',
+    '   ╔╝  [ AI·GRIJA  v2.0 ]' + repeat(' ', topW - 22) + '╚╗   ',
+    '  ║   ┌' + repeat('─', boxW) + '┐   ║  ',
+    '  ║   │  ░ ' + padCenter(v, maxLen) + ' ░  │   ║  ',
+    '  ║   │  ░ ' + padCenter(r, maxLen) + ' ░  │   ║  ',
+    '  ║   │  ░ ' + padCenter(p, maxLen) + ' ░░ │   ║  ',
+    '  ║   └' + repeat('─', boxW) + '┘   ║  ',
+    '  ║   ' + repeat('◆', boxW) + '   ║  ',
+    '  ║   STATUS: [ACTIV] ' + repeat('█', Math.max(4, boxW - 18)) + '   ║  ',
+    '   ╚╗' + repeat(' ', topW) + '╔╝  ',
+    '    ╚╗    ◈ ' + padCenter(label, maxLen) + ' ◈     ╔╝   ',
+    '     ╚╗' + repeat(' ', topW - 2) + '╔╝   ',
     '      ╚╗   ▲ AI·GRIJA.RO ▲   ╔╝    ',
-    '       ╚╗                   ╔╝     ',
-    '        ╚╗                 ╔╝      ',
-    '         ╚╗               ╔╝       ',
-    '          ╚╗             ╔╝        ',
-    '           ╚═════════════╝         ',
+    '       ╚╗' + repeat(' ', topW - 6) + '╔╝     ',
+    '        ╚╗' + repeat(' ', topW - 8) + '╔╝      ',
+    '         ╚╗' + repeat(' ', topW - 10) + '╔╝       ',
+    '          ╚╗' + repeat(' ', topW - 12) + '╔╝        ',
+    '           ╚' + repeat('═', topW - 12) + '╝         ',
   ];
 }
 
 function buildMobileShieldLines(t) {
   const v = t('hero.shield_mobile_verify');
   const p = t('hero.shield_mobile_protect');
+  const maxLen = Math.max(v.length, p.length);
+  const boxW = maxLen + 6;
+  const frameW = boxW + 4;
   return [
-    '  ╔════════════════════╗  ',
-    ' ╔╝  ◆ AI·GRIJA ◆     ╚╗ ',
-    ' ║  ┌────────────────┐  ║ ',
-    ' ║  │ ░ ' + padCenter(v, 10) + ' ░░  │  ║ ',
-    ' ║  │ ░ ' + padCenter(p, 10) + '░  │  ║ ',
-    ' ║  └────────────────┘  ║ ',
-    ' ║  STATUS: [ACTIV]     ║ ',
-    '  ╚╗                  ╔╝  ',
-    '   ╚╗  AI·GRIJA.RO   ╔╝   ',
-    '    ╚╗               ╔╝   ',
-    '     ╚╗             ╔╝    ',
-    '      ╚═════════════╝     ',
+    '  ╔' + repeat('═', frameW) + '╗  ',
+    ' ╔╝  ◆ AI·GRIJA ◆' + repeat(' ', frameW - 16) + '╚╗ ',
+    ' ║  ┌' + repeat('─', boxW) + '┐  ║ ',
+    ' ║  │ ░ ' + padCenter(v, maxLen) + ' ░░  │  ║ ',
+    ' ║  │ ░ ' + padCenter(p, maxLen) + '░  │  ║ ',
+    ' ║  └' + repeat('─', boxW) + '┘  ║ ',
+    ' ║  STATUS: [ACTIV]' + repeat(' ', frameW - 16) + '║ ',
+    '  ╚╗' + repeat(' ', frameW) + '╔╝  ',
+    '   ╚╗  AI·GRIJA.RO' + repeat(' ', frameW - 15) + '╔╝   ',
+    '    ╚╗' + repeat(' ', frameW - 4) + '╔╝   ',
+    '     ╚╗' + repeat(' ', frameW - 6) + '╔╝    ',
+    '      ╚' + repeat('═', frameW - 6) + '╝     ',
   ];
 }
 

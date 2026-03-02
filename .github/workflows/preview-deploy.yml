@@ -107,11 +107,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download allure results
+      - name: Download test results
         uses: actions/download-artifact@v4
         with:
           name: bowser-report
-          path: allure-results
+          path: .
         continue-on-error: true
 
       - name: Load previous Allure history

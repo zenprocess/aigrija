@@ -7,6 +7,7 @@ import { translationsAdmin } from './translations';
 import { configAdmin } from './config';
 import { campaignRoutes, campaignApiRoutes, scraperRoutes } from './campaigns';
 import { translationReportsAdmin } from './translation-reports';
+import { generateStandalonePost } from '../lib/draft-generator';
 
 type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 
@@ -90,6 +91,17 @@ configRouter.get('/', (c) => {
       <p class="text-gray-500 text-sm">Setarile generale ale aplicatiei vor fi disponibile aici.</p>
     </div>`;
   return c.html(adminLayout('Config', content, 'config', email));
+});
+
+// --- Generate Content API ---
+admin.post('/api/generate-content', async (c) => {
+  try {
+    await generateStandalonePost(c.env);
+    return c.json({ ok: true, message: 'Content generated' });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return c.json({ ok: false, error: message }, 500);
+  }
 });
 
 // Mount sub-routers — API routes must be mounted before HTML routes to avoid param conflicts

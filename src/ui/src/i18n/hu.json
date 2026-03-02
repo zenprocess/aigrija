@@ -15,7 +15,10 @@
     "title_highlight": "kapott?",
     "subtitle": "30 másodperc alatt ellenőrizze, hogy csalási kísérletről van-e szó. Ingyenes, névtelen, regisztráció nélkül.",
     "cta": "Ellenőrzés most",
-    "tagline": "ellenőrizz · jelentsd · védd magad"
+    "tagline": "ellenőrizz · jelentsd · védd magad",
+    "shield_verify": "ELLENŐRIZD",
+    "shield_report": "JELENTS CSALÁS",
+    "shield_protect": "VÉDD MAGAD"
   },
   "checker": {
     "label_message": "A gyanús üzenet szövege",

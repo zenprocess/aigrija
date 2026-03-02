@@ -16,7 +16,7 @@ export default defineConfig({
     { name: 'mobile', use: { ...devices['iPhone 14'] } },
   ],
   webServer: process.env.BASE_URL ? undefined : {
-    command: 'npx wrangler dev --port 8787',
+    command: 'npx wrangler dev --port 8787 --local',
     port: 8787,
     reuseExistingServer: true,
     timeout: 30_000,

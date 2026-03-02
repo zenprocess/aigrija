@@ -53,8 +53,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  e2e-api:
-    name: E2E API tests
+  e2e-tests:
+    name: E2E Playwright tests
     needs: [typecheck, unit-tests]
     runs-on: ubuntu-latest
     steps:
@@ -67,29 +67,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Build SPA assets
         run: npm run build
-      - name: Run API E2E tests
-        run: npx playwright test e2e/api.spec.ts e2e/health.spec.ts e2e/telegram-webhook.spec.ts --project=chromium
-        env:
-          BASE_URL: http://localhost:8787
-
-  e2e-browser:
-    name: E2E browser tests
-    needs: [typecheck, unit-tests]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - name: Build SPA assets
-        run: npm run build
-      - name: Run browser E2E tests
-        run: npx playwright test --ignore-pattern='**/api.spec.ts' --ignore-pattern='**/health.spec.ts' --ignore-pattern='**/telegram-webhook.spec.ts'
-        env:
-          BASE_URL: http://localhost:8787
+      - name: Run Playwright tests
+        run: npx playwright test
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -120,15 +99,22 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: cd infra && npm ci
+      - name: Install infra dependencies
+        run: cd infra && npm ci
       - name: Install policy pack
-        run: cd infra/policy && npm ci
+        run: cd infra/policy && npm install
       - name: Pulumi preview with CrossGuard
+        if: env.PULUMI_ACCESS_TOKEN != ''
         uses: pulumi/actions@v6
         with:
           command: preview
           stack-name: dev
           work-dir: infra
           policyPacks: infra/policy
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+      - name: Warn if Pulumi token missing
+        if: env.PULUMI_ACCESS_TOKEN == ''
+        run: echo "::warning::PULUMI_ACCESS_TOKEN not set — infrastructure validation skipped. Add it to GitHub secrets."
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}

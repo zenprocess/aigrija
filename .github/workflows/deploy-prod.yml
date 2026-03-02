@@ -100,7 +100,7 @@ jobs:
           cache: 'npm'
       - run: cd infra && npm ci
       - name: Install policy pack
-        run: cd infra/policy && npm ci
+        run: cd infra/policy && npm install
       - name: Pulumi preview with CrossGuard
         uses: pulumi/actions@v6
         with:

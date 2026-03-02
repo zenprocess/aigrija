@@ -1,21 +1,29 @@
-name: cookie-consent
-description: Verify cookie consent banner appears and can be accepted
+name: "cookie-consent"
+description: "Verificare aparitie banner cookie, deschidere setari, acceptare si disparitie banner"
 steps:
   - action: navigate
-    url: /#/
+    url: "/"
   - action: wait
-    selector: "[data-testid='consent-banner']"
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: page-loaded
+  - action: wait
+    selector: "[data-testid='consent-banner'], .cookie-banner, .consent-banner"
     timeout: 10000
   - action: screenshot
     name: consent-banner-visible
   - action: click
-    selector: "[data-testid='consent-settings-btn']"
+    selector: "[data-testid='consent-settings-btn'], button:has-text('Setari'), button:has-text('Personalizeaza')"
   - action: wait
-    selector: "[data-testid='consent-analytics-toggle']"
+    selector: "[data-testid='consent-analytics-toggle'], [data-testid='consent-settings-panel'], .consent-settings"
     timeout: 5000
   - action: screenshot
     name: consent-settings-open
   - action: click
-    selector: "[data-testid='consent-accept-all']"
+    selector: "[data-testid='consent-accept-all'], button:has-text('Accept toate'), button:has-text('Accepta tot')"
   - action: screenshot
     name: consent-accepted
+  - action: assert
+    selector: "body"
+    contains: ""

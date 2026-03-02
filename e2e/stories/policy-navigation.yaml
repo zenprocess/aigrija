@@ -1,29 +1,40 @@
 name: "Navigare politici legale"
-description: "Utilizatorul verifica paginile legale in romana"
+description: "Utilizatorul viziteaza toate paginile legale: GDPR, cookie-uri, termeni"
 steps:
   - action: navigate
-    url: "/#/confidentialitate"
+    url: "/gdpr"
   - action: wait
-    selector: body
+    selector: "body"
     timeout: 10000
-  - action: wait
-    selector: "[data-testid='privacy-back-btn']"
-    timeout: 15000
   - action: screenshot
-    name: privacy-ro
+    name: gdpr-page
   - action: assert
-    selector: body
-    contains: "Confidențialitate"
-  - action: assert
-    selector: "[data-testid='privacy-back-btn']"
-    contains: "napoi"
+    selector: "body"
+    contains: "GDPR"
   - action: navigate
-    url: "/#/termeni"
+    url: "/politica-cookies"
   - action: wait
-    selector: "[data-testid='terms-back-btn']"
+    selector: "body"
     timeout: 10000
   - action: screenshot
-    name: termeni-ro
+    name: politica-cookies-page
   - action: assert
-    selector: body
+    selector: "body"
+    contains: "cookie"
+  - action: navigate
+    url: "/termeni"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: termeni-page
+  - action: assert
+    selector: "body"
     contains: "Termeni"
+  - action: navigate
+    url: "/"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: back-to-homepage

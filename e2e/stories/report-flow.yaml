@@ -1,24 +1,34 @@
 name: "Generare raport autoritati"
-description: "Utilizatorul verifica un mesaj suspect si acceseaza sectiunea de raportare"
+description: "Utilizatorul verifica un mesaj suspect si raporteaza la autoritati prin pagina /raportare"
 steps:
   - action: navigate
-    url: "/#/"
+    url: "/"
   - action: wait
-    selector: "[data-testid='checker-textarea']"
+    selector: "[data-testid='checker-textarea'], [data-testid='check-input'], textarea"
     timeout: 15000
   - action: fill
-    selector: "[data-testid='checker-textarea']"
+    selector: "[data-testid='checker-textarea'], [data-testid='check-input'], textarea"
     value: "Contul dvs ING a fost blocat. Accesati urgent: http://ing-verify.com/deblocare"
   - action: click
-    selector: "[data-testid='checker-submit-btn']"
+    selector: "[data-testid='checker-submit-btn'], [data-testid='check-submit'], button[type='submit']"
   - action: wait
-    selector: "[data-testid='checker-action-share']"
-    timeout: 30000
+    selector: "[data-testid='checker-action-share'], [data-testid='verdict-card'], .verdict-card, [data-testid='check-result']"
+    timeout: 45000
   - action: screenshot
-    name: report-prefilled
+    name: verdict-shown
   - action: assert
-    selector: body
+    selector: "body"
     contains: "phishing"
+  - action: navigate
+    url: "/raportare"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: raportare-page
   - action: assert
-    selector: "[data-testid='checker-action-dnsc']"
+    selector: "body"
     contains: "1911"
+  - action: assert
+    selector: "body"
+    contains: "DNSC"

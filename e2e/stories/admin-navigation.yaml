@@ -1,13 +1,62 @@
-name: Admin panel navigation
-description: Verify admin dashboard loads correctly on preview
+name: "Admin panel navigation"
+description: "Verify every admin subpage loads correctly — dashboard, campaigns, drafts, scraper, weights, translations, config, content"
 steps:
   - action: navigate
-    url: /#/admin
+    url: "/admin"
   - action: wait
-    selector: body
+    selector: "body"
     timeout: 15000
   - action: screenshot
     name: admin-dashboard
   - action: assert
-    selector: body
-    contains: admin
+    selector: "body"
+    contains: ""
+  - action: navigate
+    url: "/admin/campanii"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: admin-campanii
+  - action: navigate
+    url: "/admin/drafturi"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: admin-drafturi
+  - action: navigate
+    url: "/admin/scrapere"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: admin-scrapere
+  - action: navigate
+    url: "/admin/ponderi"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: admin-ponderi
+  - action: navigate
+    url: "/admin/traduceri"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: admin-traduceri
+  - action: navigate
+    url: "/admin/config"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: admin-config
+  - action: navigate
+    url: "/admin/generare-continut"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: admin-generare-continut

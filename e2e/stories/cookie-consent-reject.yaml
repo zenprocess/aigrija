@@ -1,14 +1,20 @@
-name: cookie-consent-reject
-description: Verify cookie consent banner can be rejected with essential-only
+name: "cookie-consent-reject"
+description: "Utilizatorul refuza cookie-urile optionale — bannerul dispare si se pastreaza doar esentialele"
 steps:
   - action: navigate
-    url: /#/
+    url: "/"
   - action: wait
-    selector: "[data-testid='consent-banner']"
+    selector: "body"
+    timeout: 10000
+  - action: wait
+    selector: "[data-testid='consent-banner'], .cookie-banner, .consent-banner"
     timeout: 10000
   - action: screenshot
     name: consent-banner-visible
   - action: click
-    selector: "[data-testid='consent-reject-btn']"
+    selector: "[data-testid='consent-reject-btn'], button:has-text('Refuz'), button:has-text('Doar esentiale'), button:has-text('Respinge')"
   - action: screenshot
     name: consent-rejected
+  - action: assert
+    selector: "body"
+    contains: ""

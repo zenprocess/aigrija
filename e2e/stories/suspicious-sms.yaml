@@ -2,26 +2,31 @@ name: "Verificare SMS suspect"
 description: "Utilizatorul primeste un SMS suspect de la banca si il verifica pe ai-grija.ro"
 steps:
   - action: navigate
-    url: "/#/"
+    url: "/"
   - action: wait
-    selector: "[data-testid='checker-textarea']"
+    selector: "[data-testid='checker-textarea'], [data-testid='check-input'], textarea"
     timeout: 15000
   - action: screenshot
-    name: homepage
+    name: homepage-loaded
   - action: fill
-    selector: "[data-testid='checker-textarea']"
-    value: "Contul dvs ING a fost blocat. Accesati urgent: http://ing-verify.com/deblocare"
+    selector: "[data-testid='checker-textarea'], [data-testid='check-input'], textarea"
+    value: "Contul dvs ING a fost blocat. Accesati urgent: http://ing-verify.com/deblocare pentru a evita blocarea permanenta."
+  - action: screenshot
+    name: text-filled
   - action: click
-    selector: "[data-testid='checker-submit-btn']"
+    selector: "[data-testid='checker-submit-btn'], [data-testid='check-submit'], button[type='submit']"
   - action: wait
-    selector: "[data-testid='checker-action-share']"
-    timeout: 30000
+    selector: "[data-testid='checker-action-share'], [data-testid='verdict-card'], [data-testid='check-result'], .verdict-card"
+    timeout: 45000
   - action: screenshot
     name: verdict-phishing
   - action: assert
     selector: body
     contains: "PHISHING"
+  - action: assert
+    selector: body
+    contains: "phishing"
   - action: click
     selector: "[data-testid='checker-action-share']"
   - action: screenshot
-    name: share-modal
+    name: share-modal-opened

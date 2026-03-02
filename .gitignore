@@ -21,3 +21,4 @@ extension/*.zip
 # Build artifacts
 build/
 coverage/
+research/

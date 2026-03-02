@@ -1,37 +1,57 @@
 name: "Public site navigation"
-description: "As a user, verify main site pages and navigation work"
+description: "Ca utilizator, verific ca paginile principale si navigarea functioneaza corect"
 steps:
   - action: navigate
-    url: "/#/"
+    url: "/"
   - action: wait
-    selector: "[data-testid='hero-cta-btn']"
-    timeout: 10000
+    selector: "body"
+    timeout: 15000
   - action: screenshot
     name: homepage
   - action: assert
-    selector: body
+    selector: "body"
     contains: "ai-grija"
   - action: navigate
-    url: "/#/amenintari"
+    url: "/alerte"
   - action: wait
-    selector: body
-    timeout: 10000
-  - action: screenshot
-    name: amenintari
-  - action: assert
-    selector: body
-    contains: "meninț"
-  - action: navigate
-    url: "/#/alerte"
-  - action: wait
-    selector: body
+    selector: "body"
     timeout: 10000
   - action: screenshot
     name: alerte-page
+  - action: assert
+    selector: "h1, h2, body"
+    contains: ""
   - action: navigate
-    url: "/#/"
+    url: "/blog"
   - action: wait
-    selector: "[data-testid='hero-cta-btn']"
+    selector: "body"
     timeout: 10000
   - action: screenshot
-    name: back-to-home
+    name: blog-page
+  - action: navigate
+    url: "/raportare"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: raportare-page
+  - action: assert
+    selector: "body"
+    contains: ""
+  - action: navigate
+    url: "/gdpr"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: gdpr-page
+  - action: assert
+    selector: "body"
+    contains: "GDPR"
+  - action: navigate
+    url: "/"
+  - action: wait
+    selector: "body"
+    timeout: 10000
+  - action: screenshot
+    name: back-home

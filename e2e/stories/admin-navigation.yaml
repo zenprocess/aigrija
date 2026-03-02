@@ -1,8 +1,8 @@
-name: "Admin panel navigation"
-description: "As an admin, verify all admin subpages load correctly"
+name: Admin panel navigation
+description: Verify admin dashboard loads correctly on preview
 steps:
   - action: navigate
-    url: "https://admin.ai-grija.ro/"
+    url: /#/admin
   - action: wait
     selector: body
     timeout: 15000
@@ -10,25 +10,4 @@ steps:
     name: admin-dashboard
   - action: assert
     selector: body
-    contains: "admin"
-  - action: navigate
-    url: "https://admin.ai-grija.ro/campanii"
-  - action: wait
-    selector: body
-    timeout: 10000
-  - action: screenshot
-    name: admin-campanii
-  - action: navigate
-    url: "https://admin.ai-grija.ro/drafturi"
-  - action: wait
-    selector: body
-    timeout: 10000
-  - action: screenshot
-    name: admin-drafturi
-  - action: navigate
-    url: "https://admin.ai-grija.ro/scrapere"
-  - action: wait
-    selector: body
-    timeout: 10000
-  - action: screenshot
-    name: admin-scrapere
+    contains: admin

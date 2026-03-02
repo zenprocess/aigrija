@@ -17,3 +17,7 @@ test-results/
 
 # Extension packaged builds
 extension/*.zip
+
+# Build artifacts
+build/
+coverage/

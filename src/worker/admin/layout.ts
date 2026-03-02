@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { href: '/admin/traduceri', label: 'Traduceri', icon: '🌐', key: 'traduceri' },
   { href: '/admin/config', label: 'Config', icon: '⚙️', key: 'config' },
   { href: '/admin/rapoarte-traduceri', label: 'Rapoarte trad.', icon: '🗒️', key: 'rapoarte-traduceri' },
+  { href: '/admin/generare-continut', label: 'Generare AI', icon: '🤖', key: 'generare-continut' },
   { href: '/studio', label: 'Studio', icon: '🎨', key: 'studio', external: true },
 ] as const;
 

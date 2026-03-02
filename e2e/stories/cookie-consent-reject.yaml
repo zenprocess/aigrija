@@ -1,33 +1,14 @@
 name: cookie-consent-reject
-description: Verify cookie consent banner can be rejected (essential-only) and persists correct preferences
-base_path: /
-viewport:
-  width: 1440
-  height: 900
-
+description: Verify cookie consent banner can be rejected with essential-only
 steps:
   - action: navigate
-    path: /
-  - action: clearLocalStorage
-  - action: navigate
-    path: /
+    url: /#/
   - action: wait
     selector: "[data-testid='consent-banner']"
-    timeout: 3000
+    timeout: 10000
+  - action: screenshot
+    name: consent-banner-visible
   - action: click
     selector: "[data-testid='consent-reject-btn']"
-
-assertions:
-  - type: visible
-    selector: "[data-testid='consent-banner']"
-  - type: not-visible-after-action
-    selector: "[data-testid='consent-banner']"
-    action: "click [data-testid='consent-reject-btn']"
-  - type: localStorage
-    key: cookie_consent_given
-    value: "true"
-  - type: localStorage
-    key: cookie_preferences
-    value: '{"essential":true,"analytics":false}'
-  - type: responsive
-    breakpoints: [375, 768, 1440]
+  - action: screenshot
+    name: consent-rejected

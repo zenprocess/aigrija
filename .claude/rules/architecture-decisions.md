@@ -19,6 +19,7 @@ Key architectural decisions for ai-grija.ro. Full details in `docs/adrs/`.
 | 0011 | GitHub-native PM | Issues + Milestones + Labels, no external tools |
 | 0012 | Buttondown newsletter | Use Buttondown API with tag "digest", not KV storage |
 | 0013 | CrossGuard policies | Run `validate-infra.sh` before deploy, CrossGuard in CI |
+| 0014 | Environment isolation | Local dev NEVER touches prod. Only CI/CD deploys. No `--remote` from local. |
 
 ## When Writing Code
 

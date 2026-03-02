@@ -19,3 +19,4 @@ Format: [MADR](https://adr.github.io/madr/) (Markdown Any Decision Records)
 | [ADR-0011](0011-github-native-project-management.md) | GitHub-native project management | accepted | 2026-03-02 |
 | [ADR-0012](0012-buttondown-newsletter.md) | Buttondown for newsletter subscriptions | accepted | 2026-03-02 |
 | [ADR-0013](0013-crossguard-policy-as-code.md) | CrossGuard policy-as-code for infrastructure | accepted | 2026-03-02 |
+| [ADR-0014](0014-environment-isolation.md) | Strict environment isolation | accepted | 2026-03-02 |

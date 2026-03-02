@@ -171,4 +171,92 @@ export async function generateStandalonePost(env: Env): Promise<void> {
   }
 }
 
+
+export interface GenerateOptions {
+  category?: string;
+  topic?: string;
+}
+
+export async function generateStandalonePostWithOverrides(env: Env, options: GenerateOptions = {}): Promise<{ id: string; title: string }> {
+  const systemPromptMap: Record<string, string> = {
+    amenintari: ALERT_SYSTEM,
+    ghid: GUIDE_SYSTEM,
+    educatie: EDUCATION_SYSTEM,
+    povesti: STORY_SYSTEM,
+    rapoarte: REPORT_SYSTEM,
+  };
+
+  let category = options.category;
+  if (!category) {
+    const dayOfWeek = new Date().getUTCDay();
+    const categories = ["amenintari", "ghid", "educatie", "povesti", "rapoarte"];
+    category = dayOfWeek >= 1 && dayOfWeek <= 5 ? categories[dayOfWeek - 1] : categories[0];
+  }
+
+  const systemPrompt = systemPromptMap[category] ?? ALERT_SYSTEM;
+
+  let topic = options.topic?.trim() ?? "";
+
+  // Step 1: generate topic via meta-prompt only if no topic override
+  if (!topic) {
+    try {
+      const topicResult = await (env.AI.run as (model: string, inputs: { messages: { role: string; content: string }[]; max_tokens: number }) => Promise<{ response?: string }>)(
+        DRAFT_MODEL,
+        {
+          messages: [
+            { role: "system", content: "You are a cybersecurity editor. Respond ONLY with a short article title in Romanian, no explanation, no punctuation beyond the title itself." },
+            { role: "user", content: `Sugereaza un subiect specific de securitate cibernetica in Romania pentru categoria "${category}". Returneaza DOAR titlul subiectului, fara explicatii.` },
+          ],
+          max_tokens: 60,
+        }
+      );
+      topic = (topicResult?.response || "").trim().replace(/^["']+|["']+$/g, "").trim();
+    } catch (err) {
+      structuredLog("error", "[draft-generator] Failed to generate topic", { category, error: String(err) });
+      throw err;
+    }
+  }
+
+  if (!topic) {
+    structuredLog("error", "[draft-generator] Empty topic returned", { category });
+    throw new Error("Empty topic returned from AI");
+  }
+
+  // Step 2: generate the full article
+  let articleContent = "";
+  try {
+    const articleResult = await (env.AI.run as (model: string, inputs: { messages: { role: string; content: string }[]; max_tokens: number }) => Promise<{ response?: string }>)(
+      DRAFT_MODEL,
+      {
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Scrie un articol complet despre: ${topic}` },
+        ],
+        max_tokens: 1500,
+      }
+    );
+    articleContent = articleResult?.response || "";
+  } catch (err) {
+    structuredLog("error", "[draft-generator] Failed to generate article", { category, topic, error: String(err) });
+    throw err;
+  }
+
+  // Step 3: insert into D1 as admin draft
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  try {
+    await env.DB.prepare(
+      `INSERT INTO campaigns (id, title, source, draft_status, draft_content, severity, threat_type, created_at, updated_at)
+       VALUES (?, ?, 'ai-generated', 'generated', ?, 'medium', ?, ?, ?)`
+    ).bind(id, topic, articleContent, category, now, now).run();
+    structuredLog("info", "[draft-generator] Standalone post inserted (with overrides)", { id, category, topic, contentLength: articleContent.length });
+  } catch (err) {
+    structuredLog("error", "[draft-generator] Failed to insert standalone post", { id, category, topic, error: String(err) });
+    throw err;
+  }
+
+  return { id, title: topic };
+}
+
 export { buildUserMessage, fetchCampaign };
+

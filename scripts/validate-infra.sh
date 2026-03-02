@@ -5,8 +5,8 @@ WRANGLER="wrangler.toml"
 ERRORS=0
 
 # Check all cron triggers in code have matching wrangler.toml entries
-CRON_HANDLERS=$(grep -c 'case.*0 ' src/worker/lib/cron-handler.ts 2>/dev/null || echo 0)
-CRON_CONFIG=$(grep -oP "\"[0-9]+ [0-9]+ [*0-9]+ [*0-9]+ [*0-9]+\"" "$WRANGLER" | wc -l | tr -d ' ')
+CRON_HANDLERS=$(grep -cE "if.*event\.cron.*===" src/worker/lib/cron-handler.ts 2>/dev/null || echo 0)
+CRON_CONFIG=$(grep -oP "\"[0-9]+ [0-9]+ [*0-9]+ [*0-9]+ [*0-9]+\"" "$WRANGLER" | wc -l | xargs)
 if [ "$CRON_HANDLERS" -gt "$CRON_CONFIG" ]; then
   echo "ERROR: cron-handler.ts has $CRON_HANDLERS schedules but wrangler.toml only has $CRON_CONFIG"
   ERRORS=$((ERRORS + 1))

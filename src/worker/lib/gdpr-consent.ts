@@ -3,7 +3,7 @@ import type { Env } from './types';
 export type ConsentChannel = 'tg' | 'wa' | 'email';
 
 const FIVE_YEARS_SECONDS = 5 * 365 * 24 * 60 * 60;
-const TWELVE_MONTHS_MS = 12 * 30 * 24 * 60 * 60 * 1000;
+const TWELVE_MONTHS_MS = 365 * 24 * 60 * 60 * 1000; // 365 days (1 year)
 
 export interface ConsentRecord {
   consented_at: string;

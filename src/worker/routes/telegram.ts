@@ -369,7 +369,8 @@ telegram.post('/webhook/telegram', async (c) => {
     return c.json({ ok: true });
   }
 
-  // ── Update last_active ───────────────────────────────────────────────────
+  // ── Record GDPR consent + update last_active ─────────────────────────────
+  await recordConsent(c.env, 'tg', String(chatId));
   await updateLastActive(c.env, 'tg', String(chatId));
 
   // ── Rate limit ────────────────────────────────────────────────────────────

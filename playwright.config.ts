@@ -6,6 +6,10 @@ export default defineConfig({
   snapshotDir: './e2e/baselines',
   timeout: 30_000,
   retries: 1,
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+  ],
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:8787',
     screenshot: 'on',

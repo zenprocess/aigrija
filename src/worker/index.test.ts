@@ -7,8 +7,6 @@ describe('/health', () => {
       CACHE: mockKV(),
       AI: {},
       STORAGE: mockR2(),
-      DB: mockD1(),
-      DRAFT_QUEUE: mockQueue(),
     };
     const res = await app.request('/health', undefined, env);
     expect(res.status).toBe(200);
@@ -19,12 +17,10 @@ describe('/health', () => {
     expect(body.components.kv.status).toBe('healthy');
     expect(body.components.ai.status).toBe('healthy');
     expect(body.components.r2.status).toBe('healthy');
-    expect(body.components.d1.status).toBe('healthy');
-    expect(body.components.queue.status).toBe('healthy');
   });
 
   it('returns X-Request-Id header', async () => {
-    const env = { CACHE: mockKV(), AI: {}, STORAGE: mockR2(), DB: mockD1(), DRAFT_QUEUE: mockQueue() };
+    const env = { CACHE: mockKV(), AI: {}, STORAGE: mockR2() };
     const res = await app.request('/health', undefined, env);
     expect(res.headers.get('X-Request-Id')).toBeDefined();
   });
@@ -140,23 +136,4 @@ function mockR2(): R2Bucket {
     createMultipartUpload: async () => ({}),
     resumeMultipartUpload: async () => ({}),
   } as unknown as R2Bucket;
-}
-
-function mockD1(): D1Database {
-  return {
-    prepare: () => ({
-      first: async () => ({ 1: 1 }),
-      run: async () => ({}),
-      all: async () => ({ results: [] }),
-      raw: async () => [],
-      bind: () => ({}),
-    }),
-    exec: async () => ({}),
-    batch: async () => [],
-    dump: async () => new ArrayBuffer(0),
-  } as unknown as D1Database;
-}
-
-function mockQueue(): Queue {
-  return { send: async () => {}, sendBatch: async () => {} } as unknown as Queue;
 }

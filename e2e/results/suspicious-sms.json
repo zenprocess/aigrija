@@ -1,0 +1,86 @@
+{
+  "name": "Verificare SMS suspect",
+  "description": "Utilizatorul primeste un SMS suspect de la banca si il verifica pe ai-grija.ro",
+  "startTime": "2026-03-01T19:58:18.800Z",
+  "passes": {
+    "load": {
+      "status": "pass",
+      "duration": 55,
+      "screenshot": "/tmp/pass1-load.png",
+      "notes": "Page loaded successfully in 55ms"
+    },
+    "interact": {
+      "status": "pass",
+      "duration": 3682,
+      "screenshots": [
+        "/tmp/pass2-step1-navigate.png",
+        "/tmp/pass2-step2-textarea-ready.png",
+        "/tmp/pass2-step3-text-filled.png",
+        "/tmp/pass2-step4-submitted.png",
+        "/tmp/pass2-step5-results-ready.png",
+        "/tmp/pass2-step6-verdict-verified.png",
+        "/tmp/pass2-step8-final.png"
+      ],
+      "notes": "All interaction steps executed successfully",
+      "errors": []
+    },
+    "api": {
+      "status": "pass",
+      "duration": 542,
+      "requests": [
+        {
+          "url": "http://localhost:8787/",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/assets/index-vvHdA4N9.css",
+          "method": "GET",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:8787/assets/index-CHV3wn5m.js",
+          "method": "GET",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:8787/api/counter",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/api/alerts",
+          "method": "GET",
+          "status": 200
+        }
+      ]
+    },
+    "console": {
+      "status": "pass",
+      "duration": 0,
+      "errors": []
+    },
+    "vision": {
+      "status": "pass",
+      "duration": 488,
+      "screenshot": "/tmp/pass5-vision-full-page.png",
+      "description": "Layout is properly rendered with visible content, readable text, and appropriate spacing. UI elements are well-positioned."
+    },
+    "responsive": {
+      "status": "pass",
+      "duration": 3638,
+      "screenshots": {
+        "mobile": "/tmp/pass6-responsive-mobile-375px.png",
+        "tablet": "/tmp/pass6-responsive-tablet-768px.png",
+        "desktop": "/tmp/pass6-responsive-desktop-1440px.png"
+      },
+      "notes": "All responsive breakpoints render correctly (mobile 375px, tablet 768px, desktop 1440px)"
+    }
+  },
+  "summary": {
+    "totalPasses": 6,
+    "totalFails": 0,
+    "overallStatus": "pass"
+  },
+  "endTime": "2026-03-01T19:58:28.142Z"
+}

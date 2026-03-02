@@ -1,0 +1,72 @@
+{
+  "story": "Verificare mesaj sigur",
+  "timestamp": "2026-03-01T19:52:47.806Z",
+  "baseUrl": "http://localhost:8787",
+  "passes": {
+    "load": {
+      "status": "pass",
+      "duration": 2002,
+      "message": "Page loaded in 616ms (< 3s requirement)"
+    },
+    "interact": {
+      "status": "fail",
+      "duration": 7118,
+      "message": "Failed at step: screenshot: verdict | No verdict found. Body text includes: \n  Treci la continut principalai-grija.roVerificăCum funcționeazăAlerteAmenințăriGhiduriEducațieMai multROROVerifică un mesajCum funcționeazăAlerte activeAmenințăriGhiduriEducațiePovești realeRapoarteComunicateSe încarcă statisticile...Ai primit un mesaj suspect?Verifică în 30 de secunde dacă este o",
+      "stepCount": 5
+    },
+    "api": {
+      "status": "pass",
+      "duration": 8435,
+      "message": "5 non-rate-limited requests, all returned 2xx status",
+      "requests": [
+        {
+          "url": "http://localhost:8787/",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/assets/index-vvHdA4N9.css",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/assets/index-CHV3wn5m.js",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/api/counter",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/api/alerts",
+          "status": 200
+        }
+      ]
+    },
+    "console": {
+      "status": "pass",
+      "duration": 6973,
+      "message": "No critical errors (ignored 1 rate-limit errors)",
+      "errors": []
+    },
+    "vision": {
+      "status": "fail",
+      "duration": 9720,
+      "message": "No verdict visible",
+      "screenshotPath": ""
+    },
+    "responsive": {
+      "status": "fail",
+      "duration": 9378,
+      "message": "No verdict at 375px width",
+      "viewports": [
+        {
+          "width": 375,
+          "height": 667,
+          "path": "/Users/vvladescu/Desktop/aigrija/OUT-REPO/e2e/results/pass6-responsive-375px.png"
+        }
+      ]
+    }
+  },
+  "overallStatus": "fail",
+  "testsPassed": 3,
+  "testsFailed": 3
+}

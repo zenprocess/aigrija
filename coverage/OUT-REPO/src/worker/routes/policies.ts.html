@@ -1,0 +1,493 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for OUT-REPO/src/worker/routes/policies.ts</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../../prettify.css" />
+    <link rel="stylesheet" href="../../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../../../index.html">All files</a> / <a href="index.html">OUT-REPO/src/worker/routes</a> policies.ts</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>81/81</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>17/17</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>5/5</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>81/81</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line high'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">90x</span>
+<span class="cline-any cline-yes">90x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Hono } from 'hono';
+import type { Env } from '../lib/types';
+&nbsp;
+type Lang = 'ro' | 'en' | 'bg' | 'hu' | 'uk';
+&nbsp;
+const LANGS: Lang[] = ['ro', 'en', 'bg', 'hu', 'uk'];
+&nbsp;
+function getLang(raw: string | undefined): Lang {
+  if (raw &amp;&amp; (LANGS as string[]).includes(raw)) return raw as Lang;
+  return 'ro';
+}
+&nbsp;
+const disclaimers: Record&lt;Exclude&lt;Lang, 'ro'&gt;, string&gt; = {
+  en: 'This is a translation. The Romanian version shall prevail. / Aceasta este o traducere. Versiunea \u00een limba rom\u00e2n\u0103 prevaleaz\u0103.',
+  bg: '\u0422\u043e\u0432\u0430 \u0435 \u043f\u0440\u0435\u0432\u043e\u0434. \u0420\u0443\u043c\u044a\u043d\u0441\u043a\u0430\u0442\u0430 \u0432\u0435\u0440\u0441\u0438\u044f \u0438\u043c\u0430 \u043f\u0440\u0435\u0434\u0438\u043c\u0441\u0442\u0432\u043e. / Aceasta este o traducere. Versiunea \u00een limba rom\u00e2n\u0103 prevaleaz\u0103.',
+  hu: 'Ez egy ford\u00edt\u00e1s. A rom\u00e1n nyelv\u0171 v\u00e1ltozat az ir\u00e1nyadó. / Aceasta este o traducere. Versiunea \u00een limba rom\u00e2n\u0103 prevaleaz\u0103.',
+  uk: '\u0426\u0435 \u043f\u0435\u0440\u0435\u043a\u043b\u0430\u0434. \u0420\u0443\u043c\u0443\u043d\u0441\u044c\u043a\u0430 \u0432\u0435\u0440\u0441\u0456\u044f \u043c\u0430\u0454 \u043f\u0435\u0440\u0435\u0432\u0430\u0433\u0443. / Aceasta este o traducere. Versiunea \u00een limba rom\u00e2n\u0103 prevaleaz\u0103.',
+};
+&nbsp;
+const langLabels: Record&lt;Lang, string&gt; = { ro: 'RO', en: 'EN', bg: 'BG', hu: 'HU', uk: 'UK' };
+&nbsp;
+const CSS = `
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #1a1a1a; background: #fff; padding: 0 1rem 3rem; }
+  .container { max-width: 800px; margin: 0 auto; }
+  header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 2rem; flex-wrap: wrap; gap: .5rem; }
+  header a.brand { font-weight: 700; font-size: 1.1rem; color: #2563EB; text-decoration: none; }
+  .lang-switch { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .lang-switch a { color: #6b7280; text-decoration: none; font-size: .875rem; padding: .2rem .4rem; border-radius: 4px; }
+  .lang-switch a:hover { color: #2563EB; }
+  .lang-switch a.active { color: #2563EB; font-weight: 700; border-bottom: 2px solid #2563EB; }
+  .disclaimer { background: #fef9c3; border: 1px solid #fde047; border-radius: 6px; padding: .75rem 1rem; margin-bottom: 1.5rem; font-size: .9rem; color: #713f12; }
+  h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: .5rem; }
+  .updated { color: #6b7280; font-size: .875rem; margin-bottom: 2rem; }
+  h2 { font-size: 1.15rem; font-weight: 600; margin-top: 2rem; margin-bottom: .6rem; color: #111827; }
+  p { margin-bottom: 1rem; color: #374151; }
+  ul { margin: 0 0 1rem 1.5rem; color: #374151; }
+  ul li { margin-bottom: .35rem; }
+  a { color: #2563EB; }
+  .back { display: inline-block; margin-top: 2.5rem; font-size: .9rem; color: #2563EB; }
+  @media (max-width: 480px) { h1 { font-size: 1.35rem; } }
+`;
+&nbsp;
+function buildPage(opts: { lang: Lang; path: string; title: string; content: string }): string {
+  const { lang, path, title, content } = opts;
+  const base = 'https://ai-grija.ro';
+  const hreflangs = LANGS.map(l =&gt; `  &lt;link rel="alternate" hreflang="${l}" href="${base}${path}?lang=${l}"&gt;`).join('\n');
+  const disclaimerHtml = lang !== 'ro' ? `&lt;div class="disclaimer"&gt;\u26a0\ufe0f ${disclaimers[lang as Exclude&lt;Lang, 'ro'&gt;]}&lt;/div&gt;` : '';
+  const langSwitcher = LANGS.map(l =&gt; {
+    const cls = l === lang ? ' class="active"' : '';
+    return `&lt;a href="${path}?lang=${l}"${cls}&gt;${langLabels[l]}&lt;/a&gt;`;
+  }).join(' ');
+  return `&lt;!DOCTYPE html&gt;
+&lt;html lang="${lang}"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+  &lt;title&gt;${title}&lt;/title&gt;
+  &lt;link rel="canonical" href="${base}${path}"&gt;
+${hreflangs}
+  &lt;style&gt;${CSS}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div class="container"&gt;
+    &lt;header&gt;
+      &lt;a class="brand" href="https://ai-grija.ro"&gt;ai-grija.ro&lt;/a&gt;
+      &lt;nav class="lang-switch"&gt;${langSwitcher}&lt;/nav&gt;
+    &lt;/header&gt;
+    ${disclaimerHtml}
+    ${content}
+    &lt;a class="back" href="https://ai-grija.ro"&gt;\u2190 ai-grija.ro&lt;/a&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;`;
+}
+&nbsp;
+// Privacy Policy
+function privacyContent(lang: Lang): string {
+  const map: Record&lt;Lang, string&gt; = {
+    ro: `&lt;h1&gt;Politica de Confiden\u021bialitate&lt;/h1&gt;&lt;p class="updated"&gt;Ultima actualizare: Martie 2026&lt;/p&gt;&lt;h2&gt;1. Operator de date&lt;/h2&gt;&lt;p&gt;Zen Labs (zen-labs.ro)&lt;br&gt;Contact: &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;&lt;h2&gt;2. Ce date collect\u0103m&lt;/h2&gt;&lt;p&gt;Textul mesajului transmis pentru analiz\u0103 \u015fi, op\u021bional, URL-ul inclus \u00een mesaj. Nu cre\u0103m conturi de utilizator \u015fi nu stoc\u0103m permanent date cu caracter personal.&lt;/p&gt;&lt;h2&gt;3. Cum prelucr\u0103m datele&lt;/h2&gt;&lt;p&gt;Textul este procesat de Cloudflare Workers AI (modelul Llama 3.1) pentru clasificare automat\u0103. Verific\u0103rile op\u021bionale de URL utilizeaz\u0103 API-urile Google Safe Browsing, VirusTotal \u015fi URLhaus.&lt;/p&gt;&lt;h2&gt;4. Reten\u021bie&lt;/h2&gt;&lt;p&gt;Rezultatele sunt stocate \u00een cache (Cloudflare KV) cu expirare dup\u0103 1 or\u0103. Nu stoc\u0103m permanent con\u021binut transmis de utilizatori. Statisticile agregate (num\u0103r total verific\u0103ri) sunt anonimizate.&lt;/p&gt;&lt;h2&gt;5. Ter\u021bi&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Cloudflare Inc. \u2013 infrastructur\u0103 \u015fi AI&lt;/li&gt;&lt;li&gt;Google Safe Browsing API&lt;/li&gt;&lt;li&gt;VirusTotal API&lt;/li&gt;&lt;li&gt;URLhaus API (abuse.ch)&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. Cookie-uri&lt;/h2&gt;&lt;p&gt;Nu folosim cookie-uri de urm\u0103rire sau analiz\u0103.&lt;/p&gt;&lt;h2&gt;7. Drepturile tale (GDPR)&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Dreptul de acces (Art. 15)&lt;/li&gt;&lt;li&gt;Dreptul la rectificare (Art. 16)&lt;/li&gt;&lt;li&gt;Dreptul la \u015ftergere (Art. 17)&lt;/li&gt;&lt;li&gt;Dreptul la restric\u021bionarea prelucr\u0103rii (Art. 18)&lt;/li&gt;&lt;li&gt;Dreptul la portabilitatea datelor (Art. 20)&lt;/li&gt;&lt;li&gt;Dreptul la opozi\u021bie (Art. 21)&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;Pentru exercitarea acestor drepturi, scrie\u021bi la &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;.&lt;/p&gt;&lt;h2&gt;8. Autoritate de supraveghere&lt;/h2&gt;&lt;p&gt;ANSPDCP \u2013 Autoritatea Na\u021bional\u0103 de Supraveghere a Prelucr\u0103rii Datelor cu Caracter Personal&lt;br&gt;B-dul G-ral. Gheorghe Magheru 28-30, Sector 1, Bucure\u015fti&lt;br&gt;&lt;a href="https://www.dataprotection.ro" target="_blank" rel="noopener"&gt;dataprotection.ro&lt;/a&gt;&lt;/p&gt;`,
+    en: `&lt;h1&gt;Privacy Policy&lt;/h1&gt;&lt;p class="updated"&gt;Last updated: March 2026&lt;/p&gt;&lt;h2&gt;1. Data Controller&lt;/h2&gt;&lt;p&gt;Zen Labs (zen-labs.ro)&lt;br&gt;Contact: &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;&lt;h2&gt;2. What We Collect&lt;/h2&gt;&lt;p&gt;The message text submitted for analysis and, optionally, the URL included in the message. We do not create user accounts and do not permanently store personal data.&lt;/p&gt;&lt;h2&gt;3. How We Process Data&lt;/h2&gt;&lt;p&gt;Text is processed by Cloudflare Workers AI (Llama 3.1 model) for automatic classification. Optional URL checks use the Google Safe Browsing, VirusTotal, and URLhaus APIs.&lt;/p&gt;&lt;h2&gt;4. Retention&lt;/h2&gt;&lt;p&gt;Results are cached in Cloudflare KV with expiry after 1 hour. We do not permanently store user-submitted content. Aggregate statistics (total check count) are anonymized.&lt;/p&gt;&lt;h2&gt;5. Third Parties&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Cloudflare Inc. \u2013 infrastructure and AI&lt;/li&gt;&lt;li&gt;Google Safe Browsing API&lt;/li&gt;&lt;li&gt;VirusTotal API&lt;/li&gt;&lt;li&gt;URLhaus API (abuse.ch)&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. Cookies&lt;/h2&gt;&lt;p&gt;We do not use tracking or analytics cookies.&lt;/p&gt;&lt;h2&gt;7. Your Rights (GDPR)&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Right of access (Art. 15)&lt;/li&gt;&lt;li&gt;Right to rectification (Art. 16)&lt;/li&gt;&lt;li&gt;Right to erasure (Art. 17)&lt;/li&gt;&lt;li&gt;Right to restriction of processing (Art. 18)&lt;/li&gt;&lt;li&gt;Right to data portability (Art. 20)&lt;/li&gt;&lt;li&gt;Right to object (Art. 21)&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;To exercise these rights, email &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;.&lt;/p&gt;&lt;h2&gt;8. Supervisory Authority&lt;/h2&gt;&lt;p&gt;ANSPDCP \u2013 National Supervisory Authority for Personal Data Processing&lt;br&gt;B-dul G-ral. Gheorghe Magheru 28-30, Sector 1, Bucharest&lt;br&gt;&lt;a href="https://www.dataprotection.ro" target="_blank" rel="noopener"&gt;dataprotection.ro&lt;/a&gt;&lt;/p&gt;`,
+    bg: `&lt;h1&gt;\u041f\u043e\u043b\u0438\u0442\u0438\u043a\u0430 \u0437\u0430 \u043f\u043e\u0432\u0435\u0440\u0438\u0442\u0435\u043b\u043d\u043e\u0441\u0442&lt;/h1&gt;&lt;p class="updated"&gt;\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u0430 \u0430\u043a\u0442\u0443\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f: \u041c\u0430\u0440\u0442 2026&lt;/p&gt;&lt;h2&gt;1. \u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043d\u0430 \u0434\u0430\u043d\u043d\u0438&lt;/h2&gt;&lt;p&gt;Zen Labs (zen-labs.ro)&lt;br&gt;\u041a\u043e\u043d\u0442\u0430\u043a\u0442: &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;&lt;h2&gt;2. \u041a\u0430\u043a\u0432\u0438 \u0434\u0430\u043d\u043d\u0438 \u0441\u044a\u0431\u0438\u0440\u0430\u043c\u0435&lt;/h2&gt;&lt;p&gt;\u0422\u0435\u043a\u0441\u0442\u044a\u0442 \u043d\u0430 \u0441\u044a\u043e\u0431\u0449\u0435\u043d\u0438\u0435\u0442\u043e, \u0438\u0437\u043f\u0440\u0430\u0442\u0435\u043d\u043e \u0437\u0430 \u0430\u043d\u0430\u043b\u0438\u0437, \u0438 \u043d\u0435\u0437\u0430\u0434\u044a\u043b\u0436\u0438\u0442\u0435\u043b\u043d\u043e URL. \u041d\u0435 \u0441\u044a\u0437\u0434\u0430\u0432\u0430\u043c\u0435 \u043f\u043e\u0442\u0440\u0435\u0431\u0438\u0442\u0435\u043b\u0441\u043a\u0438 \u0430\u043a\u0430\u0443\u043d\u0442\u0438.&lt;/p&gt;&lt;h2&gt;3. \u041e\u0431\u0440\u0430\u0431\u043e\u0442\u0432\u0430\u043d\u0435&lt;/h2&gt;&lt;p&gt;Cloudflare Workers AI (Llama 3.1). \u041d\u0435\u0437\u0430\u0434\u044a\u043b\u0436\u0438\u0442\u0435\u043b\u043d\u0438 URL \u0447\u0440\u0435\u0437 Google Safe Browsing, VirusTotal \u0438 URLhaus.&lt;/p&gt;&lt;h2&gt;4. \u0421\u044a\u0445\u0440\u0430\u043d\u0435\u043d\u0438\u0435&lt;/h2&gt;&lt;p&gt;Cloudflare KV \u043a\u0435\u0448 \u0437\u0430 1 \u0447\u0430\u0441. \u0411\u0435\u0437 \u043f\u043e\u0441\u0442\u043e\u044f\u043d\u043d\u043e \u0441\u044a\u0445\u0440\u0430\u043d\u0435\u043d\u0438\u0435 \u043d\u0430 \u043f\u043e\u0442\u0440\u0435\u0431\u0438\u0442\u0435\u043b\u0441\u043a\u043e \u0441\u044a\u0434\u044a\u0440\u0436\u0430\u043d\u0438\u0435.&lt;/p&gt;&lt;h2&gt;5. \u0422\u0440\u0435\u0442\u0438 \u0441\u0442\u0440\u0430\u043d\u0438&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Cloudflare Inc.&lt;/li&gt;&lt;li&gt;Google Safe Browsing API&lt;/li&gt;&lt;li&gt;VirusTotal API&lt;/li&gt;&lt;li&gt;URLhaus API&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. \u0411\u0438\u0441\u043a\u0432\u0438\u0442\u043a\u0438&lt;/h2&gt;&lt;p&gt;\u041d\u0435 \u0438\u0437\u043f\u043e\u043b\u0437\u0432\u0430\u043c\u0435 \u0431\u0438\u0441\u043a\u0432\u0438\u0442\u043a\u0438.&lt;/p&gt;&lt;h2&gt;7. \u0412\u0430\u0448\u0438\u0442\u0435 \u043f\u0440\u0430\u0432\u0430 (GDPR)&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;\u041f\u0440\u0430\u0432\u043e \u043d\u0430 \u0434\u043e\u0441\u0442\u044a\u043f (\u0447\u043b. 15)&lt;/li&gt;&lt;li&gt;\u041f\u0440\u0430\u0432\u043e \u043d\u0430 \u043a\u043e\u0440\u0438\u0433\u0438\u0440\u0430\u043d\u0435 (\u0447\u043b. 16)&lt;/li&gt;&lt;li&gt;\u041f\u0440\u0430\u0432\u043e \u043d\u0430 \u0438\u0437\u0442\u0440\u0438\u0432\u0430\u043d\u0435 (\u0447\u043b. 17)&lt;/li&gt;&lt;li&gt;\u041e\u0433\u0440\u0430\u043d\u0438\u0447\u0430\u0432\u0430\u043d\u0435 (\u0447\u043b. 18)&lt;/li&gt;&lt;li&gt;\u041f\u0440\u0435\u043d\u043e\u0441\u0438\u043c\u043e\u0441\u0442 (\u0447\u043b. 20)&lt;/li&gt;&lt;li&gt;\u0412\u044a\u0437\u0440\u0430\u0436\u0435\u043d\u0438\u0435 (\u0447\u043b. 21)&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;\u041f\u0438\u0448\u0435\u0442\u0435 \u043d\u0430 &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;.&lt;/p&gt;&lt;h2&gt;8. \u041d\u0430\u0434\u0437\u043e\u0440\u0435\u043d \u043e\u0440\u0433\u0430\u043d&lt;/h2&gt;&lt;p&gt;ANSPDCP, Bucharest. &lt;a href="https://www.dataprotection.ro" target="_blank" rel="noopener"&gt;dataprotection.ro&lt;/a&gt;&lt;/p&gt;`,
+    hu: `&lt;h1&gt;Adatvédelmi tájékoztató&lt;/h1&gt;&lt;p class="updated"&gt;Utolsó frissítés: 2026. március&lt;/p&gt;&lt;h2&gt;1. Adatkezelő&lt;/h2&gt;&lt;p&gt;Zen Labs (zen-labs.ro)&lt;br&gt;Kapcsolat: &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;&lt;h2&gt;2. Milyen adatokat gyűjtünk&lt;/h2&gt;&lt;p&gt;Az elemzésre benyújtott üzenet szövegét és opcionálisan az URL-t. Nem hozunk létre felhasználói fiókokat és nem tárolunk személyes adatokat tartósan.&lt;/p&gt;&lt;h2&gt;3. Adatkezelés&lt;/h2&gt;&lt;p&gt;Cloudflare Workers AI (Llama 3.1). Opcionális URL-ellenőrzések: Google Safe Browsing, VirusTotal, URLhaus.&lt;/p&gt;&lt;h2&gt;4. Megőrzés&lt;/h2&gt;&lt;p&gt;Cloudflare KV gyorsítótár, 1 óra lejárat. Nincs tartós tárolás.&lt;/p&gt;&lt;h2&gt;5. Harmadik felek&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Cloudflare Inc.&lt;/li&gt;&lt;li&gt;Google Safe Browsing API&lt;/li&gt;&lt;li&gt;VirusTotal API&lt;/li&gt;&lt;li&gt;URLhaus API&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. Sütik&lt;/h2&gt;&lt;p&gt;Nem használunk nyomkövető sütiket.&lt;/p&gt;&lt;h2&gt;7. Az Ön jogai (GDPR)&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Hozzáférési jog (15. cikk)&lt;/li&gt;&lt;li&gt;Helyesbítési jog (16. cikk)&lt;/li&gt;&lt;li&gt;Törlési jog (17. cikk)&lt;/li&gt;&lt;li&gt;Korlátozáshoz való jog (18. cikk)&lt;/li&gt;&lt;li&gt;Adathordozhatóság (20. cikk)&lt;/li&gt;&lt;li&gt;Tiltakozási jog (21. cikk)&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;Írjon a &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt; címre.&lt;/p&gt;&lt;h2&gt;8. Felügyeleti hatóság&lt;/h2&gt;&lt;p&gt;ANSPDCP, Bukarest. &lt;a href="https://www.dataprotection.ro" target="_blank" rel="noopener"&gt;dataprotection.ro&lt;/a&gt;&lt;/p&gt;`,
+    uk: `&lt;h1&gt;Політика конфіденційності&lt;/h1&gt;&lt;p class="updated"&gt;Остання редакція: Березень 2026&lt;/p&gt;&lt;h2&gt;1. Контролер даних&lt;/h2&gt;&lt;p&gt;Zen Labs (zen-labs.ro)&lt;br&gt;Контакт: &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;&lt;h2&gt;2. Які дані збираємо&lt;/h2&gt;&lt;p&gt;Текст повідомлення та необов'язковий URL. Облікові записи не створюються, персональні дані постійно не зберігаються.&lt;/p&gt;&lt;h2&gt;3. Обробка&lt;/h2&gt;&lt;p&gt;Cloudflare Workers AI (Llama 3.1). Необов'язкові перевірки URL через Google Safe Browsing, VirusTotal, URLhaus.&lt;/p&gt;&lt;h2&gt;4. Зберігання&lt;/h2&gt;&lt;p&gt;Cloudflare KV кеш, 1 година. Без постійного зберігання.&lt;/p&gt;&lt;h2&gt;5. Треті сторони&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Cloudflare Inc.&lt;/li&gt;&lt;li&gt;Google Safe Browsing API&lt;/li&gt;&lt;li&gt;VirusTotal API&lt;/li&gt;&lt;li&gt;URLhaus API&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. Cookies&lt;/h2&gt;&lt;p&gt;Не використовуємо cookie для відстеження.&lt;/p&gt;&lt;h2&gt;7. Ваші права (GDPR)&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Право на доступ (ст. 15)&lt;/li&gt;&lt;li&gt;Право на виправлення (ст. 16)&lt;/li&gt;&lt;li&gt;Право на видалення (ст. 17)&lt;/li&gt;&lt;li&gt;Обмеження обробки (ст. 18)&lt;/li&gt;&lt;li&gt;Перенесення даних (ст. 20)&lt;/li&gt;&lt;li&gt;Право на заперечення (ст. 21)&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;Напишіть на &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;.&lt;/p&gt;&lt;h2&gt;8. Наглядовий орган&lt;/h2&gt;&lt;p&gt;ANSPDCP, Бухарест. &lt;a href="https://www.dataprotection.ro" target="_blank" rel="noopener"&gt;dataprotection.ro&lt;/a&gt;&lt;/p&gt;`,
+  };
+  return map[lang];
+}
+&nbsp;
+// General Terms
+function termsContent(lang: Lang): string {
+  const map: Record&lt;Lang, string&gt; = {
+    ro: `&lt;h1&gt;Termeni \u015fi Condi\u021bii Generale&lt;/h1&gt;&lt;p class="updated"&gt;Ultima actualizare: Martie 2026&lt;/p&gt;&lt;h2&gt;1. Serviciu&lt;/h2&gt;&lt;p&gt;ai-grija.ro este un instrument civic gratuit de verificare anti-phishing operat de Zen Labs. Utilizatorii pot trimite mesaje sau URL-uri suspecte pentru analiz\u0103 bazat\u0103 pe inteligen\u021b\u0103 artificial\u0103.&lt;/p&gt;&lt;h2&gt;2. Disclaimer AI&lt;/h2&gt;&lt;p&gt;Rezultatele sunt generate de inteligen\u021b\u0103 artificial\u0103 \u015fi au caracter informativ. Ele nu constituie consiliere juridic\u0103, financiar\u0103 sau de securitate.&lt;/p&gt;&lt;h2&gt;3. F\u0103r\u0103 garan\u021bii&lt;/h2&gt;&lt;p&gt;Serviciul este furnizat \u201eca atare\u201d, f\u0103r\u0103 nicio garan\u021bie de func\u021bionare ne\u00eentrerupt\u0103, acurate\u021be sau absen\u021b\u0103 a erorilor.&lt;/p&gt;&lt;h2&gt;4. Limitarea r\u0103spunderii&lt;/h2&gt;&lt;p&gt;Zen Labs nu este responsabil\u0103 pentru deciziile luate pe baza rezultatelor furnizate de instrument.&lt;/p&gt;&lt;h2&gt;5. Utilizare acceptabil\u0103&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Nu transmite\u021bi date personale ale ter\u021bilor.&lt;/li&gt;&lt;li&gt;Nu utiliza\u021bi serviciul \u00een scopuri ilegale.&lt;/li&gt;&lt;li&gt;Nu \u00eencerca\u021bi s\u0103 suprascoli\u021bi sau s\u0103 compromite\u021bi serviciul.&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. Proprietate intelectual\u0103&lt;/h2&gt;&lt;p&gt;Denumirea ai-grija.ro, logo-ul \u015fi codul proprietar apar\u021bin Zen Labs. Componentele open-source sunt sub licen\u021bele respective.&lt;/p&gt;&lt;h2&gt;7. Modific\u0103ri&lt;/h2&gt;&lt;p&gt;Putem actualiza ace\u015fti termeni. Continuarea utiliz\u0103rii serviciului constituie acceptarea noilor termeni.&lt;/p&gt;&lt;h2&gt;8. Legisla\u021bie aplicabil\u0103&lt;/h2&gt;&lt;p&gt;Legisla\u021bia rom\u00e2n\u0103. Instan\u021bele competente din Bucure\u015fti.&lt;/p&gt;&lt;h2&gt;9. Contact&lt;/h2&gt;&lt;p&gt;&lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;`,
+    en: `&lt;h1&gt;General Terms and Conditions&lt;/h1&gt;&lt;p class="updated"&gt;Last updated: March 2026&lt;/p&gt;&lt;h2&gt;1. Service&lt;/h2&gt;&lt;p&gt;ai-grija.ro is a free civic anti-phishing verification tool operated by Zen Labs (zen-labs.ro). Users can submit suspicious messages or URLs for AI-powered analysis.&lt;/p&gt;&lt;h2&gt;2. AI Disclaimer&lt;/h2&gt;&lt;p&gt;Results are generated by artificial intelligence and are for informational purposes only. They do not constitute legal, financial, or security advice. The final decision rests with the user.&lt;/p&gt;&lt;h2&gt;3. No Warranty&lt;/h2&gt;&lt;p&gt;The service is provided "as is" without any warranty of uninterrupted operation, accuracy, or error-free performance.&lt;/p&gt;&lt;h2&gt;4. Limitation of Liability&lt;/h2&gt;&lt;p&gt;Zen Labs is not liable for decisions made based on the tool's results.&lt;/p&gt;&lt;h2&gt;5. Acceptable Use&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Do not submit personal data of third parties.&lt;/li&gt;&lt;li&gt;Do not use the service for illegal purposes.&lt;/li&gt;&lt;li&gt;Do not attempt to overwhelm or compromise the service.&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. Intellectual Property&lt;/h2&gt;&lt;p&gt;The ai-grija.ro name, logo, and proprietary code are the property of Zen Labs. Open source components are under their respective licenses.&lt;/p&gt;&lt;h2&gt;7. Modifications&lt;/h2&gt;&lt;p&gt;We may update these terms. Continued use of the service constitutes acceptance of the updated terms.&lt;/p&gt;&lt;h2&gt;8. Governing Law&lt;/h2&gt;&lt;p&gt;Romanian law. Courts of Bucharest.&lt;/p&gt;&lt;h2&gt;9. Contact&lt;/h2&gt;&lt;p&gt;&lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;`,
+    bg: `&lt;h1&gt;\u041e\u0431\u0449\u0438 \u0443\u0441\u043b\u043e\u0432\u0438\u044f&lt;/h1&gt;&lt;p class="updated"&gt;\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u0430 \u0430\u043a\u0442\u0443\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f: \u041c\u0430\u0440\u0442 2026&lt;/p&gt;&lt;h2&gt;1. \u0423\u0441\u043b\u0443\u0433\u0430&lt;/h2&gt;&lt;p&gt;ai-grija.ro \u0435 \u0431\u0435\u0437\u043f\u043b\u0430\u0442\u0435\u043d \u0433\u0440\u0430\u0436\u0434\u0430\u043d\u0441\u043a\u0438 \u0438\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442 \u0437\u0430 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u0441\u0440\u0435\u0449\u0443 \u0444\u0438\u0448\u0438\u043d\u0433, \u0443\u043f\u0440\u0430\u0432\u043b\u044f\u0432\u0430\u043d \u043e\u0442 Zen Labs.&lt;/p&gt;&lt;h2&gt;2. AI \u043e\u0442\u043a\u0430\u0437 \u043e\u0442 \u043e\u0442\u0433\u043e\u0432\u043e\u0440\u043d\u043e\u0441\u0442&lt;/h2&gt;&lt;p&gt;\u0420\u0435\u0437\u0443\u043b\u0442\u0430\u0442\u0438\u0442\u0435 \u0441\u0430 \u0441\u0430\u043c\u043e \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u043e\u043d\u043d\u0438 \u0438 \u043d\u0435 \u043f\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u043b\u044f\u0432\u0430\u0442 \u043f\u0440\u0430\u0432\u043d\u0438, \u0444\u0438\u043d\u0430\u043d\u0441\u043e\u0432\u0438 \u0438\u043b\u0438 \u0441\u0435\u043a\u044e\u0440\u0438\u0442\u0435\u0442\u043d\u0438 \u043a\u043e\u043d\u0441\u0443\u043b\u0442\u0430\u0446\u0438\u0438.&lt;/p&gt;&lt;h2&gt;3. \u0411\u0435\u0437 \u0433\u0430\u0440\u0430\u043d\u0446\u0438\u0438&lt;/h2&gt;&lt;p&gt;\u0423\u0441\u043b\u0443\u0433\u0430\u0442\u0430 \u0441\u0435 \u043f\u0440\u0435\u0434\u043e\u0441\u0442\u0430\u0432\u044f \u201e\u043a\u0430\u043a\u0442\u0430 \u0435\u201c, \u0431\u0435\u0437 \u0433\u0430\u0440\u0430\u043d\u0446\u0438\u0438.&lt;/p&gt;&lt;h2&gt;4. \u041e\u0433\u0440\u0430\u043d\u0438\u0447\u0430\u0432\u0430\u043d\u0435 \u043d\u0430 \u043e\u0442\u0433\u043e\u0432\u043e\u0440\u043d\u043e\u0441\u0442\u0442\u0430&lt;/h2&gt;&lt;p&gt;Zen Labs \u043d\u0435 \u043d\u043e\u0441\u0438 \u043e\u0442\u0433\u043e\u0432\u043e\u0440\u043d\u043e\u0441\u0442 \u0437\u0430 \u0432\u0437\u0435\u0442\u0438 \u0440\u0435\u0448\u0435\u043d\u0438\u044f \u0432\u044a\u0437 \u043e\u0441\u043d\u043e\u0432\u0430 \u043d\u0430 \u0440\u0435\u0437\u0443\u043b\u0442\u0430\u0442\u0438\u0442\u0435.&lt;/p&gt;&lt;h2&gt;5. \u041f\u0440\u0438\u0435\u043c\u043b\u0438\u0432\u043e \u0438\u0437\u043f\u043e\u043b\u0437\u0432\u0430\u043d\u0435&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;\u041d\u0435 \u0438\u0437\u043f\u0440\u0430\u0449\u0430\u0439\u0442\u0435 \u043b\u0438\u0447\u043d\u0438 \u0434\u0430\u043d\u043d\u0438 \u043d\u0430 \u0442\u0440\u0435\u0442\u0438.&lt;/li&gt;&lt;li&gt;\u041d\u0435 \u0438\u0437\u043f\u043e\u043b\u0437\u0432\u0430\u0439\u0442\u0435 \u0437\u0430 \u043d\u0435\u0437\u0430\u043a\u043e\u043d\u043d\u0438 \u0446\u0435\u043b\u0438.&lt;/li&gt;&lt;li&gt;\u041d\u0435 \u043f\u0440\u0435\u0442\u043e\u0432\u0430\u0440\u0432\u0430\u0439\u0442\u0435 \u0443\u0441\u043b\u0443\u0433\u0430\u0442\u0430.&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. \u0418\u043d\u0442\u0435\u043b\u0435\u043a\u0442\u0443\u0430\u043b\u043d\u0430 \u0441\u043e\u0431\u0441\u0442\u0432\u0435\u043d\u043e\u0441\u0442&lt;/h2&gt;&lt;p&gt;ai-grija.ro \u0435 \u0441\u043e\u0431\u0441\u0442\u0432\u0435\u043d\u043e\u0441\u0442 \u043d\u0430 Zen Labs.&lt;/p&gt;&lt;h2&gt;7. \u041f\u0440\u043e\u043c\u0435\u043d\u0438&lt;/h2&gt;&lt;p&gt;\u041c\u043e\u0436\u0435\u043c \u0434\u0430 \u0430\u043a\u0442\u0443\u0430\u043b\u0438\u0437\u0438\u0440\u0430\u043c\u0435 \u0443\u0441\u043b\u043e\u0432\u0438\u044f\u0442\u0430. \u041f\u0440\u043e\u0434\u044a\u043b\u0436\u0430\u0432\u0430\u043d\u0435\u0442\u043e \u043d\u0430 \u0438\u0437\u043f\u043e\u043b\u0437\u0432\u0430\u043d\u0435 \u0435 \u043f\u0440\u0438\u0435\u043c\u0430\u043d\u0435 \u043d\u0430 \u043d\u043e\u0432\u0438\u0442\u0435 \u0443\u0441\u043b\u043e\u0432\u0438\u044f.&lt;/p&gt;&lt;h2&gt;8. \u041f\u0440\u0438\u043b\u043e\u0436\u0438\u043c\u043e \u043f\u0440\u0430\u0432\u043e&lt;/h2&gt;&lt;p&gt;\u0420\u0443\u043c\u044a\u043d\u0441\u043a\u043e \u043f\u0440\u0430\u0432\u043e. \u0421\u044a\u0434\u0438\u043b\u0438\u0449\u0430 \u043d\u0430 \u0411\u0443\u043a\u0443\u0440\u0435\u0449.&lt;/p&gt;&lt;h2&gt;9. \u041a\u043e\u043d\u0442\u0430\u043a\u0442&lt;/h2&gt;&lt;p&gt;&lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;`,
+    hu: `&lt;h1&gt;Általános Szerződési Feltételek&lt;/h1&gt;&lt;p class="updated"&gt;Utolsó frissítés: 2026. március&lt;/p&gt;&lt;h2&gt;1. Szolgáltatás&lt;/h2&gt;&lt;p&gt;Az ai-grija.ro egy ingyenes közösségi adathalászat-ellenőrző eszköz, amelyet a Zen Labs üzemeltet. A felhasználók gyanús üzeneteket vagy URL-eket küldhetnek be AI-alapú elemzésre.&lt;/p&gt;&lt;h2&gt;2. AI nyilatkozat&lt;/h2&gt;&lt;p&gt;Az eredmények csak tájékoztató jellegűek, nem minősülnek jogi, pénzügyi vagy biztonsági tanácsadásnak.&lt;/p&gt;&lt;h2&gt;3. Garancia kizárása&lt;/h2&gt;&lt;p&gt;A szolgáltatás "ahogy van" kerül nyújtásra, garancia nélkül.&lt;/p&gt;&lt;h2&gt;4. Felelősség korlátozása&lt;/h2&gt;&lt;p&gt;A Zen Labs nem vállal felelősséget az eredmények alapján hozott döntésekért.&lt;/p&gt;&lt;h2&gt;5. Elfogadható használat&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Ne küldjön harmadik felek személyes adatait.&lt;/li&gt;&lt;li&gt;Ne használja törvénytelen célokra.&lt;/li&gt;&lt;li&gt;Ne kísérelje meg túlterhelni a szolgáltatást.&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. Szellemi tulajdon&lt;/h2&gt;&lt;p&gt;Az ai-grija.ro a Zen Labs tulajdona.&lt;/p&gt;&lt;h2&gt;7. Módosítások&lt;/h2&gt;&lt;p&gt;A feltételeket frissíthetjük. A folyamatos használat elfogadást jelent.&lt;/p&gt;&lt;h2&gt;8. Alkalmazandó jog&lt;/h2&gt;&lt;p&gt;Román jog. Bukaresti bíróságok.&lt;/p&gt;&lt;h2&gt;9. Kapcsolat&lt;/h2&gt;&lt;p&gt;&lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;`,
+    uk: `&lt;h1&gt;Загальні умови використання&lt;/h1&gt;&lt;p class="updated"&gt;Остання редакція: Березень 2026&lt;/p&gt;&lt;h2&gt;1. Сервіс&lt;/h2&gt;&lt;p&gt;ai-grija.ro — безкоштовний громадський інструмент перевірки проти фішингу від Zen Labs.&lt;/p&gt;&lt;h2&gt;2. Застереження щодо AI&lt;/h2&gt;&lt;p&gt;Результати мають лише інформаційний характер і не є юридичною, фінансовою або безпековою консультацією.&lt;/p&gt;&lt;h2&gt;3. Відсутність гарантій&lt;/h2&gt;&lt;p&gt;Сервіс надається «як є», без гарантій.&lt;/p&gt;&lt;h2&gt;4. Обмеження відповідальності&lt;/h2&gt;&lt;p&gt;Zen Labs не несе відповідальності за рішення на основі результатів інструменту.&lt;/p&gt;&lt;h2&gt;5. Допустиме використання&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Не надсилайте персональні дані третіх осіб.&lt;/li&gt;&lt;li&gt;Не використовуйте для незаконних цілей.&lt;/li&gt;&lt;li&gt;Не намагайтесь перевантажити сервіс.&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. Інтелектуальна власність&lt;/h2&gt;&lt;p&gt;ai-grija.ro належить Zen Labs.&lt;/p&gt;&lt;h2&gt;7. Зміни&lt;/h2&gt;&lt;p&gt;Умови можуть оновлюватись. Продовження використання означає прийняття.&lt;/p&gt;&lt;h2&gt;8. Застосовне право&lt;/h2&gt;&lt;p&gt;Румунське право. Суди Бухаресту.&lt;/p&gt;&lt;h2&gt;9. Контакт&lt;/h2&gt;&lt;p&gt;&lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;`,
+  };
+  return map[lang];
+}
+&nbsp;
+// GDPR
+function gdprContent(lang: Lang): string {
+  const map: Record&lt;Lang, string&gt; = {
+    ro: `&lt;h1&gt;GDPR \u2013 Drepturile Tale \u015fi \u015etergerea Datelor&lt;/h1&gt;&lt;p class="updated"&gt;Ultima actualizare: Martie 2026&lt;/p&gt;&lt;h2&gt;1. Operator de date&lt;/h2&gt;&lt;p&gt;Zen Labs (zen-labs.ro)&lt;br&gt;Contact: &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;&lt;h2&gt;2. Ce date prelucr\u0103m&lt;/h2&gt;&lt;p&gt;Textul mesajelor \u015fi URL-urile op\u021bionale transmise voluntar pentru analiza de phishing. Nu este necesar\u0103 crearea unui cont. Nu colect\u0103m date de identificare personal\u0103.&lt;/p&gt;&lt;h2&gt;3. Reten\u021bia datelor&lt;/h2&gt;&lt;p&gt;Mesajele trimise sunt procesate \u00een timp real \u015fi stocate \u00een cache Cloudflare KV p\u00e2n\u0103 la 1 or\u0103. Nu stoc\u0103m permanent con\u021binut transmis de utilizatori. Statisticile agregate anonimizate (num\u0103r total verific\u0103ri) sunt re\u021binute.&lt;/p&gt;&lt;h2&gt;4. Cum solicita\u021bi \u015ftergerea&lt;/h2&gt;&lt;p&gt;Trimite\u021bi un email la &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;. Deoarece nu stoc\u0103m permanent date personale, de obicei nu exist\u0103 date de \u015fters. Vom confirma \u00een termen de 30 de zile.&lt;/p&gt;&lt;h2&gt;5. Drepturile tale GDPR&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Dreptul de acces (Art. 15)&lt;/li&gt;&lt;li&gt;Dreptul la rectificare (Art. 16)&lt;/li&gt;&lt;li&gt;Dreptul la \u015ftergere (Art. 17)&lt;/li&gt;&lt;li&gt;Dreptul la restric\u021bionarea prelucr\u0103rii (Art. 18)&lt;/li&gt;&lt;li&gt;Dreptul la portabilitatea datelor (Art. 20)&lt;/li&gt;&lt;li&gt;Dreptul la opozi\u021bie (Art. 21)&lt;/li&gt;&lt;li&gt;Dreptul de a depune o pl\u00e2ngere la autoritatea de supraveghere&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. Autoritate de supraveghere&lt;/h2&gt;&lt;p&gt;ANSPDCP&lt;br&gt;B-dul G-ral. Gheorghe Magheru 28-30, Sector 1, cod po\u015ftal 010336, Bucure\u015fti&lt;br&gt;&lt;a href="https://www.anspdcp.ro" target="_blank" rel="noopener"&gt;anspdcp.ro&lt;/a&gt;&lt;/p&gt;`,
+    en: `&lt;h1&gt;GDPR \u2013 Your Rights and Data Deletion&lt;/h1&gt;&lt;p class="updated"&gt;Last updated: March 2026&lt;/p&gt;&lt;h2&gt;1. Data Controller&lt;/h2&gt;&lt;p&gt;Zen Labs (zen-labs.ro)&lt;br&gt;Contact: &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;&lt;h2&gt;2. What Data We Process&lt;/h2&gt;&lt;p&gt;Message text and optional URLs voluntarily submitted for phishing analysis. No account creation required. No personal identification data collected.&lt;/p&gt;&lt;h2&gt;3. Data Retention&lt;/h2&gt;&lt;p&gt;Submitted messages are processed in real-time and cached in Cloudflare KV for up to 1 hour. No permanent storage of user-submitted content. Anonymized aggregate statistics (total checks count) are retained.&lt;/p&gt;&lt;h2&gt;4. How to Request Deletion&lt;/h2&gt;&lt;p&gt;Email &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;. Since we don't store personal data permanently, there is typically nothing to delete. We will confirm within 30 days.&lt;/p&gt;&lt;h2&gt;5. Your GDPR Rights&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Right of access (Art. 15)&lt;/li&gt;&lt;li&gt;Right to rectification (Art. 16)&lt;/li&gt;&lt;li&gt;Right to erasure (Art. 17)&lt;/li&gt;&lt;li&gt;Right to restriction of processing (Art. 18)&lt;/li&gt;&lt;li&gt;Right to data portability (Art. 20)&lt;/li&gt;&lt;li&gt;Right to object (Art. 21)&lt;/li&gt;&lt;li&gt;Right to lodge a complaint with the supervisory authority&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. Supervisory Authority&lt;/h2&gt;&lt;p&gt;ANSPDCP&lt;br&gt;B-dul G-ral. Gheorghe Magheru 28-30, Sector 1, postal code 010336, Bucharest&lt;br&gt;&lt;a href="https://www.anspdcp.ro" target="_blank" rel="noopener"&gt;anspdcp.ro&lt;/a&gt;&lt;/p&gt;`,
+    bg: `&lt;h1&gt;GDPR \u2013 \u0412\u0430\u0448\u0438\u0442\u0435 \u043f\u0440\u0430\u0432\u0430 \u0438 \u0438\u0437\u0442\u0440\u0438\u0432\u0430\u043d\u0435 \u043d\u0430 \u0434\u0430\u043d\u043d\u0438&lt;/h1&gt;&lt;p class="updated"&gt;\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u0430 \u0430\u043a\u0442\u0443\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f: \u041c\u0430\u0440\u0442 2026&lt;/p&gt;&lt;h2&gt;1. \u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043d\u0430 \u0434\u0430\u043d\u043d\u0438&lt;/h2&gt;&lt;p&gt;Zen Labs (zen-labs.ro)&lt;br&gt;\u041a\u043e\u043d\u0442\u0430\u043a\u0442: &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;&lt;h2&gt;2. \u041a\u0430\u043a\u0432\u0438 \u0434\u0430\u043d\u043d\u0438 \u043e\u0431\u0440\u0430\u0431\u043e\u0442\u0432\u0430\u043c\u0435&lt;/h2&gt;&lt;p&gt;\u0422\u0435\u043a\u0441\u0442 \u043d\u0430 \u0441\u044a\u043e\u0431\u0449\u0435\u043d\u0438\u044f \u0438 \u043d\u0435\u0437\u0430\u0434\u044a\u043b\u0436\u0438\u0442\u0435\u043b\u043d\u0438 URL \u0437\u0430 \u0430\u043d\u0430\u043b\u0438\u0437 \u043d\u0430 \u0444\u0438\u0448\u0438\u043d\u0433. \u041d\u0435 \u0441\u0435 \u0441\u044a\u0431\u0438\u0440\u0430\u0442 \u043b\u0438\u0447\u043d\u0438 \u0434\u0430\u043d\u043d\u0438.&lt;/p&gt;&lt;h2&gt;3. \u0421\u044a\u0445\u0440\u0430\u043d\u0435\u043d\u0438\u0435&lt;/h2&gt;&lt;p&gt;Cloudflare KV \u043a\u0435\u0448, 1 \u0447\u0430\u0441. \u0411\u0435\u0437 \u043f\u043e\u0441\u0442\u043e\u044f\u043d\u043d\u043e \u0441\u044a\u0445\u0440\u0430\u043d\u0435\u043d\u0438\u0435.&lt;/p&gt;&lt;h2&gt;4. \u0418\u0437\u0442\u0440\u0438\u0432\u0430\u043d\u0435&lt;/h2&gt;&lt;p&gt;\u041f\u0438\u0448\u0435\u0442\u0435 \u043d\u0430 &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;. \u041e\u0442\u0433\u043e\u0432\u043e\u0440 \u0432 30 \u0434\u043d\u0438.&lt;/p&gt;&lt;h2&gt;5. \u041f\u0440\u0430\u0432\u0430 \u043f\u043e GDPR&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;\u0414\u043e\u0441\u0442\u044a\u043f (\u0447\u043b. 15)&lt;/li&gt;&lt;li&gt;\u041a\u043e\u0440\u0438\u0433\u0438\u0440\u0430\u043d\u0435 (\u0447\u043b. 16)&lt;/li&gt;&lt;li&gt;\u0418\u0437\u0442\u0440\u0438\u0432\u0430\u043d\u0435 (\u0447\u043b. 17)&lt;/li&gt;&lt;li&gt;\u041e\u0433\u0440\u0430\u043d\u0438\u0447\u0430\u0432\u0430\u043d\u0435 (\u0447\u043b. 18)&lt;/li&gt;&lt;li&gt;\u041f\u0440\u0435\u043d\u043e\u0441\u0438\u043c\u043e\u0441\u0442 (\u0447\u043b. 20)&lt;/li&gt;&lt;li&gt;\u0412\u044a\u0437\u0440\u0430\u0436\u0435\u043d\u0438\u0435 (\u0447\u043b. 21)&lt;/li&gt;&lt;li&gt;\u0416\u0430\u043b\u0431\u0430 \u0434\u043e \u043d\u0430\u0434\u0437\u043e\u0440\u043d\u0438\u044f \u043e\u0440\u0433\u0430\u043d&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. \u041d\u0430\u0434\u0437\u043e\u0440\u0435\u043d \u043e\u0440\u0433\u0430\u043d&lt;/h2&gt;&lt;p&gt;ANSPDCP, \u0411\u0443\u043a\u0443\u0440\u0435\u0449. &lt;a href="https://www.anspdcp.ro" target="_blank" rel="noopener"&gt;anspdcp.ro&lt;/a&gt;&lt;/p&gt;`,
+    hu: `&lt;h1&gt;GDPR \u2013 Az Ön jogai és adattörlés&lt;/h1&gt;&lt;p class="updated"&gt;Utolsó frissítés: 2026. március&lt;/p&gt;&lt;h2&gt;1. Adatkezelő&lt;/h2&gt;&lt;p&gt;Zen Labs (zen-labs.ro)&lt;br&gt;Kapcsolat: &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;&lt;h2&gt;2. Milyen adatokat kezelünk&lt;/h2&gt;&lt;p&gt;Adathalászat-elemzéshez önkéntesen benyújtott üzenetszövegek és opcionális URL-ek. Nem szükséges fiók. Személyazonosításra alkalmas adatok nem kerülnek gyűjtésre.&lt;/p&gt;&lt;h2&gt;3. Adatmegőrzés&lt;/h2&gt;&lt;p&gt;Cloudflare KV gyorsítótár, 1 óra lejárat. Nincs tartós tárolás.&lt;/p&gt;&lt;h2&gt;4. Törlés kérése&lt;/h2&gt;&lt;p&gt;Írjon a &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt; címre. Általában nincs mit törölni. 30 napon belül válaszolunk.&lt;/p&gt;&lt;h2&gt;5. GDPR jogai&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Hozzáférés (15. cikk)&lt;/li&gt;&lt;li&gt;Helyesbítés (16. cikk)&lt;/li&gt;&lt;li&gt;Törlés (17. cikk)&lt;/li&gt;&lt;li&gt;Korlátozás (18. cikk)&lt;/li&gt;&lt;li&gt;Adathordozhatóság (20. cikk)&lt;/li&gt;&lt;li&gt;Tiltakozás (21. cikk)&lt;/li&gt;&lt;li&gt;Panasz a felügyeleti hatóságnál&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. Felügyeleti hatóság&lt;/h2&gt;&lt;p&gt;ANSPDCP, Bukarest. &lt;a href="https://www.anspdcp.ro" target="_blank" rel="noopener"&gt;anspdcp.ro&lt;/a&gt;&lt;/p&gt;`,
+    uk: `&lt;h1&gt;GDPR \u2013 Ваші права та видалення даних&lt;/h1&gt;&lt;p class="updated"&gt;Остання редакція: Березень 2026&lt;/p&gt;&lt;h2&gt;1. Контролер даних&lt;/h2&gt;&lt;p&gt;Zen Labs (zen-labs.ro)&lt;br&gt;Контакт: &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;&lt;/p&gt;&lt;h2&gt;2. Які дані обробляємо&lt;/h2&gt;&lt;p&gt;Текст повідомлень та URL для аналізу фішингу. Без облікових записів. Без збору персональних даних.&lt;/p&gt;&lt;h2&gt;3. Зберігання&lt;/h2&gt;&lt;p&gt;Cloudflare KV кеш, 1 година. Без постійного зберігання.&lt;/p&gt;&lt;h2&gt;4. Запит на видалення&lt;/h2&gt;&lt;p&gt;Напишіть на &lt;a href="mailto:contact@ai-grija.ro"&gt;contact@ai-grija.ro&lt;/a&gt;. Зазвичай немає що видаляти. Відповідь протягом 30 днів.&lt;/p&gt;&lt;h2&gt;5. Ваші права за GDPR&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Доступ (ст. 15)&lt;/li&gt;&lt;li&gt;Виправлення (ст. 16)&lt;/li&gt;&lt;li&gt;Видалення (ст. 17)&lt;/li&gt;&lt;li&gt;Обмеження (ст. 18)&lt;/li&gt;&lt;li&gt;Перенесення (ст. 20)&lt;/li&gt;&lt;li&gt;Заперечення (ст. 21)&lt;/li&gt;&lt;li&gt;Скарга до наглядового органу&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;6. Наглядовий орган&lt;/h2&gt;&lt;p&gt;ANSPDCP, Бухарест. &lt;a href="https://www.anspdcp.ro" target="_blank" rel="noopener"&gt;anspdcp.ro&lt;/a&gt;&lt;/p&gt;`,
+  };
+  return map[lang];
+}
+&nbsp;
+const pageTitles: Record&lt;string, Record&lt;Lang, string&gt;&gt; = {
+  privacy: { ro: 'Politica de Confiden\u021bialitate \u2013 ai-grija.ro', en: 'Privacy Policy \u2013 ai-grija.ro', bg: '\u041f\u043e\u043b\u0438\u0442\u0438\u043a\u0430 \u0437\u0430 \u043f\u043e\u0432\u0435\u0440\u0438\u0442\u0435\u043b\u043d\u043e\u0441\u0442 \u2013 ai-grija.ro', hu: 'Adatvédelmi tájékoztató \u2013 ai-grija.ro', uk: '\u041f\u043e\u043b\u0456\u0442\u0438\u043a\u0430 \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0441\u0442\u0456 \u2013 ai-grija.ro' },
+  terms: { ro: 'Termeni \u015fi Condi\u021bii \u2013 ai-grija.ro', en: 'Terms and Conditions \u2013 ai-grija.ro', bg: '\u041e\u0431\u0449\u0438 \u0443\u0441\u043b\u043e\u0432\u0438\u044f \u2013 ai-grija.ro', hu: 'Általános Feltételek \u2013 ai-grija.ro', uk: '\u0423\u043c\u043e\u0432\u0438 \u0432\u0438\u043a\u043e\u0440\u0438\u0441\u0442\u0430\u043d\u043d\u044f \u2013 ai-grija.ro' },
+  gdpr: { ro: 'GDPR \u2013 Drepturile Tale \u2013 ai-grija.ro', en: 'GDPR \u2013 Your Rights \u2013 ai-grija.ro', bg: 'GDPR \u2013 \u0412\u0430\u0448\u0438\u0442\u0435 \u043f\u0440\u0430\u0432\u0430 \u2013 ai-grija.ro', hu: 'GDPR \u2013 Az Ön jogai \u2013 ai-grija.ro', uk: 'GDPR \u2013 \u0412\u0430\u0448\u0456 \u043f\u0440\u0430\u0432\u0430 \u2013 ai-grija.ro' },
+};
+&nbsp;
+const policies = new Hono&lt;{ Bindings: Env }&gt;();
+&nbsp;
+policies.get('/policies/privacy', (c) =&gt; {
+  const lang = getLang(c.req.query('lang'));
+  return c.html(buildPage({ lang, path: '/policies/privacy', title: pageTitles.privacy[lang], content: privacyContent(lang) }));
+});
+&nbsp;
+policies.get('/policies/general-terms', (c) =&gt; {
+  const lang = getLang(c.req.query('lang'));
+  return c.html(buildPage({ lang, path: '/policies/general-terms', title: pageTitles.terms[lang], content: termsContent(lang) }));
+});
+&nbsp;
+policies.get('/gdpr', (c) =&gt; {
+  const lang = getLang(c.req.query('lang'));
+  return c.html(buildPage({ lang, path: '/gdpr', title: pageTitles.gdpr[lang], content: gdprContent(lang) }));
+});
+&nbsp;
+export { policies };
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-03-01T07:00:21.575Z
+            </div>
+        <script src="../../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../../sorter.js"></script>
+        <script src="../../../../block-navigation.js"></script>
+    </body>
+</html>
+    

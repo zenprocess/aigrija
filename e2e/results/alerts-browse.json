@@ -1,0 +1,88 @@
+{
+  "story": "Navigare alerte active",
+  "timestamp": "2026-03-01T19:59:54.177Z",
+  "baseUrl": "http://localhost:8787",
+  "passes": {
+    "load": {
+      "status": "pass",
+      "duration": 82,
+      "message": "Page loaded in 82ms (< 3s requirement) - HTTP 200"
+    },
+    "interact": {
+      "status": "pass",
+      "duration": 2997,
+      "message": "All 3 steps executed successfully",
+      "stepCount": 3
+    },
+    "api": {
+      "status": "pass",
+      "duration": 2147,
+      "message": "5 requests successful (2xx), no failures",
+      "requests": [
+        {
+          "url": "http://localhost:8787/",
+          "status": 200,
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:8787/assets/index-CHV3wn5m.js",
+          "status": 200,
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:8787/assets/index-vvHdA4N9.css",
+          "status": 200,
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:8787/api/alerts",
+          "status": 200,
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:8787/api/counter",
+          "status": 200,
+          "method": "GET"
+        }
+      ]
+    },
+    "console": {
+      "status": "pass",
+      "duration": 2646,
+      "message": "No critical errors detected (0 warnings)",
+      "errors": [],
+      "warnings": []
+    },
+    "vision": {
+      "status": "pass",
+      "duration": 2745,
+      "message": "Full-page screenshot captured, content visible",
+      "screenshotPath": "e2e/results/pass5-vision-fullpage.png"
+    },
+    "responsive": {
+      "status": "pass",
+      "duration": 5553,
+      "message": "Screenshots captured at 3 breakpoints",
+      "viewports": [
+        {
+          "width": 375,
+          "height": 667,
+          "path": "e2e/results/pass6-responsive-375px.png"
+        },
+        {
+          "width": 768,
+          "height": 1024,
+          "path": "e2e/results/pass6-responsive-768px.png"
+        },
+        {
+          "width": 1440,
+          "height": 900,
+          "path": "e2e/results/pass6-responsive-1440px.png"
+        }
+      ]
+    }
+  },
+  "overallStatus": "pass",
+  "testsPassed": 6,
+  "testsFailed": 0
+}

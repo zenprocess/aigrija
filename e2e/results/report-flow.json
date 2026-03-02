@@ -1,0 +1,126 @@
+{
+  "name": "Generare raport autoritati",
+  "description": "Utilizatorul verifica un mesaj suspect si acceseaza sectiunea de raportare",
+  "startTime": "2026-03-01T20:00:14.876Z",
+  "passes": {
+    "load": {
+      "status": "pass",
+      "duration": 286,
+      "screenshot": "/tmp/pass1-load-report.png",
+      "notes": "Page loaded successfully in 286ms"
+    },
+    "interact": {
+      "status": "pass",
+      "duration": 17075,
+      "screenshots": [
+        "/tmp/pass2-step1-navigate-report.png",
+        "/tmp/pass2-step2-textarea-ready-report.png",
+        "/tmp/pass2-step3-text-filled-report.png",
+        "/tmp/pass2-step4-submitted-report.png",
+        "/tmp/pass2-step5-results-ready-report.png",
+        "/tmp/pass2-step6-verdict-report.png",
+        "/tmp/pass2-step8-final-report.png"
+      ],
+      "notes": "All interaction steps executed successfully. Phishing detected: true. DNSC link found: false",
+      "errors": []
+    },
+    "api": {
+      "status": "pass",
+      "duration": 0,
+      "requests": [
+        {
+          "url": "http://localhost:8787/",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/site.webmanifest",
+          "method": "GET",
+          "status": 503
+        },
+        {
+          "url": "http://localhost:8787/assets/index-CHV3wn5m.js",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/assets/index-vvHdA4N9.css",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/api/counter",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/api/alerts",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/site.webmanifest",
+          "method": "GET",
+          "status": 503
+        },
+        {
+          "url": "http://localhost:8787/assets/index-vvHdA4N9.css",
+          "method": "GET",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:8787/assets/index-CHV3wn5m.js",
+          "method": "GET",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:8787/api/counter",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/api/alerts",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/api/check",
+          "method": "POST",
+          "status": 429
+        }
+      ]
+    },
+    "console": {
+      "status": "pass",
+      "duration": 0,
+      "errors": []
+    },
+    "vision": {
+      "status": "pass",
+      "duration": 995,
+      "screenshot": "/tmp/pass5-vision-report-full.png",
+      "description": "Layout is properly rendered with visible content and appropriate spacing. Phishing verdict is displayed. DNSC reporting information is visible."
+    },
+    "responsive": {
+      "status": "pass",
+      "duration": 6767,
+      "screenshots": {
+        "mobile": "/tmp/pass6-responsive-mobile-375px-report.png",
+        "tablet": "/tmp/pass6-responsive-tablet-768px-report.png",
+        "desktop": "/tmp/pass6-responsive-desktop-1440px-report.png"
+      },
+      "notes": "All responsive breakpoints render correctly with proper phishing detection (mobile 375px, tablet 768px, desktop 1440px)"
+    }
+  },
+  "summary": {
+    "totalPasses": 6,
+    "totalFails": 0,
+    "overallStatus": "pass"
+  },
+  "endTime": "2026-03-01T20:00:41.316Z"
+}

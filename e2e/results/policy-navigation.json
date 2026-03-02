@@ -1,0 +1,65 @@
+{
+  "storyName": "Navigare politici legale",
+  "description": "Utilizatorul verifica paginile legale in romana",
+  "baseUrl": "http://localhost:8787",
+  "timestamp": "2026-03-01T19:44:43.854Z",
+  "status": "ok",
+  "passes": {
+    "load": {
+      "status": "pass",
+      "details": "Page loaded in 60ms (threshold: 3000ms)"
+    },
+    "interact": {
+      "status": "pass",
+      "details": "All 9 steps executed successfully in 3358ms",
+      "screenshots": [
+        "step1-navigate-privacy",
+        "step2-wait-back-btn",
+        "step3-privacy-ro",
+        "step4-assert-confidentialitate",
+        "step5-assert-napoi",
+        "step6-navigate-termeni",
+        "step7-wait-body",
+        "step8-termeni-ro",
+        "step9-assert-termeni"
+      ]
+    },
+    "api": {
+      "status": "pass",
+      "details": "All 3 network requests returned 2xx/3xx",
+      "requests": [
+        {
+          "url": "http://localhost:8787/",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/assets/index-vvHdA4N9.css",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8787/assets/index-CHV3wn5m.js",
+          "status": 200
+        }
+      ]
+    },
+    "console": {
+      "status": "pass",
+      "errors": []
+    },
+    "vision": {
+      "status": "pass",
+      "details": "Full-page layout is correct, heading visible, body dimensions valid",
+      "screenshot": "05-vision-full-page.png"
+    },
+    "responsive": {
+      "status": "pass",
+      "details": "Page renders correctly at all 3 breakpoints (375, 768, 1440px)",
+      "screenshots": {
+        "mobile": "06-responsive-mobile-375px.png",
+        "tablet": "06-responsive-tablet-768px.png",
+        "desktop": "06-responsive-desktop-1440px.png"
+      }
+    }
+  },
+  "overallResult": "PASS: All 6 passes completed successfully"
+}

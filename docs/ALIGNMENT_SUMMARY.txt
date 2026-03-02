@@ -1,0 +1,235 @@
+================================================================================
+                 INFISICAL SECRETS ALIGNMENT AUDIT — SUMMARY
+================================================================================
+
+Repository: ai-grija (Cloudflare Workers)
+Project ID: e0b19aba-bb80-4118-90ab-3a7fd5ecabfd
+Audit Date: 2026-03-02
+Status: ANALYSIS COMPLETE — ACTION ITEMS IDENTIFIED
+
+================================================================================
+                              INVENTORY SNAPSHOT
+================================================================================
+
+Total Environment Variables in Code:        25
+├─ Cloudflare Bindings (non-secret):       8  (ASSETS, AI, CACHE, DB, ADMIN_DB, DRAFT_QUEUE, STORAGE, ANALYTICS)
+├─ Configuration (non-secret):             2  (BASE_URL, CORS_ORIGINS)
+├─ API Secrets (require Infisical):       16  (need verification)
+└─ Unused Declarations:                    3  (PHISHTANK_API_KEY, LAUNCHDARKLY_SDK_KEY, CF_ACCESS_TEAM_DOMAIN)
+
+GitHub Actions Secrets:                     6  (separate, in GitHub)
+E2E Test Variables:                         4  (separate, testing only)
+Sanity Studio Variables:                    2  (separate, studio build only)
+
+================================================================================
+                         CRITICAL FINDINGS & GAPS
+================================================================================
+
+FINDING 1: THREE UNUSED DECLARATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+These are declared in src/worker/lib/types.ts but NEVER used in code:
+
+  ✗ PHISHTANK_API_KEY      — No implementation found
+  ✗ LAUNCHDARKLY_SDK_KEY   — No implementation found  
+  ✗ CF_ACCESS_TEAM_DOMAIN  — No implementation found
+
+ACTION: Remove from types.ts or implement the features.
+FILE: /Users/vvladescu/Desktop/aigrija/OUT-REPO/src/worker/lib/types.ts (lines 19, 25, 28)
+
+================================================================================
+
+FINDING 2: UNVERIFIED SECRETS (CANNOT ACCESS INFISICAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+16 secrets are used in code but coverage in Infisical cannot be verified.
+Need API access to confirm all are present and have valid values:
+
+CRITICAL (used frequently):
+  ? ADMIN_API_KEY              — Admin endpoint protection
+  ? GOOGLE_SAFE_BROWSING_KEY   — URL malware detection (used 2 files)
+  ? VIRUSTOTAL_API_KEY         — Threat scanning (used 4 files)
+
+MESSAGING (background tasks):
+  ? TELEGRAM_BOT_TOKEN         — Telegram bot auth (used 2 files)
+  ? TELEGRAM_WEBHOOK_SECRET    — Webhook verification
+  ? TELEGRAM_ADMIN_CHAT_ID     — Internal alerts
+  ? WHATSAPP_ACCESS_TOKEN      — WhatsApp API auth
+  ? WHATSAPP_VERIFY_TOKEN      — Webhook challenge
+  ? WHATSAPP_APP_SECRET        — Webhook signing
+  ? WHATSAPP_PHONE_NUMBER_ID   — Bot phone identifier
+
+OPTIONAL (graceful fallback if missing):
+  ? BUTTONDOWN_API_KEY         — Newsletter (optional)
+  ? SANITY_PROJECT_ID          — CMS project (optional)
+  ? SANITY_DATASET             — CMS dataset (optional)
+  ? SANITY_WRITE_TOKEN         — CMS publishing (optional)
+  ? SANITY_WEBHOOK_SECRET      — Webhook verification (optional)
+  ? URLHAUS_AUTH_KEY           — Malware DB fallback (optional)
+
+ACTION: Call Infisical API to list all 3 environments:
+  mcp__infisical__list-secrets(projectId="e0b19aba-bb80-4118-90ab-3a7fd5ecabfd", environmentSlug="dev")
+  mcp__infisical__list-secrets(projectId="e0b19aba-bb80-4118-90ab-3a7fd5ecabfd", environmentSlug="test")
+  mcp__infisical__list-secrets(projectId="e0b19aba-bb80-4118-90ab-3a7fd5ecabfd", environmentSlug="prod")
+
+================================================================================
+
+FINDING 3: NO HARDCODED SECRETS FOUND
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ PASS — No API keys, tokens, or credentials found hardcoded in source code.
+
+Safe hardcodes (configuration):
+  ✓ DEFAULT_CORS_ORIGINS = ['https://ai-grija.ro', 'https://admin.ai-grija.ro']
+  ✓ BASE_URL = "https://ai-grija.ro" (in wrangler.toml)
+
+STATUS: CLEAN — All secrets properly externalized.
+
+================================================================================
+
+FINDING 4: ALL USED SECRETS ARE DECLARED IN TYPE DEFINITION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ PASS — No orphan env.* access without declaration.
+
+Code patterns audited:
+  • c.env.VARIABLE (19 usages across all routes/admin)
+  • env.VARIABLE (25 usages across all libraries)
+  • process.env.VARIABLE (4 usages in e2e tests)
+
+STATUS: NO GAPS — All used variables are declared in src/worker/lib/types.ts
+
+================================================================================
+                        ENVIRONMENT CONSISTENCY MATRIX
+================================================================================
+
+Should be SAME across dev/test/prod:
+  → GOOGLE_SAFE_BROWSING_KEY   (API key is environment-agnostic)
+  → VIRUSTOTAL_API_KEY         (API key is environment-agnostic)
+  → URLHAUS_AUTH_KEY           (API key is environment-agnostic)
+
+Should be DIFFERENT across dev/test/prod:
+  → ADMIN_API_KEY              (credentials vary per environment)
+  → TELEGRAM_BOT_TOKEN         (separate bots)
+  → TELEGRAM_WEBHOOK_SECRET    (separate webhooks)
+  → TELEGRAM_ADMIN_CHAT_ID     (different chat IDs)
+  → WHATSAPP_VERIFY_TOKEN      (separate webhooks)
+  → WHATSAPP_ACCESS_TOKEN      (separate apps)
+  → WHATSAPP_APP_SECRET        (separate apps)
+  → WHATSAPP_PHONE_NUMBER_ID   (separate phone numbers)
+  → BUTTONDOWN_API_KEY         (separate newsletters)
+  → SANITY_PROJECT_ID          (separate CMS projects)
+  → SANITY_DATASET             (separate datasets)
+  → SANITY_WRITE_TOKEN         (separate tokens)
+  → SANITY_WEBHOOK_SECRET      (separate webhooks)
+
+STATUS: CANNOT VERIFY — need Infisical access to confirm correct distribution.
+
+================================================================================
+                           CODE USAGE STATISTICS
+================================================================================
+
+Routes using secrets:
+  • src/worker/routes/check-qr.ts        — GOOGLE_SAFE_BROWSING_KEY, VIRUSTOTAL_API_KEY, URLHAUS_AUTH_KEY
+  • src/worker/routes/openapi-check.ts   — GOOGLE_SAFE_BROWSING_KEY, VIRUSTOTAL_API_KEY, URLHAUS_AUTH_KEY
+  • src/worker/routes/telegram.ts        — TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET, VIRUSTOTAL_API_KEY
+  • src/worker/routes/whatsapp.ts        — WHATSAPP_VERIFY_TOKEN, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_APP_SECRET, VIRUSTOTAL_API_KEY
+  • src/worker/routes/admin-flags.ts     — ADMIN_API_KEY
+  • src/worker/routes/counter.ts         — ADMIN_API_KEY
+  • src/worker/routes/newsletter.ts      — BUTTONDOWN_API_KEY
+  • src/worker/routes/weekly.ts          — BUTTONDOWN_API_KEY
+  • src/worker/routes/blog.ts            — SANITY_WEBHOOK_SECRET
+  • src/worker/admin/activity.ts         — ADMIN_API_KEY
+  • src/worker/admin/analytics.ts        — ADMIN_API_KEY
+  • src/worker/admin/drafts.ts           — ADMIN_API_KEY
+
+Libraries using secrets:
+  • src/worker/lib/alerter.ts            — TELEGRAM_BOT_TOKEN, TELEGRAM_ADMIN_CHAT_ID
+  • src/worker/lib/telegram-digest.ts    — TELEGRAM_BOT_TOKEN, TELEGRAM_ADMIN_CHAT_ID
+  • src/worker/lib/sanity.ts             — SANITY_PROJECT_ID, SANITY_DATASET
+  • src/worker/lib/sanity-writer.ts      — SANITY_PROJECT_ID, SANITY_DATASET, SANITY_WRITE_TOKEN
+  • src/worker/lib/admin-auth.ts         — CACHE (not a secret)
+  • src/worker/lib/security-headers.ts   — CORS_ORIGINS (config, not secret)
+
+E2E tests:
+  • Base URL override for testing
+  • CF Access credentials for preview environment access
+
+================================================================================
+                              RECOMMENDED ACTIONS
+================================================================================
+
+IMMEDIATE (Do First):
+───────────────────
+1. Remove unused declarations from src/worker/lib/types.ts:
+   [ ] PHISHTANK_API_KEY (line 19)
+   [ ] LAUNCHDARKLY_SDK_KEY (line 28)
+   [ ] CF_ACCESS_TEAM_DOMAIN (line 25)
+
+2. Verify Infisical has all 16 required secrets:
+   [ ] Call mcp__infisical__list-secrets for dev, test, prod
+   [ ] Check all secrets have non-empty values
+   [ ] Check no secrets contain "REPLACE_ME" or "PLACEHOLDER"
+
+SHORT TERM (This Week):
+──────────────────────
+3. Verify environment-specific values:
+   [ ] ADMIN_API_KEY differs across dev/test/prod
+   [ ] Test bots (TELEGRAM_*) use sandbox accounts
+   [ ] Test messaging (WHATSAPP_*) use test phone numbers
+   [ ] Production values use live credentials
+
+4. Document secret rotation policy:
+   [ ] When to rotate ADMIN_API_KEY
+   [ ] When to rotate third-party API keys
+   [ ] Who has access to Infisical
+   [ ] Who approves key rotation
+
+5. Sync GitHub Workflow secrets:
+   [ ] CLOUDFLARE_API_TOKEN (from Infisical)
+   [ ] CLOUDFLARE_ACCOUNT_ID (from Infisical)
+   [ ] PULUMI_ACCESS_TOKEN (from Infisical)
+
+LONG TERM (This Month):
+───────────────────────
+6. Add automated secret validation to CI:
+   [ ] Verify all declared secrets exist in Infisical
+   [ ] Verify no secrets in GitHub that shouldn't be there
+   [ ] Automated rotation reminders
+
+================================================================================
+                              FILES REFERENCED
+================================================================================
+
+Type Definitions:
+  → /Users/vvladescu/Desktop/aigrija/OUT-REPO/src/worker/lib/types.ts (22 secrets declared)
+
+Configuration:
+  → /Users/vvladescu/Desktop/aigrija/OUT-REPO/wrangler.toml (bindings + vars)
+
+Documentation:
+  → /Users/vvladescu/Desktop/aigrija/OUT-REPO/docs/INFISICAL_AUDIT.md (full report)
+  → /Users/vvladescu/Desktop/aigrija/OUT-REPO/docs/SECRETS_CHECKLIST.md (quick ref)
+
+Rules (Project Policy):
+  → /Users/vvladescu/Desktop/aigrija/.claude/rules/secrets-infisical.md
+  → /Users/vvladescu/Desktop/aigrija/.claude/rules/draconic-security.md
+
+================================================================================
+                                  CONCLUSION
+================================================================================
+
+✓ Code alignment: CLEAN
+  • All used secrets are declared
+  • No hardcoded credentials found
+  • Proper externalization via Infisical
+
+? Infisical coverage: UNVERIFIED
+  • Cannot access Infisical API to confirm all secrets present
+  • Need manual verification of 16 required secrets
+  • Need to check for placeholder/empty values
+
+✗ Technical debt: MINOR
+  • 3 unused declarations should be removed
+  • 0 critical issues preventing deployment
+
+OVERALL ASSESSMENT: Ready for Infisical verification step
+                    (audit roadblock is MCP access, not code issues)
+
+================================================================================

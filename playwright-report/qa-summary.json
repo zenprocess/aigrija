@@ -1,0 +1,84 @@
+{
+  "timestamp": "2026-02-28T19:55:09.244Z",
+  "base_url": "http://localhost:8787",
+  "passes": {
+    "load": {
+      "status": "pass",
+      "load_time_ms": 686
+    },
+    "console": {
+      "status": "pass",
+      "error_count": 0
+    },
+    "accessibility": {
+      "status": "pass",
+      "images_missing_alt": 0,
+      "interactive_without_aria": 0,
+      "data_testids_found": 0
+    },
+    "sections": {
+      "status": "pass",
+      "passed": 7,
+      "total": 7
+    },
+    "responsive": {
+      "status": "pass",
+      "breakpoints": [
+        "desktop@1440x900",
+        "tablet@768x1024",
+        "mobile@390x844"
+      ]
+    }
+  },
+  "console_errors": [],
+  "page_errors": [],
+  "accessibility": {
+    "images_missing_alt": [],
+    "interactive_without_aria": [],
+    "data_testid_warnings": [
+      "No data-testid attributes found"
+    ]
+  },
+  "sections": {
+    "header_brand": {
+      "status": "pass",
+      "description": "Header with ai-grija.ro text"
+    },
+    "hero_suspect": {
+      "status": "pass",
+      "description": "Hero with \"suspect\" text"
+    },
+    "cum_functioneaza": {
+      "status": "pass",
+      "description": "Cum functioneaza section"
+    },
+    "campanii_phishing": {
+      "status": "pass",
+      "description": "Campanii de phishing active section"
+    },
+    "despre": {
+      "status": "pass",
+      "description": "Despre ai-grija.ro section"
+    },
+    "footer_zen": {
+      "status": "pass",
+      "description": "Footer with Zen Labs"
+    },
+    "form_textarea": {
+      "status": "pass",
+      "description": "Form textarea present"
+    }
+  },
+  "screenshots": {
+    "desktop": "screenshots/desktop.png",
+    "mobile": "screenshots/mobile.png",
+    "tablet": "screenshots/tablet.png"
+  },
+  "summary": {
+    "total_passes": 5,
+    "passed": 5,
+    "failed": 0,
+    "warned": 0,
+    "overall": "ok"
+  }
+}

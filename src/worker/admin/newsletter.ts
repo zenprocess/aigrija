@@ -157,7 +157,7 @@ newsletterAdmin.get('/export', async (c) => {
       rows.push(...data.results);
       hasMore = data.next !== null && data.results.length > 0;
       page++;
-      if (page > 20) break;
+      if (page > 20) break; // Safety cap: max 1000 subscribers (20 pages × 50/page)
     }
   } catch (err) {
     structuredLog('error', 'admin_newsletter_export_failed', { error: String(err) });
@@ -199,7 +199,7 @@ newsletterAdmin.delete('/:email', async (c) => {
 
   if (c.env.CACHE) {
     try {
-      await c.env.CACHE.delete(`consent:${email}`);
+      await c.env.CACHE.delete(`consent:email:${email}`);
       structuredLog('info', 'admin_newsletter_consent_purged', { email });
     } catch (err) {
       structuredLog('warn', 'admin_newsletter_consent_purge_failed', { email, error: String(err) });

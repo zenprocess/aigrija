@@ -186,7 +186,7 @@ describe('newsletterAdmin', () => {
       expect(res.status).toBe(200);
       const html = await res.text();
       expect(html).toBe('');
-      expect((env.CACHE as ReturnType<typeof makeKV>).delete).toHaveBeenCalledWith('consent:ion@test.ro');
+      expect((env.CACHE as ReturnType<typeof makeKV>).delete).toHaveBeenCalledWith('consent:email:ion@test.ro');
     });
 
     it('returns 500 when BUTTONDOWN_API_KEY is missing', async () => {

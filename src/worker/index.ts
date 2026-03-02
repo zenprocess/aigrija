@@ -150,6 +150,18 @@ app.route('/', quiz);
 app.route('/', translationReport);
 app.route('/', newsletter);
 
+// Asset fallback: for any route not matched by Hono, try the ASSETS binding.
+// This is required because run_worker_first = true intercepts all requests before
+// Cloudflare's asset handler, so static files (index.html, JS, CSS, etc.) would
+// otherwise return 404.
+app.notFound(async (c) => {
+  const response = await c.env.ASSETS.fetch(c.req.raw);
+  if (response.status !== 404) {
+    return response;
+  }
+  return c.json({ error: { code: 'NOT_FOUND', message: 'Pagina nu a fost gasita.' } }, 404);
+});
+
 // Admin host routing
 // Requests from admin.ai-grija.ro are handled by the admin app
 // On localhost, requests to /admin/* are also routed to the admin app

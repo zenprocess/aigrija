@@ -14,7 +14,8 @@ resources/
 # Playwright
 playwright-report/
 test-results/
-
+allure-results/
+allure-report/
 # Extension packaged builds
 extension/*.zip
 

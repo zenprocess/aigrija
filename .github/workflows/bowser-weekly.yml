@@ -29,7 +29,9 @@ jobs:
         if: always()
         with:
           name: bowser-weekly-report
-          path: playwright-report/
+          path: |
+            playwright-report/
+            allure-results/
       - name: Deduplicate issues per failed story
         if: steps.bowser.outcome == 'failure'
         env:
@@ -40,3 +42,48 @@ jobs:
           FAILED=$(jq -r '.stories[] | select(.status == "FAIL") | .name' "$SUMMARY" 2>/dev/null)
           [ -z "$FAILED" ] && exit 0
           for story in $FAILED; do EXISTING=$(gh issue list --label "qa:fail" --state open --search "$story in:title" --json number --jq '.[0].number' 2>/dev/null); ERROR=$(jq -r --arg s "$story" '.stories[] | select(.name == $s) | .error // "No details"' "$SUMMARY"); if [ -n "$EXISTING" ] && [ "$EXISTING" != "null" ]; then gh issue comment "$EXISTING" --body "Bowser weekly $(date -u +%Y-%m-%d): still failing. Error: $ERROR. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"; else gh issue create --title "QA: $story — Bowser weekly failure" --label "auto-detected,qa:fail" --body "Story: $story failed in Bowser weekly run. Error: $ERROR. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"; fi; done
+
+  allure-report:
+    name: Publish Allure Report
+    needs: exploratory
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          name: bowser-weekly-report
+          path: .
+        continue-on-error: true
+
+      - name: Load previous Allure history
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+        continue-on-error: true
+
+      - name: Copy history
+        run: |
+          mkdir -p allure-results/history
+          cp -r gh-pages/reports/allure/history/* allure-results/history/ 2>/dev/null || true
+
+      - name: Generate Allure Report
+        uses: simple-elf/allure-report-action@v1.9
+        if: always()
+        with:
+          allure_results: allure-results
+          allure_history: allure-history
+          keep_reports: 30
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        if: always()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: allure-history
+          destination_dir: reports/allure

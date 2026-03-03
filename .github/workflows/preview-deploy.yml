@@ -303,12 +303,12 @@ jobs:
   # (simple-elf base image removed; step-security fork adds unwanted abstractions).
   # History is preserved across runs for trend graphs.
   # A PR comment is posted with a direct link to the published report.
-  # Runs on both push and PR events so every run gets a report.
+  # Only runs on push (merge to main/feature branch), not on PR events.
   # ---------------------------------------------------------------------------
   allure-report:
     name: Publish Allure report
     needs: bowser-test
-    if: always()
+    if: always() && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write        # needed to push to gh-pages

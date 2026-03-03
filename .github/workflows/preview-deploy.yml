@@ -302,7 +302,6 @@ jobs:
   # Uses allure-commandline npm package — avoids fragile Docker-based actions
   # (simple-elf base image removed; step-security fork adds unwanted abstractions).
   # History is preserved across runs for trend graphs.
-  # A PR comment is posted with a direct link to the published report.
   # Only runs on push (merge to main/feature branch), not on PR events.
   # ---------------------------------------------------------------------------
   allure-report:

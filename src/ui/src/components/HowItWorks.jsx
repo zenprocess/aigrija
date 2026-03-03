@@ -8,17 +8,17 @@ export default function HowItWorks() {
   const steps = [
     {
       icon: ClipboardPaste,
-      iconColor: 'text-blue-400',
-      bgColor: 'bg-blue-500/20',
-      glow: 'shadow-[0_0_20px_rgba(37,99,235,0.2)]',
+      iconColor: 'text-green-400',
+      bgColor: 'bg-green-500/20',
+      glow: 'shadow-[0_0_20px_rgba(22,163,74,0.2)]',
       titleKey: 'how_it_works.step1_title',
       descKey: 'how_it_works.step1_desc',
     },
     {
       icon: Brain,
-      iconColor: 'text-purple-400',
-      bgColor: 'bg-purple-500/20',
-      glow: 'shadow-[0_0_20px_rgba(168,85,247,0.2)]',
+      iconColor: 'text-green-400',
+      bgColor: 'bg-green-500/20',
+      glow: 'shadow-[0_0_20px_rgba(22,163,74,0.2)]',
       titleKey: 'how_it_works.step2_title',
       descKey: 'how_it_works.step2_desc',
     },
@@ -38,12 +38,12 @@ export default function HowItWorks() {
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 inline-block relative">
             {t('how_it_works.title')}
-            <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50"></div>
+            <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-green-500 to-transparent opacity-50"></div>
           </h2>
         </div>
 
         <div className="relative">
-          <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500/10 via-purple-500/30 to-green-500/10 -translate-y-1/2 z-0"></div>
+          <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-green-500/10 via-green-500/30 to-green-500/10 -translate-y-1/2 z-0"></div>
 
           <div className="grid md:grid-cols-3 gap-8 relative z-10">
             {steps.map((step, idx) => (

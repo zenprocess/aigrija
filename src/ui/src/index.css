@@ -33,7 +33,7 @@
 
 /* Focus visible — WCAG 2.2 AA */
 :focus-visible {
-  outline: 3px solid #3b82f6;
+  outline: 3px solid #22c55e;
   outline-offset: 2px;
 }
 

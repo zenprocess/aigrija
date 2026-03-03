@@ -48,7 +48,7 @@ describe('HeroAscii component', () => {
 
   it('handles mobile responsiveness', () => {
     expect(source).toContain('isMobile');
-    expect(source).toContain('MOBILE_SHIELD_LINES');
+    expect(source).toContain('buildMobileShieldLines');
   });
 });
 

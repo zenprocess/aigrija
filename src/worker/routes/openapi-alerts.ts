@@ -81,13 +81,13 @@ export class AlertsEndpoint extends OpenAPIRoute {
 }
 
 const EmergingCampaignSchema = z.object({
-  id: z.string(),
-  scam_type: z.string(),
   domain: z.string().optional(),
+  scam_type: z.string(),
   report_count: z.number(),
-  confidence: z.number(),
-  first_detected: z.number(),
-  last_seen: z.number(),
+  first_seen: z.string(),
+  last_seen: z.string(),
+  source: z.literal('community'),
+  status: z.literal('investigating'),
 });
 
 const AlertsEmergingResponseSchema = z.object({

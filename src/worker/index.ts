@@ -164,7 +164,6 @@ openapi.post('/api/quiz/check', QuizCheckEndpoint);
 openapi.get('/api/health/metrics', MetricsEndpoint);
 openapi.get('/api/share/:id', ShareEndpoint);
 
-
 // Admin feature flag routes
 app.route('/', adminFlags);
 

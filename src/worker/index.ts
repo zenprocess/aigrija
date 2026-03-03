@@ -192,11 +192,31 @@ app.route('/', translationReport);
 app.route('/', newsletter);
 app.route('/', gepa);
 
+// Explicit service worker route — prevents SPA catch-all from serving HTML
+app.get('/sw.js', async (c) => {
+  return c.body(
+    '// Minimal SW for PWA installability\nself.addEventListener("install", () => self.skipWaiting());\nself.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));\n',
+    200,
+    { 'Content-Type': 'application/javascript', 'Cache-Control': 'public, max-age=0, must-revalidate' }
+  );
+});
+
 // Asset fallback: for any route not matched by Hono, try the ASSETS binding.
 // This is required because run_worker_first = true intercepts all requests before
 // Cloudflare's asset handler, so static files (index.html, JS, CSS, etc.) would
 // otherwise return 404.
 app.notFound(async (c) => {
+  // Don't serve SPA fallback for file-extension requests (prevents /sw.js#/termeni leak)
+  const pathExt = c.req.path.match(/\.\w{2,5}$/);
+  if (pathExt) {
+    const response = await c.env.ASSETS.fetch(c.req.raw);
+    if (response.status !== 404 && !response.headers.get('content-type')?.includes('text/html')) {
+      return response;
+    }
+    // Static file not found — return 404 directly, no SPA fallback
+    const rid = c.get('requestId') || 'unknown';
+    return c.json({ error: { code: 'NOT_FOUND', message: 'Fisierul nu a fost gasit.' }, request_id: rid }, 404);
+  }
   const response = await c.env.ASSETS.fetch(c.req.raw);
   if (response.status !== 404) {
     return response;

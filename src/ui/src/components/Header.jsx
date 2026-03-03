@@ -44,10 +44,10 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => { window.location.hash = ''; window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
-            <div className="p-1.5 bg-blue-600/20 rounded-lg border border-blue-500/30">
-              <ShieldCheck className="w-6 h-6 text-blue-500" />
+            <div className="p-1.5 bg-green-600/20 rounded-lg border border-green-500/30">
+              <ShieldCheck className="w-6 h-6 text-green-500" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-white">ai-grija<span className="text-blue-500">.ro</span></span>
+            <span className="text-xl font-bold tracking-tight text-white">ai-grija<span className="text-green-500">.ro</span></span>
           </div>
 
           {/* Desktop Nav */}

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="refresh" content="15" />
+  <title>Eroare temporara — ai-grija.ro</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0f172a;
+      color: #e2e8f0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .card {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 1rem;
+      max-width: 520px;
+      width: 100%;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    }
+    .icon { display: flex; justify-content: center; margin-bottom: 1.5rem; }
+    .icon svg { width: 64px; height: 64px; color: #22c55e; }
+    .brand {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 1.125rem; font-weight: 700; color: #22c55e;
+      text-decoration: none; margin-bottom: 1.5rem;
+    }
+    .brand-dot { width: 8px; height: 8px; background-color: #22c55e; border-radius: 50%; display: inline-block; }
+    h1 { font-size: 1.5rem; font-weight: 700; color: #f1f5f9; margin-bottom: 0.75rem; line-height: 1.3; }
+    p.subtitle { font-size: 0.9375rem; color: #94a3b8; line-height: 1.6; margin-bottom: 1.75rem; }
+    .refresh-note { font-size: 0.8125rem; color: #64748b; margin-bottom: 1.5rem; }
+    .refresh-note span { color: #22c55e; font-weight: 600; }
+    .btn {
+      display: inline-block; background-color: #22c55e; color: #0f172a;
+      font-weight: 700; font-size: 0.9375rem; padding: 0.625rem 1.75rem;
+      border-radius: 0.5rem; text-decoration: none; border: none; cursor: pointer;
+    }
+    .btn:hover { background-color: #16a34a; }
+    .cf-error-box {
+      margin-top: 1.5rem; padding: 1rem; background-color: #0f172a;
+      border: 1px solid #334155; border-radius: 0.5rem; font-size: 0.75rem;
+      color: #64748b; text-align: left; word-break: break-word;
+    }
+    .cf-error-box:empty { display: none; }
+    footer { margin-top: 2.5rem; font-size: 0.75rem; color: #475569; }
+    footer a { color: #22c55e; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="3"/>
+        <circle cx="22" cy="25" r="3" fill="currentColor"/>
+        <circle cx="42" cy="25" r="3" fill="currentColor"/>
+        <path d="M20 44 Q32 36 44 44" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+      </svg>
+    </div>
+    <a class="brand" href="https://ai-grija.ro"><span class="brand-dot"></span>ai-grija.ro</a>
+    <h1>Serviciul este temporar indisponibil</h1>
+    <p class="subtitle">Platforma de prevenire a fraudelor AI este momentan inaccesibila. Echipa noastra a fost notificata si lucreaza la rezolvarea problemei.</p>
+    <p class="refresh-note">Pagina se va reincarca automat in <span>15 secunde</span>.</p>
+    <a class="btn" href="/">Incearca din nou</a>
+    <div class="cf-error-box">::CLOUDFLARE_ERROR_500S_BOX::</div>
+    <div class="cf-error-box">::CLOUDFLARE_ERROR_1000S_BOX::</div>
+  </div>
+  <footer>&copy; 2026 <a href="https://ai-grija.ro">ai-grija.ro</a> &mdash; Protectie impotriva fraudelor online</footer>
+</body>
+</html>

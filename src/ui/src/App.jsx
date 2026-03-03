@@ -19,7 +19,7 @@ function LoadingSkeleton() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
         <p className="text-gray-400 text-sm font-mono">Se incarca...</p>
       </div>
     </div>
@@ -33,7 +33,7 @@ const CONTENT_CATEGORIES = ['amenintari', 'ghid', 'educatie', 'povesti', 'rapoar
 function PageShell({ children }) {
   return (
     <ErrorBoundary>
-      <div className="min-h-screen flex flex-col relative selection:bg-blue-500/30 selection:text-white overflow-x-hidden">
+      <div className="min-h-screen flex flex-col relative selection:bg-green-500/30 selection:text-white overflow-x-hidden">
         <div className={`fixed inset-0 bg-[url('${BG_PATTERN}')] opacity-30 pointer-events-none z-0`} />
         <Header />
         <main className="flex-grow">
@@ -102,7 +102,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen flex flex-col relative selection:bg-blue-500/30 selection:text-white overflow-x-hidden">
+      <div className="min-h-screen flex flex-col relative selection:bg-green-500/30 selection:text-white overflow-x-hidden">
         <a href="#main-content" className="skip-to-content">Treci la continut principal</a>
         <div className={`fixed inset-0 bg-[url('${BG_PATTERN}')] opacity-30 pointer-events-none z-0`} />
 

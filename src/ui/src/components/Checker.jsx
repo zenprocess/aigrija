@@ -118,7 +118,7 @@ export default function Checker() {
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText('https://ai-grija.ro');
+    navigator.clipboard.writeText(buildShareUrl());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -142,7 +142,7 @@ export default function Checker() {
 
   return (
     <section id="verifica" className="py-20 relative z-20">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="glass-card p-6 md:p-8 relative overflow-hidden group">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] opacity-50"></div>

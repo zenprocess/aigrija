@@ -34,7 +34,7 @@ import { cdnProtection } from './middleware/cdn-protection';
 import { admin } from './admin';
 import { createOpenAPIApp } from './lib/openapi';
 import { CheckEndpoint } from './routes/openapi-check';
-import { AlertsEndpoint } from './routes/openapi-alerts';
+import { AlertsEndpoint, AlertsEmergingEndpoint, AlertsBySlugEndpoint } from './routes/openapi-alerts';
 import { HealthEndpoint, DeepHealthEndpoint } from './routes/openapi-health';
 import { CheckImageEndpoint } from './routes/openapi-check-image';
 import { CheckQrEndpoint } from './routes/openapi-check-qr';
@@ -138,13 +138,15 @@ app.use('/api/*', cors({
 // Wrap with chanfana for OpenAPI docs at /docs
 const openapi = createOpenAPIApp(app);
 
-// OpenAPI-documented routes
+// OpenAPI-documented routes (chanfana — auto-generates /openapi.json)
 openapi.post('/api/check', CheckEndpoint);
-openapi.get('/api/alerts', AlertsEndpoint);
-openapi.get('/health', HealthEndpoint);
-openapi.get('/health/deep', DeepHealthEndpoint);
 openapi.post('/api/check/image', CheckImageEndpoint);
 openapi.post('/api/check-qr', CheckQrEndpoint);
+openapi.get('/api/alerts', AlertsEndpoint);
+openapi.get('/api/alerts/emerging', AlertsEmergingEndpoint);
+openapi.get('/api/alerts/:slug', AlertsBySlugEndpoint);
+openapi.get('/health', HealthEndpoint);
+openapi.get('/health/deep', DeepHealthEndpoint);
 openapi.get('/api/counter', CounterEndpoint);
 openapi.get('/api/reports', ReportsEndpoint);
 openapi.post('/api/reports/:id/vote', VoteEndpoint);
@@ -161,6 +163,7 @@ openapi.get('/api/quiz', QuizEndpoint);
 openapi.post('/api/quiz/check', QuizCheckEndpoint);
 openapi.get('/api/health/metrics', MetricsEndpoint);
 openapi.get('/api/share/:id', ShareEndpoint);
+
 
 // Admin feature flag routes
 app.route('/', adminFlags);

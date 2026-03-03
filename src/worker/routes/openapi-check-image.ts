@@ -138,7 +138,8 @@ export class CheckImageEndpoint extends OpenAPIRoute {
       }
     } catch (err) {
       structuredLog('error', 'vision_model_failed', { error: String(err) });
-      imageAnalysis = 'Analiza vizuala nu a putut fi finalizata. Modelul de viziune nu este disponibil.';
+      imageAnalysis = '';
+      visionVerdict = 'suspicious';
     }
 
     let classification;
@@ -147,7 +148,20 @@ export class CheckImageEndpoint extends OpenAPIRoute {
       if (visionVerdict === 'phishing' && classification.verdict === 'likely_safe') {
         classification = { ...classification, verdict: 'suspicious' as const };
       }
+    } else if (!imageAnalysis) {
+      // Vision failed and no text context — cannot analyze
+      classification = {
+        verdict: 'suspicious' as const,
+        confidence: 0.0,
+        scam_type: 'Analiza indisponibila',
+        red_flags: [] as string[],
+        explanation: 'Analiza vizuala nu este disponibila momentan. Va rugam sa incercati din nou sau sa furnizati textul mesajului.',
+        recommended_actions: ['Incercati din nou mai tarziu', 'Furnizati textul mesajului pentru analiza text'],
+        model_used: VISION_MODEL,
+        ai_disclaimer: 'Analiza generata de AI. Rezultatele sunt orientative si nu constituie consiliere juridica.',
+      };
     } else {
+      // Vision succeeded, no text context — use vision-only classification
       classification = {
         verdict: visionVerdict,
         confidence: visionVerdict === 'phishing' ? 0.85 : visionVerdict === 'suspicious' ? 0.60 : 0.80,

@@ -70,8 +70,7 @@ async function verifyJWT(token: string, teamDomain: string, kv: KVNamespace): Pr
   const parts = token.split('.');
   if (parts.length !== 3) return null;
 
-  const headerStr = JSON.parse(new TextDecoder().decode(base64urlDecode(parts[0])));
-  const kid = headerStr.kid as string | undefined;
+  const { kid } = JSON.parse(new TextDecoder().decode(base64urlDecode(parts[0]))) as { kid?: string };
 
   const certs = await fetchCFAccessCerts(teamDomain, kv);
   if (!certs) return null;
@@ -112,8 +111,8 @@ async function verifyJWT(token: string, teamDomain: string, kv: KVNamespace): Pr
     }
   }
 
-  const signedData = toUint8Array(new TextEncoder().encode(`${parts[0]}.${parts[1]}`));
-  const signature = toUint8Array(base64urlDecode(parts[2]));
+  const signedData = new TextEncoder().encode(`${parts[0]}.${parts[1]}`) as Uint8Array<ArrayBuffer>;
+  const signature = base64urlDecode(parts[2]) as Uint8Array<ArrayBuffer>;
 
   let valid = false;
   try {

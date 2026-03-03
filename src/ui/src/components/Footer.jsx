@@ -179,7 +179,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-8">
           <div className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-tight text-white">ai-grija<span className="text-blue-500">.ro</span></span>
+            <span className="text-xl font-bold tracking-tight text-white">ai-grija<span className="text-green-500">.ro</span></span>
           </div>
 
           <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm text-gray-400">
@@ -221,7 +221,7 @@ export default function Footer() {
               {t('footer.report_translation')}
             </button>
 
-            <a data-testid="footer-link-github" href="https://github.com/zenprocess/aigrija" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
+            <a data-testid="footer-link-github" href="https://github.com/zenprocess/aigrija/discussions/categories/q-a" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
               <Github className="w-4 h-4" />
               <span>{t('footer.github')}</span>
             </a>

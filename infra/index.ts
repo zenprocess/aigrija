@@ -215,6 +215,25 @@ for (const { configKey, secretName } of secretDefs) {
 }
 
 // ---------------------------------------------------------------------------
+// CF Custom Error Pages — served from R2 CDN for edge-level 500 and 1000 errors
+// ---------------------------------------------------------------------------
+const cfErrorPageUrl = "https://cdn.ai-grija.ro/cf-error.html";
+
+new cloudflare.CustomPages("custom-error-500", {
+  zoneId,
+  type: "500Errors",
+  url: cfErrorPageUrl,
+  state: "customized",
+});
+
+new cloudflare.CustomPages("custom-error-1000", {
+  zoneId,
+  type: "1000Errors",
+  url: cfErrorPageUrl,
+  state: "customized",
+});
+
+// ---------------------------------------------------------------------------
 // Stack Outputs
 // ---------------------------------------------------------------------------
 export const kvNamespaceId = kvNamespace.id;

@@ -71,9 +71,6 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 describe('handleScheduled', () => {
   describe('scraper — 0 0 * * *', () => {

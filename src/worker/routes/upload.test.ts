@@ -160,7 +160,6 @@ describe("AI fallback/degradation", () => {
     const body = await res.json() as any;
     expect(body.classification).toBeDefined();
     expect(body.classification.verdict).toBe("suspicious");
-    expect(["phishing", "suspicious", "likely_safe"]).toContain(body.classification.verdict);
     expect(body.classification.model_used).toBeDefined();
     expect(body.classification.ai_disclaimer).toBeDefined();
     expect(body.classification.recommended_actions).toBeInstanceOf(Array);

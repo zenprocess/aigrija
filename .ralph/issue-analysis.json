@@ -1,0 +1,111 @@
+{
+  "summary": {
+    "total": 13,
+    "by_type": {
+      "bug": {
+        "count": 1,
+        "avg_staleness": 0,
+        "stale_count": 0
+      },
+      "unknown": {
+        "count": 12,
+        "avg_staleness": 2,
+        "stale_count": 0
+      }
+    }
+  },
+  "issues": [
+    {
+      "number": 320,
+      "title": "test: add tests for OpenAPI chanfana route endpoints",
+      "type": "unknown",
+      "complexity": "unknown",
+      "staleness_days": 0
+    },
+    {
+      "number": 319,
+      "title": "refactor: CSP middleware duplication — extract to shared middleware",
+      "type": "unknown",
+      "complexity": "unknown",
+      "staleness_days": 0
+    },
+    {
+      "number": 318,
+      "title": "test: add unit tests for cron-handler.ts",
+      "type": "unknown",
+      "complexity": "unknown",
+      "staleness_days": 0
+    },
+    {
+      "number": 317,
+      "title": "refactor: deduplicate shared helpers between Telegram and WhatsApp routes",
+      "type": "unknown",
+      "complexity": "unknown",
+      "staleness_days": 0
+    },
+    {
+      "number": 316,
+      "title": "fix: timing-safe comparison missing in webhook signature verification",
+      "type": "bug",
+      "complexity": "unknown",
+      "staleness_days": 0
+    },
+    {
+      "number": 299,
+      "title": "TEST: Upgrade Bowser story assertions from body.contains to structural checks",
+      "type": "unknown",
+      "complexity": "unknown",
+      "staleness_days": 3
+    },
+    {
+      "number": 298,
+      "title": "TEST: Add share flow e2e — verify share URL, not root domain",
+      "type": "unknown",
+      "complexity": "unknown",
+      "staleness_days": 3
+    },
+    {
+      "number": 297,
+      "title": "TEST: Add asset integrity tests — favicon, logo, brand colors",
+      "type": "unknown",
+      "complexity": "unknown",
+      "staleness_days": 3
+    },
+    {
+      "number": 296,
+      "title": "TEST: Add blog category route tests",
+      "type": "unknown",
+      "complexity": "unknown",
+      "staleness_days": 3
+    },
+    {
+      "number": 295,
+      "title": "TEST: Add routing boundary spec — static assets must not return SPA HTML",
+      "type": "unknown",
+      "complexity": "unknown",
+      "staleness_days": 3
+    },
+    {
+      "number": 294,
+      "title": "TEST: Add AI fallback/degradation e2e and unit tests",
+      "type": "unknown",
+      "complexity": "unknown",
+      "staleness_days": 3
+    },
+    {
+      "number": 285,
+      "title": "Epic: BDD Test Hardening — Close Coverage Gaps",
+      "type": "unknown",
+      "complexity": "unknown",
+      "staleness_days": 3
+    },
+    {
+      "number": 282,
+      "title": "CI should validate CF_ACCESS_TEAM_DOMAIN is set before deploy",
+      "type": "unknown",
+      "complexity": "low",
+      "staleness_days": 3
+    }
+  ],
+  "generated_at": "2026-03-06T20:33:36Z"
+}

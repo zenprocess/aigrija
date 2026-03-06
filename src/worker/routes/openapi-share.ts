@@ -35,7 +35,7 @@ export class ShareEndpoint extends OpenAPIRoute {
     const rid = c.get('requestId') || 'unknown';
     const origin = c.req.header('Origin');
 
-    if (!UUID_RE.test(id)) {
+    if (!id || !UUID_RE.test(id)) {
       return c.json(
         { error: { code: 'VALIDATION_ERROR', message: 'ID invalid. Se asteapta un UUID.' }, request_id: rid },
         400

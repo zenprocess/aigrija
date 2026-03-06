@@ -5,8 +5,7 @@ import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib
 import { classify } from '../lib/classifier';
 import { structuredLog } from '../lib/logger';
 import { ImageUploadSchema, formatZodError } from '../lib/schemas';
-
-const VISION_MODEL = '@cf/meta/llava-1.5-7b-hf';
+import { VISION_MODEL } from '../lib/constants';
 
 const upload = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 

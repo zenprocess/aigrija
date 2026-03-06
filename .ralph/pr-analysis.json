@@ -1,0 +1,75 @@
+{
+  "hotspot_files": [
+    {
+      "file": "src/worker/index.ts",
+      "count": 10
+    },
+    {
+      "file": ".github/workflows/preview-deploy.yml",
+      "count": 7
+    }
+  ],
+  "high_friction_prs": [
+    {
+      "number": 278,
+      "title": "fix: UI consistency — green palette, smaller hero, ASCII i18n",
+      "comment_count": 8
+    },
+    {
+      "number": 269,
+      "title": "feat: Test Intelligence (allure, tags, CI reorder)",
+      "comment_count": 11
+    },
+    {
+      "number": 188,
+      "title": "feat: Maturity sweep + GDPR + open-source hardening",
+      "comment_count": 9
+    }
+  ],
+  "churn_rate": 3462,
+  "merge_velocity": 0,
+  "active_areas": [
+    {
+      "directory": "src/worker/routes",
+      "count": 55
+    },
+    {
+      "directory": "src/worker/lib",
+      "count": 43
+    },
+    {
+      "directory": "e2e",
+      "count": 26
+    },
+    {
+      "directory": "e2e/stories",
+      "count": 23
+    },
+    {
+      "directory": "src/worker/admin",
+      "count": 22
+    },
+    {
+      "directory": "docs/adrs",
+      "count": 19
+    },
+    {
+      "directory": ".github/workflows",
+      "count": 18
+    },
+    {
+      "directory": "src/worker",
+      "count": 13
+    },
+    {
+      "directory": "infra",
+      "count": 11
+    },
+    {
+      "directory": "migrations",
+      "count": 8
+    }
+  ],
+  "total_prs_analyzed": 18,
+  "generated_at": "2026-03-06T20:33:31Z"
+}

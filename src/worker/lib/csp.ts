@@ -34,9 +34,9 @@ export const SECURITY_HEADERS_PUBLIC_CSP =
  * Hono middleware that sets Content-Security-Policy on all responses.
  */
 export function cspMiddleware(policy: string): MiddlewareHandler {
-  return async (_c, next) => {
+  return async (c, next) => {
     await next();
-    _c.res.headers.set('Content-Security-Policy', policy);
+    c.res.headers.set('Content-Security-Policy', policy);
   };
 }
 
@@ -44,11 +44,11 @@ export function cspMiddleware(policy: string): MiddlewareHandler {
  * Hono middleware that sets Content-Security-Policy only on HTML responses.
  */
 export function cspHtmlMiddleware(policy: string): MiddlewareHandler {
-  return async (_c, next) => {
+  return async (c, next) => {
     await next();
-    const ct = _c.res.headers.get('Content-Type') ?? '';
+    const ct = c.res.headers.get('Content-Type') ?? '';
     if (ct.includes('text/html')) {
-      _c.res.headers.set('Content-Security-Policy', policy);
+      c.res.headers.set('Content-Security-Policy', policy);
     }
   };
 }

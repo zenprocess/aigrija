@@ -5,6 +5,7 @@ import { analyzeUrl } from '../lib/url-analyzer';
 import { checkRateLimit } from '../lib/rate-limiter';
 import { recordConsent, revokeConsent, updateLastActive } from '../lib/gdpr-consent';
 import { structuredLog } from '../lib/logger';
+import { timingSafeEqual } from '../lib/webhook-verify';
 
 const whatsapp = new Hono<{ Bindings: Env }>();
 
@@ -213,7 +214,7 @@ async function verifyHmacSha256(secret: string, rawBody: string, signatureHeader
   );
   const sig = await crypto.subtle.sign('HMAC', key, enc.encode(rawBody));
   const computed = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
-  return computed === expected;
+  return timingSafeEqual(computed, expected);
 }
 
 // ── Routes ────────────────────────────────────────────────────────────────────

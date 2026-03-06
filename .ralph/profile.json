@@ -1,0 +1,74 @@
+{
+  "project_id": "zenprocess/aigrija",
+  "visibility": "private",
+  "stack": {
+    "primary": "typescript",
+    "runtime": "cloudflare-workers",
+    "framework": "hono",
+    "frontend": "react",
+    "databases": [
+      "d1",
+      "kv",
+      "r2"
+    ],
+    "stacks": [
+      {
+        "name": "typescript",
+        "paths": [
+          "./",
+          "e2e/",
+          "extension/",
+          "infra/",
+          "scripts/",
+          "src/",
+          "studio/"
+        ],
+        "weight": 1
+      }
+    ],
+    "secondary_stacks": []
+  },
+  "testing": {
+    "unit": "npx vitest run",
+    "e2e": "npx playwright test",
+    "contract": null,
+    "bdd": null,
+    "min_coverage": 80
+  },
+  "decomposition": {
+    "max_story_complexity": "medium",
+    "preferred_agents": [
+      "devops-cf",
+      "qa-specialist",
+      "react-specialist",
+      "ts-fullstack"
+    ],
+    "tdd_required": false,
+    "contract_first": false,
+    "max_parallel_agents": 5,
+    "context_budget_pct": 40,
+    "interface_owner_first": true,
+    "rag_mandatory": false
+  },
+  "quality": {
+    "pre_commit": [
+      "npx tsc --noEmit",
+      "npx vitest run"
+    ],
+    "pre_merge": [
+      "npx vitest run",
+      "npx playwright test"
+    ],
+    "coverage_gate": 80
+  },
+  "assessor": {
+    "eval_dimensions": [
+      "goal",
+      "effort",
+      "plan",
+      "assumptions"
+    ],
+    "gepa_enabled": true,
+    "feedback_source": "github-issues"
+  }
+}

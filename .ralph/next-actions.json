@@ -1,0 +1,47 @@
+[
+  {
+    "rank": 1,
+    "title": "Refactor hotspot file src/worker/index.ts (changed in 0% of PRs)",
+    "rationale": "File appears in 0% of PRs, indicating high churn",
+    "score": 60,
+    "type": "refactor",
+    "related_issue": null,
+    "suggested_agent": "ts-fullstack"
+  },
+  {
+    "rank": 2,
+    "title": "Refactor hotspot file .github/workflows/preview-deploy.yml (changed in 0% of PRs)",
+    "rationale": "File appears in 0% of PRs, indicating high churn",
+    "score": 60,
+    "type": "refactor",
+    "related_issue": null,
+    "suggested_agent": "ts-fullstack"
+  },
+  {
+    "rank": 3,
+    "title": "Improve code clarity in area touched by PR #278 (avg 0 review comments)",
+    "rationale": "PR #278 had high review friction",
+    "score": 60,
+    "type": "refactor",
+    "related_issue": 278,
+    "suggested_agent": "ts-fullstack"
+  },
+  {
+    "rank": 4,
+    "title": "Improve code clarity in area touched by PR #269 (avg 0 review comments)",
+    "rationale": "PR #269 had high review friction",
+    "score": 60,
+    "type": "refactor",
+    "related_issue": 269,
+    "suggested_agent": "ts-fullstack"
+  },
+  {
+    "rank": 5,
+    "title": "Improve code clarity in area touched by PR #188 (avg 0 review comments)",
+    "rationale": "PR #188 had high review friction",
+    "score": 60,
+    "type": "refactor",
+    "related_issue": 188,
+    "suggested_agent": "ts-fullstack"
+  }
+]

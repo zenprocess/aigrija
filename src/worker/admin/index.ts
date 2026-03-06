@@ -16,6 +16,7 @@ import { structuredLog } from '../lib/logger';
 import { gdprAdmin } from './gdpr';
 import { flagsAdmin } from './flags';
 import { newsletterAdmin } from './newsletter';
+import { cspHtmlMiddleware, ADMIN_CSP } from '../lib/csp';
 
 type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 
@@ -24,23 +25,8 @@ const admin = new Hono<AdminEnv>();
 // Apply CF Access auth to all admin routes
 admin.use('*', adminAuth);
 
-// Content-Security-Policy middleware for all admin HTML responses
-const ADMIN_CSP = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com/htmx.org@",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https://cdn.ai-grija.ro",
-  "connect-src 'self'",
-  "frame-ancestors 'none'",
-].join('; ');
-
-admin.use('*', async (c, next) => {
-  await next();
-  const ct = c.res.headers.get('Content-Type') ?? '';
-  if (ct.includes('text/html')) {
-    c.res.headers.set('Content-Security-Policy', ADMIN_CSP);
-  }
-});
+// Content-Security-Policy middleware for all admin HTML responses — shared from lib/csp
+admin.use('*', cspHtmlMiddleware(ADMIN_CSP));
 
 // --- Dashboard ---
 admin.get('/', (c) => {

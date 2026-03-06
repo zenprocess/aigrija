@@ -31,6 +31,7 @@ import { newsletter } from './routes/newsletter';
 import { gepa } from './routes/gepa';
 import { handleScheduled } from './lib/cron-handler';
 import { cdnProtection } from './middleware/cdn-protection';
+import { cspMiddleware, PUBLIC_CSP } from './lib/csp';
 import { admin } from './admin';
 import { createOpenAPIApp } from './lib/openapi';
 import { CheckEndpoint } from './routes/openapi-check';
@@ -100,32 +101,14 @@ app.onError((err, c) => {
 app.use('/alerte/*', secureHeaders());
 app.use('/alerte', secureHeaders());
 
-// Content-Security-Policy for SSR pages
-const CSP_VALUE = "default-src 'self'; script-src 'self' https://cloud.umami.is; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self';";
-app.use('/alerte/*', async (c, next) => {
-  await next();
-  c.res.headers.set('Content-Security-Policy', CSP_VALUE);
-});
-app.use('/alerte', async (c, next) => {
-  await next();
-  c.res.headers.set('Content-Security-Policy', CSP_VALUE);
-});
-app.use('/policies/*', async (c, next) => {
-  await next();
-  c.res.headers.set('Content-Security-Policy', CSP_VALUE);
-});
-app.use('/gdpr', async (c, next) => {
-  await next();
-  c.res.headers.set('Content-Security-Policy', CSP_VALUE);
-});
-app.use('/og/*', async (c, next) => {
-  await next();
-  c.res.headers.set('Content-Security-Policy', CSP_VALUE);
-});
-app.use('/card/*', async (c, next) => {
-  await next();
-  c.res.headers.set('Content-Security-Policy', CSP_VALUE);
-});
+// Content-Security-Policy for SSR pages — shared middleware from lib/csp
+const publicCsp = cspMiddleware(PUBLIC_CSP);
+app.use('/alerte/*', publicCsp);
+app.use('/alerte', publicCsp);
+app.use('/policies/*', publicCsp);
+app.use('/gdpr', publicCsp);
+app.use('/og/*', publicCsp);
+app.use('/card/*', publicCsp);
 
 // CORS only on public API routes
 app.use('/api/*', cors({

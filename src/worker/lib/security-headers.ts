@@ -1,5 +1,6 @@
 import type { MiddlewareHandler } from 'hono';
 import type { Env } from './types';
+import { SECURITY_HEADERS_ADMIN_CSP, SECURITY_HEADERS_PUBLIC_CSP } from './csp';
 
 const DEFAULT_CORS_ORIGINS = ['https://ai-grija.ro', 'https://admin.ai-grija.ro'];
 
@@ -18,11 +19,7 @@ export function securityHeaders(): MiddlewareHandler {
 
     c.header(
       'Content-Security-Policy',
-      isAdmin
-        // CDN dependencies (htmx, tailwind) require unsafe-inline for styles and external script-src
-        ? "default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.r2.dev; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-        // Tailwind (CDN build) injects styles at runtime — unsafe-inline required until a build step is added
-        : "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.r2.dev; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+      isAdmin ? SECURITY_HEADERS_ADMIN_CSP : SECURITY_HEADERS_PUBLIC_CSP
     );
     c.header('X-Content-Type-Options', 'nosniff');
     c.header('X-Frame-Options', 'DENY');

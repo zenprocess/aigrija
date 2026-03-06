@@ -138,6 +138,16 @@ jobs:
       - name: Build static assets
         run: pnpm run build
 
+      - name: Validate CF_ACCESS_TEAM_DOMAIN
+        run: |
+          if [ -z "$CF_ACCESS_TEAM_DOMAIN" ]; then
+            echo "::error::CF_ACCESS_TEAM_DOMAIN is not set. Add it as a GitHub secret or variable before deploying."
+            exit 1
+          fi
+          echo "CF_ACCESS_TEAM_DOMAIN is set"
+        env:
+          CF_ACCESS_TEAM_DOMAIN: ${{ secrets.CF_ACCESS_TEAM_DOMAIN }}
+
       # Retries 3x with 10 s base wait. nick-fields/retry applies exponential
       # backoff internally, covering transient Cloudflare API 502s on the
       # Workers schedules endpoint without hand-rolling a bash loop.

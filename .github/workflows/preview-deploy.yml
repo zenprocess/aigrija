@@ -135,9 +135,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build static assets
-        run: pnpm run build
-
       - name: Validate CF_ACCESS_TEAM_DOMAIN
         run: |
           if [ -z "$CF_ACCESS_TEAM_DOMAIN" ]; then
@@ -147,6 +144,9 @@ jobs:
           echo "CF_ACCESS_TEAM_DOMAIN is set"
         env:
           CF_ACCESS_TEAM_DOMAIN: ${{ secrets.CF_ACCESS_TEAM_DOMAIN }}
+
+      - name: Build static assets
+        run: pnpm run build
 
       # Retries 3x with 10 s base wait. nick-fields/retry applies exponential
       # backoff internally, covering transient Cloudflare API 502s on the

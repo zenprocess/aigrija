@@ -6,6 +6,7 @@ import { checkRateLimit } from '../lib/rate-limiter';
 import { recordConsent, revokeConsent, updateLastActive } from '../lib/gdpr-consent';
 import { structuredLog } from '../lib/logger';
 import { timingSafeEqual } from '../lib/webhook-verify';
+import { extractUrls, simpleHash, formatAnalysisReply } from '../lib/bot-helpers';
 
 const whatsapp = new Hono<{ Bindings: Env }>();
 
@@ -44,76 +45,6 @@ interface WhatsAppWebhookBody {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function extractUrls(text: string): string[] {
-  const urlRegex = /https?:\/\/[^\s]+|www\.[^\s]+/gi;
-  return text.match(urlRegex) ?? [];
-}
-
-function verdictEmoji(verdict: string): string {
-  if (verdict === 'phishing') return '🔴';
-  if (verdict === 'suspicious') return '🟡';
-  return '🟢';
-}
-
-function verdictLabel(verdict: string): string {
-  if (verdict === 'phishing') return 'PHISHING DETECTAT';
-  if (verdict === 'suspicious') return 'MESAJ SUSPECT';
-  return 'PROBABIL SIGUR';
-}
-
-function simpleHash(text: string): string {
-  let h = 2166136261;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = (h * 16777619) >>> 0;
-  }
-  return h.toString(16).padStart(8, '0');
-}
-
-function formatAnalysisReply(
-  result: Awaited<ReturnType<typeof classify>>,
-  urlFlags: string[],
-  isForwarded?: boolean,
-  cardUrl?: string
-): string {
-  const emoji = verdictEmoji(result.verdict);
-  const label = verdictLabel(result.verdict);
-  const confidencePct = Math.round(result.confidence * 100);
-
-  const lines: string[] = [
-    `${emoji} *${label}*`,
-    `_Confidenta: ${confidencePct}%_`,
-    '',
-    `Explicatie:`,
-    result.explanation,
-  ];
-
-  const allFlags = [...result.red_flags, ...urlFlags];
-  if (allFlags.length > 0) {
-    lines.push('', 'Semne de alarma:');
-    for (const flag of allFlags) {
-      lines.push(`- ${flag}`);
-    }
-  }
-
-  if (result.recommended_actions.length > 0) {
-    lines.push('', 'Actiuni recomandate:');
-    result.recommended_actions.forEach((action, i) => {
-      lines.push(`${i + 1}. ${action}`);
-    });
-  }
-
-  if (isForwarded) {
-    lines.push('', '⚠️ Mesaj redirecționat detectat — analizat automat.');
-  }
-  if (cardUrl) {
-    lines.push('', `📊 Card verificare: ${cardUrl}`);
-  }
-  lines.push('', 'Verifica pe https://ai-grija.ro');
-
-  return lines.join('\n');
-}
 
 async function sendWhatsAppMessage(
   accessToken: string,
@@ -355,7 +286,7 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
         const hash = simpleHash(text);
         const cardUrl = `${baseUrl}/card/${hash}`;
 
-        const replyText = formatAnalysisReply(classification, urlFlags, isForwarded, cardUrl);
+        const replyText = formatAnalysisReply(classification, urlFlags, { format: 'whatsapp', isForwarded, cardUrl });
 
         if (isForwarded) {
           // Send interactive message with action buttons for forwarded messages

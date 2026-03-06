@@ -8,7 +8,7 @@ import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib
 import { classify } from '../lib/classifier';
 import { structuredLog } from '../lib/logger';
 
-const VISION_MODEL = '@cf/meta/llava-1.5-7b-hf';
+const VISION_MODEL = '@cf/llava-hf/llava-1.5-7b-hf';
 
 const ClassificationSchema = z.object({
   verdict: z.enum(['phishing', 'suspicious', 'likely_safe']),

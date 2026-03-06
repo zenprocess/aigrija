@@ -7,6 +7,7 @@ import { analyzeUrl } from '../lib/url-analyzer';
 import { checkRateLimit } from '../lib/rate-limiter';
 import { CAMPAIGNS } from '../data/campaigns';
 import { recordConsent, revokeConsent, updateLastActive } from '../lib/gdpr-consent';
+import { extractUrls, simpleHash, verdictEmoji, verdictLabel, formatAnalysisReply } from '../lib/bot-helpers';
 
 const telegram = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
@@ -54,11 +55,6 @@ interface TelegramUpdate {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function extractUrls(text: string): string[] {
-  const urlRegex = /https?:\/\/[^\s]+|www\.[^\s]+/gi;
-  return text.match(urlRegex) ?? [];
-}
 
 async function sendMessage(
   token: string,
@@ -149,16 +145,6 @@ async function answerInlineQuery(
   }
 }
 
-/** FNV-1a 32-bit hash -> 8-char hex */
-function simpleHash(text: string): string {
-  let h = 2166136261;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = (h * 16777619) >>> 0;
-  }
-  return h.toString(16).padStart(8, '0');
-}
-
 function buildVerdictKeyboard(
   hash: string,
   baseUrl: string
@@ -172,53 +158,6 @@ function buildVerdictKeyboard(
       { text: 'Ajutor', callback_data: 'help' },
     ],
   ];
-}
-
-function verdictEmoji(verdict: string): string {
-  if (verdict === 'phishing') return '🔴';
-  if (verdict === 'suspicious') return '🟡';
-  return '🟢';
-}
-
-function verdictLabel(verdict: string): string {
-  if (verdict === 'phishing') return 'PHISHING DETECTAT';
-  if (verdict === 'suspicious') return 'MESAJ SUSPECT';
-  return 'PROBABIL SIGUR';
-}
-
-function formatAnalysisReply(
-  result: Awaited<ReturnType<typeof classify>>,
-  urlFlags: string[]
-): string {
-  const emoji = verdictEmoji(result.verdict);
-  const label = verdictLabel(result.verdict);
-  const confidencePct = Math.round(result.confidence * 100);
-
-  const lines: string[] = [
-    `${emoji} <b>${label}</b>`,
-    `<i>Confidenta: ${confidencePct}%</i>`,
-    '',
-    `📋 <b>Explicatie:</b>`,
-    result.explanation,
-  ];
-
-  const allFlags = [...result.red_flags, ...urlFlags];
-  if (allFlags.length > 0) {
-    lines.push('', '🚩 <b>Semne de alarma:</b>');
-    for (const flag of allFlags) {
-      lines.push(`• ${flag}`);
-    }
-  }
-
-  if (result.recommended_actions.length > 0) {
-    lines.push('', '✅ <b>Actiuni recomandate:</b>');
-    result.recommended_actions.forEach((action, i) => {
-      lines.push(`${i + 1}. ${action}`);
-    });
-  }
-
-  lines.push('', '🛡️ ai-grija.ro — Proiect civic de Zen Labs');
-  return lines.join('\n');
 }
 
 // ── Route ────────────────────────────────────────────────────────────────────
@@ -422,7 +361,7 @@ telegram.post('/webhook/telegram', async (c) => {
     }
   }
 
-  const replyText = formatAnalysisReply(classification, urlFlags);
+  const replyText = formatAnalysisReply(classification, urlFlags, { format: 'html' });
   const hash = simpleHash(text);
 
   const keyboard = isForwarded

@@ -5,7 +5,7 @@ import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib
 import { classify } from '../lib/classifier';
 import { structuredLog } from '../lib/logger';
 import { ImageUploadSchema, formatZodError } from '../lib/schemas';
-import { VISION_MODEL } from '../lib/constants';
+import { VISION_MODEL, uint8ArrayToBase64 } from '../lib/constants';
 
 const upload = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
@@ -75,13 +75,21 @@ upload.post('/api/check/image', async (c) => {
   let visionVerdict: 'phishing' | 'suspicious' | 'likely_safe' = 'suspicious';
 
   try {
-    const visionResult = await (c.env.AI.run as unknown as (model: string, input: { image: number[]; prompt: string; max_tokens: number }) => Promise<{ description?: string; response?: string }>)(VISION_MODEL, {
-      image: Array.from(imageBytes),
-      prompt: visionPrompt,
-      max_tokens: 512,
-    }) as { description?: string; response?: string };
+    const base64Image = uint8ArrayToBase64(imageBytes);
+    const dataUri = `data:${imageFile.type};base64,${base64Image}`;
 
-    imageAnalysis = visionResult.description || visionResult.response || 'Analiza vizuala nu a putut fi finalizata.';
+    const visionResult = await (c.env.AI.run as unknown as (model: string, input: { messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image_url?: { url: string } }> }>; max_tokens: number }) => Promise<{ response?: string }>)(VISION_MODEL, {
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: dataUri } },
+          { type: 'text', text: visionPrompt },
+        ],
+      }],
+      max_tokens: 512,
+    });
+
+    imageAnalysis = visionResult.response || 'Analiza vizuala nu a putut fi finalizata.';
 
     const lower = imageAnalysis.toLowerCase();
     if (lower.includes('phishing') || lower.includes('frauda') || lower.includes('escrocherie')) {

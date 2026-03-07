@@ -7,7 +7,7 @@ import { ImageUploadSchema, formatZodError } from '../lib/schemas';
 import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { classify } from '../lib/classifier';
 import { structuredLog } from '../lib/logger';
-import { VISION_MODEL } from '../lib/constants';
+import { VISION_MODEL, uint8ArrayToBase64 } from '../lib/constants';
 
 const ClassificationSchema = z.object({
   verdict: z.enum(['phishing', 'suspicious', 'likely_safe']),
@@ -119,13 +119,21 @@ export class CheckImageEndpoint extends OpenAPIRoute {
     let visionVerdict: 'phishing' | 'suspicious' | 'likely_safe' = 'suspicious';
 
     try {
-      const visionResult = await (c.env.AI.run as unknown as (model: string, input: { image: number[]; prompt: string; max_tokens: number }) => Promise<{ description?: string; response?: string }>)(VISION_MODEL, {
-        image: Array.from(imageBytes),
-        prompt: visionPrompt,
+      const base64Image = uint8ArrayToBase64(imageBytes);
+      const dataUri = `data:${imageFile.type};base64,${base64Image}`;
+
+      const visionResult = await (c.env.AI.run as unknown as (model: string, input: { messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image_url?: { url: string } }> }>; max_tokens: number }) => Promise<{ response?: string }>)(VISION_MODEL, {
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: dataUri } },
+            { type: 'text', text: visionPrompt },
+          ],
+        }],
         max_tokens: 512,
       });
 
-      imageAnalysis = visionResult.description || visionResult.response || 'Analiza vizuala nu a putut fi finalizata.';
+      imageAnalysis = visionResult.response || 'Analiza vizuala nu a putut fi finalizata.';
 
       const lower = imageAnalysis.toLowerCase();
       if (lower.includes('phishing') || lower.includes('frauda') || lower.includes('escrocherie')) {

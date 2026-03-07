@@ -31,7 +31,7 @@ function makeR2(): R2Bucket {
   } as unknown as R2Bucket;
 }
 
-function makeAI(response = { description: "Mesaj legitim" }): any {
+function makeAI(response = { response: "Mesaj legitim" }): any {
   return { run: vi.fn().mockResolvedValue(response) };
 }
 

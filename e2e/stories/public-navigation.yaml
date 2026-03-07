@@ -17,8 +17,8 @@ steps:
   - action: screenshot
     name: alerte-page
   - action: assert
-    selector: "body"
-    contains: "ai-grija.ro"
+    selector: "footer"
+    matches: "ai-grija\\.ro"
   - action: navigate
     url: "/gdpr"
   - action: wait
@@ -27,8 +27,8 @@ steps:
   - action: screenshot
     name: gdpr-page
   - action: assert
-    selector: "body"
-    contains: "GDPR"
+    selector: "h1, h2, body"
+    matches: "GDPR"
   - action: navigate
     url: "/policies/privacy"
   - action: wait
@@ -38,7 +38,7 @@ steps:
     name: privacy-page
   - action: assert
     selector: "body"
-    contains: "Zen Labs"
+    matches: "Zen Labs"
   - action: navigate
     url: "/policies/general-terms"
   - action: wait
@@ -47,8 +47,8 @@ steps:
   - action: screenshot
     name: terms-page
   - action: assert
-    selector: "body"
-    contains: "Termeni"
+    selector: "h1, h2, body"
+    matches: "Termeni"
   - action: navigate
     url: "/"
   - action: wait

@@ -11,7 +11,7 @@ steps:
     name: alerts-list-loaded
   - action: assert
     selector: "h1, h2"
-    contains: ""
+    visible: true
   - action: screenshot
     name: alerts-list-content
   - action: navigate

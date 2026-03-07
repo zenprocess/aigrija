@@ -11,7 +11,7 @@ steps:
     name: alerte-page
   - action: assert
     selector: "h1"
-    contains: "Alerte"
+    matches: "Alerte"
 
   - action: navigate
     url: "/blog"
@@ -22,7 +22,7 @@ steps:
     name: blog-page
   - action: assert
     selector: "body"
-    contains: ""
+    visible: true
 
   - action: navigate
     url: "/gdpr"
@@ -32,8 +32,8 @@ steps:
   - action: screenshot
     name: gdpr-page
   - action: assert
-    selector: "body"
-    contains: "GDPR"
+    selector: "h1, h2, body"
+    matches: "GDPR"
 
   - action: navigate
     url: "/policies/privacy"
@@ -44,7 +44,7 @@ steps:
     name: privacy-page
   - action: assert
     selector: "body"
-    contains: "dataprotection.ro"
+    matches: "dataprotection\\.ro"
 
   - action: navigate
     url: "/"

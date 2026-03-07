@@ -10,8 +10,8 @@ steps:
   - action: screenshot
     name: gdpr-page
   - action: assert
-    selector: "body"
-    contains: "GDPR"
+    selector: "h1, h2, body"
+    matches: "GDPR"
   - action: navigate
     url: "/policies/privacy"
   - action: wait
@@ -20,8 +20,8 @@ steps:
   - action: screenshot
     name: privacy-page
   - action: assert
-    selector: "body"
-    contains: "Politica de"
+    selector: "h1, h2, body"
+    matches: "Politica de"
   - action: navigate
     url: "/policies/general-terms"
   - action: wait
@@ -30,8 +30,8 @@ steps:
   - action: screenshot
     name: termeni-page
   - action: assert
-    selector: "body"
-    contains: "Termeni"
+    selector: "h1, h2, body"
+    matches: "Termeni"
   - action: navigate
     url: "/"
   - action: wait

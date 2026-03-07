@@ -17,8 +17,8 @@ steps:
   - action: screenshot
     name: gdpr-page
   - action: assert
-    selector: "body"
-    contains: "GDPR"
+    selector: "h1, h2, body"
+    matches: "GDPR"
   - action: navigate
     url: "/policies/privacy"
   - action: wait
@@ -27,5 +27,5 @@ steps:
   - action: screenshot
     name: privacy-page
   - action: assert
-    selector: "body"
-    contains: "ai-grija.ro"
+    selector: "footer"
+    matches: "ai-grija\\.ro"

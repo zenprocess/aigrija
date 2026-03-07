@@ -90,14 +90,16 @@ describe('publishToSanity', () => {
     vi.unstubAllGlobals();
   });
 
-  it('throws when SANITY_PROJECT_ID is missing', async () => {
+  it('returns error when SANITY_PROJECT_ID is missing', async () => {
     const env = { ...baseEnv, SANITY_PROJECT_ID: '' } as unknown as Env;
-    await expect(publishToSanity(baseCampaign, 'draft', 'threatReport', env)).rejects.toThrow('Sanity not configured');
+    const result = await publishToSanity(baseCampaign, 'draft', 'threatReport', env);
+    expect(result).toEqual({ id: '', error: 'SANITY_PROJECT_ID not configured' });
   });
 
-  it('throws when SANITY_WRITE_TOKEN is missing', async () => {
+  it('returns error when SANITY_WRITE_TOKEN is missing', async () => {
     const env = { ...baseEnv, SANITY_WRITE_TOKEN: '' } as unknown as Env;
-    await expect(publishToSanity(baseCampaign, 'draft', 'threatReport', env)).rejects.toThrow('Sanity not configured');
+    const result = await publishToSanity(baseCampaign, 'draft', 'threatReport', env);
+    expect(result).toEqual({ id: '', error: 'SANITY_WRITE_TOKEN not configured' });
   });
 
   it('throws when Sanity API returns non-ok status', async () => {

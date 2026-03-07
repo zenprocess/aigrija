@@ -13,6 +13,7 @@ import { deleteOldShareCards } from './r2-cleanup';
 const BATCH_LIMIT = 5;
 
 async function runDraftGeneration(env: Env): Promise<void> {
+  const startTime = Date.now();
   structuredLog('info', 'cron_draft_generation_start', { stage: 'cron' });
 
   const pendingRows = await env.DB.prepare(
@@ -34,10 +35,18 @@ async function runDraftGeneration(env: Env): Promise<void> {
       });
     }
   }
+
+  structuredLog('info', 'cron_draft_generation_done', { stage: 'cron', job: 'draftGeneration', duration_ms: Date.now() - startTime });
 }
 
 async function runSanityPublish(env: Env): Promise<void> {
+  const startTime = Date.now();
   structuredLog('info', 'cron_sanity_publish_start', { stage: 'cron' });
+
+  if (!env.SANITY_WRITE_TOKEN) {
+    structuredLog('error', 'sanity_write_token_missing', { stage: 'cron', action: 'publish' });
+    return;
+  }
 
   const generatedRows = await env.DB.prepare(
     `SELECT * FROM campaigns WHERE draft_status = 'generated' LIMIT ?`
@@ -94,9 +103,12 @@ async function runSanityPublish(env: Env): Promise<void> {
       }
     }
   }
+
+  structuredLog('info', 'cron_sanity_publish_done', { stage: 'cron', job: 'sanityPublish', duration_ms: Date.now() - startTime });
 }
 
 async function runWeeklyDigest(env: Env): Promise<void> {
+  const startTime = Date.now();
   structuredLog('info', 'cron_weekly_digest_start', { stage: 'cron' });
 
   const weekOf = getISOWeek(new Date());
@@ -133,7 +145,7 @@ async function runWeeklyDigest(env: Env): Promise<void> {
     });
   }
 
-  structuredLog('info', 'cron_weekly_digest_done', { stage: 'cron', weekOf });
+  structuredLog('info', 'cron_weekly_digest_done', { stage: 'cron', job: 'weeklyDigest', weekOf, duration_ms: Date.now() - startTime });
 }
 
 export async function handleScheduled(event: ScheduledEvent, env: Env): Promise<void> {
@@ -164,8 +176,16 @@ export async function handleScheduled(event: ScheduledEvent, env: Env): Promise<
     } catch (err) {
       structuredLog('error', 'cron_r2_cleanup_failed', { stage: 'cron', error: String(err) });
     }
-    await runDraftGeneration(env);
-    await runSanityPublish(env);
+    try {
+      await runDraftGeneration(env);
+    } catch (err) {
+      structuredLog('error', 'cron_draft_generation_unhandled', { stage: 'cron', error: String(err) });
+    }
+    try {
+      await runSanityPublish(env);
+    } catch (err) {
+      structuredLog('error', 'cron_sanity_publish_unhandled', { stage: 'cron', error: String(err) });
+    }
   } else if (event.cron === '0 2 * * 1-5') {
     // Weekdays 02:00 — AI educational content generation
     try {

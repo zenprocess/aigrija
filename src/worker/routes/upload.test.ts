@@ -236,7 +236,7 @@ describe("AI fallback/degradation", () => {
     const body = await res.json() as any;
     expect(body.classification).toBeDefined();
     // Text classifier should produce a valid result despite vision failure
-    expect(["phishing", "suspicious", "likely_safe"]).toContain(body.classification.verdict);
+    expect(body.classification.verdict).toBe("phishing");
     expect(body.classification.confidence).toBeGreaterThan(0);
     expect(body.classification.model_used).toBeDefined();
   });

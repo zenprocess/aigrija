@@ -86,7 +86,7 @@ export function formatAnalysisReply(
 
   if (isHtml) {
     lines.push('', '\u{1F6E1}\uFE0F ai-grija.ro \u2014 Proiect civic de Zen Labs');
-  } else if (options.format === "whatsapp") {
+  } else {
     if (options.isForwarded) {
       lines.push('', '\u26A0\uFE0F Mesaj redirec\u021Bionat detectat \u2014 analizat automat.');
     }

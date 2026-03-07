@@ -45,6 +45,7 @@ test.describe('Share flow — post-analysis share/distribute', () => {
     expect(checkRes.status()).toBe(200);
 
     const body = await checkRes.json();
+    expect(body.share_url).toBeDefined();
     const match = body.share_url.match(/\/card\/([a-f0-9]+)$/);
     expect(match).toBeTruthy();
     const hash = match![1];

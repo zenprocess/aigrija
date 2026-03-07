@@ -81,7 +81,7 @@ upload.post('/api/check/image', async (c) => {
     const dataUri = `data:${imageFile.type};base64,${base64Image}`;
 
     // Accept Llama 3.2 license if not yet accepted (cached in KV)
-    const licenseKey = "ai:llama32:license_accepted";
+    const licenseKey = `ai:license:${VISION_MODEL}`;
     if (!(await c.env.CACHE.get(licenseKey))) {
       try {
         await (c.env.AI.run as any)(VISION_MODEL, { prompt: "agree", max_tokens: 1 });

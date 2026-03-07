@@ -7,7 +7,8 @@ import { ImageUploadSchema, formatZodError } from '../lib/schemas';
 import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { classify } from '../lib/classifier';
 import { structuredLog } from '../lib/logger';
-import { VISION_MODEL, uint8ArrayToBase64 } from '../lib/constants';
+import { VISION_MODEL } from '../lib/constants';
+import { uint8ArrayToBase64 } from '../lib/encoding';
 import { validateVisionResponse, calibrateConfidence } from '../lib/vision-validator';
 
 const ClassificationSchema = z.object({

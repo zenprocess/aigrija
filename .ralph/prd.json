@@ -1,36 +1,82 @@
 {
   "project": "aigrija",
-  "epic": "Wave 1 — Security, CI, Vision Fix, Refactor",
-  "verify_cmd": "npx tsc --noEmit && npx vitest run",
+  "epic": "Wave 3 — Vision Upgrade + Blog Pipeline + Test Coverage",
   "stories": [
     {
       "id": "S-001",
-      "title": "Fix vision model name — @cf/meta to @cf/llava-hf",
-      "description": "The Workers AI vision model name changed from @cf/meta/llava-1.5-7b-hf to @cf/llava-hf/llava-1.5-7b-hf. Image upload analysis silently fails because the old model name returns an error that gets caught and swallowed. Fix the model name in both upload.ts and openapi-check-image.ts. Also update the upload.test.ts mock to match the new model name if referenced.",
+      "title": "Upgrade vision model to llama-3.2-11b-vision-instruct",
+      "description": "Upgrade from @cf/llava-hf/llava-1.5-7b-hf (7B, hallucination-prone) to @cf/meta/llama-3.2-11b-vision-instruct (11B). Changes: (1) Update VISION_MODEL in src/worker/lib/constants.ts, (2) Update AI.run() calls in both upload.ts and openapi-check-image.ts — new model uses messages array format: AI.run(model, { messages: [{ role: 'user', content: [{ type: 'image', image: arrayOfBytes }, { type: 'text', text: prompt }] }], max_tokens: 512 }), (3) Update response parsing — new model returns { response: string }. Read the Cloudflare Workers AI docs for @cf/meta/llama-3.2-11b-vision-instruct to confirm the exact API format before making changes. Run npx tsc --noEmit && npx vitest run to verify.",
       "acceptance_criteria": [
-        "VISION_MODEL constant uses @cf/llava-hf/llava-1.5-7b-hf in upload.ts",
-        "VISION_MODEL constant uses @cf/llava-hf/llava-1.5-7b-hf in openapi-check-image.ts",
-        "All existing tests pass (npx vitest run)",
-        "TypeScript compiles clean (npx tsc --noEmit)"
+        "VISION_MODEL updated to @cf/meta/llama-3.2-11b-vision-instruct in constants.ts",
+        "Both upload.ts and openapi-check-image.ts use new API message format",
+        "Response parsing handles new model output format",
+        "npx tsc --noEmit passes",
+        "npx vitest run passes"
       ],
       "assigned_agent": "ts-fullstack",
       "dependencies": [],
       "status": "pending",
       "priority": 1,
       "attempts": 0,
-      "files_modified": ["src/worker/routes/upload.ts", "src/worker/routes/openapi-check-image.ts", "src/worker/routes/upload.test.ts"],
+      "files_modified": [],
       "last_error": null,
-      "last_attempt_at": null
+      "last_attempt_at": null,
+      "github_issue": 326
     },
     {
       "id": "S-002",
-      "title": "Fix timing-safe comparison in webhook signature verification (#316)",
-      "description": "Webhook signature verification for Telegram and WhatsApp routes uses direct string comparison instead of constant-time comparison. This is vulnerable to timing attacks. Use crypto.subtle.timingSafeEqual or a polyfill for constant-time comparison in all webhook signature checks. Find all webhook signature verification code in src/worker/routes/ and src/worker/lib/ and fix them.",
+      "title": "Add vision output validation + confidence calibration",
+      "description": "Add validation layer for vision model responses to catch hallucinations. Create src/worker/lib/vision-validator.ts with: (1) validateVisionResponse(text: string): boolean — reject responses too short (<20 chars), containing no Romanian text, or incoherent gibberish, (2) calibrateConfidence(response: string, verdict: string): number — score confidence based on response quality (keyword density, coherence signals) instead of fixed values (currently 0.85/0.60/0.80). Use validator in both upload.ts and openapi-check-image.ts. When validation fails, fall back to 'suspicious' with confidence 0.0. Add unit tests in src/worker/lib/vision-validator.test.ts. Run npx tsc --noEmit && npx vitest run to verify.",
       "acceptance_criteria": [
-        "All webhook signature comparisons use timing-safe comparison (crypto.subtle.timingSafeEqual or equivalent)",
-        "No direct === or == comparison of signature strings remains",
-        "All existing tests pass",
-        "TypeScript compiles clean"
+        "src/worker/lib/vision-validator.ts exports validateVisionResponse and calibrateConfidence",
+        "Both upload.ts and openapi-check-image.ts use the validator",
+        "Incoherent responses produce low-confidence suspicious verdict",
+        "Unit tests cover valid, invalid, and edge-case responses",
+        "npx tsc --noEmit passes",
+        "npx vitest run passes"
+      ],
+      "assigned_agent": "ts-fullstack",
+      "dependencies": ["S-001"],
+      "status": "pending",
+      "priority": 1,
+      "attempts": 0,
+      "files_modified": [],
+      "last_error": null,
+      "last_attempt_at": null,
+      "github_issue": 327
+    },
+    {
+      "id": "S-003",
+      "title": "Add Opus-benchmarked image analysis tests",
+      "description": "Add tests that benchmark the CF vision model against Claude Opus as ground truth. Steps: (1) Create test-fixtures/images/ with 3 test images — download a known phishing screenshot URL, a known safe screenshot URL, and an ambiguous one (use placeholder PNG files with embedded text if real screenshots aren't available), (2) Create test-fixtures/opus-baselines.json with pre-computed Opus verdicts for each image (manually populate with expected verdicts: phishing, likely_safe, suspicious), (3) Create src/worker/routes/vision-quality.test.ts — for each fixture image, mock the CF AI.run() with realistic responses matching each verdict, call the image check handler, verify the endpoint verdict doesn't contradict the Opus baseline (e.g. Opus=phishing means endpoint must not return likely_safe), (4) Test the fallback path — when AI.run() throws, verify confidence is 0.0 not a fake high value. Run npx tsc --noEmit && npx vitest run to verify.",
+      "acceptance_criteria": [
+        "test-fixtures/opus-baselines.json exists with 3+ baseline verdicts",
+        "Tests verify CF model verdict doesn't contradict Opus baseline",
+        "Tests cover AI.run() failure path with confidence 0.0",
+        "npx tsc --noEmit passes",
+        "npx vitest run passes"
+      ],
+      "assigned_agent": "ts-fullstack",
+      "dependencies": ["S-001"],
+      "status": "pending",
+      "priority": 1,
+      "attempts": 0,
+      "files_modified": [],
+      "last_error": null,
+      "last_attempt_at": null,
+      "github_issue": 328
+    },
+    {
+      "id": "S-004",
+      "title": "Add missing secret detection in Sanity publish + cron logging",
+      "description": "Fix the blog pipeline that silently fails because SANITY_WRITE_TOKEN is missing. Changes: (1) In src/worker/lib/sanity.ts — before any Sanity mutation, check if SANITY_WRITE_TOKEN (from env) is present. If missing, log structuredLog('error', 'sanity_write_token_missing', { action: 'publish' }) and return early with a meaningful error, don't throw. (2) In src/worker/lib/cron-handler.ts — add structuredLog at start/end of each cron job with job name and duration. In runSanityPublish, check for SANITY_WRITE_TOKEN and log clear error if missing. Ensure one failing job doesn't block others. (3) Add unit tests for the missing-secret paths in cron-handler.test.ts — mock env without SANITY_WRITE_TOKEN and verify the handler logs error but doesn't throw. Read both files first to understand existing patterns. Run npx tsc --noEmit && npx vitest run to verify.",
+      "acceptance_criteria": [
+        "Sanity publish logs clear error when SANITY_WRITE_TOKEN is missing",
+        "Cron handler logs job name and duration for each job",
+        "Missing-secret path is unit tested",
+        "One failing cron job does not prevent others from running",
+        "npx tsc --noEmit passes",
+        "npx vitest run passes"
       ],
       "assigned_agent": "ts-fullstack",
       "dependencies": [],
@@ -39,37 +85,37 @@
       "attempts": 0,
       "files_modified": [],
       "last_error": null,
-      "last_attempt_at": null
+      "last_attempt_at": null,
+      "github_issue": 329
     },
     {
-      "id": "S-003",
-      "title": "CI should validate CF_ACCESS_TEAM_DOMAIN before deploy (#282)",
-      "description": "Add a validation step to the GitHub Actions deploy workflow that checks CF_ACCESS_TEAM_DOMAIN is set as a secret/variable before running wrangler deploy. If missing, the deploy should fail with a clear error message. Check .github/workflows/ for the deploy workflow and add the validation step.",
+      "id": "S-005",
+      "title": "Upgrade Bowser story assertions to structural checks",
+      "description": "In the existing Bowser/browser detection tests, upgrade weak assertions from body.contains() to proper structural checks. Read the existing test files first (search for bowser or browser-related test files under src/worker/ or e2e/). Replace string contains checks with structured assertions: verify JSON shape, check specific fields, assert types. Run npx tsc --noEmit && npx vitest run to verify.",
       "acceptance_criteria": [
-        "Deploy workflow checks CF_ACCESS_TEAM_DOMAIN is non-empty before deploy step",
-        "Clear error message if CF_ACCESS_TEAM_DOMAIN is missing",
-        "Existing workflow structure preserved",
-        "YAML is valid"
+        "All Bowser-related assertions use structural checks (toBe, toEqual, toHaveProperty) not string contains",
+        "npx tsc --noEmit passes",
+        "npx vitest run passes"
       ],
-      "assigned_agent": "devops-cf",
+      "assigned_agent": "ts-fullstack",
       "dependencies": [],
       "status": "pending",
-      "priority": 2,
+      "priority": 1,
       "attempts": 0,
       "files_modified": [],
       "last_error": null,
-      "last_attempt_at": null
+      "last_attempt_at": null,
+      "github_issue": 299
     },
     {
-      "id": "S-004",
-      "title": "Extract shared CSP middleware (#319)",
-      "description": "CSP (Content-Security-Policy) middleware logic is duplicated across multiple route files. Extract it into a shared middleware in src/worker/middleware/ or src/worker/lib/. Find all CSP header setting code, identify the common pattern, extract to a reusable middleware function, and replace all duplicates with the shared version. Add a unit test for the extracted middleware.",
+      "id": "S-006",
+      "title": "Add asset integrity tests — favicon, logo, brand colors",
+      "description": "Create e2e/asset-integrity.spec.ts (Playwright test). Test that critical static assets load correctly: (1) GET /favicon.ico returns valid icon (200 or 204, content-type image/*), (2) Check that the homepage loads the site logo (query selector for img with logo in alt/src), (3) Verify brand color CSS variables are defined (check computed styles for primary brand colors). The BASE_URL is https://pre.ai-grija.ro (read from process.env.BASE_URL or default). Run npx playwright test e2e/asset-integrity.spec.ts to verify.",
       "acceptance_criteria": [
-        "Single CSP middleware function in src/worker/middleware/ or src/worker/lib/",
-        "All route files use the shared middleware instead of inline CSP logic",
-        "Unit test for the CSP middleware",
-        "All existing tests pass",
-        "TypeScript compiles clean"
+        "e2e/asset-integrity.spec.ts exists",
+        "Tests verify favicon loads with correct content-type",
+        "Tests verify logo image is present",
+        "npx tsc --noEmit passes"
       ],
       "assigned_agent": "ts-fullstack",
       "dependencies": [],
@@ -78,7 +124,48 @@
       "attempts": 0,
       "files_modified": [],
       "last_error": null,
-      "last_attempt_at": null
+      "last_attempt_at": null,
+      "github_issue": 297
+    },
+    {
+      "id": "S-007",
+      "title": "Add blog category route tests",
+      "description": "Create src/worker/routes/blog.test.ts with unit tests for the blog category routes. Read src/worker/routes/blog.ts (or wherever blog routes are defined) first. Test: (1) GET /blog returns valid HTML or JSON listing, (2) GET /blog/:category returns filtered posts, (3) Invalid category returns 404, (4) Blog route handles empty Sanity response gracefully. Mock the Sanity fetch calls. Run npx tsc --noEmit && npx vitest run to verify.",
+      "acceptance_criteria": [
+        "Blog route unit tests exist",
+        "Tests cover category filtering and error handling",
+        "npx tsc --noEmit passes",
+        "npx vitest run passes"
+      ],
+      "assigned_agent": "ts-fullstack",
+      "dependencies": [],
+      "status": "pending",
+      "priority": 2,
+      "attempts": 0,
+      "files_modified": [],
+      "last_error": null,
+      "last_attempt_at": null,
+      "github_issue": 296
+    },
+    {
+      "id": "S-008",
+      "title": "Add tests for OpenAPI chanfana route endpoints",
+      "description": "Create tests for the OpenAPI/chanfana route endpoints. Read the chanfana route files under src/worker/routes/openapi-*.ts first. Create src/worker/routes/openapi-endpoints.test.ts. Test each OpenAPI endpoint: (1) CheckTextEndpoint — valid text input returns classification, (2) CheckImageEndpoint — valid image returns analysis, (3) ShareEndpoint — valid hash returns share card, (4) Test validation errors (missing required fields), (5) Test rate limiting response format. Mock env bindings (AI, CACHE, STORAGE). Run npx tsc --noEmit && npx vitest run to verify.",
+      "acceptance_criteria": [
+        "Tests cover all OpenAPI chanfana endpoints",
+        "Tests verify validation and error responses",
+        "npx tsc --noEmit passes",
+        "npx vitest run passes"
+      ],
+      "assigned_agent": "ts-fullstack",
+      "dependencies": [],
+      "status": "pending",
+      "priority": 3,
+      "attempts": 0,
+      "files_modified": [],
+      "last_error": null,
+      "last_attempt_at": null,
+      "github_issue": 320
     }
   ]
 }

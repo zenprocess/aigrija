@@ -119,6 +119,7 @@ export class CheckImageEndpoint extends OpenAPIRoute {
 
     let imageAnalysis = '';
     let visionVerdict: 'phishing' | 'suspicious' | 'likely_safe' = 'suspicious';
+    let _debugError = '';
 
     try {
       const base64Image = uint8ArrayToBase64(imageBytes);
@@ -155,6 +156,7 @@ export class CheckImageEndpoint extends OpenAPIRoute {
       structuredLog('error', 'vision_model_failed', { error: String(err) });
       imageAnalysis = '';
       visionVerdict = 'suspicious';
+      _debugError = String(err);
     }
 
     let classification;

@@ -266,7 +266,7 @@ describe("CheckEndpoint — POST /api/check", () => {
 describe("CheckImageEndpoint — POST /api/check/image", () => {
   function makeVisionAI(response: string = "Aceasta pare a fi phishing") {
     return {
-      run: vi.fn().mockResolvedValue({ description: response }),
+      run: vi.fn().mockResolvedValue({ response }),
     } as any;
   }
 

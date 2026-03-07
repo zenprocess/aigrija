@@ -8,6 +8,7 @@ import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib
 import { classify } from '../lib/classifier';
 import { structuredLog } from '../lib/logger';
 import { VISION_MODEL, uint8ArrayToBase64 } from '../lib/constants';
+import { validateVisionResponse, calibrateConfidence } from '../lib/vision-validator';
 
 const ClassificationSchema = z.object({
   verdict: z.enum(['phishing', 'suspicious', 'likely_safe']),
@@ -135,13 +136,19 @@ export class CheckImageEndpoint extends OpenAPIRoute {
 
       imageAnalysis = visionResult.response || 'Analiza vizuala nu a putut fi finalizata.';
 
-      const lower = imageAnalysis.toLowerCase();
-      if (lower.includes('phishing') || lower.includes('frauda') || lower.includes('escrocherie')) {
-        visionVerdict = 'phishing';
-      } else if (lower.includes('suspect') || lower.includes('atentie') || lower.includes('posibil')) {
+      if (!validateVisionResponse(imageAnalysis)) {
+        structuredLog('warn', 'vision_response_invalid', { response: imageAnalysis.slice(0, 100) });
+        imageAnalysis = '';
         visionVerdict = 'suspicious';
-      } else if (lower.includes('sigur') || lower.includes('legitim') || lower.includes('oficial')) {
-        visionVerdict = 'likely_safe';
+      } else {
+        const lower = imageAnalysis.toLowerCase();
+        if (lower.includes('phishing') || lower.includes('frauda') || lower.includes('escrocherie')) {
+          visionVerdict = 'phishing';
+        } else if (lower.includes('suspect') || lower.includes('atentie') || lower.includes('posibil')) {
+          visionVerdict = 'suspicious';
+        } else if (lower.includes('sigur') || lower.includes('legitim') || lower.includes('oficial')) {
+          visionVerdict = 'likely_safe';
+        }
       }
     } catch (err) {
       structuredLog('error', 'vision_model_failed', { error: String(err) });
@@ -156,7 +163,6 @@ export class CheckImageEndpoint extends OpenAPIRoute {
         classification = { ...classification, verdict: 'suspicious' as const };
       }
     } else if (!imageAnalysis) {
-      // Vision failed and no text context — cannot analyze
       classification = {
         verdict: 'suspicious' as const,
         confidence: 0.0,
@@ -168,10 +174,10 @@ export class CheckImageEndpoint extends OpenAPIRoute {
         ai_disclaimer: 'Analiza generata de AI. Rezultatele sunt orientative si nu constituie consiliere juridica.',
       };
     } else {
-      // Vision succeeded, no text context — use vision-only classification
+      const confidence = calibrateConfidence(imageAnalysis, visionVerdict);
       classification = {
         verdict: visionVerdict,
-        confidence: visionVerdict === 'phishing' ? 0.85 : visionVerdict === 'suspicious' ? 0.60 : 0.80,
+        confidence,
         scam_type: visionVerdict === 'phishing' ? 'Detectat in imagine' : visionVerdict === 'suspicious' ? 'Posibil suspect' : 'Necunoscut',
         red_flags: visionVerdict !== 'likely_safe' ? ['Continut vizual suspect detectat'] : [] as string[],
         explanation: imageAnalysis,

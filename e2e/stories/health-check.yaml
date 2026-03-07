@@ -59,7 +59,7 @@ steps:
     name: api-badges
   - action: assert
     selector: "body"
-    json_has_property: "badges"
+    json_has_property: "verified_by"
 
   - action: navigate
     url: "/sitemap.xml"

@@ -1,34 +1,37 @@
-name: "Verificare mesaj sigur"
-tags: [regression, api]
-description: "Testeaza paginile SSR accesibile — verificarea mesajelor via API /api/check necesita POST si nu poate fi efectuata prin navigate"
+name: Verificare mesaj sigur
+tags:
+- regression
+- api
+description: Testeaza paginile SSR accesibile — verificarea mesajelor via API /api/check
+  necesita POST si nu poate fi efectuata prin navigate
 steps:
-  - action: navigate
-    url: "/raport"
-  - action: wait
-    selector: "body"
-    timeout: 10000
-  - action: screenshot
-    name: raport-page
-  - action: assert
-    selector: "h1, h2"
-    matches: "Generator Raport Incident"
-  - action: navigate
-    url: "/alerte"
-  - action: wait
-    selector: "body"
-    timeout: 10000
-  - action: screenshot
-    name: alerte-page
-  - action: assert
-    selector: "footer"
-    matches: "ai-grija\\.ro"
-  - action: navigate
-    url: "/gdpr"
-  - action: wait
-    selector: "body"
-    timeout: 10000
-  - action: screenshot
-    name: gdpr-page
-  - action: assert
-    selector: "h1, h2, body"
-    matches: "GDPR"
+- action: navigate
+  url: /raport
+- action: wait
+  selector: body
+  timeout: 10000
+- action: screenshot
+  name: raport-page
+- action: assert
+  selector: h1, h2
+  matches: Generator Raport Incident
+- action: navigate
+  url: /alerte
+- action: wait
+  selector: body
+  timeout: 10000
+- action: screenshot
+  name: alerte-page
+- action: assert
+  selector: body
+  matches: ai-grija\.ro
+- action: navigate
+  url: /gdpr
+- action: wait
+  selector: body
+  timeout: 10000
+- action: screenshot
+  name: gdpr-page
+- action: assert
+  selector: h1, h2, body
+  matches: GDPR

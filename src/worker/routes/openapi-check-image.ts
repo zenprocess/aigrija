@@ -212,7 +212,7 @@ export class CheckImageEndpoint extends OpenAPIRoute {
       request_id: rid,
       classification,
       image_analysis: imageAnalysis,
-      rate_limit: { remaining, limit },
+      rate_limit: { remaining, limit }, _debug: _debugError,
     });
   }
 }

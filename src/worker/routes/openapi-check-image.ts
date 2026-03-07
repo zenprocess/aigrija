@@ -137,8 +137,10 @@ export class CheckImageEndpoint extends OpenAPIRoute {
       });
 
       imageAnalysis = visionResult.response || 'Analiza vizuala nu a putut fi finalizata.';
+      _debugError = JSON.stringify({ rawKeys: Object.keys(visionResult), rawResponse: JSON.stringify(visionResult).slice(0, 300), analysisLen: imageAnalysis.length, analysisPreview: imageAnalysis.slice(0, 200) });
 
       if (!validateVisionResponse(imageAnalysis)) {
+        _debugError += '|VALIDATION_REJECTED:' + imageAnalysis.slice(0, 100);
         structuredLog('warn', 'vision_response_invalid', { response: imageAnalysis.slice(0, 100) });
         imageAnalysis = '';
         visionVerdict = 'suspicious';

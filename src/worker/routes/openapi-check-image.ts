@@ -119,11 +119,15 @@ export class CheckImageEndpoint extends OpenAPIRoute {
 
     let imageAnalysis = '';
     let visionVerdict: 'phishing' | 'suspicious' | 'likely_safe' = 'suspicious';
-    let _debugError = '';
 
     try {
       const base64Image = uint8ArrayToBase64(imageBytes);
       const dataUri = `data:${imageFile.type};base64,${base64Image}`;
+
+      // Accept Llama 3.2 license if not yet accepted (one-time)
+      try {
+        await (c.env.AI.run as any)(VISION_MODEL, { prompt: "agree", max_tokens: 1 });
+      } catch { /* already accepted or irrelevant */ }
 
       const visionResult = await (c.env.AI.run as unknown as (model: string, input: { messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image_url?: { url: string } }> }>; max_tokens: number }) => Promise<{ response?: string }>)(VISION_MODEL, {
         messages: [{
@@ -137,10 +141,8 @@ export class CheckImageEndpoint extends OpenAPIRoute {
       });
 
       imageAnalysis = visionResult.response || 'Analiza vizuala nu a putut fi finalizata.';
-      _debugError = JSON.stringify({ rawKeys: Object.keys(visionResult), rawResponse: JSON.stringify(visionResult).slice(0, 300), analysisLen: imageAnalysis.length, analysisPreview: imageAnalysis.slice(0, 200) });
 
       if (!validateVisionResponse(imageAnalysis)) {
-        _debugError += '|VALIDATION_REJECTED:' + imageAnalysis.slice(0, 100);
         structuredLog('warn', 'vision_response_invalid', { response: imageAnalysis.slice(0, 100) });
         imageAnalysis = '';
         visionVerdict = 'suspicious';
@@ -158,7 +160,6 @@ export class CheckImageEndpoint extends OpenAPIRoute {
       structuredLog('error', 'vision_model_failed', { error: String(err) });
       imageAnalysis = '';
       visionVerdict = 'suspicious';
-      _debugError = String(err);
     }
 
     let classification;
@@ -212,7 +213,7 @@ export class CheckImageEndpoint extends OpenAPIRoute {
       request_id: rid,
       classification,
       image_analysis: imageAnalysis,
-      rate_limit: { remaining, limit }, _debug: _debugError,
+      rate_limit: { remaining, limit },
     });
   }
 }

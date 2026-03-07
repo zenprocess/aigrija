@@ -4,14 +4,18 @@
       "image": "phishing-screenshot.png",
       "opus_verdict": "phishing",
       "description": "Screenshot of a fake bank login page with urgent language and suspicious URL",
-      "contradicts": ["likely_safe"],
+      "contradicts": [
+        "likely_safe"
+      ],
       "notes": "Opus detected phishing indicators: fake BRD branding, urgency language, suspicious domain brd-secure-login.xyz"
     },
     {
       "image": "safe-screenshot.png",
       "opus_verdict": "likely_safe",
       "description": "Screenshot of a legitimate bank notification from official app",
-      "contradicts": ["phishing"],
+      "contradicts": [
+        "phishing"
+      ],
       "notes": "Opus confirmed legitimate: official app UI, no suspicious URLs, standard notification format"
     },
     {
@@ -21,5 +25,6 @@
       "contradicts": [],
       "notes": "Opus marked suspicious: legitimate sender format but unusual request for personal data verification"
     }
-  ]
+  ],
+  "_note": "Placeholder baselines for test scaffolding. Images are synthetic PNGs \u2014 tests mock AI.run() responses rather than running real inference. Replace with real screenshots and actual Opus evaluations for production-grade regression testing."
 }

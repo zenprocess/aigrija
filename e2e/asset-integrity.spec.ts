@@ -6,11 +6,9 @@ import { test, expect } from '@playwright/test';
 test.describe('Asset integrity — favicon', () => {
   test('GET /favicon.ico returns valid icon with image content-type', async ({ request }) => {
     const res = await request.get('/favicon.ico');
-    expect([200, 204]).toContain(res.status());
-    if (res.status() === 200) {
-      const contentType = res.headers()['content-type'] ?? '';
-      expect(contentType).toMatch(/^image\//);
-    }
+    expect(res.status()).toBe(200);
+    const contentType = res.headers()['content-type'] ?? '';
+    expect(contentType).toMatch(/^image\//);
   });
 });
 

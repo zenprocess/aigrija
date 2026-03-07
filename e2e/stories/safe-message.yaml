@@ -10,8 +10,8 @@ steps:
   - action: screenshot
     name: raport-page
   - action: assert
-    selector: "body"
-    contains: "Generator Raport Incident"
+    selector: "h1, h2"
+    matches: "Generator Raport Incident"
   - action: navigate
     url: "/alerte"
   - action: wait
@@ -20,8 +20,8 @@ steps:
   - action: screenshot
     name: alerte-page
   - action: assert
-    selector: "body"
-    contains: "ai-grija.ro"
+    selector: "footer"
+    matches: "ai-grija\\.ro"
   - action: navigate
     url: "/gdpr"
   - action: wait
@@ -30,5 +30,5 @@ steps:
   - action: screenshot
     name: gdpr-page
   - action: assert
-    selector: "body"
-    contains: "GDPR"
+    selector: "h1, h2, body"
+    matches: "GDPR"

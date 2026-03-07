@@ -18,7 +18,7 @@ steps:
     name: privacy-page
   - action: assert
     selector: "body"
-    contains: "contact@ai-grija.ro"
+    matches: "contact@ai-grija\\.ro"
   - action: navigate
     url: "/policies/general-terms"
   - action: wait
@@ -28,4 +28,4 @@ steps:
     name: terms-page
   - action: assert
     selector: "body"
-    contains: "Zen Labs"
+    matches: "Zen Labs"

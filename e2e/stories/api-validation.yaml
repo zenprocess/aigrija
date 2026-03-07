@@ -19,5 +19,7 @@ steps:
     name: openapi-json
   - action: assert
     selector: "body"
-    contains: "check"
-
+    json_has_property: "paths"
+  - action: assert
+    selector: "body"
+    json_has_property: "openapi"

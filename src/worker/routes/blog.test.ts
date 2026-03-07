@@ -36,6 +36,128 @@ vi.mock('../lib/sanity', () => ({
 import { sanityFetch } from '../lib/sanity';
 const mockSanityFetch = vi.mocked(sanityFetch);
 
+// ─── Cross-cutting: empty responses, invalid params, lang filtering ──────────
+
+describe('empty Sanity responses', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('GET /ghid returns empty array when Sanity returns null', async () => {
+    mockSanityFetch.mockResolvedValue(null);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/ghid'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toEqual([]);
+  });
+
+  it('GET /amenintari returns empty array when Sanity returns empty', async () => {
+    mockSanityFetch.mockResolvedValue([]);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/amenintari'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toEqual([]);
+  });
+
+  it('GET /educatie returns empty array when Sanity returns null', async () => {
+    mockSanityFetch.mockResolvedValue(null);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/educatie'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toEqual([]);
+  });
+
+  it('GET /rapoarte returns empty array when Sanity returns null', async () => {
+    mockSanityFetch.mockResolvedValue(null);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/rapoarte'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toEqual([]);
+  });
+
+  it('GET /povesti returns empty array when Sanity returns null', async () => {
+    mockSanityFetch.mockResolvedValue(null);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/povesti'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toEqual([]);
+  });
+
+  it('GET /presa returns empty array when Sanity returns null', async () => {
+    mockSanityFetch.mockResolvedValue(null);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/presa'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toEqual([]);
+  });
+});
+
+describe('invalid query parameters', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns 400 for invalid lang parameter', async () => {
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/ghid?lang=xx'), env);
+    expect(res.status).toBe(400);
+    const json = await res.json() as { error: { code: string } };
+    expect(json.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('returns 400 for invalid page parameter', async () => {
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/ghid?page=-1'), env);
+    expect(res.status).toBe(400);
+    const json = await res.json() as { error: { code: string } };
+    expect(json.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('returns 400 for non-numeric page', async () => {
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/ghid?page=abc'), env);
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('language filtering', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('passes lang=en to Sanity when specified', async () => {
+    mockSanityFetch.mockResolvedValue([]);
+    const env = makeEnv();
+    await blog.fetch(makeRequest('/ghid?lang=en'), env);
+    expect(mockSanityFetch).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.any(String),
+      expect.objectContaining({ lang: 'en' }),
+    );
+  });
+
+  it('defaults to lang=ro when not specified', async () => {
+    mockSanityFetch.mockResolvedValue([]);
+    const env = makeEnv();
+    await blog.fetch(makeRequest('/ghid'), env);
+    expect(mockSanityFetch).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.any(String),
+      expect.objectContaining({ lang: 'ro' }),
+    );
+  });
+
+  it('accepts all valid languages', async () => {
+    mockSanityFetch.mockResolvedValue([]);
+    const env = makeEnv();
+    for (const lang of ['ro', 'en', 'bg', 'hu', 'uk']) {
+      mockSanityFetch.mockClear();
+      const res = await blog.fetch(makeRequest(`/amenintari?lang=${lang}`), env);
+      expect(res.status).toBe(200);
+    }
+  });
+});
+
 // ─── /amenintari ──────────────────────────────────────────────────────────────
 
 describe('GET /amenintari', () => {

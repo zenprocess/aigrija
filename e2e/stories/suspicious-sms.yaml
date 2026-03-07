@@ -1,37 +1,43 @@
-name: "Verificare SMS suspect"
-tags: [regression, api]
-description: "Testeaza pagina de raportare si alertele SSR — verificarea mesajelor via API necesita POST si nu poate fi efectuata cu navigate"
+name: Verificare SMS suspect
+tags:
+- regression
+- api
+description: Testeaza pagina de raportare si alertele SSR — verificarea mesajelor
+  via API necesita POST si nu poate fi efectuata cu navigate
 steps:
-  - action: navigate
-    url: "/alerte"
-  - action: wait
-    selector: "body"
-    timeout: 15000
-  - action: screenshot
-    name: alerte-page-loaded
-  - action: assert
-    selector: "body"
-    contains: "ai-grija.ro"
-  - action: navigate
-    url: "/raport"
-  - action: wait
-    selector: "body"
-    timeout: 10000
-  - action: screenshot
-    name: raport-page
-  - action: assert
-    selector: "body"
-    contains: "Generator Raport Incident"
-  - action: assert
-    selector: "body"
-    contains: "DNSC"
-  - action: navigate
-    url: "/alerte"
-  - action: wait
-    selector: "body"
-    timeout: 10000
-  - action: screenshot
-    name: alerte-index
-  - action: assert
-    selector: "h1"
-    contains: "Alerte phishing"
+- action: navigate
+  url: /alerte
+- action: wait
+  selector: body
+  timeout: 15000
+- action: screenshot
+  name: alerte-page-loaded
+- action: assert
+  selector: body
+  matches: ai-grija\.ro
+- action: navigate
+  url: /raport
+- action: wait
+  selector: body
+  timeout: 10000
+- action: screenshot
+  name: raport-page
+- action: assert
+  selector: h1, h2
+  matches: Generator Raport Incident
+- action: assert
+  selector: body
+  exists: true
+- action: assert
+  selector: a[href*='dnsc'], body
+  matches: DNSC
+- action: navigate
+  url: /alerte
+- action: wait
+  selector: body
+  timeout: 10000
+- action: screenshot
+  name: alerte-index
+- action: assert
+  selector: h1
+  matches: Alerte\s+phishing

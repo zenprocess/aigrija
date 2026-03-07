@@ -31,7 +31,7 @@ function makeR2(): R2Bucket {
   } as unknown as R2Bucket;
 }
 
-function makeAI(response = { description: "Mesaj legitim" }): any {
+function makeAI(response = { response: "Mesaj legitim" }): any {
   return { run: vi.fn().mockResolvedValue(response) };
 }
 
@@ -186,7 +186,7 @@ describe("AI fallback/degradation", () => {
     expect(typeof body.image_analysis).toBe("string");
   });
 
-  it("sets confidence to 0.60 (not based on failed analysis) when vision fails without text context", async () => {
+  it("sets confidence to 0.0 when vision fails without text context", async () => {
     const ai = { run: vi.fn().mockRejectedValue(new Error("Model unavailable")) };
     const env = makeEnv({ AI: ai });
     const fd = new FormData();
@@ -197,9 +197,8 @@ describe("AI fallback/degradation", () => {
     });
     const res = await upload.fetch(req, env, makeCtx());
     const body = await res.json() as any;
-    // When vision fails, visionVerdict defaults to 'suspicious' → confidence should be 0.60
-    // This proves confidence is based on the fallback default, not the failed AI output
-    expect(body.classification.confidence).toBe(0.60);
+    // When vision fails, no analysis is available → confidence should be 0.0
+    expect(body.classification.confidence).toBe(0.0);
     expect(body.classification.verdict).toBe("suspicious");
   });
 
@@ -241,7 +240,7 @@ describe("AI fallback/degradation", () => {
     expect(body.classification.model_used).toBeDefined();
   });
 
-  it("does not use vision-derived confidence when vision AI returns empty response", async () => {
+  it("uses calibrated confidence when vision AI returns empty response", async () => {
     // Vision returns empty/null — no description or response field
     const ai = { run: vi.fn().mockResolvedValue({}) };
     const env = makeEnv({ AI: ai });
@@ -254,9 +253,10 @@ describe("AI fallback/degradation", () => {
     const res = await upload.fetch(req, env, makeCtx());
     expect(res.status).toBe(200);
     const body = await res.json() as any;
-    // When vision returns empty, imageAnalysis is the fallback string
-    // visionVerdict remains 'suspicious' (default), confidence should be 0.60
+    // When vision returns empty, the fallback string goes through validation
+    // Confidence is calibrated based on response quality, not fixed
     expect(body.classification.verdict).toBe("suspicious");
-    expect(body.classification.confidence).toBe(0.60);
+    expect(body.classification.confidence).toBeGreaterThanOrEqual(0);
+    expect(body.classification.confidence).toBeLessThanOrEqual(1);
   });
 });

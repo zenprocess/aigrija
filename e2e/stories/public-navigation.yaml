@@ -1,58 +1,62 @@
-name: "Public site navigation"
-tags: [smoke, critical, regression]
-description: "Ca utilizator, verific ca paginile principale SSR si navigarea functioneaza corect"
+name: Public site navigation
+tags:
+- smoke
+- critical
+- regression
+description: Ca utilizator, verific ca paginile principale SSR si navigarea functioneaza
+  corect
 steps:
-  - action: navigate
-    url: "/"
-  - action: wait
-    selector: "body"
-    timeout: 15000
-  - action: screenshot
-    name: homepage
-  - action: navigate
-    url: "/alerte"
-  - action: wait
-    selector: "body"
-    timeout: 10000
-  - action: screenshot
-    name: alerte-page
-  - action: assert
-    selector: "body"
-    contains: "ai-grija.ro"
-  - action: navigate
-    url: "/gdpr"
-  - action: wait
-    selector: "body"
-    timeout: 10000
-  - action: screenshot
-    name: gdpr-page
-  - action: assert
-    selector: "body"
-    contains: "GDPR"
-  - action: navigate
-    url: "/policies/privacy"
-  - action: wait
-    selector: "body"
-    timeout: 10000
-  - action: screenshot
-    name: privacy-page
-  - action: assert
-    selector: "body"
-    contains: "Zen Labs"
-  - action: navigate
-    url: "/policies/general-terms"
-  - action: wait
-    selector: "body"
-    timeout: 10000
-  - action: screenshot
-    name: terms-page
-  - action: assert
-    selector: "body"
-    contains: "Termeni"
-  - action: navigate
-    url: "/"
-  - action: wait
-    selector: "body"
-    timeout: 10000
-  - action: screenshot
-    name: back-home
+- action: navigate
+  url: /
+- action: wait
+  selector: body
+  timeout: 15000
+- action: screenshot
+  name: homepage
+- action: navigate
+  url: /alerte
+- action: wait
+  selector: body
+  timeout: 10000
+- action: screenshot
+  name: alerte-page
+- action: assert
+  selector: body
+  matches: ai-grija\.ro
+- action: navigate
+  url: /gdpr
+- action: wait
+  selector: body
+  timeout: 10000
+- action: screenshot
+  name: gdpr-page
+- action: assert
+  selector: h1, h2, body
+  matches: GDPR
+- action: navigate
+  url: /policies/privacy
+- action: wait
+  selector: body
+  timeout: 10000
+- action: screenshot
+  name: privacy-page
+- action: assert
+  selector: body
+  matches: Zen Labs
+- action: navigate
+  url: /policies/general-terms
+- action: wait
+  selector: body
+  timeout: 10000
+- action: screenshot
+  name: terms-page
+- action: assert
+  selector: h1, h2, body
+  matches: Termeni
+- action: navigate
+  url: /
+- action: wait
+  selector: body
+  timeout: 10000
+- action: screenshot
+  name: back-home

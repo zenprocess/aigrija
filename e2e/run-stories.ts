@@ -17,6 +17,12 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:8787';
 const STORIES_DIR = path.join(__dirname, 'stories');
 const OUTPUT_DIR = path.join(__dirname, '..', 'test-results', 'stories');
 
+interface JsonFieldCheck {
+  path: string;
+  equals?: unknown;
+  type?: 'string' | 'number' | 'boolean' | 'object' | 'array';
+}
+
 interface Step {
   action: 'navigate' | 'fill' | 'click' | 'wait' | 'screenshot' | 'assert';
   url?: string;
@@ -24,6 +30,13 @@ interface Step {
   value?: string;
   name?: string;
   timeout?: number;
+  exists?: boolean;
+  visible?: boolean;
+  text_equals?: string;
+  matches?: string;
+  json_has_property?: string;
+  json_field?: JsonFieldCheck;
+  element_count_gte?: number;
   contains?: string;
 }
 
@@ -69,13 +82,104 @@ async function executeStep(page: Page, step: Step, storyDir: string, screenshots
       break;
     }
     case 'assert': {
-      if (step.contains) {
-        const el = await page.locator(step.selector!).first();
-        const text = await el.textContent();
-        if (!text?.includes(step.contains)) {
-          throw new Error(`Assertion failed: expected "${step.selector}" to contain "${step.contains}", got: "${text?.slice(0, 100)}"`);
+      const selector = step.selector ?? 'body';
+
+      if (step.exists != null) {
+        const el = await page.$(selector);
+        if (step.exists && !el) {
+          throw new Error(`Assertion failed: expected "${selector}" to exist`);
+        }
+        if (!step.exists && el) {
+          throw new Error(`Assertion failed: expected "${selector}" to NOT exist`);
         }
       }
+
+      if (step.visible) {
+        const loc = page.locator(selector).first();
+        const isVisible = await loc.isVisible();
+        if (!isVisible) {
+          throw new Error(`Assertion failed: expected "${selector}" to be visible`);
+        }
+      }
+
+      if (step.text_equals != null) {
+        const el = await page.locator(selector).first();
+        const text = (await el.textContent())?.trim() ?? '';
+        if (text !== step.text_equals) {
+          throw new Error(`Assertion failed: expected "${selector}" text to equal "${step.text_equals}", got: "${text.slice(0, 100)}"`);
+        }
+      }
+
+      if (step.matches) {
+        const el = await page.locator(selector).first();
+        const text = await el.textContent() ?? '';
+        const re = new RegExp(step.matches);
+        if (!re.test(text)) {
+          throw new Error(`Assertion failed: expected "${selector}" text to match /${step.matches}/, got: "${text.slice(0, 100)}"`);
+        }
+      }
+
+      if (step.json_has_property) {
+        const el = await page.locator(selector).first();
+        const text = await el.textContent() ?? '';
+        let parsed: Record<string, unknown>;
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          throw new Error(`Assertion failed: expected "${selector}" to contain valid JSON, got: "${text.slice(0, 100)}"`);
+        }
+        if (!(step.json_has_property in parsed)) {
+          throw new Error(`Assertion failed: expected JSON to have property "${step.json_has_property}", keys: [${Object.keys(parsed).join(', ')}]`);
+        }
+      }
+
+      if (step.json_field) {
+        const el = await page.locator(selector).first();
+        const text = await el.textContent() ?? '';
+        let parsed: Record<string, unknown>;
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          throw new Error(`Assertion failed: expected "${selector}" to contain valid JSON, got: "${text.slice(0, 100)}"`);
+        }
+        const keys = step.json_field.path.split('.');
+        let current: unknown = parsed;
+        for (const key of keys) {
+          if (current == null || typeof current !== 'object') {
+            throw new Error(`Assertion failed: JSON path "${step.json_field.path}" not traversable at "${key}"`);
+          }
+          current = (current as Record<string, unknown>)[key];
+        }
+        if (step.json_field.type) {
+          const actualType = Array.isArray(current) ? 'array' : typeof current;
+          if (actualType !== step.json_field.type) {
+            throw new Error(`Assertion failed: expected JSON field "${step.json_field.path}" to be type "${step.json_field.type}", got "${actualType}"`);
+          }
+        }
+        if (step.json_field.equals !== undefined) {
+          const actual = JSON.stringify(current);
+          const expected = JSON.stringify(step.json_field.equals);
+          if (actual !== expected) {
+            throw new Error(`Assertion failed: expected JSON field "${step.json_field.path}" to equal ${expected}, got ${actual}`);
+          }
+        }
+      }
+
+      if (step.element_count_gte != null) {
+        const count = await page.locator(selector).count();
+        if (count < step.element_count_gte) {
+          throw new Error(`Assertion failed: expected "${selector}" count >= ${step.element_count_gte}, got ${count}`);
+        }
+      }
+
+      if (step.contains) {
+        const el = await page.locator(selector).first();
+        const text = await el.textContent();
+        if (!text?.includes(step.contains)) {
+          throw new Error(`Assertion failed: expected "${selector}" to contain "${step.contains}", got: "${text?.slice(0, 100)}"`);
+        }
+      }
+
       break;
     }
     default:

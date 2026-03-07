@@ -171,7 +171,7 @@ describe('handleScheduled', () => {
     });
 
     it('publishes generated drafts to Sanity and updates status', async () => {
-      const env = makeEnv();
+      const env = makeEnv({ SANITY_WRITE_TOKEN: 'test-token' });
       vi.mocked(deleteOldShareCards).mockResolvedValue({ deleted: 0, errors: 0, listed: 0 });
       const runFn = vi.fn().mockResolvedValue({ success: true });
       const bindAll = vi.fn();
@@ -207,7 +207,7 @@ describe('handleScheduled', () => {
     });
 
     it('skips sanity publish when draft_content is empty', async () => {
-      const env = makeEnv();
+      const env = makeEnv({ SANITY_WRITE_TOKEN: 'test-token' });
       vi.mocked(deleteOldShareCards).mockResolvedValue({ deleted: 0, errors: 0, listed: 0 });
       const bindAll = vi.fn();
       bindAll.mockResolvedValueOnce({ results: [] }).mockResolvedValueOnce({
@@ -226,7 +226,7 @@ describe('handleScheduled', () => {
     });
 
     it('handles invalid JSON in draft_content', async () => {
-      const env = makeEnv();
+      const env = makeEnv({ SANITY_WRITE_TOKEN: 'test-token' });
       vi.mocked(deleteOldShareCards).mockResolvedValue({ deleted: 0, errors: 0, listed: 0 });
       const bindAll = vi.fn();
       bindAll.mockResolvedValueOnce({ results: [] }).mockResolvedValueOnce({
@@ -244,6 +244,63 @@ describe('handleScheduled', () => {
       expect(structuredLog).toHaveBeenCalledWith('error', 'cron_sanity_parse_failed', expect.objectContaining({
         campaignId: 'c4',
       }));
+    });
+  });
+
+  describe('missing SANITY_WRITE_TOKEN — 0 1 * * *', () => {
+    it('logs error and skips sanity publish when SANITY_WRITE_TOKEN is missing', async () => {
+      const env = makeEnv();
+      // Ensure no SANITY_WRITE_TOKEN is set
+      delete (env as any).SANITY_WRITE_TOKEN;
+      vi.mocked(deleteOldShareCards).mockResolvedValue({ deleted: 0, errors: 0, listed: 0 });
+
+      await handleScheduled(makeEvent('0 1 * * *'), env);
+
+      expect(structuredLog).toHaveBeenCalledWith('error', 'sanity_write_token_missing', expect.objectContaining({
+        action: 'publish',
+      }));
+      // publishToSanity should never be called since we returned early
+      expect(publishToSanity).not.toHaveBeenCalled();
+    });
+
+    it('does not throw when SANITY_WRITE_TOKEN is missing', async () => {
+      const env = makeEnv();
+      delete (env as any).SANITY_WRITE_TOKEN;
+      vi.mocked(deleteOldShareCards).mockResolvedValue({ deleted: 0, errors: 0, listed: 0 });
+
+      // Should not throw
+      await expect(handleScheduled(makeEvent('0 1 * * *'), env)).resolves.toBeUndefined();
+    });
+
+    it('still runs draft generation even when SANITY_WRITE_TOKEN is missing', async () => {
+      const env = makeEnv();
+      delete (env as any).SANITY_WRITE_TOKEN;
+      vi.mocked(deleteOldShareCards).mockResolvedValue({ deleted: 0, errors: 0, listed: 0 });
+
+      await handleScheduled(makeEvent('0 1 * * *'), env);
+
+      // Draft generation should still be called (it doesn't need the token)
+      expect(structuredLog).toHaveBeenCalledWith('info', 'cron_draft_generation_start', expect.any(Object));
+    });
+  });
+
+  describe('job isolation — 0 1 * * *', () => {
+    it('runs sanity publish even if draft generation throws', async () => {
+      const env = makeEnv({ SANITY_WRITE_TOKEN: 'test-token' });
+      vi.mocked(deleteOldShareCards).mockResolvedValue({ deleted: 0, errors: 0, listed: 0 });
+      // Make DB.prepare throw for draft generation
+      const bindAll = vi.fn();
+      bindAll.mockRejectedValueOnce(new Error('DB crash')).mockResolvedValueOnce({ results: [] });
+      (env as any).DB = {
+        prepare: vi.fn().mockReturnValue({
+          bind: vi.fn().mockReturnValue({ all: bindAll, run: vi.fn() }),
+        }),
+      };
+
+      await handleScheduled(makeEvent('0 1 * * *'), env);
+
+      // Sanity publish should still run
+      expect(structuredLog).toHaveBeenCalledWith('info', 'cron_sanity_publish_start', expect.any(Object));
     });
   });
 

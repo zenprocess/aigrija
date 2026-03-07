@@ -10,17 +10,17 @@ steps:
   - action: screenshot
     name: raport-page
   - action: assert
-    selector: "body"
-    contains: "Generator Raport Incident"
+    selector: "h1, h2"
+    matches: "Generator Raport Incident"
   - action: assert
     selector: "body"
-    contains: "1911"
+    matches: "1911"
   - action: assert
     selector: "body"
-    contains: "DNSC"
+    matches: "DNSC"
   - action: assert
     selector: "body"
-    contains: "CERT-RO"
+    matches: "CERT-RO"
   - action: navigate
     url: "/alerte"
   - action: wait
@@ -30,7 +30,7 @@ steps:
     name: alerte-index
   - action: assert
     selector: "h1"
-    contains: "Alerte phishing"
+    matches: "Alerte\\s+phishing"
   - action: navigate
     url: "/gdpr"
   - action: wait
@@ -39,5 +39,5 @@ steps:
   - action: screenshot
     name: gdpr-page
   - action: assert
-    selector: "body"
-    contains: "GDPR"
+    selector: "h1, h2, body"
+    matches: "GDPR"

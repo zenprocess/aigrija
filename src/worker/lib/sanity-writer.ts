@@ -58,13 +58,19 @@ export async function publishToSanity(
   draftContent: string,
   contentType: string,
   env: Env
-): Promise<{ id: string }> {
+): Promise<{ id: string; error?: string }> {
   const projectId = env.SANITY_PROJECT_ID;
   const dataset = env.SANITY_DATASET || 'production';
   const token = env.SANITY_WRITE_TOKEN;
 
-  if (!projectId || !token) {
-    throw new Error('Sanity not configured: missing SANITY_PROJECT_ID or SANITY_WRITE_TOKEN');
+  if (!token) {
+    structuredLog('error', 'sanity_write_token_missing', { action: 'publish', campaignId: campaign.id });
+    return { id: '', error: 'SANITY_WRITE_TOKEN not configured' };
+  }
+
+  if (!projectId) {
+    structuredLog('error', 'sanity_project_id_missing', { action: 'publish', campaignId: campaign.id });
+    return { id: '', error: 'SANITY_PROJECT_ID not configured' };
   }
 
   const doc = contentType === 'threatReport'

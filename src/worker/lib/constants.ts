@@ -1,1 +1,1 @@
-export const VISION_MODEL = "@cf/llava-hf/llava-1.5-7b-hf";
+export const VISION_MODEL = "@cf/meta/llama-3.2-11b-vision-instruct";

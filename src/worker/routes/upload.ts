@@ -6,6 +6,8 @@ import { classify } from '../lib/classifier';
 import { structuredLog } from '../lib/logger';
 import { ImageUploadSchema, formatZodError } from '../lib/schemas';
 import { VISION_MODEL } from '../lib/constants';
+import { uint8ArrayToBase64 } from '../lib/encoding';
+import { validateVisionResponse, calibrateConfidence } from '../lib/vision-validator';
 
 const upload = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
@@ -75,25 +77,39 @@ upload.post('/api/check/image', async (c) => {
   let visionVerdict: 'phishing' | 'suspicious' | 'likely_safe' = 'suspicious';
 
   try {
-    const visionResult = await (c.env.AI.run as unknown as (model: string, input: { image: number[]; prompt: string; max_tokens: number }) => Promise<{ description?: string; response?: string }>)(VISION_MODEL, {
-      image: Array.from(imageBytes),
-      prompt: visionPrompt,
+    const base64Image = uint8ArrayToBase64(imageBytes);
+    const dataUri = `data:${imageFile.type};base64,${base64Image}`;
+
+    const visionResult = await (c.env.AI.run as unknown as (model: string, input: { messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image_url?: { url: string } }> }>; max_tokens: number }) => Promise<{ response?: string }>)(VISION_MODEL, {
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: dataUri } },
+          { type: 'text', text: visionPrompt },
+        ],
+      }],
       max_tokens: 512,
-    }) as { description?: string; response?: string };
+    });
 
-    imageAnalysis = visionResult.description || visionResult.response || 'Analiza vizuala nu a putut fi finalizata.';
+    imageAnalysis = visionResult.response || 'Analiza vizuala nu a putut fi finalizata.';
 
-    const lower = imageAnalysis.toLowerCase();
-    if (lower.includes('phishing') || lower.includes('frauda') || lower.includes('escrocherie')) {
-      visionVerdict = 'phishing';
-    } else if (lower.includes('suspect') || lower.includes('atentie') || lower.includes('posibil')) {
+    if (!validateVisionResponse(imageAnalysis)) {
+      structuredLog('warn', 'vision_response_invalid', { response: imageAnalysis.slice(0, 100) });
+      imageAnalysis = '';
       visionVerdict = 'suspicious';
-    } else if (lower.includes('sigur') || lower.includes('legitim') || lower.includes('oficial')) {
-      visionVerdict = 'likely_safe';
+    } else {
+      const lower = imageAnalysis.toLowerCase();
+      if (lower.includes('phishing') || lower.includes('frauda') || lower.includes('escrocherie')) {
+        visionVerdict = 'phishing';
+      } else if (lower.includes('suspect') || lower.includes('atentie') || lower.includes('posibil')) {
+        visionVerdict = 'suspicious';
+      } else if (lower.includes('sigur') || lower.includes('legitim') || lower.includes('oficial')) {
+        visionVerdict = 'likely_safe';
+      }
     }
   } catch (err) {
     structuredLog('error', 'vision_model_failed', { error: String(err) });
-    imageAnalysis = 'Analiza vizuala nu a putut fi finalizata. Modelul de viziune nu este disponibil.';
+    imageAnalysis = '';
   }
 
   let classification: ClassificationResult;
@@ -102,10 +118,22 @@ upload.post('/api/check/image', async (c) => {
     if (visionVerdict === 'phishing' && classification.verdict === 'likely_safe') {
       classification = { ...classification, verdict: 'suspicious' };
     }
+  } else if (!imageAnalysis) {
+    classification = {
+      verdict: 'suspicious',
+      confidence: 0.0,
+      scam_type: 'Analiza indisponibila',
+      red_flags: [] as string[],
+      explanation: 'Analiza vizuala nu este disponibila momentan. Va rugam sa incercati din nou sau sa furnizati textul mesajului.',
+      recommended_actions: ['Incercati din nou mai tarziu', 'Furnizati textul mesajului pentru analiza text'],
+      model_used: VISION_MODEL,
+      ai_disclaimer: 'Analiza generata de AI. Rezultatele sunt orientative si nu constituie consiliere juridica.',
+    };
   } else {
+    const confidence = calibrateConfidence(imageAnalysis, visionVerdict);
     classification = {
       verdict: visionVerdict,
-      confidence: visionVerdict === 'phishing' ? 0.85 : visionVerdict === 'suspicious' ? 0.60 : 0.80,
+      confidence,
       scam_type: visionVerdict === 'phishing' ? 'Detectat in imagine' : visionVerdict === 'suspicious' ? 'Posibil suspect' : 'Necunoscut',
       red_flags: visionVerdict !== 'likely_safe' ? ['Continut vizual suspect detectat'] : [],
       explanation: imageAnalysis,

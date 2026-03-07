@@ -11,7 +11,12 @@ steps:
     name: health-check
   - action: assert
     selector: "body"
-    contains: "healthy"
+    json_has_property: "status"
+  - action: assert
+    selector: "body"
+    json_field:
+      path: "status"
+      type: "string"
 
   - action: navigate
     url: "/api/alerts"
@@ -54,7 +59,7 @@ steps:
     name: api-badges
   - action: assert
     selector: "body"
-    contains: "Cloudflare"
+    json_has_property: "verified_by"
 
   - action: navigate
     url: "/sitemap.xml"

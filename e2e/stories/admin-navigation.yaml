@@ -11,7 +11,7 @@ steps:
     name: admin-dashboard
   - action: assert
     selector: "body"
-    contains: ""
+    visible: true
   - action: navigate
     url: "/admin/campanii"
   - action: wait

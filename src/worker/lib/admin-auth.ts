@@ -85,7 +85,9 @@ async function verifyJWT(token: string, teamDomain: string, kv: KVNamespace): Pr
   let verifyAlgorithm: AlgorithmIdentifier | EcdsaParams;
 
   if (matchingKey.kty === 'RSA') {
-    algorithm = { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' };
+    const algToHash: Record<string, string> = { RS256: 'SHA-256', RS384: 'SHA-384', RS512: 'SHA-512', PS256: 'SHA-256', PS384: 'SHA-384', PS512: 'SHA-512' };
+    const rsaHash = (header.alg && algToHash[header.alg]) ?? 'SHA-256';
+    algorithm = { name: 'RSASSA-PKCS1-v1_5', hash: rsaHash };
     verifyAlgorithm = 'RSASSA-PKCS1-v1_5';
   } else if (matchingKey.kty === 'EC') {
     const curve = matchingKey.crv ?? 'P-256';

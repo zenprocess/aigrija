@@ -340,7 +340,7 @@ ${renderPortableText(post.body)}
 </div>
 </article>
 <div class="share-section">
-<button class="share-btn" onclick="navigator.clipboard.writeText(window.location.href).then(()=>this.textContent='${t('share-copied', lang)}')">${t('share', lang)}</button>
+<button class="share-btn" data-copied="${escapeHtml(t('share-copied', lang))}" onclick="navigator.clipboard.writeText(window.location.href).then(()=>this.textContent=this.dataset.copied)">${escapeHtml(t('share', lang))}</button>
 </div>
 <a class="back-link" href="/${escapedCategory}${lang !== 'ro' ? `?lang=${escapeHtml(lang)}` : ''}">&larr; ${t('back-link', lang)} ${escapeHtml(categoryTitle)}</a>
 </main>

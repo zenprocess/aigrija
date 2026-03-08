@@ -54,7 +54,7 @@ export class NewsletterSubscribeEndpoint extends OpenAPIRoute {
       || c.req.header('x-real-ip')
       || 'unknown';
 
-    const rl = await checkRateLimit(c.env.CACHE, `newsletter:${ip}`, 5, 60);
+    const rl = await checkRateLimit(c.env.CACHE, `newsletter:${ip}`, 5, 120);
     applyRateLimitHeaders((k, v) => c.header(k, v), rl);
 
     if (!rl.allowed) {
@@ -160,7 +160,7 @@ export class NewsletterUnsubscribeEndpoint extends OpenAPIRoute {
       || c.req.header('x-real-ip')
       || 'unknown';
 
-    const rl = await checkRateLimit(c.env.CACHE, `newsletter:${ip}`, 5, 60);
+    const rl = await checkRateLimit(c.env.CACHE, `newsletter:${ip}`, 5, 120);
     applyRateLimitHeaders((k, v) => c.header(k, v), rl);
 
     if (!rl.allowed) {

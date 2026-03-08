@@ -82,7 +82,7 @@ describe('POST /api/newsletter/subscribe', () => {
       body: JSON.stringify({ email: 'user@example.com' }),
     });
 
-    const res = await app.fetch(req, makeEnv({ [rlKey('newsletter:9.9.9.9', 60)]: '5' }) as any, ctx);
+    const res = await app.fetch(req, makeEnv({ [rlKey('newsletter:9.9.9.9', 120)]: '5' }) as any, ctx);
     expect(res.status).toBe(429);
     const body = await res.json() as { error: { code: string } };
     expect(body.error.code).toBe('RATE_LIMITED');
@@ -162,7 +162,7 @@ describe('POST /api/newsletter/unsubscribe', () => {
       body: JSON.stringify({ email: 'user@example.com' }),
     });
 
-    const res = await app.fetch(req, makeEnv({ [rlKey('newsletter:8.8.8.8', 60)]: '5' }) as any, ctx);
+    const res = await app.fetch(req, makeEnv({ [rlKey('newsletter:8.8.8.8', 120)]: '5' }) as any, ctx);
     expect(res.status).toBe(429);
   });
 });

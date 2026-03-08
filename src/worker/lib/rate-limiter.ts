@@ -30,12 +30,12 @@ export const ROUTE_RATE_LIMITS: Record<string, RouteRateLimitConfig> = {
   // Counter endpoint — very generous
   'counter':        { limit: 200, windowSeconds: 3600 },
   // Alerts / blog / card / og — read-heavy, generous
-  'alerts':         { limit: 60,  windowSeconds: 60 },
-  'blog':           { limit: 60,  windowSeconds: 60 },
-  'card':           { limit: 60,  windowSeconds: 60 },
-  'og':             { limit: 60,  windowSeconds: 60 },
+  'alerts':         { limit: 60,  windowSeconds: 120 },
+  'blog':           { limit: 60,  windowSeconds: 120 },
+  'card':           { limit: 60,  windowSeconds: 120 },
+  'og':             { limit: 60,  windowSeconds: 120 },
   // RSS feeds — crawlers hammer these; stricter
-  'feed':           { limit: 30,  windowSeconds: 60 },
+  'feed':           { limit: 30,  windowSeconds: 120 },
 };
 
 export interface RateLimitResult {
@@ -74,28 +74,34 @@ export async function checkRateLimit(
   const windowSlot = Math.floor(now / windowSeconds);
   // The window resets at the start of the next slot.
   const reset = (windowSlot + 1) * windowSeconds;
-  // TTL is the remaining time until the window boundary (minimum 1 second).
-  const ttl = Math.max(1, reset - now);
+  // TTL is the remaining time until the window boundary.
+  // Cloudflare KV requires expirationTtl >= 60 seconds.
+  const ttl = Math.max(60, reset - now);
 
   const key = `rl:${identifier}:${windowSlot}`;
 
-  const raw = await cache.get(key);
+  try {
+    const raw = await cache.get(key);
 
-  if (raw === null) {
-    // First request in this window — create key with TTL anchored to window end.
-    await cache.put(key, '1', { expirationTtl: ttl });
-    return { allowed: true, remaining: limit - 1, limit, reset };
+    if (raw === null) {
+      // First request in this window — create key with TTL anchored to window end.
+      await cache.put(key, '1', { expirationTtl: ttl });
+      return { allowed: true, remaining: limit - 1, limit, reset };
+    }
+
+    const current = parseInt(raw, 10);
+    if (current >= limit) {
+      return { allowed: false, remaining: 0, limit, reset };
+    }
+
+    // Increment counter. TTL is re-set to remaining window time so KV expiry
+    // tracks the fixed window boundary, not the time of the last request.
+    await cache.put(key, String(current + 1), { expirationTtl: ttl });
+    return { allowed: true, remaining: limit - current - 1, limit, reset };
+  } catch {
+    // KV failure — degrade gracefully by allowing the request through.
+    return { allowed: true, remaining: limit, limit, reset };
   }
-
-  const current = parseInt(raw, 10);
-  if (current >= limit) {
-    return { allowed: false, remaining: 0, limit, reset };
-  }
-
-  // Increment counter. TTL is re-set to remaining window time so KV expiry
-  // tracks the fixed window boundary, not the time of the last request.
-  await cache.put(key, String(current + 1), { expirationTtl: ttl });
-  return { allowed: true, remaining: limit - current - 1, limit, reset };
 }
 
 /**

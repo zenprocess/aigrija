@@ -203,8 +203,9 @@ jobs:
           ATTEMPT=0
           MAX_ELAPSED=180
           echo "Waiting for Cloudflare edge propagation..."
-          sleep 10
-          ELAPSED=10
+          INITIAL_DELAY=10
+          sleep "$INITIAL_DELAY"
+          ELAPSED=$INITIAL_DELAY
           while [ "$ELAPSED" -lt "$MAX_ELAPSED" ]; do
             ATTEMPT=$((ATTEMPT + 1))
             STATUS=$(curl -so /dev/null --max-time 10 --connect-timeout 5 -w '%{http_code}' https://ai-grija.ro/health 2>/dev/null || echo "000")
@@ -225,7 +226,7 @@ jobs:
             sleep "$WAIT"
             ELAPSED=$((ELAPSED + WAIT))
           done
-          echo "ERROR: Production not healthy after ${MAX_ELAPSED}s"
+          echo "ERROR: Production not healthy after ${ELAPSED}s"
           exit 1
 
   post-deploy-bdd:

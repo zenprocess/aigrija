@@ -217,9 +217,11 @@ describe("AI fallback/degradation", () => {
     };
     const ai = {
       run: vi.fn()
-        // First call: vision model → throws
+        // First call: license acceptance → succeeds
+        .mockResolvedValueOnce({})
+        // Second call: vision model → throws
         .mockRejectedValueOnce(new Error("Vision model unavailable"))
-        // Second call: text classifier → succeeds
+        // Third call: text classifier → succeeds
         .mockResolvedValueOnce(classifierResult),
     };
     const env = makeEnv({ AI: ai });

@@ -1,0 +1,3 @@
+name: ai-grija-policy
+runtime: nodejs
+description: CrossGuard policies for ai-grija infrastructure

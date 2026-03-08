@@ -38,7 +38,7 @@ test.describe('Blog SSR — content negotiation', () => {
     expect(Array.isArray(body)).toBe(true);
   });
 
-  test('no Accept header defaults to JSON', async ({ request }) => {
+  test('Accept: */* defaults to JSON', async ({ request }) => {
     const res = await request.get('/ghid', {
       headers: { Accept: '*/*' },
     });

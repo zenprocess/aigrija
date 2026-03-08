@@ -88,8 +88,11 @@ async function verifyJWT(token: string, teamDomain: string, kv: KVNamespace): Pr
     algorithm = { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' };
     verifyAlgorithm = 'RSASSA-PKCS1-v1_5';
   } else if (matchingKey.kty === 'EC') {
-    algorithm = { name: 'ECDSA', namedCurve: matchingKey.crv ?? 'P-256' };
-    verifyAlgorithm = { name: 'ECDSA', hash: 'SHA-256' };
+    const curve = matchingKey.crv ?? 'P-256';
+    const ecHashMap: Record<string, string> = { 'P-256': 'SHA-256', 'P-384': 'SHA-384', 'P-521': 'SHA-512' };
+    const ecHash = ecHashMap[curve] ?? 'SHA-256';
+    algorithm = { name: 'ECDSA', namedCurve: curve };
+    verifyAlgorithm = { name: 'ECDSA', hash: ecHash };
   } else {
     return null;
   }

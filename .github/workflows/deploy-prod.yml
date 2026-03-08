@@ -197,7 +197,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - name: Wait for production to be ready (exponential backoff, 180s max)
+      - name: Wait for production to be ready (progressive backoff, 180s max)
         run: |
           ELAPSED=0
           ATTEMPT=0
@@ -209,7 +209,7 @@ jobs:
             ATTEMPT=$((ATTEMPT + 1))
             STATUS=$(curl -so /dev/null --max-time 10 --connect-timeout 5 -w '%{http_code}' https://ai-grija.ro/health 2>/dev/null || echo "000")
             if [ "$STATUS" = "200" ]; then
-              echo "Production healthy after ${ELAPSED}s (attempt $ATTEMPT)"
+              echo "Basic health check passed after ${ELAPSED}s (attempt $ATTEMPT)"
               echo "Running deep health check..."
               DEEP=$(curl -so /dev/null --max-time 30 --connect-timeout 5 -w '%{http_code}' https://ai-grija.ro/health/deep 2>/dev/null || echo "000")
               if [ "$DEEP" = "200" ]; then

@@ -25,6 +25,7 @@ export const blogPost = defineType({
       options: {
         list: [
           { title: 'Romanian', value: 'ro' },
+          { title: 'English', value: 'en' },
           { title: 'Bulgarian', value: 'bg' },
           { title: 'Hungarian', value: 'hu' },
           { title: 'Ukrainian', value: 'uk' },
@@ -102,10 +103,22 @@ export const blogPost = defineType({
         list: [
           { title: 'Ghid de protectie', value: 'ghid' },
           { title: 'Educatie digitala', value: 'educatie' },
+          { title: 'General', value: 'general' },
         ],
         layout: 'radio',
       },
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'content',
+      title: 'Content',
+      description: 'Plain text content (used by automated publishing)',
+      type: 'text',
+    }),
+    defineField({
+      name: 'sourceUrl',
+      title: 'Source URL',
+      type: 'url',
     }),
     defineField({
       name: 'featured',

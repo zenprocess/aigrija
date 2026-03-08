@@ -25,6 +25,7 @@ export const communityStory = defineType({
       options: {
         list: [
           { title: 'Romanian', value: 'ro' },
+          { title: 'English', value: 'en' },
           { title: 'Bulgarian', value: 'bg' },
           { title: 'Hungarian', value: 'hu' },
           { title: 'Ukrainian', value: 'uk' },
@@ -39,10 +40,28 @@ export const communityStory = defineType({
       type: 'string',
     }),
     defineField({
+      name: 'author',
+      title: 'Author',
+      type: 'reference',
+      to: [{ type: 'author' }],
+    }),
+    defineField({
       name: 'authorName',
       title: 'Author Name',
       description: 'Display name (not a reference to an Author document)',
       type: 'string',
+    }),
+    defineField({
+      name: 'excerpt',
+      title: 'Excerpt',
+      type: 'text',
+      rows: 3,
+    }),
+    defineField({
+      name: 'categories',
+      title: 'Categories',
+      type: 'array',
+      of: [{ type: 'reference', to: [{ type: 'category' }] }],
     }),
     defineField({
       name: 'publishedAt',

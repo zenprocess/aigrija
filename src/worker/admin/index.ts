@@ -220,6 +220,23 @@ admin.get('/generare-continut', async (c) => {
   return c.html(adminLayout('Generare Continut AI', content, 'generare-continut', email));
 });
 
+// --- Sanity Studio SPA ---
+admin.get('/studio', async (c) => {
+  const url = new URL(c.req.url);
+  url.pathname = '/studio/index.html';
+  return c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
+});
+admin.get('/studio/*', async (c) => {
+  const response = await c.env.ASSETS.fetch(c.req.raw);
+  if (response.status !== 404) {
+    return response;
+  }
+  // SPA fallback — serve studio/index.html for client-side routing
+  const url = new URL(c.req.url);
+  url.pathname = '/studio/index.html';
+  return c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
+});
+
 // Mount sub-routers — API routes must be mounted before HTML routes to avoid param conflicts
 admin.route('/campanii/api', campaignApiRoutes);
 admin.route('/campanii', campaignRoutes);

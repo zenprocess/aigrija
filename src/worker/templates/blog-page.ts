@@ -119,7 +119,7 @@ function renderFooter(category: string, lang: string): string {
 <a href="/${escapeHtml(category)}/feed.xml">RSS Feed</a>
 <a href="/feed.xml">RSS Global</a>
 </div>
-<p>&copy; ${new Date().getFullYear()} ai-grija.ro — ${t('footer', lang)}</p>
+<p>&copy; ${new Date().getFullYear()} ai-grija.ro — ${escapeHtml(t('footer', lang))}</p>
 </div></footer>`;
 }
 
@@ -229,8 +229,8 @@ ${p.author?.name ? `<span>${escapeHtml(p.author.name)}</span>` : ''}
 </article>`;
   }).join('\n');
 
-  const prevPage = page > 1 ? `<a href="/${escapedCategory}?lang=${escapeHtml(lang)}&page=${page - 1}">&larr; ${t('prev-page', lang)}</a>` : '<span></span>';
-  const nextPage = safePosts.length >= 20 ? `<a href="/${escapedCategory}?lang=${escapeHtml(lang)}&page=${page + 1}">${t('next-page', lang)} &rarr;</a>` : '<span></span>';
+  const prevPage = page > 1 ? `<a href="/${escapedCategory}?lang=${escapeHtml(lang)}&page=${page - 1}">&larr; ${escapeHtml(t('prev-page', lang))}</a>` : '<span></span>';
+  const nextPage = safePosts.length >= 20 ? `<a href="/${escapedCategory}?lang=${escapeHtml(lang)}&page=${page + 1}">${escapeHtml(t('next-page', lang))} &rarr;</a>` : '<span></span>';
   const pagination = page > 1 || safePosts.length >= 20 ? `<div class="pagination">${prevPage}${nextPage}</div>` : '';
 
   return `<!DOCTYPE html>
@@ -258,7 +258,7 @@ ${renderHeader()}
 <p>${escapeHtml(categoryDesc)}</p>
 </div>
 <div class="posts">
-${postCards || `<p style="color:#737373">${t('no-articles', lang)}</p>`}
+${postCards || `<p style="color:#737373">${escapeHtml(t('no-articles', lang))}</p>`}
 </div>
 ${pagination}
 </main>
@@ -330,7 +330,7 @@ ${renderHeader()}
 <div class="article-meta">
 ${post.author?.name ? `<span>${escapeHtml(post.author.name)}</span>` : ''}
 ${date ? `<span>${formatDate(date, lang)}</span>` : ''}
-<span>${readTime} ${t('reading-time', lang)}</span>
+<span>${readTime} ${escapeHtml(t('reading-time', lang))}</span>
 </div>
 </div>
 ${imageUrl ? `<img class="article-hero" src="${escapeHtml(imageUrl)}" alt="${escapeHtml(title)}">` : ''}
@@ -342,7 +342,7 @@ ${renderPortableText(post.body)}
 <div class="share-section">
 <button class="share-btn" data-copied="${escapeHtml(t('share-copied', lang))}" onclick="navigator.clipboard.writeText(window.location.href).then(()=>this.textContent=this.dataset.copied)">${escapeHtml(t('share', lang))}</button>
 </div>
-<a class="back-link" href="/${escapedCategory}${lang !== 'ro' ? `?lang=${escapeHtml(lang)}` : ''}">&larr; ${t('back-link', lang)} ${escapeHtml(categoryTitle)}</a>
+<a class="back-link" href="/${escapedCategory}${lang !== 'ro' ? `?lang=${escapeHtml(lang)}` : ''}">&larr; ${escapeHtml(t('back-link', lang))} ${escapeHtml(categoryTitle)}</a>
 </main>
 ${renderFooter(category, lang)}
 </body>

@@ -207,11 +207,11 @@ jobs:
           ELAPSED=10
           while [ "$ELAPSED" -lt "$MAX_ELAPSED" ]; do
             ATTEMPT=$((ATTEMPT + 1))
-            STATUS=$(curl -so /dev/null -w '%{http_code}' https://ai-grija.ro/health 2>/dev/null || echo "000")
+            STATUS=$(curl -so /dev/null --max-time 10 --connect-timeout 5 -w '%{http_code}' https://ai-grija.ro/health 2>/dev/null || echo "000")
             if [ "$STATUS" = "200" ]; then
               echo "Production healthy after ${ELAPSED}s (attempt $ATTEMPT)"
               echo "Running deep health check..."
-              DEEP=$(curl -so /dev/null -w '%{http_code}' https://ai-grija.ro/health/deep 2>/dev/null || echo "000")
+              DEEP=$(curl -so /dev/null --max-time 30 --connect-timeout 5 -w '%{http_code}' https://ai-grija.ro/health/deep 2>/dev/null || echo "000")
               if [ "$DEEP" = "200" ]; then
                 echo "Deep health check passed"
                 exit 0

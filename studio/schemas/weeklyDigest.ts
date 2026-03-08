@@ -25,6 +25,7 @@ export const weeklyDigest = defineType({
       options: {
         list: [
           { title: 'Romanian', value: 'ro' },
+          { title: 'English', value: 'en' },
           { title: 'Bulgarian', value: 'bg' },
           { title: 'Hungarian', value: 'hu' },
           { title: 'Ukrainian', value: 'uk' },
@@ -54,6 +55,23 @@ export const weeklyDigest = defineType({
       name: 'publishedAt',
       title: 'Published At',
       type: 'datetime',
+    }),
+    defineField({
+      name: 'excerpt',
+      title: 'Excerpt',
+      type: 'text',
+      rows: 3,
+    }),
+    defineField({
+      name: 'body',
+      title: 'Body',
+      type: 'blockContent',
+    }),
+    defineField({
+      name: 'categories',
+      title: 'Categories',
+      type: 'array',
+      of: [{ type: 'reference', to: [{ type: 'category' }] }],
     }),
     defineField({
       name: 'summary',

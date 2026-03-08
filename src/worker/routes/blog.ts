@@ -4,6 +4,7 @@ import type { Env } from '../lib/types';
 import { sanityFetch } from '../lib/sanity';
 import { structuredLog } from '../lib/logger';
 import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { renderBlogListPage, renderBlogPostPage } from '../templates/blog-page';
 
 const VALID_BLOG_LANGS = ['ro', 'en', 'bg', 'hu', 'uk'] as const;
 
@@ -21,6 +22,11 @@ function parseBlogQuery(langRaw?: string, pageRaw?: string): { ok: true; data: B
     return { ok: false, message: msg };
   }
   return { ok: true, data: result.data };
+}
+
+function wantsHtml(c: { req: { header: (name: string) => string | undefined } }): boolean {
+  const accept = c.req.header('Accept') || '';
+  return accept.includes('text/html') && !accept.includes('application/json');
 }
 
 const blog = new Hono<{ Bindings: Env }>();
@@ -117,11 +123,18 @@ blog.get('/amenintari', async (c) => {
   const { lang, page } = _qp.data;
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
-  const cacheKey = `amenintari:list:${lang}:${page}`;
+  const html = wantsHtml(c);
+  const cacheKey = `${html ? 'html:' : ''}amenintari:list:${lang}:${page}`;
   const cached = await kvGet(c.env, cacheKey);
-  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
+  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<unknown[]>(c.env, AMENINTARI_LIST_QUERY, { lang, from, to });
+    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, AMENINTARI_LIST_QUERY, { lang, from, to });
+    if (html) {
+      const rendered = renderBlogListPage(posts as never[], 'amenintari', lang, page, c.env.BASE_URL);
+      await kvPut(c.env, cacheKey, rendered, 300);
+      c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
+      return c.html(rendered);
+    }
     const body = JSON.stringify(posts ?? []);
     await kvPut(c.env, cacheKey, body, 300);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
@@ -157,12 +170,19 @@ blog.get('/amenintari/:slug', async (c) => {
   const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
   if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
   const lang = _lq.data.lang;
-  const cacheKey = `amenintari:post:${lang}:${slug}`;
+  const html = wantsHtml(c);
+  const cacheKey = `${html ? 'html:' : ''}amenintari:post:${lang}:${slug}`;
   const cached = await kvGet(c.env, cacheKey);
-  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
+  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<unknown>(c.env, AMENINTARI_POST_QUERY, { slug, lang });
+    const post = await sanityFetch<Record<string, unknown>>(c.env, AMENINTARI_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Raportul nu a fost gasit.' }, request_id: 'unknown' }, 404);
+    if (html) {
+      const rendered = renderBlogPostPage(post as never, 'amenintari', lang, c.env.BASE_URL);
+      await kvPut(c.env, cacheKey, rendered, 600);
+      c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
+      return c.html(rendered);
+    }
     const body = JSON.stringify(post);
     await kvPut(c.env, cacheKey, body, 600);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
@@ -181,11 +201,18 @@ blog.get('/ghid', async (c) => {
   const { lang, page } = _qp.data;
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
-  const cacheKey = `ghid:list:${lang}:${page}`;
+  const html = wantsHtml(c);
+  const cacheKey = `${html ? 'html:' : ''}ghid:list:${lang}:${page}`;
   const cached = await kvGet(c.env, cacheKey);
-  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
+  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<unknown[]>(c.env, GHID_LIST_QUERY, { lang, from, to });
+    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, GHID_LIST_QUERY, { lang, from, to });
+    if (html) {
+      const rendered = renderBlogListPage(posts as never[], 'ghid', lang, page, c.env.BASE_URL);
+      await kvPut(c.env, cacheKey, rendered, 300);
+      c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
+      return c.html(rendered);
+    }
     const body = JSON.stringify(posts ?? []);
     await kvPut(c.env, cacheKey, body, 300);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
@@ -221,12 +248,19 @@ blog.get('/ghid/:slug', async (c) => {
   const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
   if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
   const lang = _lq.data.lang;
-  const cacheKey = `ghid:post:${lang}:${slug}`;
+  const html = wantsHtml(c);
+  const cacheKey = `${html ? 'html:' : ''}ghid:post:${lang}:${slug}`;
   const cached = await kvGet(c.env, cacheKey);
-  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
+  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<unknown>(c.env, GHID_POST_QUERY, { slug, lang });
+    const post = await sanityFetch<Record<string, unknown>>(c.env, GHID_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Ghidul nu a fost gasit.' }, request_id: 'unknown' }, 404);
+    if (html) {
+      const rendered = renderBlogPostPage(post as never, 'ghid', lang, c.env.BASE_URL);
+      await kvPut(c.env, cacheKey, rendered, 600);
+      c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
+      return c.html(rendered);
+    }
     const body = JSON.stringify(post);
     await kvPut(c.env, cacheKey, body, 600);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
@@ -245,11 +279,18 @@ blog.get('/educatie', async (c) => {
   const { lang, page } = _qp.data;
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
-  const cacheKey = `educatie:list:${lang}:${page}`;
+  const html = wantsHtml(c);
+  const cacheKey = `${html ? 'html:' : ''}educatie:list:${lang}:${page}`;
   const cached = await kvGet(c.env, cacheKey);
-  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
+  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<unknown[]>(c.env, EDUCATIE_LIST_QUERY, { lang, from, to });
+    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, EDUCATIE_LIST_QUERY, { lang, from, to });
+    if (html) {
+      const rendered = renderBlogListPage(posts as never[], 'educatie', lang, page, c.env.BASE_URL);
+      await kvPut(c.env, cacheKey, rendered, 300);
+      c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
+      return c.html(rendered);
+    }
     const body = JSON.stringify(posts ?? []);
     await kvPut(c.env, cacheKey, body, 300);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
@@ -285,12 +326,19 @@ blog.get('/educatie/:slug', async (c) => {
   const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
   if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
   const lang = _lq.data.lang;
-  const cacheKey = `educatie:post:${lang}:${slug}`;
+  const html = wantsHtml(c);
+  const cacheKey = `${html ? 'html:' : ''}educatie:post:${lang}:${slug}`;
   const cached = await kvGet(c.env, cacheKey);
-  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
+  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<unknown>(c.env, EDUCATIE_POST_QUERY, { slug, lang });
+    const post = await sanityFetch<Record<string, unknown>>(c.env, EDUCATIE_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Articolul de educatie nu a fost gasit.' }, request_id: 'unknown' }, 404);
+    if (html) {
+      const rendered = renderBlogPostPage(post as never, 'educatie', lang, c.env.BASE_URL);
+      await kvPut(c.env, cacheKey, rendered, 600);
+      c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
+      return c.html(rendered);
+    }
     const body = JSON.stringify(post);
     await kvPut(c.env, cacheKey, body, 600);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
@@ -309,11 +357,18 @@ blog.get('/rapoarte', async (c) => {
   const { lang, page } = _qp.data;
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
-  const cacheKey = `rapoarte:list:${lang}:${page}`;
+  const html = wantsHtml(c);
+  const cacheKey = `${html ? 'html:' : ''}rapoarte:list:${lang}:${page}`;
   const cached = await kvGet(c.env, cacheKey);
-  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
+  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<unknown[]>(c.env, RAPOARTE_LIST_QUERY, { lang, from, to });
+    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, RAPOARTE_LIST_QUERY, { lang, from, to });
+    if (html) {
+      const rendered = renderBlogListPage(posts as never[], 'rapoarte', lang, page, c.env.BASE_URL);
+      await kvPut(c.env, cacheKey, rendered, 300);
+      c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
+      return c.html(rendered);
+    }
     const body = JSON.stringify(posts ?? []);
     await kvPut(c.env, cacheKey, body, 300);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
@@ -329,12 +384,19 @@ blog.get('/rapoarte/:slug', async (c) => {
   const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
   if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
   const lang = _lq.data.lang;
-  const cacheKey = `rapoarte:post:${lang}:${slug}`;
+  const html = wantsHtml(c);
+  const cacheKey = `${html ? 'html:' : ''}rapoarte:post:${lang}:${slug}`;
   const cached = await kvGet(c.env, cacheKey);
-  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
+  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<unknown>(c.env, RAPOARTE_POST_QUERY, { slug, lang });
+    const post = await sanityFetch<Record<string, unknown>>(c.env, RAPOARTE_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Raportul saptamanal nu a fost gasit.' }, request_id: 'unknown' }, 404);
+    if (html) {
+      const rendered = renderBlogPostPage(post as never, 'rapoarte', lang, c.env.BASE_URL);
+      await kvPut(c.env, cacheKey, rendered, 600);
+      c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
+      return c.html(rendered);
+    }
     const body = JSON.stringify(post);
     await kvPut(c.env, cacheKey, body, 600);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
@@ -353,11 +415,18 @@ blog.get('/povesti', async (c) => {
   const { lang, page } = _qp.data;
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
-  const cacheKey = `povesti:list:${lang}:${page}`;
+  const html = wantsHtml(c);
+  const cacheKey = `${html ? 'html:' : ''}povesti:list:${lang}:${page}`;
   const cached = await kvGet(c.env, cacheKey);
-  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
+  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<unknown[]>(c.env, POVESTI_LIST_QUERY, { lang, from, to });
+    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, POVESTI_LIST_QUERY, { lang, from, to });
+    if (html) {
+      const rendered = renderBlogListPage(posts as never[], 'povesti', lang, page, c.env.BASE_URL);
+      await kvPut(c.env, cacheKey, rendered, 300);
+      c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
+      return c.html(rendered);
+    }
     const body = JSON.stringify(posts ?? []);
     await kvPut(c.env, cacheKey, body, 300);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
@@ -373,12 +442,19 @@ blog.get('/povesti/:slug', async (c) => {
   const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
   if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
   const lang = _lq.data.lang;
-  const cacheKey = `povesti:post:${lang}:${slug}`;
+  const html = wantsHtml(c);
+  const cacheKey = `${html ? 'html:' : ''}povesti:post:${lang}:${slug}`;
   const cached = await kvGet(c.env, cacheKey);
-  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
+  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<unknown>(c.env, POVESTI_POST_QUERY, { slug, lang });
+    const post = await sanityFetch<Record<string, unknown>>(c.env, POVESTI_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Povestea nu a fost gasita.' }, request_id: 'unknown' }, 404);
+    if (html) {
+      const rendered = renderBlogPostPage(post as never, 'povesti', lang, c.env.BASE_URL);
+      await kvPut(c.env, cacheKey, rendered, 600);
+      c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
+      return c.html(rendered);
+    }
     const body = JSON.stringify(post);
     await kvPut(c.env, cacheKey, body, 600);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
@@ -397,11 +473,18 @@ blog.get('/presa', async (c) => {
   const { lang, page } = _qp.data;
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
-  const cacheKey = `presa:list:${lang}:${page}`;
+  const html = wantsHtml(c);
+  const cacheKey = `${html ? 'html:' : ''}presa:list:${lang}:${page}`;
   const cached = await kvGet(c.env, cacheKey);
-  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
+  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<unknown[]>(c.env, PRESA_LIST_QUERY, { lang, from, to });
+    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, PRESA_LIST_QUERY, { lang, from, to });
+    if (html) {
+      const rendered = renderBlogListPage(posts as never[], 'presa', lang, page, c.env.BASE_URL);
+      await kvPut(c.env, cacheKey, rendered, 300);
+      c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
+      return c.html(rendered);
+    }
     const body = JSON.stringify(posts ?? []);
     await kvPut(c.env, cacheKey, body, 300);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
@@ -417,12 +500,19 @@ blog.get('/presa/:slug', async (c) => {
   const _lq = parseBlogQuery(c.req.query('lang') || undefined, undefined);
   if (!_lq.ok) return c.json({ error: { code: 'VALIDATION_ERROR', message: _lq.message, request_id: 'unknown' } }, 400);
   const lang = _lq.data.lang;
-  const cacheKey = `presa:post:${lang}:${slug}`;
+  const html = wantsHtml(c);
+  const cacheKey = `${html ? 'html:' : ''}presa:post:${lang}:${slug}`;
   const cached = await kvGet(c.env, cacheKey);
-  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', 'application/json'); return c.body(cached); }
+  if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<unknown>(c.env, PRESA_POST_QUERY, { slug, lang });
+    const post = await sanityFetch<Record<string, unknown>>(c.env, PRESA_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Comunicatul de presa nu a fost gasit.' }, request_id: 'unknown' }, 404);
+    if (html) {
+      const rendered = renderBlogPostPage(post as never, 'presa', lang, c.env.BASE_URL);
+      await kvPut(c.env, cacheKey, rendered, 600);
+      c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
+      return c.html(rendered);
+    }
     const body = JSON.stringify(post);
     await kvPut(c.env, cacheKey, body, 600);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
@@ -566,6 +656,8 @@ blog.post('/content/webhook', async (c) => {
       tasks.push(kvDeleteByPrefix(c.env, `${prefix}:list:`));
       tasks.push(kvDeleteByPrefix(c.env, `${prefix}:post:`));
       tasks.push(kvDeleteByPrefix(c.env, `${prefix}:feed:`));
+      tasks.push(kvDeleteByPrefix(c.env, `html:${prefix}:list:`));
+      tasks.push(kvDeleteByPrefix(c.env, `html:${prefix}:post:`));
     }
     tasks.push(kvDeleteByPrefix(c.env, 'feed:all:'));
     tasks.push(kvDeleteByPrefix(c.env, 'sitemap:content'));

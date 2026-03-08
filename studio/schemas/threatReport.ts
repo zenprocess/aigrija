@@ -25,6 +25,7 @@ export const threatReport = defineType({
       options: {
         list: [
           { title: 'Romanian', value: 'ro' },
+          { title: 'English', value: 'en' },
           { title: 'Bulgarian', value: 'bg' },
           { title: 'Hungarian', value: 'hu' },
           { title: 'Ukrainian', value: 'uk' },
@@ -52,6 +53,11 @@ export const threatReport = defineType({
         layout: 'radio',
       },
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'threatType',
+      title: 'Threat Type',
+      type: 'string',
     }),
     defineField({
       name: 'affectedEntities',
@@ -108,6 +114,34 @@ export const threatReport = defineType({
       name: 'recommendedActions',
       title: 'Recommended Actions',
       type: 'blockContent',
+    }),
+    defineField({
+      name: 'excerpt',
+      title: 'Excerpt',
+      type: 'text',
+      rows: 3,
+    }),
+    defineField({
+      name: 'content',
+      title: 'Content',
+      description: 'Plain text content (used by automated publishing)',
+      type: 'text',
+    }),
+    defineField({
+      name: 'sourceUrl',
+      title: 'Source URL',
+      type: 'url',
+    }),
+    defineField({
+      name: 'publishedAt',
+      title: 'Published At',
+      type: 'datetime',
+    }),
+    defineField({
+      name: 'categories',
+      title: 'Categories',
+      type: 'array',
+      of: [{ type: 'reference', to: [{ type: 'category' }] }],
     }),
     defineField({
       name: 'relatedCampaign',

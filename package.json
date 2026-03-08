@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "build": "npm run build:ui",
     "build:ui": "vite build --config vite.config.ui.ts",
+    "build:studio": "cd studio && npx sanity build --output-path ../dist/studio",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "test:stories": "npx tsx e2e/run-stories.ts",
@@ -19,7 +20,8 @@
     "deploy:preview": "npx wrangler deploy --env preview",
     "db:migrate": "npx wrangler d1 execute ai-grija-admin --file=migrations/0001_admin_schema.sql --remote && npx wrangler d1 execute ai-grija-admin --file=migrations/0002_conversations_reports.sql --remote",
     "db:migrate:preview": "npx wrangler d1 execute ai-grija-admin-preview --file=migrations/0001_admin_schema.sql --remote && npx wrangler d1 execute ai-grija-admin-preview --file=migrations/0002_conversations_reports.sql --remote",
-    "test:explore": "tsx e2e/bowser-explore.ts"
+    "test:explore": "tsx e2e/bowser-explore.ts",
+    "seed": "tsx scripts/seed-content.ts"
   },
   "dependencies": {
     "@dicebear/collection": "^9.3.2",

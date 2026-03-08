@@ -165,6 +165,39 @@ describe("checkRateLimit — fixed-window expiry", () => {
   });
 });
 
+// ── KV TTL minimum 60s ──────────────────────────────────────────────────────
+
+describe("checkRateLimit — KV TTL minimum", () => {
+  it("TTL is never below 60 even when window has < 60s remaining", async () => {
+    const windowSeconds = 120;
+    vi.useFakeTimers();
+    // Set time to 119s into a 120s window — only 1s remaining
+    const slotStart = Math.floor(Date.now() / 1000 / windowSeconds) * windowSeconds;
+    vi.setSystemTime(new Date((slotStart + 119) * 1000));
+
+    const kv = makeKV();
+    await checkRateLimit(kv, "ttl-min-test", 10, windowSeconds);
+    expect(kv._lastTtl).toBe(60);
+  });
+
+  it("degrades gracefully when KV put throws", async () => {
+    const kv = makeKV();
+    kv.get = async () => null;
+    kv.put = async () => { throw new Error("KV unavailable"); };
+    const result = await checkRateLimit(kv, "kv-fail", 5, 3600);
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(5);
+  });
+
+  it("degrades gracefully when KV get throws", async () => {
+    const kv = makeKV();
+    kv.get = async () => { throw new Error("KV unavailable"); };
+    const result = await checkRateLimit(kv, "kv-fail-get", 5, 3600);
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(5);
+  });
+});
+
 // ── ROUTE_RATE_LIMITS ───────────────────────────────────────────────────────
 
 describe("ROUTE_RATE_LIMITS", () => {
@@ -176,10 +209,10 @@ describe("ROUTE_RATE_LIMITS", () => {
     expect(ROUTE_RATE_LIMITS['vote'].limit).toBeLessThan(ROUTE_RATE_LIMITS['telegram'].limit);
   });
 
-  it("all routes have positive limit and windowSeconds", () => {
+  it("all routes have positive limit and windowSeconds >= 60", () => {
     for (const [route, cfg] of Object.entries(ROUTE_RATE_LIMITS)) {
       expect(cfg.limit, `${route}.limit`).toBeGreaterThan(0);
-      expect(cfg.windowSeconds, `${route}.windowSeconds`).toBeGreaterThan(0);
+      expect(cfg.windowSeconds, `${route}.windowSeconds`).toBeGreaterThanOrEqual(60);
     }
   });
 

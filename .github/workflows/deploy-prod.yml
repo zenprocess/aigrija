@@ -197,15 +197,35 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - name: Wait for production to be ready
+      - name: Wait for production to be ready (exponential backoff, 180s max)
         run: |
-          for i in $(seq 1 30); do
-            STATUS=$(curl -sf -o /dev/null -w '%{http_code}' https://ai-grija.ro/health/deep 2>/dev/null || echo "000")
-            if [ "$STATUS" = "200" ]; then echo "Production healthy"; exit 0; fi
-            echo "Attempt $i: status=$STATUS, retrying..."
-            sleep 5
+          ELAPSED=0
+          ATTEMPT=0
+          MAX_ELAPSED=180
+          echo "Waiting for Cloudflare edge propagation..."
+          sleep 10
+          ELAPSED=10
+          while [ "$ELAPSED" -lt "$MAX_ELAPSED" ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            STATUS=$(curl -so /dev/null -w '%{http_code}' https://ai-grija.ro/health 2>/dev/null || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "Production healthy after ${ELAPSED}s (attempt $ATTEMPT)"
+              echo "Running deep health check..."
+              DEEP=$(curl -so /dev/null -w '%{http_code}' https://ai-grija.ro/health/deep 2>/dev/null || echo "000")
+              if [ "$DEEP" = "200" ]; then
+                echo "Deep health check passed"
+                exit 0
+              fi
+              echo "Deep health check returned HTTP $DEEP — retrying..."
+            else
+              echo "Attempt $ATTEMPT: HTTP $STATUS (elapsed: ${ELAPSED}s)"
+            fi
+            WAIT=$((ATTEMPT * 3))
+            [ "$WAIT" -gt 15 ] && WAIT=15
+            sleep "$WAIT"
+            ELAPSED=$((ELAPSED + WAIT))
           done
-          echo "ERROR: Production not healthy after 150s"
+          echo "ERROR: Production not healthy after ${MAX_ELAPSED}s"
           exit 1
 
   post-deploy-bdd:

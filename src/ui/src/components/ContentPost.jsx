@@ -75,13 +75,13 @@ export default function ContentPost({ slug, category }) {
     const ctrl = new AbortController();
     setLoading(true);
     setError(null);
-    fetch(`${baseEndpoint}/${slug}`, { signal: ctrl.signal })
+    fetch(`${baseEndpoint}/${slug}?lang=${lang}`, { signal: ctrl.signal })
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((data) => { setPost(data.post || data); setRelated(data.related || []); })
       .catch((err) => { if (err.name !== 'AbortError') setError(err.message); })
       .finally(() => setLoading(false));
     return () => ctrl.abort();
-  }, [slug, category]);
+  }, [slug, category, lang]);
 
   const handleShare = () => {
     const url = window.location.href;

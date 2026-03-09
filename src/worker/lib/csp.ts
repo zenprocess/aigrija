@@ -21,6 +21,21 @@ export const ADMIN_CSP = [
 ].join('; ');
 
 /**
+ * CSP policy for Sanity Studio SPA (/admin/studio).
+ * Allows eval (GROQ), Sanity API connections, and CDN image assets.
+ */
+export const STUDIO_CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://cdn.sanity.io",
+  "connect-src 'self' https://*.api.sanity.io https://*.apicdn.sanity.io https://api.sanity.io",
+  "font-src 'self' data:",
+  "frame-src 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+
+/**
  * CSP policy used by the global securityHeaders() middleware.
  * Admin variant includes CDN script sources; public variant is locked down.
  */

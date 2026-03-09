@@ -16,7 +16,7 @@ import { structuredLog } from '../lib/logger';
 import { gdprAdmin } from './gdpr';
 import { flagsAdmin } from './flags';
 import { newsletterAdmin } from './newsletter';
-import { cspHtmlMiddleware, ADMIN_CSP } from '../lib/csp';
+import { cspHtmlMiddleware, ADMIN_CSP, STUDIO_CSP } from '../lib/csp';
 
 type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 
@@ -224,17 +224,25 @@ admin.get('/generare-continut', async (c) => {
 admin.get('/studio', async (c) => {
   const url = new URL(c.req.url);
   url.pathname = '/studio/index.html';
-  return c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
+  const response = await c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
+  const res = new Response(response.body, response);
+  res.headers.set('Content-Security-Policy', STUDIO_CSP);
+  return res;
 });
 admin.get('/studio/*', async (c) => {
   const response = await c.env.ASSETS.fetch(c.req.raw);
   if (response.status !== 404) {
-    return response;
+    const res = new Response(response.body, response);
+    res.headers.set('Content-Security-Policy', STUDIO_CSP);
+    return res;
   }
   // SPA fallback — serve studio/index.html for client-side routing
   const url = new URL(c.req.url);
   url.pathname = '/studio/index.html';
-  return c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
+  const fallback = await c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
+  const res = new Response(fallback.body, fallback);
+  res.headers.set('Content-Security-Policy', STUDIO_CSP);
+  return res;
 });
 
 // Mount sub-routers — API routes must be mounted before HTML routes to avoid param conflicts

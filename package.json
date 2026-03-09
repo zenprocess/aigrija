@@ -8,7 +8,7 @@
     "deploy": "npx wrangler deploy",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "build": "npm run build:ui",
+    "build": "npm run build:ui && npm run build:studio",
     "build:ui": "vite build --config vite.config.ui.ts",
     "build:studio": "cd studio && npx sanity build --output-path ../dist/studio",
     "test:e2e": "npx playwright test",

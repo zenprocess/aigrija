@@ -56,6 +56,7 @@ binding = "DRAFT_QUEUE"
 
 [vars]
 BASE_URL = "https://ai-grija.ro"
+CF_ACCESS_TEAM_DOMAIN = "zenprocess"
 
 
 [triggers]
@@ -80,7 +81,7 @@ routes = [
   { pattern = "pre.ai-grija.ro/*", zone_name = "ai-grija.ro" },
   { pattern = "pre-admin.ai-grija.ro/*", zone_name = "ai-grija.ro" },
 ]
-vars = { BASE_URL = "https://pre.ai-grija.ro" }
+vars = { BASE_URL = "https://pre.ai-grija.ro", CF_ACCESS_TEAM_DOMAIN = "zenprocess" }
 
 [[env.preview.kv_namespaces]]
 binding = "CACHE"

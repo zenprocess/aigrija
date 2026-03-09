@@ -1,13 +1,13 @@
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard', icon: '🏠', key: 'dashboard' },
-  { href: '/admin/campanii', label: 'Campanii', icon: '📋', key: 'campanii' },
-  { href: '/admin/drafturi', label: 'Drafturi', icon: '✏️', key: 'drafturi' },
-  { href: '/admin/scrapere', label: 'Scraper-e', icon: '🔍', key: 'scrapere' },
-  { href: '/admin/ponderi', label: 'Ponderi', icon: '⚖️', key: 'ponderi' },
-  { href: '/admin/traduceri', label: 'Traduceri', icon: '🌐', key: 'traduceri' },
+  { href: '/admin/campanii', label: 'Campaigns', icon: '📋', key: 'campanii' },
+  { href: '/admin/drafturi', label: 'Drafts', icon: '✏️', key: 'drafturi' },
+  { href: '/admin/scrapere', label: 'Scrapers', icon: '🔍', key: 'scrapere' },
+  { href: '/admin/ponderi', label: 'Weights', icon: '⚖️', key: 'ponderi' },
+  { href: '/admin/traduceri', label: 'Translations', icon: '🌐', key: 'traduceri' },
   { href: '/admin/config', label: 'Config', icon: '⚙️', key: 'config' },
-  { href: '/admin/rapoarte-traduceri', label: 'Rapoarte trad.', icon: '🗒️', key: 'rapoarte-traduceri' },
-  { href: '/admin/generare-continut', label: 'Generare AI', icon: '🤖', key: 'generare-continut' },
+  { href: '/admin/rapoarte-traduceri', label: 'Translation Reports', icon: '🗒️', key: 'rapoarte-traduceri' },
+  { href: '/admin/generare-continut', label: 'AI Generation', icon: '🤖', key: 'generare-continut' },
   { href: '/studio', label: 'Studio', icon: '🎨', key: 'studio', external: true },
 ] as const;
 
@@ -29,7 +29,7 @@ export function adminLayout(title: string, content: string, activeNav = '', admi
   }).join('\n');
 
   return `<!DOCTYPE html>
-<html lang="ro">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">

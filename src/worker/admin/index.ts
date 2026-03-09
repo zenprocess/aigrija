@@ -34,25 +34,25 @@ admin.get('/', (c) => {
   const content = `
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div class="bg-white rounded-xl border border-gray-200 p-4">
-        <div class="text-sm text-gray-500 mb-1">Campanii totale</div>
+        <div class="text-sm text-gray-500 mb-1">Total Campaigns</div>
         <div class="text-2xl font-bold text-gray-800">—</div>
       </div>
       <div class="bg-white rounded-xl border border-gray-200 p-4">
-        <div class="text-sm text-gray-500 mb-1">Drafturi in asteptare</div>
+        <div class="text-sm text-gray-500 mb-1">Pending Drafts</div>
         <div class="text-2xl font-bold text-yellow-600">—</div>
       </div>
       <div class="bg-white rounded-xl border border-gray-200 p-4">
-        <div class="text-sm text-gray-500 mb-1">Rulari scraper azi</div>
+        <div class="text-sm text-gray-500 mb-1">Scraper Runs Today</div>
         <div class="text-2xl font-bold text-blue-600">—</div>
       </div>
       <div class="bg-white rounded-xl border border-gray-200 p-4">
-        <div class="text-sm text-gray-500 mb-1">Erori scraper</div>
+        <div class="text-sm text-gray-500 mb-1">Scraper Errors</div>
         <div class="text-2xl font-bold text-red-600">—</div>
       </div>
     </div>
     <div class="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 class="text-gray-700 font-medium mb-2">Bun venit, ${email}</h2>
-      <p class="text-gray-500 text-sm">Panoul de administrare este in constructie. Foloseste navigatia din stanga pentru a accesa sectiunile disponibile.</p>
+      <h2 class="text-gray-700 font-medium mb-2">Welcome, ${email}</h2>
+      <p class="text-gray-500 text-sm">The admin panel is under construction. Use the navigation on the left to access available sections.</p>
     </div>`;
   return c.html(adminLayout('Dashboard', content, 'dashboard', email));
 });
@@ -103,11 +103,11 @@ admin.get('/generare-continut', async (c) => {
   }
 
   const categoryLabels: Record<string, string> = {
-    amenintari: 'Amenintari',
-    ghid: 'Ghid de protectie',
-    educatie: 'Educatie',
-    povesti: 'Povesti',
-    rapoarte: 'Rapoarte',
+    amenintari: 'Threats',
+    ghid: 'Protection Guide',
+    educatie: 'Education',
+    povesti: 'Stories',
+    rapoarte: 'Reports',
   };
 
   const statusBadge = (s: string) => {
@@ -127,45 +127,45 @@ admin.get('/generare-continut', async (c) => {
         <td class="py-2 px-3 text-xs text-gray-500">${escapeHtml(categoryLabels[d.threat_type ?? ''] ?? (d.threat_type ?? '-'))}</td>
         <td class="py-2 px-3 text-xs text-gray-400">${escapeHtml((d.created_at ?? '').slice(0, 10))}</td>
         <td class="py-2 px-3">${statusBadge(escapeHtml(d.draft_status))}</td>
-        <td class="py-2 px-3"><a href="/admin/campanii/${escapeHtml(d.id)}" class="text-xs text-blue-500 hover:underline">Vizualizeaza</a></td>
+        <td class="py-2 px-3"><a href="/admin/campanii/${escapeHtml(d.id)}" class="text-xs text-blue-500 hover:underline">View</a></td>
       </tr>`).join('')
-    : '<tr><td colspan="5" class="py-8 text-center text-gray-400 text-sm">Niciun draft generat inca.</td></tr>';
+    : '<tr><td colspan="5" class="py-8 text-center text-gray-400 text-sm">No drafts generated yet.</td></tr>';
 
   const content = `
     <div class="max-w-2xl">
       <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <h2 class="text-gray-700 font-semibold mb-4">Generare articol AI</h2>
+        <h2 class="text-gray-700 font-semibold mb-4">AI Article Generation</h2>
         <form id="gen-form" class="space-y-4">
           <div>
-            <label class="block text-sm text-gray-600 mb-1" for="category">Categorie</label>
+            <label class="block text-sm text-gray-600 mb-1" for="category">Category</label>
             <select id="category" name="category" class="border rounded px-3 py-2 w-full text-sm">
-              <option value="amenintari">Amenintari</option>
-              <option value="ghid">Ghid de protectie</option>
-              <option value="educatie">Educatie</option>
-              <option value="povesti">Povesti</option>
-              <option value="rapoarte">Rapoarte</option>
+              <option value="amenintari">Threats</option>
+              <option value="ghid">Protection Guide</option>
+              <option value="educatie">Education</option>
+              <option value="povesti">Stories</option>
+              <option value="rapoarte">Reports</option>
             </select>
           </div>
           <div>
-            <label class="block text-sm text-gray-600 mb-1" for="topic">Subiect personalizat (optional)</label>
-            <input type="text" id="topic" name="topic" placeholder="Lasa gol pentru a genera automat..." class="border rounded px-3 py-2 w-full text-sm"/>
-            <p class="text-xs text-gray-400 mt-1">Daca specifici un subiect, pasul de generare titlu este omis.</p>
+            <label class="block text-sm text-gray-600 mb-1" for="topic">Custom Topic (optional)</label>
+            <input type="text" id="topic" name="topic" placeholder="Leave blank to auto-generate..." class="border rounded px-3 py-2 w-full text-sm"/>
+            <p class="text-xs text-gray-400 mt-1">If you specify a topic, the title generation step is skipped.</p>
           </div>
-          <button type="submit" id="gen-btn" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 text-sm font-medium">Genereaza</button>
+          <button type="submit" id="gen-btn" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 text-sm font-medium">Generate</button>
         </form>
         <div id="gen-result" class="mt-4 hidden"></div>
       </div>
 
       <div class="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 class="text-gray-700 font-semibold mb-4">Drafturi AI recente</h2>
+        <h2 class="text-gray-700 font-semibold mb-4">Recent AI Drafts</h2>
         <table class="w-full text-sm" id="drafts-table">
           <thead class="bg-gray-50 text-left text-xs text-gray-500">
             <tr>
-              <th class="py-2 px-3">Titlu</th>
-              <th class="py-2 px-3">Categorie</th>
-              <th class="py-2 px-3">Data</th>
+              <th class="py-2 px-3">Title</th>
+              <th class="py-2 px-3">Category</th>
+              <th class="py-2 px-3">Date</th>
               <th class="py-2 px-3">Status</th>
-              <th class="py-2 px-3">Actiuni</th>
+              <th class="py-2 px-3">Actions</th>
             </tr>
           </thead>
           <tbody id="drafts-body">${draftsHtml}</tbody>
@@ -182,7 +182,7 @@ admin.get('/generare-continut', async (c) => {
       const topic = document.getElementById('topic').value.trim();
 
       btn.disabled = true;
-      btn.textContent = 'Se genereaza...';
+      btn.textContent = 'Generating...';
       result.className = 'mt-4 hidden';
 
       try {
@@ -199,25 +199,25 @@ admin.get('/generare-continut', async (c) => {
           link.className = 'underline font-medium';
           link.textContent = data.title;
           result.textContent = '';
-          result.appendChild(document.createTextNode('Draft generat: '));
+          result.appendChild(document.createTextNode('Draft generated: '));
           result.appendChild(link);
           setTimeout(() => location.reload(), 2000);
         } else {
           result.className = 'mt-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-800';
-          result.textContent = 'Eroare: ' + (data.error || 'Necunoscuta');
+          result.textContent = 'Error: ' + (data.error || 'Unknown');
         }
       } catch (err) {
         result.className = 'mt-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-800';
-        result.textContent = 'Eroare retea: ' + err.message;
+        result.textContent = 'Network error: ' + err.message;
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Genereaza';
+        btn.textContent = 'Generate';
         result.classList.remove('hidden');
       }
     });
     </script>`;
 
-  return c.html(adminLayout('Generare Continut AI', content, 'generare-continut', email));
+  return c.html(adminLayout('AI Content Generation', content, 'generare-continut', email));
 });
 
 // --- Sanity Studio SPA ---

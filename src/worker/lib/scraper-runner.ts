@@ -107,7 +107,7 @@ async function logRun(
 ): Promise<void> {
   try {
     await env.DB.prepare(
-      `INSERT INTO scraper_runs (id, source, items_found, items_new, errors, run_at)
+      `INSERT INTO scraper_runs (id, source, items_found, items_new, error, ran_at)
        VALUES (?, ?, ?, ?, ?, ?)`
     ).bind(
       crypto.randomUUID(),

@@ -389,11 +389,11 @@ export const scraperRoutes = new Hono<AdminEnv>();
 
 scraperRoutes.get('/', async (c) => {
   const email = c.get('adminEmail');
-  let rows: { results: { id: string; source: string; items_found: number; items_new: number; errors: string | null; run_at: string }[] } = { results: [] };
+  let rows: { results: { id: string; source: string; items_found: number; items_new: number; error: string | null; ran_at: string }[] } = { results: [] };
   try {
     rows = await c.env.DB.prepare(
-      'SELECT * FROM scraper_runs ORDER BY run_at DESC LIMIT 50'
-    ).all<{ id: string; source: string; items_found: number; items_new: number; errors: string | null; run_at: string }>();
+      'SELECT * FROM scraper_runs ORDER BY ran_at DESC LIMIT 50'
+    ).all<{ id: string; source: string; items_found: number; items_new: number; error: string | null; ran_at: string }>();
   } catch (err) {
     structuredLog('error', 'admin_scrapers_list_failed', { stage: 'admin', error: String(err) });
     return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'scrapere', email), 500);
@@ -404,8 +404,8 @@ scraperRoutes.get('/', async (c) => {
       <td class="py-2 px-3">${r.source}</td>
       <td class="py-2 px-3">${r.items_found}</td>
       <td class="py-2 px-3">${r.items_new}</td>
-      <td class="py-2 px-3">${r.errors ? '<span class="text-red-500">Yes</span>' : '<span class="text-green-500">No</span>'}</td>
-      <td class="py-2 px-3 text-gray-400 text-xs">${r.run_at.slice(0, 19)}</td>
+      <td class="py-2 px-3">${r.error ? '<span class="text-red-500">Yes</span>' : '<span class="text-green-500">No</span>'}</td>
+      <td class="py-2 px-3 text-gray-400 text-xs">${r.ran_at.slice(0, 19)}</td>
     </tr>`).join('');
 
   const body = `

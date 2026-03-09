@@ -65,7 +65,7 @@ describe('newsletterAdmin', () => {
       const html = await res.text();
       expect(html).toContain('ion@test.ro');
       expect(html).toContain('maria@test.ro');
-      expect(html).toContain('Abonati newsletter (2)');
+      expect(html).toContain('Newsletter Subscribers (2)');
     });
 
     it('returns 500 when BUTTONDOWN_API_KEY is missing', async () => {
@@ -73,7 +73,7 @@ describe('newsletterAdmin', () => {
       const res = await newsletterAdmin.fetch(req, makeEnv({ BUTTONDOWN_API_KEY: undefined }), makeCtx());
       expect(res.status).toBe(500);
       const html = await res.text();
-      expect(html).toContain('BUTTONDOWN_API_KEY lipsa');
+      expect(html).toContain('BUTTONDOWN_API_KEY missing');
     });
 
     it('returns 502 when Buttondown API fails', async () => {
@@ -83,7 +83,7 @@ describe('newsletterAdmin', () => {
       const res = await newsletterAdmin.fetch(req, makeEnv(), makeCtx());
       expect(res.status).toBe(502);
       const html = await res.text();
-      expect(html).toContain('Eroare API Buttondown');
+      expect(html).toContain('Buttondown API Error');
     });
 
     it('renders pagination when multiple pages exist', async () => {
@@ -116,7 +116,7 @@ describe('newsletterAdmin', () => {
       const req = new Request('http://localhost/');
       const res = await newsletterAdmin.fetch(req, makeEnv(), makeCtx());
       const html = await res.text();
-      expect(html).toContain('Niciun abonat');
+      expect(html).toContain('No subscribers');
     });
   });
 
@@ -204,7 +204,7 @@ describe('newsletterAdmin', () => {
       const res = await newsletterAdmin.fetch(req, makeEnv(), makeCtx());
       expect(res.status).toBe(502);
       const html = await res.text();
-      expect(html).toContain('Eroare Buttondown');
+      expect(html).toContain('Buttondown Error');
     });
 
     it('still succeeds if KV delete fails (non-fatal)', async () => {

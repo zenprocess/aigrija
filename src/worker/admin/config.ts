@@ -6,28 +6,28 @@ import { adminLayout } from './layout';
 type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 
 const FEATURE_FLAGS = [
-  { name: 'dnsc_scraper', label: 'Scraper DNSC' },
-  { name: 'anaf_scraper', label: 'Scraper ANAF' },
-  { name: 'bitdefender_scraper', label: 'Scraper Bitdefender' },
-  { name: 'ai_draft_generation', label: 'Generare draft AI' },
-  { name: 'community_voting', label: 'Vot comunitate' },
-  { name: 'qr_scanner', label: 'Scanner QR' },
+  { name: 'dnsc_scraper', label: 'DNSC Scraper' },
+  { name: 'anaf_scraper', label: 'ANAF Scraper' },
+  { name: 'bitdefender_scraper', label: 'Bitdefender Scraper' },
+  { name: 'ai_draft_generation', label: 'AI Draft Generation' },
+  { name: 'community_voting', label: 'Community Voting' },
+  { name: 'qr_scanner', label: 'QR Scanner' },
 ];
 
 const RATE_LIMIT_ENDPOINTS = [
   { name: 'telegram', label: 'Telegram', default: 50 },
   { name: 'whatsapp', label: 'WhatsApp', default: 50 },
   { name: 'check', label: 'Check API', default: 100 },
-  { name: 'community_vote', label: 'Vot comunitate', default: 10 },
+  { name: 'community_vote', label: 'Community Voting', default: 10 },
 ];
 
 const CIRCUIT_BREAKERS = ['safe-browsing', 'urlhaus', 'virustotal', 'rdap'];
 
 const CACHE_PREFIXES = [
   { prefix: 'url-threat:', label: 'URL threat cache' },
-  { prefix: 'rdap:', label: 'RDAP / domenii' },
+  { prefix: 'rdap:', label: 'RDAP / Domains' },
   { prefix: 'content:', label: 'Content cache' },
-  { prefix: 'i18n:', label: 'Traduceri (overrides)' },
+  { prefix: 'i18n:', label: 'Translations (overrides)' },
 ];
 
 async function getFlagStatus(kv: KVNamespace, name: string): Promise<{ enabled: boolean; changedAt: string | null }> {
@@ -76,7 +76,7 @@ async function configPage(kv: KVNamespace, email: string): Promise<string> {
     <tr class="border-b border-gray-100">
       <td class="py-3 px-4 text-sm text-gray-700">${f.label}</td>
       <td class="py-3 px-4">${badge}</td>
-      <td class="py-3 px-4 text-xs text-gray-400">${f.changedAt ? new Date(f.changedAt).toLocaleString('ro-RO') : '—'}</td>
+      <td class="py-3 px-4 text-xs text-gray-400">${f.changedAt ? new Date(f.changedAt).toLocaleString('en-US') : '—'}</td>
       <td class="py-3 px-4">
         <label class="relative inline-flex items-center cursor-pointer">
           <input type="checkbox" ${checked} class="sr-only peer"
@@ -94,7 +94,7 @@ async function configPage(kv: KVNamespace, email: string): Promise<string> {
         <input type="number" value="${r.value}" min="1" max="10000"
                class="border border-gray-200 rounded px-2 py-1 text-sm w-24"
                onchange="saveRateLimit('${r.name}', this.value)">
-        <span class="text-xs text-gray-400 ml-1">/ ora</span>
+        <span class="text-xs text-gray-400 ml-1">/ hour</span>
       </td>
       <td class="py-3 px-4 text-xs text-gray-400">default: ${r.default}</td>
     </tr>`).join('');
@@ -132,7 +132,7 @@ async function configPage(kv: KVNamespace, email: string): Promise<string> {
           <thead><tr class="text-xs text-gray-400 border-b border-gray-100">
             <th class="text-left py-2 px-4">Feature</th>
             <th class="text-left py-2 px-4">Status</th>
-            <th class="text-left py-2 px-4">Modificat</th>
+            <th class="text-left py-2 px-4">Modified</th>
             <th class="text-left py-2 px-4">Toggle</th>
           </tr></thead>
           <tbody>${flagRows}</tbody>
@@ -145,7 +145,7 @@ async function configPage(kv: KVNamespace, email: string): Promise<string> {
         <table class="w-full">
           <thead><tr class="text-xs text-gray-400 border-b border-gray-100">
             <th class="text-left py-2 px-4">Endpoint</th>
-            <th class="text-left py-2 px-4">Limita / ora</th>
+            <th class="text-left py-2 px-4">Limit / hour</th>
             <th class="text-left py-2 px-4">Default</th>
           </tr></thead>
           <tbody>${rlRows}</tbody>
@@ -157,9 +157,9 @@ async function configPage(kv: KVNamespace, email: string): Promise<string> {
         <h3 class="font-semibold text-gray-700 mb-3">Circuit Breakers</h3>
         <table class="w-full">
           <thead><tr class="text-xs text-gray-400 border-b border-gray-100">
-            <th class="text-left py-2 px-4">Serviciu</th>
-            <th class="text-left py-2 px-4">Stare</th>
-            <th class="text-left py-2 px-4">Actiuni</th>
+            <th class="text-left py-2 px-4">Service</th>
+            <th class="text-left py-2 px-4">State</th>
+            <th class="text-left py-2 px-4">Actions</th>
           </tr></thead>
           <tbody>${cbRows}</tbody>
         </table>
@@ -188,7 +188,7 @@ async function configPage(kv: KVNamespace, email: string): Promise<string> {
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({name, enabled})
       });
-      notify(res.ok ? 'Flag actualizat.' : 'Eroare flag.', res.ok);
+      notify(res.ok ? 'Flag updated.' : 'Flag error.', res.ok);
       if (res.ok) setTimeout(() => location.reload(), 800);
     }
     async function saveRateLimit(endpoint, limit) {
@@ -197,7 +197,7 @@ async function configPage(kv: KVNamespace, email: string): Promise<string> {
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({endpoint, limit: parseInt(limit, 10)})
       });
-      notify(res.ok ? 'Rate limit salvat.' : 'Eroare rate limit.', res.ok);
+      notify(res.ok ? 'Rate limit saved.' : 'Rate limit error.', res.ok);
     }
     async function resetCb(name) {
       const res = await fetch('/admin/config/circuit-reset', {
@@ -205,23 +205,23 @@ async function configPage(kv: KVNamespace, email: string): Promise<string> {
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({name})
       });
-      notify(res.ok ? 'Circuit breaker resetat.' : 'Eroare reset.', res.ok);
+      notify(res.ok ? 'Circuit breaker reset.' : 'Reset error.', res.ok);
       if (res.ok) setTimeout(() => location.reload(), 800);
     }
     async function flushCache(prefix) {
-      if (!confirm('Stergi toate cheile cu prefixul "' + prefix + '"?')) return;
+      if (!confirm('Delete all keys with prefix "' + prefix + '"?')) return;
       const res = await fetch('/admin/config/cache-flush', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({prefix})
       });
       const j = await res.json();
-      document.getElementById('cache-result').textContent = res.ok ? 'Sterse ' + (j.deleted ?? 0) + ' chei.' : 'Eroare flush.';
-      notify(res.ok ? 'Cache flushed.' : 'Eroare cache.', res.ok);
+      document.getElementById('cache-result').textContent = res.ok ? 'Deleted ' + (j.deleted ?? 0) + ' keys.' : 'Flush error.';
+      notify(res.ok ? 'Cache flushed.' : 'Cache error.', res.ok);
     }
     </script>`;
 
-  return adminLayout('Configuratie sistem', content, 'config', email);
+  return adminLayout('System Configuration', content, 'config', email);
 }
 
 export const configAdmin = new Hono<AdminEnv>();

@@ -4,6 +4,7 @@ export default {
   content: [
     './src/ui/index.html',
     './src/ui/src/**/*.{js,ts,jsx,tsx}',
+    './src/worker/admin/**/*.ts',
   ],
   theme: {
     container: {

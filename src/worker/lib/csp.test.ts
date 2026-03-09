@@ -68,13 +68,14 @@ describe('CSP policy constants', () => {
 
   it('ADMIN_CSP contains expected directives', () => {
     expect(ADMIN_CSP).toContain("default-src 'self'");
-    expect(ADMIN_CSP).toContain('https://cdn.tailwindcss.com');
+    expect(ADMIN_CSP).not.toContain('cdn.tailwindcss.com');
+    expect(ADMIN_CSP).toContain('https://unpkg.com');
     expect(ADMIN_CSP).toContain("frame-ancestors 'none'");
     expect(ADMIN_CSP).toContain('https://cdn.ai-grija.ro');
   });
 
   it('SECURITY_HEADERS_ADMIN_CSP contains CDN sources', () => {
-    expect(SECURITY_HEADERS_ADMIN_CSP).toContain('cdn.tailwindcss.com');
+    expect(SECURITY_HEADERS_ADMIN_CSP).not.toContain('cdn.tailwindcss.com');
     expect(SECURITY_HEADERS_ADMIN_CSP).toContain('unpkg.com');
     expect(SECURITY_HEADERS_ADMIN_CSP).toContain("base-uri 'self'");
   });

@@ -46,7 +46,8 @@ describe('securityHeaders middleware', () => {
     const app = makeApp('https://admin.ai-grija.ro/');
     const res = await app.request('https://admin.ai-grija.ro/');
     const csp = res.headers.get('Content-Security-Policy');
-    expect(csp).toContain('cdn.tailwindcss.com');
+    expect(csp).not.toContain('cdn.tailwindcss.com');
+    expect(csp).toContain('unpkg.com');
   });
 
   it('adds CORS headers for allowed origin', async () => {

@@ -8,12 +8,12 @@ export const PUBLIC_CSP =
   "default-src 'self'; script-src 'self' https://cloud.umami.is; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self';";
 
 /**
- * CSP policy for the admin panel (HTML-over-the-wire with htmx + Tailwind CDN).
- * Allows inline scripts (htmx handlers), Tailwind CDN, and cdn.ai-grija.ro images.
+ * CSP policy for the admin panel (HTML-over-the-wire with htmx + build-time Tailwind CSS).
+ * Allows inline scripts (htmx handlers) and cdn.ai-grija.ro images.
  */
 export const ADMIN_CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com/htmx.org@",
+  "script-src 'self' 'unsafe-inline' https://unpkg.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https://cdn.ai-grija.ro",
   "connect-src 'self'",
@@ -25,7 +25,7 @@ export const ADMIN_CSP = [
  * Admin variant includes CDN script sources; public variant is locked down.
  */
 export const SECURITY_HEADERS_ADMIN_CSP =
-  "default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.r2.dev; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+  "default-src 'self'; script-src 'self' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.r2.dev; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 
 export const SECURITY_HEADERS_PUBLIC_CSP =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.r2.dev; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";

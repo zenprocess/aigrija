@@ -22,6 +22,11 @@ type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 
 const admin = new Hono<AdminEnv>();
 
+// Serve admin static assets (CSS) before auth — no login required for stylesheets
+admin.get('/admin-assets/*', async (c) => {
+  return c.env.ASSETS.fetch(c.req.raw);
+});
+
 // Apply CF Access auth to all admin routes
 admin.use('*', adminAuth);
 

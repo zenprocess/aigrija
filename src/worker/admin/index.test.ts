@@ -106,6 +106,6 @@ describe('admin/index', () => {
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain('https://cdn.ai-grija.ro');
-    expect(csp).toContain('https://cdn.tailwindcss.com');
+    expect(csp).not.toContain('cdn.tailwindcss.com');
   });
 });

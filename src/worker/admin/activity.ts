@@ -38,7 +38,7 @@ activity.get('/', async (c) => {
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Activitate Admin - ai-grija.ro</title>
+  <title>Admin Activity - ai-grija.ro</title>
   <style>
     body { font-family: Arial, sans-serif; max-width: 1400px; margin: 20px auto; padding: 20px; }
     table { width: 100%; border-collapse: collapse; }

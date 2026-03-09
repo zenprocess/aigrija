@@ -123,7 +123,7 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
               <button onclick="saveSingle('${activeLang}','${escHtml(key)}',this)"
                       class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs shrink-0">Save</button>
               <button onclick="autoTranslateSingle('${activeLang}','${escHtml(key)}',this)"
-                      class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs shrink-0" title="Auto-traducere AI">AI</button>
+                      class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs shrink-0" title="AI Auto-translate">AI</button>
               ${isOverride ? `<button onclick="deleteOverride('${activeLang}','${escHtml(key)}',this)"
                       class="bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded text-xs shrink-0">X</button>` : ''}
             </div>`

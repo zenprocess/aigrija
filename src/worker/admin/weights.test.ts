@@ -57,7 +57,7 @@ describe('weightsAdmin', () => {
     const res = await app.fetch(req, makeEnv(), makeCtx());
     expect(res.status).toBe(200);
     const html = await res.text();
-    expect(html).toContain('Ponderi');
+    expect(html).toContain('Weights');
   });
 
   it('POST /save updates weights', async () => {
@@ -70,7 +70,7 @@ describe('weightsAdmin', () => {
     const res = await app.fetch(req, makeEnv(), makeCtx());
     expect(res.status).toBe(200);
     const text = await res.text();
-    expect(text).toContain('salvate');
+    expect(text).toContain('saved');
   });
 
   it('POST /reset redirects to /admin/ponderi', async () => {
@@ -91,7 +91,7 @@ describe('weightsAdmin', () => {
     const res = await app.fetch(req, makeEnv(), makeCtx());
     expect(res.status).toBe(200);
     const text = await res.text();
-    expect(text).toContain('Introduti');
+    expect(text).toContain('Enter a URL');
   });
 
   it('GET /test returns error for invalid URL', async () => {
@@ -102,7 +102,7 @@ describe('weightsAdmin', () => {
     const res = await app.fetch(req, makeEnv(), makeCtx());
     expect(res.status).toBe(200);
     const text = await res.text();
-    expect(text).toContain('URL invalid');
+    expect(text).toContain('Invalid URL');
   });
 
   it('GET /test scores a valid URL', async () => {
@@ -113,7 +113,7 @@ describe('weightsAdmin', () => {
     const res = await app.fetch(req, makeEnv(), makeCtx());
     expect(res.status).toBe(200);
     const text = await res.text();
-    expect(text).toContain('Scor');
+    expect(text).toContain('Score');
   });
 
   it('GET /history returns JSON', async () => {

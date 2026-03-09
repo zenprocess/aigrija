@@ -152,15 +152,6 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - name: Validate CF_ACCESS_TEAM_DOMAIN
-        run: |
-          if [ -z "$CF_ACCESS_TEAM_DOMAIN" ]; then
-            echo "::error::CF_ACCESS_TEAM_DOMAIN is not set. Add it as a GitHub secret or variable before deploying."
-            exit 1
-          fi
-          echo "CF_ACCESS_TEAM_DOMAIN is set"
-        env:
-          CF_ACCESS_TEAM_DOMAIN: ${{ secrets.CF_ACCESS_TEAM_DOMAIN }}
       - run: pnpm run build
       - name: Deploy to Cloudflare
         id: deploy

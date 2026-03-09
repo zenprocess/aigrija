@@ -19,7 +19,7 @@ analytics.get('/', async (c) => {
     ]);
   } catch (err) {
     structuredLog('error', 'admin_analytics_query_failed', { stage: 'admin', error: String(err) });
-    return c.html('<h1>Eroare baza de date</h1>', 500);
+    return c.html('<h1>Database error</h1>', 500);
   }
 
   const severityData = JSON.stringify(
@@ -37,7 +37,7 @@ analytics.get('/', async (c) => {
   );
 
   const html = `<!DOCTYPE html>
-<html lang="ro">
+<html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <title>Analytics - Admin ai-grija.ro</title>
@@ -52,18 +52,18 @@ analytics.get('/', async (c) => {
 </head>
 <body>
   <nav>
-    <a href="/admin/campaigns">Campanii</a>
+    <a href="/admin/campaigns">Campaigns</a>
     <a href="/admin/analytics">Analytics</a>
-    <a href="/admin/activity">Activitate</a>
+    <a href="/admin/activity">Activity</a>
   </nav>
   <h1>📊 Analytics</h1>
   <div class="charts">
     <div class="chart-box">
-      <h3>Distribuție severitate</h3>
+      <h3>Severity Distribution</h3>
       <canvas id="severityChart"></canvas>
     </div>
     <div class="chart-box">
-      <h3>Campanii pe lună</h3>
+      <h3>Campaigns per Month</h3>
       <canvas id="monthChart"></canvas>
     </div>
   </div>
@@ -83,7 +83,7 @@ analytics.get('/', async (c) => {
       type: 'bar',
       data: {
         labels: monthData.map(d => d.label),
-        datasets: [{ label: 'Campanii', data: monthData.map(d => d.count), backgroundColor: '#2563EB' }]
+        datasets: [{ label: 'Campaigns', data: monthData.map(d => d.count), backgroundColor: '#2563EB' }]
       }
     });
   </script>

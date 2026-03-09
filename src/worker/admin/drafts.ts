@@ -44,21 +44,21 @@ drafts.get('/', async (c) => {
   `).join('');
 
   const filterLinks = ['', 'generated', 'approved', 'published', 'rejected'].map((s) =>
-    `<a href="?status=${s}" class="px-3 py-1 rounded text-sm ${s === status ? 'bg-red-700 text-white' : 'bg-white border text-gray-700 hover:bg-gray-50'}">${s || 'Toate'}</a>`
+    `<a href="?status=${s}" class="px-3 py-1 rounded text-sm ${s === status ? 'bg-red-700 text-white' : 'bg-white border text-gray-700 hover:bg-gray-50'}">${s || 'All'}</a>`
   ).join('');
 
   const body = `
     <div class="flex gap-2 mb-4">${filterLinks}</div>
-    ${campaigns.length === 0 ? '<p class="text-gray-500">Nu există drafturi.</p>' : `
+    ${campaigns.length === 0 ? '<p class="text-gray-500">No drafts found.</p>' : `
     <div class="bg-white rounded shadow overflow-auto">
       <table class="w-full text-left">
         <thead class="bg-gray-100 text-xs uppercase text-gray-600">
           <tr>
-            <th class="py-2 px-3">Titlu</th>
-            <th class="py-2 px-3">Tip</th>
-            <th class="py-2 px-3">Severitate</th>
+            <th class="py-2 px-3">Title</th>
+            <th class="py-2 px-3">Type</th>
+            <th class="py-2 px-3">Severity</th>
             <th class="py-2 px-3">Status</th>
-            <th class="py-2 px-3">Data</th>
+            <th class="py-2 px-3">Date</th>
           </tr>
         </thead>
         <tbody>${rows_html}</tbody>
@@ -66,7 +66,7 @@ drafts.get('/', async (c) => {
     </div>`}
   `;
 
-  return c.html(adminLayout('Drafturi AI', body));
+  return c.html(adminLayout('AI Drafts', body));
 });
 
 // GET /admin/drafts/:id — review page
@@ -75,12 +75,12 @@ drafts.get('/:id', async (c) => {
   const campaign = await c.env.DB.prepare(`SELECT * FROM campaigns WHERE id = ?`).bind(id).first<Campaign>();
 
   if (!campaign) {
-    return c.text('Campania nu a fost găsită', 404);
+    return c.text('Campaign not found', 404);
   }
 
   const draftHtml = campaign.draft_content
     ? markdownToHtml(campaign.draft_content)
-    : '<p class="text-gray-400 italic">Draft negenererat încă.</p>';
+    : '<p class="text-gray-400 italic">Draft not yet generated.</p>';
 
   const key = new URL(c.req.url).searchParams.get('key') || '';
   const authParam = key ? `?key=${encodeURIComponent(key)}` : '';
@@ -92,38 +92,38 @@ drafts.get('/:id', async (c) => {
 
   const body = `
     <div class="mb-4 flex flex-wrap gap-2">
-      ${actionBtn('approve', 'Aprobă', 'bg-green-600')}
-      ${actionBtn('publish', 'Publică în Sanity', 'bg-blue-600')}
-      ${actionBtn('reject', 'Respinge', 'bg-red-600')}
-      ${actionBtn('regenerate', 'Regenerează', 'bg-yellow-600')}
-      ${actionBtn('publish-multi', 'Publică multiplu', 'bg-purple-600')}
+      ${actionBtn('approve', 'Approve', 'bg-green-600')}
+      ${actionBtn('publish', 'Publish to Sanity', 'bg-blue-600')}
+      ${actionBtn('reject', 'Reject', 'bg-red-600')}
+      ${actionBtn('regenerate', 'Regenerate', 'bg-yellow-600')}
+      ${actionBtn('publish-multi', 'Multi-Publish', 'bg-purple-600')}
     </div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Left: original campaign data -->
       <div class="bg-white rounded shadow p-4">
-        <h2 class="font-semibold text-gray-700 mb-3 text-sm uppercase tracking-wide">Date campanie originală</h2>
+        <h2 class="font-semibold text-gray-700 mb-3 text-sm uppercase tracking-wide">Original Campaign Data</h2>
         <dl class="space-y-2 text-sm">
-          <div><dt class="text-gray-500 font-medium">Titlu</dt><dd class="text-gray-900">${escHtml(campaign.title || '')}</dd></div>
-          <div><dt class="text-gray-500 font-medium">Tip amenințare</dt><dd>${escHtml(campaign.threat_type || '')}</dd></div>
-          <div><dt class="text-gray-500 font-medium">Severitate</dt><dd>${escHtml(campaign.severity || '')}</dd></div>
-          <div><dt class="text-gray-500 font-medium">Branduri afectate</dt><dd>${escHtml(campaign.affected_brands || '')}</dd></div>
-          <div><dt class="text-gray-500 font-medium">Sursă</dt><dd>${campaign.source_url ? `<a href="${escHtml(campaign.source_url)}" target="_blank" class="text-blue-600 underline">${escHtml(campaign.source_url)}</a>` : escHtml(campaign.source || '')}</dd></div>
-          <div><dt class="text-gray-500 font-medium">Status draft</dt><dd><span class="font-medium">${campaign.draft_status || '—'}</span></dd></div>
+          <div><dt class="text-gray-500 font-medium">Title</dt><dd class="text-gray-900">${escHtml(campaign.title || '')}</dd></div>
+          <div><dt class="text-gray-500 font-medium">Threat Type</dt><dd>${escHtml(campaign.threat_type || '')}</dd></div>
+          <div><dt class="text-gray-500 font-medium">Severity</dt><dd>${escHtml(campaign.severity || '')}</dd></div>
+          <div><dt class="text-gray-500 font-medium">Affected Brands</dt><dd>${escHtml(campaign.affected_brands || '')}</dd></div>
+          <div><dt class="text-gray-500 font-medium">Source</dt><dd>${campaign.source_url ? `<a href="${escHtml(campaign.source_url)}" target="_blank" class="text-blue-600 underline">${escHtml(campaign.source_url)}</a>` : escHtml(campaign.source || '')}</dd></div>
+          <div><dt class="text-gray-500 font-medium">Draft Status</dt><dd><span class="font-medium">${campaign.draft_status || '—'}</span></dd></div>
         </dl>
         <div class="mt-4">
-          <dt class="text-gray-500 font-medium text-sm mb-1">Text sursă</dt>
+          <dt class="text-gray-500 font-medium text-sm mb-1">Source Text</dt>
           <dd class="bg-gray-50 rounded p-2 text-xs text-gray-700 max-h-64 overflow-y-auto whitespace-pre-wrap">${escHtml((campaign.body_text || '').slice(0, 3000))}</dd>
         </div>
       </div>
       <!-- Right: AI draft preview -->
       <div class="bg-white rounded shadow p-4">
-        <h2 class="font-semibold text-gray-700 mb-3 text-sm uppercase tracking-wide">Draft generat de AI</h2>
+        <h2 class="font-semibold text-gray-700 mb-3 text-sm uppercase tracking-wide">AI-Generated Draft</h2>
         <div class="prose max-w-none text-sm overflow-y-auto max-h-[70vh]">${draftHtml}</div>
         <div class="mt-4 border-t pt-4">
-          <h3 class="text-sm font-medium text-gray-700 mb-2">Editează draft</h3>
+          <h3 class="text-sm font-medium text-gray-700 mb-2">Edit Draft</h3>
           <form method="POST" action="/admin/drafts/${id}/edit${authParam}">
             <textarea name="draft_content" rows="12" class="w-full border rounded p-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-400">${escHtml(campaign.draft_content || '')}</textarea>
-            <button type="submit" class="mt-2 px-3 py-1.5 rounded bg-gray-700 text-white text-sm hover:bg-gray-800">Salvează draft</button>
+            <button type="submit" class="mt-2 px-3 py-1.5 rounded bg-gray-700 text-white text-sm hover:bg-gray-800">Save Draft</button>
           </form>
         </div>
       </div>

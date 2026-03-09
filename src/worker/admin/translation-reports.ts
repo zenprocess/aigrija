@@ -8,7 +8,7 @@ type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 const translationReportsAdmin = new Hono<AdminEnv>();
 
 function formatDate(ts: number): string {
-  return new Date(ts).toLocaleString('ro-RO', { timeZone: 'Europe/Bucharest' });
+  return new Date(ts).toLocaleString('en-US', { timeZone: 'Europe/Bucharest' });
 }
 
 function esc(s: string | null | undefined): string {
@@ -48,7 +48,7 @@ translationReportsAdmin.get('/', async (c) => {
           <form method="POST" action="/rapoarte-traduceri/${encodeURIComponent(r.id)}/resolve">
             <button type="submit"
               class="text-xs bg-green-100 hover:bg-green-200 text-green-800 px-2 py-1 rounded transition-colors">
-              Rezolvat
+              Resolved
             </button>
           </form>
         </td>
@@ -58,20 +58,20 @@ translationReportsAdmin.get('/', async (c) => {
   const content = `
     <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-        <h2 class="text-gray-700 font-medium">Rapoarte de traducere (${records.filter(Boolean).length})</h2>
+        <h2 class="text-gray-700 font-medium">Translation Reports (${records.filter(Boolean).length})</h2>
       </div>
-      ${rows.length === 0 ? '<div class="px-6 py-8 text-center text-gray-400 text-sm">Nu exista rapoarte inca.</div>' : `
+      ${rows.length === 0 ? '<div class="px-6 py-8 text-center text-gray-400 text-sm">No reports yet.</div>' : `
       <div class="overflow-x-auto">
         <table class="w-full text-left">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
-              <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Limba</th>
-              <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pagina</th>
-              <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Text curent</th>
-              <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Sugestie</th>
-              <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Detalii</th>
-              <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actiune</th>
+              <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+              <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Language</th>
+              <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Page</th>
+              <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Current Text</th>
+              <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Suggestion</th>
+              <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Details</th>
+              <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -79,7 +79,7 @@ translationReportsAdmin.get('/', async (c) => {
       </div>`}
     </div>`;
 
-  return c.html(adminLayout('Rapoarte traduceri', content, 'rapoarte-traduceri', email));
+  return c.html(adminLayout('Translation Reports', content, 'rapoarte-traduceri', email));
 });
 
 // Resolve (delete) a report

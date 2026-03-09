@@ -9,17 +9,17 @@ type AdminEnv = { Bindings: Env; Variables: AdminVariables };
 const WEIGHT_LABELS: Record<keyof RiskWeights, string> = {
   safeBrowsingMatch: 'Google Safe Browsing',
   urlhausMatch: 'URLhaus',
-  virustotalMalicious: 'VirusTotal (malitios)',
-  virustotalSuspicious: 'VirusTotal (suspect)',
-  domainAgeLt30: 'Domeniu < 30 zile',
-  domainAgeLt90: 'Domeniu < 90 zile',
-  httpNoTls: 'HTTP fara TLS',
-  longDomain: 'Domeniu lung',
-  manyDigits: 'Multe cifre',
-  tooManySubdomains: 'Prea multe subdomenii',
+  virustotalMalicious: 'VirusTotal (malicious)',
+  virustotalSuspicious: 'VirusTotal (suspicious)',
+  domainAgeLt30: 'Domain < 30 days',
+  domainAgeLt90: 'Domain < 90 days',
+  httpNoTls: 'HTTP without TLS',
+  longDomain: 'Long Domain',
+  manyDigits: 'Many Digits',
+  tooManySubdomains: 'Too Many Subdomains',
   lookalikeBrand: 'Look-alike brand',
   urlShortener: 'URL shortener',
-  suspiciousTld: 'TLD suspect',
+  suspiciousTld: 'Suspicious TLD',
 };
 
 const WEIGHT_GROUPS: { label: string; keys: (keyof RiskWeights)[] }[] = [
@@ -54,7 +54,7 @@ function weightsPage(weights: RiskWeights, history: { weights: RiskWeights; save
       <table class="w-full">
         <thead><tr class="text-xs text-gray-400 border-b border-gray-100">
           <th class="text-left py-1 px-3">Indicator</th>
-          <th class="text-left py-1 px-3">Valoare</th>
+          <th class="text-left py-1 px-3">Value</th>
           <th class="text-left py-1 px-3">Default</th>
           <th class="text-left py-1 px-3">Numeric</th>
         </tr></thead>
@@ -64,22 +64,22 @@ function weightsPage(weights: RiskWeights, history: { weights: RiskWeights; save
 
   const histRows = history.slice(0, 10).map(h => `
     <tr class="border-b border-gray-100 text-sm">
-      <td class="py-2 px-3 text-gray-500">${new Date(h.savedAt).toLocaleString('ro-RO')}</td>
+      <td class="py-2 px-3 text-gray-500">${new Date(h.savedAt).toLocaleString('en-US')}</td>
       <td class="py-2 px-3 font-mono text-xs text-gray-600">${Object.entries(h.weights).map(([k,v]) => `${k}:${v}`).join(' ')}</td>
-    </tr>`).join('') || '<tr><td colspan="2" class="py-4 text-center text-gray-400 text-sm">Niciun istoric</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="2" class="py-4 text-center text-gray-400 text-sm">No history</td></tr>';
 
   const content = `
     <form id="weights-form" hx-post="/admin/ponderi/save" hx-target="#save-result" hx-swap="innerHTML">
       ${groups}
       <div class="flex gap-3 mb-6">
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium">Salveaza ponderi</button>
-        <button type="button" onclick="resetDefaults()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium">Reseteaza la default</button>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium">Save Weights</button>
+        <button type="button" onclick="resetDefaults()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium">Reset to Default</button>
       </div>
       <div id="save-result"></div>
     </form>
 
     <div class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-      <h3 class="font-semibold text-gray-700 mb-3">Testeaza URL</h3>
+      <h3 class="font-semibold text-gray-700 mb-3">Test URL</h3>
       <div class="flex gap-2">
         <input id="test-url-input" type="url" placeholder="https://example.com"
                class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
@@ -88,17 +88,17 @@ function weightsPage(weights: RiskWeights, history: { weights: RiskWeights; save
                name="url">
         <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm"
                 hx-get="/admin/ponderi/test" hx-include="#weights-form,#test-url-input"
-                hx-target="#test-result" hx-swap="innerHTML">Testeaza</button>
+                hx-target="#test-result" hx-swap="innerHTML">Test</button>
       </div>
       <div id="test-result" class="mt-3"></div>
     </div>
 
     <div class="bg-white rounded-xl border border-gray-200 p-4">
-      <h3 class="font-semibold text-gray-700 mb-3">Istoric modificari (ultimele 10)</h3>
+      <h3 class="font-semibold text-gray-700 mb-3">Change History (last 10)</h3>
       <table class="w-full">
         <thead><tr class="text-xs text-gray-400 border-b border-gray-100">
-          <th class="text-left py-1 px-3">Data</th>
-          <th class="text-left py-1 px-3">Valori salvate</th>
+          <th class="text-left py-1 px-3">Date</th>
+          <th class="text-left py-1 px-3">Saved Values</th>
         </tr></thead>
         <tbody>${histRows}</tbody>
       </table>
@@ -118,7 +118,7 @@ function weightsPage(weights: RiskWeights, history: { weights: RiskWeights; save
     }
     </script>`;
 
-  return adminLayout('Ponderi clasificare', content, 'ponderi', email);
+  return adminLayout('Classification Weights', content, 'ponderi', email);
 }
 
 export const weightsAdmin = new Hono<AdminEnv>();
@@ -143,7 +143,7 @@ weightsAdmin.post('/save', async (c) => {
     }
   }
   await saveWeights(c.env.CACHE, newWeights);
-  return c.html('<div class="text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-2 text-sm">Ponderi salvate cu succes.</div>');
+  return c.html('<div class="text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-2 text-sm">Weights saved successfully.</div>');
 });
 
 weightsAdmin.post('/reset', async (c) => {
@@ -153,7 +153,7 @@ weightsAdmin.post('/reset', async (c) => {
 
 weightsAdmin.get('/test', async (c) => {
   const url = c.req.query('url') || '';
-  if (!url) return c.html('<p class="text-gray-400 text-sm">Introduti un URL pentru testare.</p>');
+  if (!url) return c.html('<p class="text-gray-400 text-sm">Enter a URL to test.</p>');
 
   // Parse proposed weights from query params (sent via hx-include of form)
   const form = c.req.query();
@@ -167,7 +167,7 @@ weightsAdmin.get('/test', async (c) => {
   // Minimal heuristic flags from URL (no external calls in test mode)
   let parsed: URL;
   try { parsed = new URL(url.startsWith('http') ? url : `https://${url}`); } catch {
-    return c.html('<p class="text-red-600 text-sm">URL invalid.</p>');
+    return c.html('<p class="text-red-600 text-sm">Invalid URL.</p>');
   }
   const domain = parsed.hostname.toLowerCase();
   const flags = {
@@ -190,20 +190,20 @@ weightsAdmin.get('/test', async (c) => {
 
   const breakdownRows = Object.entries(withProposed.breakdown).map(([k, v]) =>
     `<tr><td class="py-1 px-2 text-xs text-gray-600">${WEIGHT_LABELS[k as keyof RiskWeights] ?? k}</td><td class="py-1 px-2 text-xs font-mono">${v.toFixed(2)}</td></tr>`
-  ).join('') || '<tr><td colspan="2" class="text-gray-400 text-xs py-1 px-2">Niciun flag activ</td></tr>';
+  ).join('') || '<tr><td colspan="2" class="text-gray-400 text-xs py-1 px-2">No active flags</td></tr>';
 
   return c.html(`
     <div class="grid grid-cols-2 gap-4 mb-3">
       <div class="bg-gray-50 rounded-lg p-3 text-center">
-        <div class="text-xs text-gray-500 mb-1">Scor curent</div>
+        <div class="text-xs text-gray-500 mb-1">Current Score</div>
         <div class="text-xl font-bold ${withCurrent.score >= 0.5 ? 'text-red-600' : 'text-green-600'}">${(withCurrent.score * 100).toFixed(0)}%</div>
       </div>
       <div class="bg-blue-50 rounded-lg p-3 text-center">
-        <div class="text-xs text-gray-500 mb-1">Scor propus</div>
+        <div class="text-xs text-gray-500 mb-1">Proposed Score</div>
         <div class="text-xl font-bold ${withProposed.score >= 0.5 ? 'text-red-600' : 'text-green-600'}">${(withProposed.score * 100).toFixed(0)}%</div>
       </div>
     </div>
-    <table class="w-full"><thead><tr class="text-xs text-gray-400"><th class="text-left px-2">Factor</th><th class="text-left px-2">Contributie</th></tr></thead>
+    <table class="w-full"><thead><tr class="text-xs text-gray-400"><th class="text-left px-2">Factor</th><th class="text-left px-2">Contribution</th></tr></thead>
     <tbody>${breakdownRows}</tbody></table>`);
 });
 

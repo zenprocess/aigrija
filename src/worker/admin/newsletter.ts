@@ -82,7 +82,7 @@ newsletterAdmin.get('/', async (c) => {
 
   const apiKey = c.env.BUTTONDOWN_API_KEY;
   if (!apiKey) {
-    return c.html(adminLayout('Abonati newsletter', '<p class="text-red-500">BUTTONDOWN_API_KEY lipsa.</p>', 'abonati', email), 500);
+    return c.html(adminLayout('Newsletter Subscribers', '<p class="text-red-500">BUTTONDOWN_API_KEY missing.</p>', 'abonati', email), 500);
   }
 
   let data: ButtondownListResponse;
@@ -90,7 +90,7 @@ newsletterAdmin.get('/', async (c) => {
     data = await fetchButtondownSubscribers(apiKey, page);
   } catch (err) {
     structuredLog('error', 'admin_newsletter_list_failed', { error: String(err) });
-    return c.html(adminLayout('Abonati newsletter', `<p class="text-red-500">Eroare API Buttondown: ${escapeHtml(String(err))}</p>`, 'abonati', email), 502);
+    return c.html(adminLayout('Newsletter Subscribers', `<p class="text-red-500">Buttondown API Error: ${escapeHtml(String(err))}</p>`, 'abonati', email), 502);
   }
 
   const totalPages = Math.ceil(data.count / PAGE_SIZE);
@@ -104,11 +104,11 @@ newsletterAdmin.get('/', async (c) => {
       <td class="py-2 px-3">
         <button
           hx-delete="/admin/abonati/${encodeURIComponent(s.email)}"
-          hx-confirm="Stergi ${escapeHtml(s.email)}?"
+          hx-confirm="Delete ${escapeHtml(s.email)}?"
           hx-target="closest tr"
           hx-swap="outerHTML"
           class="text-xs text-red-500 hover:underline">
-          Sterge
+          Delete
         </button>
       </td>
     </tr>`).join('');
@@ -119,7 +119,7 @@ newsletterAdmin.get('/', async (c) => {
 
   const body = `
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-xl font-bold">Abonati newsletter (${data.count})</h1>
+      <h1 class="text-xl font-bold">Newsletter Subscribers (${data.count})</h1>
       <a href="/admin/abonati/export" class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700">Export CSV</a>
     </div>
     <div class="overflow-x-auto">
@@ -127,24 +127,24 @@ newsletterAdmin.get('/', async (c) => {
         <thead class="bg-gray-100 text-left">
           <tr>
             <th class="py-2 px-3">Email</th>
-            <th class="py-2 px-3">Tip</th>
-            <th class="py-2 px-3">Data inscriere</th>
-            <th class="py-2 px-3">Taguri</th>
-            <th class="py-2 px-3">Actiuni</th>
+            <th class="py-2 px-3">Type</th>
+            <th class="py-2 px-3">Signup Date</th>
+            <th class="py-2 px-3">Tags</th>
+            <th class="py-2 px-3">Actions</th>
           </tr>
         </thead>
-        <tbody>${rowsHtml || '<tr><td colspan="5" class="py-8 text-center text-gray-400">Niciun abonat</td></tr>'}</tbody>
+        <tbody>${rowsHtml || '<tr><td colspan="5" class="py-8 text-center text-gray-400">No subscribers</td></tr>'}</tbody>
       </table>
       <div class="flex gap-2 mt-4">${paginationHtml}</div>
     </div>`;
 
-  return c.html(adminLayout('Abonati newsletter', body, 'abonati', email));
+  return c.html(adminLayout('Newsletter Subscribers', body, 'abonati', email));
 });
 
 newsletterAdmin.get('/export', async (c) => {
   const apiKey = c.env.BUTTONDOWN_API_KEY;
   if (!apiKey) {
-    return c.text('BUTTONDOWN_API_KEY lipsa', 500);
+    return c.text('BUTTONDOWN_API_KEY missing', 500);
   }
 
   const rows: ButtondownSubscriber[] = [];
@@ -161,7 +161,7 @@ newsletterAdmin.get('/export', async (c) => {
     }
   } catch (err) {
     structuredLog('error', 'admin_newsletter_export_failed', { error: String(err) });
-    return c.text(`Eroare export: ${String(err)}`, 502);
+    return c.text(`Export error: ${String(err)}`, 502);
   }
 
   const csvHeader = 'email,subscriber_type,creation_date,tags\n';
@@ -187,14 +187,14 @@ newsletterAdmin.delete('/:email', async (c) => {
   const apiKey = c.env.BUTTONDOWN_API_KEY;
 
   if (!apiKey) {
-    return c.html('<tr><td colspan="5" class="py-2 px-3 text-red-500 text-sm">BUTTONDOWN_API_KEY lipsa</td></tr>', 500);
+    return c.html('<tr><td colspan="5" class="py-2 px-3 text-red-500 text-sm">BUTTONDOWN_API_KEY missing</td></tr>', 500);
   }
 
   try {
     await deleteButtondownSubscriber(apiKey, email);
   } catch (err) {
     structuredLog('error', 'admin_newsletter_delete_buttondown_failed', { email, error: String(err) });
-    return c.html(`<tr><td colspan="5" class="py-2 px-3 text-red-500 text-sm">Eroare Buttondown: ${escapeHtml(String(err))}</td></tr>`, 502);
+    return c.html(`<tr><td colspan="5" class="py-2 px-3 text-red-500 text-sm">Buttondown Error: ${escapeHtml(String(err))}</td></tr>`, 502);
   }
 
   if (c.env.CACHE) {

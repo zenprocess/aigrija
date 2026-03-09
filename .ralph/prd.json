@@ -1,171 +1,72 @@
 {
   "project": "aigrija",
-  "epic": "Wave 3 — Vision Upgrade + Blog Pipeline + Test Coverage",
+  "epic": "Admin panel — translate all Romanian UI text to English",
   "stories": [
     {
       "id": "S-001",
-      "title": "Upgrade vision model to llama-3.2-11b-vision-instruct",
-      "description": "Upgrade from @cf/llava-hf/llava-1.5-7b-hf (7B, hallucination-prone) to @cf/meta/llama-3.2-11b-vision-instruct (11B). Changes: (1) Update VISION_MODEL in src/worker/lib/constants.ts, (2) Update AI.run() calls in both upload.ts and openapi-check-image.ts — new model uses messages array format: AI.run(model, { messages: [{ role: 'user', content: [{ type: 'image', image: arrayOfBytes }, { type: 'text', text: prompt }] }], max_tokens: 512 }), (3) Update response parsing — new model returns { response: string }. Read the Cloudflare Workers AI docs for @cf/meta/llama-3.2-11b-vision-instruct to confirm the exact API format before making changes. Run npx tsc --noEmit && npx vitest run to verify.",
+      "title": "Translate layout.ts + index.ts to English",
+      "description": "Translate all Romanian UI text in the admin layout and dashboard/content-generation pages to English.\n\nFiles: src/worker/admin/layout.ts, src/worker/admin/index.ts\n\nIn layout.ts:\n- Line 2: 'Campanii' -> 'Campaigns'\n- Line 3: 'Drafturi' -> 'Drafts'\n- Line 4: 'Scraper-e' -> 'Scrapers'\n- Line 5: 'Ponderi' -> 'Weights'\n- Line 6: 'Traduceri' -> 'Translations'\n- Line 8: 'Rapoarte trad.' -> 'Translation Reports'\n- Line 9: 'Generare AI' -> 'AI Generation'\n- Line 32: <html lang=\"ro\"> -> <html lang=\"en\">\n\nIn index.ts:\n- Line 37: 'Campanii totale' -> 'Total Campaigns'\n- Line 41: 'Drafturi in asteptare' -> 'Pending Drafts'\n- Line 45: 'Rulari scraper azi' -> 'Scraper Runs Today'\n- Line 49: 'Erori scraper' -> 'Scraper Errors'\n- Line 54: 'Bun venit, ${email}' -> 'Welcome, ${email}'\n- Line 55: 'Panoul de administrare este in constructie. Foloseste navigatia din stanga pentru a accesa sectiunile disponibile.' -> 'The admin panel is under construction. Use the navigation on the left to access available sections.'\n- Line 137: 'Generare articol AI' -> 'AI Article Generation'\n- Line 140: 'Categorie' -> 'Category'\n- Line 141-147: option labels: 'Amenintari' -> 'Threats', 'Ghid de protectie' -> 'Protection Guide', 'Educatie' -> 'Education', 'Povesti' -> 'Stories', 'Rapoarte' -> 'Reports'\n- Line 150: 'Subiect personalizat (optional)' -> 'Custom Topic (optional)'\n- Line 151: placeholder 'Lasa gol pentru a genera automat...' -> 'Leave blank to auto-generate...'\n- Line 152: 'Daca specifici un subiect, pasul de generare titlu este omis.' -> 'If you specify a topic, the title generation step is skipped.'\n- Line 154: 'Genereaza' -> 'Generate'\n- Line 185: 'Se genereaza...' -> 'Generating...'\n- Line 202: 'Draft generat: ' -> 'Draft generated: '\n- Line 207: 'Eroare: ' -> 'Error: '\n- Line 211: 'Eroare retea: ' -> 'Network error: '\n- Line 214: 'Genereaza' (button reset text) -> 'Generate'\n- Line 105-111: categoryLabels object: amenintari -> 'Threats', ghid -> 'Protection Guide', educatie -> 'Education', povesti -> 'Stories', rapoarte -> 'Reports'\n- Line 161: 'Drafturi AI recente' -> 'Recent AI Drafts'\n- Line 163-169: table headers: 'Titlu' -> 'Title', 'Categorie' -> 'Category', 'Data' -> 'Date', 'Actiuni' -> 'Actions'\n- Line 132: 'Niciun draft generat inca.' -> 'No drafts generated yet.'\n- Line 130: 'Vizualizeaza' -> 'View'\n- Line 220: adminLayout title 'Generare Continut AI' -> 'AI Content Generation'\n\nDo NOT change route paths (keep /campanii, /ponderi etc.).\nDo NOT change nav key identifiers.\nOnly change user-visible labels and text.\n\nVerify: npx tsc --noEmit && npx vitest run --reporter=verbose",
       "acceptance_criteria": [
-        "VISION_MODEL updated to @cf/meta/llama-3.2-11b-vision-instruct in constants.ts",
-        "Both upload.ts and openapi-check-image.ts use new API message format",
-        "Response parsing handles new model output format",
-        "npx tsc --noEmit passes",
-        "npx vitest run passes"
+        "All Romanian text in layout.ts replaced with English",
+        "All Romanian text in index.ts replaced with English",
+        "html lang attribute is 'en'",
+        "Route paths unchanged",
+        "TypeScript compiles",
+        "Tests pass"
       ],
       "assigned_agent": "ts-fullstack",
       "dependencies": [],
-      "status": "pending",
+      "status": "passed",
       "priority": 1,
-      "attempts": 0,
+      "attempts": 1,
       "files_modified": [],
       "last_error": null,
-      "last_attempt_at": null,
-      "github_issue": 326
+      "last_attempt_at": "2026-03-09T07:58:29Z"
     },
     {
       "id": "S-002",
-      "title": "Add vision output validation + confidence calibration",
-      "description": "Add validation layer for vision model responses to catch hallucinations. Create src/worker/lib/vision-validator.ts with: (1) validateVisionResponse(text: string): boolean — reject responses too short (<20 chars), containing no Romanian text, or incoherent gibberish, (2) calibrateConfidence(response: string, verdict: string): number — score confidence based on response quality (keyword density, coherence signals) instead of fixed values (currently 0.85/0.60/0.80). Use validator in both upload.ts and openapi-check-image.ts. When validation fails, fall back to 'suspicious' with confidence 0.0. Add unit tests in src/worker/lib/vision-validator.test.ts. Run npx tsc --noEmit && npx vitest run to verify.",
+      "title": "Translate campaigns.ts + drafts.ts + weights.ts to English",
+      "description": "Translate all Romanian UI text in campaigns, drafts, and weights admin pages to English.\n\nFiles: src/worker/admin/campaigns.ts, src/worker/admin/drafts.ts, src/worker/admin/weights.ts\n\nIn campaigns.ts:\n- Line 214: 'Eroare baza de date.' -> 'Database error.'\n- Line 214: adminLayout title 'Eroare' -> 'Error'\n- Line 243: heading 'Campanii (${total})' -> 'Campaigns (${total})'\n- Line 244: '+ Campanie noua' -> '+ New Campaign'\n- Line 247: placeholder 'Cauta...' -> 'Search...'\n- Line 252: 'Toate severit.' -> 'All Severities'\n- Line 256: 'Toate statusuri' -> 'All Statuses'\n- Line 264-269: table headers: 'Titlu' -> 'Title', 'Sursa' -> 'Source', 'Severitate' -> 'Severity', 'Data' -> 'Date', 'Actiuni' -> 'Actions'\n- Line 272: 'Nicio campanie' -> 'No campaigns'\n- Line 277: adminLayout title 'Campanii' -> 'Campaigns'\n- Line 283: '&larr; Inapoi' -> '&larr; Back'\n- Line 284: 'Campanie noua' heading -> 'New Campaign'\n- Line 288: 'Titlu *' -> 'Title *'\n- Line 292: 'Sursa' -> 'Source'\n- Line 296: 'URL Sursa' -> 'Source URL'\n- Line 300: 'Severitate' -> 'Severity'\n- Line 306: 'Tip amenintare' -> 'Threat Type'\n- Line 309: 'Creeaza' -> 'Create'\n- Line 312: adminLayout title 'Campanie noua' -> 'New Campaign'\n- Line 323: 'Eroare baza de date.' -> 'Database error.'\n- Line 325: 'Campanie negasita.' -> 'Campaign not found.'\n- Line 333: '&larr; Inapoi' -> '&larr; Back'\n- Line 337: 'Detalii' -> 'Details'\n- Line 339-344: detail labels: 'Sursa' -> 'Source', 'URL Sursa' -> 'Source URL', 'Publicat la' -> 'Published at', 'Tip amenintare' -> 'Threat Type', 'Branduri afectate' -> 'Affected Brands', 'Status draft' -> 'Draft Status'\n- Line 348: 'Editeaza' -> 'Edit'\n- Line 351: 'Severitate' -> 'Severity'\n- Line 357: 'Tip amenintare' -> 'Threat Type'\n- Line 361: 'Status draft' -> 'Draft Status'\n- Line 366: 'Salveaza' -> 'Save'\n- Line 372: 'IOC-uri detectate' -> 'Detected IOCs'\n- Line 379: 'Continut extras' -> 'Extracted Content'\n- Line 399: 'Eroare baza de date.' -> 'Database error.'\n- Line 412: 'Scraper Runs' heading is already English, good\n- Line 414: 'Ruleaza DNSC acum' -> 'Run DNSC Now'\n- Line 419-423: table headers: 'Sursa' -> 'Source', 'Gasite' -> 'Found', 'Noi' -> 'New', 'Erori' -> 'Errors', 'Data' -> 'Date'\n- Line 407: 'Da' -> 'Yes', 'Nu' -> 'No'\n- Line 426: 'Nicio rulare' -> 'No runs'\n- Line 429: adminLayout title 'Scraper-e' -> 'Scrapers'\n\nIn drafts.ts:\n- Line 47: filter label: 'Toate' -> 'All'\n- Line 52: 'Nu exista drafturi.' -> 'No drafts found.'\n- Line 57-61: table headers: 'Titlu' -> 'Title', 'Tip' -> 'Type', 'Severitate' -> 'Severity', 'Data' -> 'Date'\n- Line 69: adminLayout title 'Drafturi AI' -> 'AI Drafts'\n- Line 78: 'Campania nu a fost gasita' -> 'Campaign not found'\n- Line 83: 'Draft negenerat inca.' -> 'Draft not yet generated.'\n- Line 95: 'Aproba' -> 'Approve'\n- Line 96: 'Publica in Sanity' -> 'Publish to Sanity'\n- Line 97: 'Respinge' -> 'Reject'\n- Line 98: 'Regenereaza' -> 'Regenerate'\n- Line 99: 'Publica multiplu' -> 'Multi-Publish'\n- Line 104: 'Date campanie originala' -> 'Original Campaign Data'\n- Line 106: 'Titlu' -> 'Title'\n- Line 107: 'Tip amenintare' -> 'Threat Type'\n- Line 108: 'Severitate' -> 'Severity'\n- Line 109: 'Branduri afectate' -> 'Affected Brands'\n- Line 110: 'Sursa' -> 'Source'\n- Line 111: 'Status draft' -> 'Draft Status'\n- Line 114: 'Text sursa' -> 'Source Text'\n- Line 120: 'Draft generat de AI' -> 'AI-Generated Draft'\n- Line 123: 'Editeaza draft' -> 'Edit Draft'\n- Line 126: 'Salveaza draft' -> 'Save Draft'\n\nIn weights.ts:\n- Line 12: 'VirusTotal (malitios)' -> 'VirusTotal (malicious)'\n- Line 13: 'VirusTotal (suspect)' -> 'VirusTotal (suspicious)'\n- Line 14: 'Domeniu < 30 zile' -> 'Domain < 30 days'\n- Line 15: 'Domeniu < 90 zile' -> 'Domain < 90 days'\n- Line 16: 'HTTP fara TLS' -> 'HTTP without TLS'\n- Line 17: 'Domeniu lung' -> 'Long Domain'\n- Line 18: 'Multe cifre' -> 'Many Digits'\n- Line 19: 'Prea multe subdomenii' -> 'Too Many Subdomains'\n- Line 22: 'TLD suspect' -> 'Suspicious TLD'\n- Line 56-59: table headers: 'Indicator' -> 'Indicator', 'Valoare' -> 'Value', 'Default' -> 'Default', 'Numeric' -> 'Numeric'\n- Line 67-68: date format: toLocaleString('ro-RO') -> toLocaleString('en-US') or just toISOString()\n- Line 69: 'Niciun istoric' -> 'No history'\n- Line 75: 'Salveaza ponderi' -> 'Save Weights'\n- Line 76: 'Reseteaza la default' -> 'Reset to Default'\n- Line 82: 'Testeaza URL' -> 'Test URL'\n- Line 91: 'Testeaza' button -> 'Test'\n- Line 97: 'Istoric modificari (ultimele 10)' -> 'Change History (last 10)'\n- Line 100-101: table headers: 'Data' -> 'Date', 'Valori salvate' -> 'Saved Values'\n- Line 121: adminLayout title 'Ponderi clasificare' -> 'Classification Weights'\n- Line 146: 'Ponderi salvate cu succes.' -> 'Weights saved successfully.'\n- Line 156: 'Introduti un URL pentru testare.' -> 'Enter a URL to test.'\n- Line 170: 'URL invalid.' -> 'Invalid URL.'\n- Line 193: 'Niciun flag activ' -> 'No active flags'\n- Line 198: 'Scor curent' -> 'Current Score'\n- Line 202: 'Scor propus' -> 'Proposed Score'\n- Line 206: 'Factor' -> 'Factor', 'Contributie' -> 'Contribution'\n\nDo NOT change route paths or JS variable names.\n\nVerify: npx tsc --noEmit && npx vitest run --reporter=verbose",
       "acceptance_criteria": [
-        "src/worker/lib/vision-validator.ts exports validateVisionResponse and calibrateConfidence",
-        "Both upload.ts and openapi-check-image.ts use the validator",
-        "Incoherent responses produce low-confidence suspicious verdict",
-        "Unit tests cover valid, invalid, and edge-case responses",
-        "npx tsc --noEmit passes",
-        "npx vitest run passes"
+        "All Romanian text in campaigns.ts replaced with English",
+        "All Romanian text in drafts.ts replaced with English",
+        "All Romanian text in weights.ts replaced with English",
+        "Route paths unchanged",
+        "TypeScript compiles",
+        "Tests pass"
       ],
       "assigned_agent": "ts-fullstack",
-      "dependencies": ["S-001"],
-      "status": "pending",
+      "dependencies": [],
+      "status": "failed",
       "priority": 1,
-      "attempts": 0,
+      "attempts": 1,
       "files_modified": [],
-      "last_error": null,
-      "last_attempt_at": null,
-      "github_issue": 327
+      "last_error": "Worktree merge failed",
+      "last_attempt_at": "2026-03-09T08:02:49Z"
     },
     {
       "id": "S-003",
-      "title": "Add Opus-benchmarked image analysis tests",
-      "description": "Add tests that benchmark the CF vision model against Claude Opus as ground truth. Steps: (1) Create test-fixtures/images/ with 3 test images — download a known phishing screenshot URL, a known safe screenshot URL, and an ambiguous one (use placeholder PNG files with embedded text if real screenshots aren't available), (2) Create test-fixtures/opus-baselines.json with pre-computed Opus verdicts for each image (manually populate with expected verdicts: phishing, likely_safe, suspicious), (3) Create src/worker/routes/vision-quality.test.ts — for each fixture image, mock the CF AI.run() with realistic responses matching each verdict, call the image check handler, verify the endpoint verdict doesn't contradict the Opus baseline (e.g. Opus=phishing means endpoint must not return likely_safe), (4) Test the fallback path — when AI.run() throws, verify confidence is 0.0 not a fake high value. Run npx tsc --noEmit && npx vitest run to verify.",
+      "title": "Translate translations.ts + config.ts + analytics.ts + activity.ts + newsletter.ts + translation-reports.ts to English",
+      "description": "Translate all Romanian UI text in the remaining admin pages to English.\n\nFiles: src/worker/admin/translations.ts, src/worker/admin/config.ts, src/worker/admin/analytics.ts, src/worker/admin/activity.ts, src/worker/admin/newsletter.ts, src/worker/admin/translation-reports.ts\n\nIn translations.ts:\n- Line 12: 'Romana (referinta)' -> 'Romanian (reference)'\n- Line 13: 'Bulgara' -> 'Bulgarian'\n- Line 14: 'Maghiara' -> 'Hungarian'\n- Line 15: 'Ucraineana' -> 'Ukrainian'\n- Line 16: 'Engleza' -> 'English'\n- Line 124: button 'Salv' -> 'Save'\n- Line 140: placeholder 'Cauta cheie...' -> 'Search key...'\n- Line 142: button 'Cauta' -> 'Search'\n- Line 148: button 'Auto-traducere lipsa' -> 'Auto-translate missing'\n- Line 152: 'Import bulk JSON pentru ${LANG_LABELS[activeLang]}' -> 'Bulk JSON Import for ${LANG_LABELS[activeLang]}'\n- Line 154: button 'Importa' -> 'Import'\n- Line 159: 'Se traduce...' -> 'Translating...'\n- Line 165: 'Cheie' -> 'Key'\n- Line 166: 'Romana (referinta)' -> 'Romanian (reference)'\n- Line 167: 'Valoare curenta' -> 'Current Value'\n- Line 173: 'Salvat!' -> 'Saved!'\n- Line 174: 'Tradus AI!' -> 'AI Translated!'\n- Line 185: btn text 'OK' and 'Salv' -> 'OK' and 'Save'\n- Line 188: 'Stergi override-ul? Se va reveni la valoarea statica.' -> 'Delete override? Will revert to static value.'\n- Line 199: 'JSON invalid.' -> 'Invalid JSON.'\n- Line 206: 'Importat N chei.' -> 'Imported N keys.' and 'Eroare import.' -> 'Import error.'\n- Line 232: 'Eroare auto-traducere: ' -> 'Auto-translation error: '\n- Line 244: 'Se traduce...' -> 'Translating...'\n- Line 246: 'Se traduc cheile lipsa, asteptati...' -> 'Translating missing keys, please wait...'\n- Line 255: 'Tradus: N chei noi. Sarite (deja exista): N.' -> 'Translated: N new keys. Skipped (already exist): N.'\n- Line 258: 'Eroare: ' -> 'Error: '\n- Line 261: 'Eroare de retea: ' -> 'Network error: '\n- Line 264: 'Auto-traducere lipsa' -> 'Auto-translate missing'\n- Line 269: adminLayout title 'Traduceri' -> 'Translations'\n- Line 122: placeholder 'Traducere...' -> 'Translation...'\n\nIn config.ts:\n- Line 9: 'Scraper DNSC' -> 'DNSC Scraper'\n- Line 10: 'Scraper ANAF' -> 'ANAF Scraper'\n- Line 11: 'Scraper Bitdefender' -> 'Bitdefender Scraper'\n- Line 12: 'Generare draft AI' -> 'AI Draft Generation'\n- Line 13: 'Vot comunitate' -> 'Community Voting'\n- Line 14: 'Scanner QR' -> 'QR Scanner'\n- Line 21: 'Vot comunitate' (rate limit) -> 'Community Voting'\n- Line 28: 'RDAP / domenii' -> 'RDAP / Domains'\n- Line 30: 'Traduceri (overrides)' -> 'Translations (overrides)'\n- Line 79: toLocaleString('ro-RO') -> toLocaleString('en-US')\n- Line 97: '/ ora' -> '/ hour'\n- Line 135: 'Modificat' -> 'Modified'\n- Line 147: 'Limita / ora' -> 'Limit / hour'\n- Line 160: 'Serviciu' -> 'Service'\n- Line 161: 'Stare' -> 'State'\n- Line 162: 'Actiuni' -> 'Actions'\n- Line 191: 'Flag actualizat.' -> 'Flag updated.' and 'Eroare flag.' -> 'Flag error.'\n- Line 200: 'Rate limit salvat.' -> 'Rate limit saved.' and 'Eroare rate limit.' -> 'Rate limit error.'\n- Line 208: 'Circuit breaker resetat.' -> 'Circuit breaker reset.' and 'Eroare reset.' -> 'Reset error.'\n- Line 212: 'Stergi toate cheile cu prefixul...' -> 'Delete all keys with prefix...'\n- Line 219: 'Sterse N chei.' -> 'Deleted N keys.' and 'Eroare flush.' -> 'Flush error.'\n- Line 224: adminLayout title 'Configuratie sistem' -> 'System Configuration'\n\nIn analytics.ts:\n- Line 23: 'Eroare baza de date' -> 'Database error'\n- Line 40: <html lang=\"ro\"> -> <html lang=\"en\">\n- Line 55-57: nav links: 'Campanii' -> 'Campaigns', 'Activitate' -> 'Activity'\n- Line 62: 'Distributie severitate' -> 'Severity Distribution'\n- Line 66: 'Campanii pe luna' -> 'Campaigns per Month'\n- Line 86: dataset label 'Campanii' -> 'Campaigns'\n\nIn activity.ts:\n- Line 38: <html lang=\"ro\"> -> <html lang=\"en\">\n- Line 55-57: nav links: 'Campanii' -> 'Campaigns', 'Activitate' -> 'Activity'\n- Line 59: 'Jurnal Activitate Admin' -> 'Admin Activity Log'\n- Line 61: placeholder 'Actiune' -> 'Action'\n- Line 62: placeholder 'Email admin' -> 'Admin Email'\n- Line 65: button 'Filtreaza' -> 'Filter'\n- Line 69: table headers: 'Data' -> 'Date', 'Actiune' -> 'Action', 'Entitate' -> 'Entity', 'Detalii' -> 'Details'\n- Line 72: 'Nu exista activitate inregistrata.' -> 'No activity recorded.'\n\nIn newsletter.ts:\n- Line 85: 'BUTTONDOWN_API_KEY lipsa.' -> 'BUTTONDOWN_API_KEY missing.'\n- Line 85: adminLayout title 'Abonati newsletter' -> 'Newsletter Subscribers'\n- Line 93: 'Eroare API Buttondown: ' -> 'Buttondown API Error: '\n- Line 93: adminLayout title 'Abonati newsletter' -> 'Newsletter Subscribers'\n- Line 107: 'Stergi ${email}?' -> 'Delete ${email}?'\n- Line 111: 'Sterge' -> 'Delete'\n- Line 122: heading 'Abonati newsletter (${data.count})' -> 'Newsletter Subscribers (${data.count})'\n- Line 123: 'Export CSV' button stays as is (already English)\n- Line 129: 'Email' header stays, 'Tip' -> 'Type', 'Data inscriere' -> 'Signup Date', 'Taguri' -> 'Tags', 'Actiuni' -> 'Actions'\n- Line 136: 'Niciun abonat' -> 'No subscribers'\n- Line 141: adminLayout title 'Abonati newsletter' -> 'Newsletter Subscribers'\n- Line 147: 'BUTTONDOWN_API_KEY lipsa' -> 'BUTTONDOWN_API_KEY missing'\n- Line 164: 'Eroare export: ' -> 'Export error: '\n- Line 190: 'BUTTONDOWN_API_KEY lipsa' -> 'BUTTONDOWN_API_KEY missing'\n- Line 197: 'Eroare Buttondown: ' -> 'Buttondown Error: '\n\nIn translation-reports.ts:\n- Line 11: toLocaleString('ro-RO', ...) -> toLocaleString('en-US', ...)\n- Line 50: button 'Rezolvat' -> 'Resolved'\n- Line 61: heading 'Rapoarte de traducere' -> 'Translation Reports'\n- Line 63: 'Nu exista rapoarte inca.' -> 'No reports yet.'\n- Line 68-74: table headers: 'Data' -> 'Date', 'Limba' -> 'Language', 'Pagina' -> 'Page', 'Text curent' -> 'Current Text', 'Sugestie' -> 'Suggestion', 'Detalii' -> 'Details', 'Actiune' -> 'Action'\n- Line 82: adminLayout title 'Rapoarte traduceri' -> 'Translation Reports'\n\nDo NOT change route paths or JS variable names.\n\nVerify: npx tsc --noEmit && npx vitest run --reporter=verbose",
       "acceptance_criteria": [
-        "test-fixtures/opus-baselines.json exists with 3+ baseline verdicts",
-        "Tests verify CF model verdict doesn't contradict Opus baseline",
-        "Tests cover AI.run() failure path with confidence 0.0",
-        "npx tsc --noEmit passes",
-        "npx vitest run passes"
+        "All Romanian text in translations.ts replaced with English",
+        "All Romanian text in config.ts replaced with English",
+        "All Romanian text in analytics.ts replaced with English",
+        "All Romanian text in activity.ts replaced with English",
+        "All Romanian text in newsletter.ts replaced with English",
+        "All Romanian text in translation-reports.ts replaced with English",
+        "Route paths unchanged",
+        "TypeScript compiles",
+        "Tests pass"
       ],
       "assigned_agent": "ts-fullstack",
-      "dependencies": ["S-001"],
-      "status": "pending",
+      "dependencies": [],
+      "status": "failed",
       "priority": 1,
-      "attempts": 0,
+      "attempts": 1,
       "files_modified": [],
-      "last_error": null,
-      "last_attempt_at": null,
-      "github_issue": 328
-    },
-    {
-      "id": "S-004",
-      "title": "Add missing secret detection in Sanity publish + cron logging",
-      "description": "Fix the blog pipeline that silently fails because SANITY_WRITE_TOKEN is missing. Changes: (1) In src/worker/lib/sanity.ts — before any Sanity mutation, check if SANITY_WRITE_TOKEN (from env) is present. If missing, log structuredLog('error', 'sanity_write_token_missing', { action: 'publish' }) and return early with a meaningful error, don't throw. (2) In src/worker/lib/cron-handler.ts — add structuredLog at start/end of each cron job with job name and duration. In runSanityPublish, check for SANITY_WRITE_TOKEN and log clear error if missing. Ensure one failing job doesn't block others. (3) Add unit tests for the missing-secret paths in cron-handler.test.ts — mock env without SANITY_WRITE_TOKEN and verify the handler logs error but doesn't throw. Read both files first to understand existing patterns. Run npx tsc --noEmit && npx vitest run to verify.",
-      "acceptance_criteria": [
-        "Sanity publish logs clear error when SANITY_WRITE_TOKEN is missing",
-        "Cron handler logs job name and duration for each job",
-        "Missing-secret path is unit tested",
-        "One failing cron job does not prevent others from running",
-        "npx tsc --noEmit passes",
-        "npx vitest run passes"
-      ],
-      "assigned_agent": "ts-fullstack",
-      "dependencies": [],
-      "status": "pending",
-      "priority": 1,
-      "attempts": 0,
-      "files_modified": [],
-      "last_error": null,
-      "last_attempt_at": null,
-      "github_issue": 329
-    },
-    {
-      "id": "S-005",
-      "title": "Upgrade Bowser story assertions to structural checks",
-      "description": "In the existing Bowser/browser detection tests, upgrade weak assertions from body.contains() to proper structural checks. Read the existing test files first (search for bowser or browser-related test files under src/worker/ or e2e/). Replace string contains checks with structured assertions: verify JSON shape, check specific fields, assert types. Run npx tsc --noEmit && npx vitest run to verify.",
-      "acceptance_criteria": [
-        "All Bowser-related assertions use structural checks (toBe, toEqual, toHaveProperty) not string contains",
-        "npx tsc --noEmit passes",
-        "npx vitest run passes"
-      ],
-      "assigned_agent": "ts-fullstack",
-      "dependencies": [],
-      "status": "pending",
-      "priority": 1,
-      "attempts": 0,
-      "files_modified": [],
-      "last_error": null,
-      "last_attempt_at": null,
-      "github_issue": 299
-    },
-    {
-      "id": "S-006",
-      "title": "Add asset integrity tests — favicon, logo, brand colors",
-      "description": "Create e2e/asset-integrity.spec.ts (Playwright test). Test that critical static assets load correctly: (1) GET /favicon.ico returns valid icon (200 or 204, content-type image/*), (2) Check that the homepage loads the site logo (query selector for img with logo in alt/src), (3) Verify brand color CSS variables are defined (check computed styles for primary brand colors). The BASE_URL is https://pre.ai-grija.ro (read from process.env.BASE_URL or default). Run npx playwright test e2e/asset-integrity.spec.ts to verify.",
-      "acceptance_criteria": [
-        "e2e/asset-integrity.spec.ts exists",
-        "Tests verify favicon loads with correct content-type",
-        "Tests verify logo image is present",
-        "npx tsc --noEmit passes"
-      ],
-      "assigned_agent": "ts-fullstack",
-      "dependencies": [],
-      "status": "pending",
-      "priority": 2,
-      "attempts": 0,
-      "files_modified": [],
-      "last_error": null,
-      "last_attempt_at": null,
-      "github_issue": 297
-    },
-    {
-      "id": "S-007",
-      "title": "Add blog category route tests",
-      "description": "Create src/worker/routes/blog.test.ts with unit tests for the blog category routes. Read src/worker/routes/blog.ts (or wherever blog routes are defined) first. Test: (1) GET /blog returns valid HTML or JSON listing, (2) GET /blog/:category returns filtered posts, (3) Invalid category returns 404, (4) Blog route handles empty Sanity response gracefully. Mock the Sanity fetch calls. Run npx tsc --noEmit && npx vitest run to verify.",
-      "acceptance_criteria": [
-        "Blog route unit tests exist",
-        "Tests cover category filtering and error handling",
-        "npx tsc --noEmit passes",
-        "npx vitest run passes"
-      ],
-      "assigned_agent": "ts-fullstack",
-      "dependencies": [],
-      "status": "pending",
-      "priority": 2,
-      "attempts": 0,
-      "files_modified": [],
-      "last_error": null,
-      "last_attempt_at": null,
-      "github_issue": 296
-    },
-    {
-      "id": "S-008",
-      "title": "Add tests for OpenAPI chanfana route endpoints",
-      "description": "Create tests for the OpenAPI/chanfana route endpoints. Read the chanfana route files under src/worker/routes/openapi-*.ts first. Create src/worker/routes/openapi-endpoints.test.ts. Test each OpenAPI endpoint: (1) CheckTextEndpoint — valid text input returns classification, (2) CheckImageEndpoint — valid image returns analysis, (3) ShareEndpoint — valid hash returns share card, (4) Test validation errors (missing required fields), (5) Test rate limiting response format. Mock env bindings (AI, CACHE, STORAGE). Run npx tsc --noEmit && npx vitest run to verify.",
-      "acceptance_criteria": [
-        "Tests cover all OpenAPI chanfana endpoints",
-        "Tests verify validation and error responses",
-        "npx tsc --noEmit passes",
-        "npx vitest run passes"
-      ],
-      "assigned_agent": "ts-fullstack",
-      "dependencies": [],
-      "status": "pending",
-      "priority": 3,
-      "attempts": 0,
-      "files_modified": [],
-      "last_error": null,
-      "last_attempt_at": null,
-      "github_issue": 320
+      "last_error": "Worktree merge failed",
+      "last_attempt_at": "2026-03-09T08:02:54Z"
     }
   ]
 }

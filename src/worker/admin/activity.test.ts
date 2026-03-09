@@ -34,7 +34,7 @@ describe('activity router', () => {
     const res = await activity.fetch(req, env, makeCtx());
     expect(res.status).toBe(200);
     const html = await res.text();
-    expect(html).toContain('Activitate');
+    expect(html).toContain('Admin Activity');
     expect(html).toContain('approve');
     expect(html).toContain('admin@test.ro');
   });

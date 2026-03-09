@@ -9,11 +9,11 @@ const SUPPORTED_LANGS = ['ro', 'bg', 'hu', 'uk', 'en'] as const;
 type Lang = typeof SUPPORTED_LANGS[number];
 
 const LANG_LABELS: Record<Lang, string> = {
-  ro: 'Romana (referinta)',
-  bg: 'Bulgara',
-  hu: 'Maghiara',
-  uk: 'Ucraineana',
-  en: 'Engleza',
+  ro: 'Romanian (reference)',
+  bg: 'Bulgarian',
+  hu: 'Hungarian',
+  uk: 'Ukrainian',
+  en: 'English',
 };
 
 const LANG_FULL_NAMES: Record<Exclude<Lang, 'ro'>, string> = {
@@ -119,11 +119,11 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
           : `<div class="flex gap-2 items-start">
               <input type="text" value="${escHtml(currentVal)}" data-key="${escHtml(key)}" data-lang="${activeLang}"
                      class="flex-1 border border-gray-200 rounded px-2 py-1 text-sm translation-input"
-                     placeholder="Traducere...">
+                     placeholder="Translation...">
               <button onclick="saveSingle('${activeLang}','${escHtml(key)}',this)"
-                      class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs shrink-0">Salv</button>
+                      class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs shrink-0">Save</button>
               <button onclick="autoTranslateSingle('${activeLang}','${escHtml(key)}',this)"
-                      class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs shrink-0" title="Auto-traducere AI">AI</button>
+                      class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs shrink-0" title="AI Auto-translate">AI</button>
               ${isOverride ? `<button onclick="deleteOverride('${activeLang}','${escHtml(key)}',this)"
                       class="bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded text-xs shrink-0">X</button>` : ''}
             </div>`
@@ -137,41 +137,41 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
     <div class="flex gap-3 mb-4">
       <form method="get" class="flex-1 flex gap-2">
         <input type="hidden" name="lang" value="${activeLang}">
-        <input type="text" name="search" value="${search}" placeholder="Cauta cheie..."
+        <input type="text" name="search" value="${search}" placeholder="Search key..."
                class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm">
-        <button type="submit" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm">Cauta</button>
+        <button type="submit" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm">Search</button>
       </form>
       <a href="/admin/traduceri/api/export?lang=${activeLang}"
          class="bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-4 py-2 rounded-lg text-sm flex items-center">Export JSON</a>
       <button onclick="showImport()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-lg text-sm">Import JSON</button>
       ${!isRoLang ? `<button onclick="autoTranslateAll('${activeLang}')" id="auto-translate-all-btn"
-         class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm">Auto-traducere lipsa</button>` : ''}
+         class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm">Auto-translate missing</button>` : ''}
     </div>
 
     <div id="import-panel" class="hidden bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4">
-      <h3 class="text-sm font-medium text-gray-700 mb-2">Import bulk JSON pentru ${LANG_LABELS[activeLang]}</h3>
+      <h3 class="text-sm font-medium text-gray-700 mb-2">Bulk JSON Import for ${LANG_LABELS[activeLang]}</h3>
       <textarea id="import-json" rows="6" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono mb-2" placeholder='{"key.path": "valoare", ...}'></textarea>
-      <button onclick="bulkImport('${activeLang}')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm">Importa</button>
+      <button onclick="bulkImport('${activeLang}')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm">Import</button>
       <div id="import-result" class="mt-2 text-sm"></div>
     </div>
 
     <div id="auto-translate-progress" class="hidden bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
-      <p class="text-sm text-purple-700" id="auto-translate-msg">Se traduce...</p>
+      <p class="text-sm text-purple-700" id="auto-translate-msg">Translating...</p>
     </div>
 
     <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <table class="w-full">
         <thead><tr class="text-xs text-gray-400 border-b border-white/10 bg-gray-50">
-          <th class="text-left py-2 px-3 w-1/4">Cheie</th>
-          <th class="text-left py-2 px-3 w-1/4">Romana (referinta)</th>
-          <th class="text-left py-2 px-3">Valoare curenta</th>
+          <th class="text-left py-2 px-3 w-1/4">Key</th>
+          <th class="text-left py-2 px-3 w-1/4">Romanian (reference)</th>
+          <th class="text-left py-2 px-3">Current Value</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
 
-    <div id="save-notify" class="fixed bottom-4 right-4 hidden bg-green-600 text-white px-4 py-2 rounded-lg text-sm shadow-lg">Salvat!</div>
-    <div id="ai-notify" class="fixed bottom-4 right-4 hidden bg-purple-600 text-white px-4 py-2 rounded-lg text-sm shadow-lg">Tradus AI!</div>
+    <div id="save-notify" class="fixed bottom-4 right-4 hidden bg-green-600 text-white px-4 py-2 rounded-lg text-sm shadow-lg">Saved!</div>
+    <div id="ai-notify" class="fixed bottom-4 right-4 hidden bg-purple-600 text-white px-4 py-2 rounded-lg text-sm shadow-lg">AI Translated!</div>
 
     <script>
     async function saveSingle(lang, key, btn) {
@@ -182,10 +182,10 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({lang, key, value: input.value})
       });
-      if (res.ok) { showNotify('save-notify'); btn.textContent = 'OK'; setTimeout(() => { btn.textContent = 'Salv'; location.reload(); }, 1500); }
+      if (res.ok) { showNotify('save-notify'); btn.textContent = 'OK'; setTimeout(() => { btn.textContent = 'Save'; location.reload(); }, 1500); }
     }
     async function deleteOverride(lang, key, btn) {
-      if (!confirm('Stergi override-ul? Se va reveni la valoarea statica.')) return;
+      if (!confirm('Delete override? Will revert to static value.')) return;
       await fetch('/admin/traduceri/api/key', {
         method: 'DELETE',
         headers: {'Content-Type':'application/json'},
@@ -196,14 +196,14 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
     async function bulkImport(lang) {
       const txt = document.getElementById('import-json').value;
       let data;
-      try { data = JSON.parse(txt); } catch { document.getElementById('import-result').textContent = 'JSON invalid.'; return; }
+      try { data = JSON.parse(txt); } catch { document.getElementById('import-result').textContent = 'Invalid JSON.'; return; }
       const res = await fetch('/admin/traduceri/api/import', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({lang, data})
       });
       const j = await res.json();
-      document.getElementById('import-result').textContent = j.imported ? 'Importat ' + j.imported + ' chei.' : 'Eroare import.';
+      document.getElementById('import-result').textContent = j.imported ? 'Imported ' + j.imported + ' keys.' : 'Import error.';
     }
     function showImport() { document.getElementById('import-panel').classList.toggle('hidden'); }
     function showNotify(id) {
@@ -229,7 +229,7 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
           input.value = j.translation;
           showNotify('ai-notify');
         } else {
-          alert('Eroare auto-traducere: ' + (j.error || 'unknown'));
+          alert('Auto-translation error: ' + (j.error || 'unknown'));
         }
       } finally {
         btn.textContent = origText;
@@ -241,9 +241,9 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
       const progress = document.getElementById('auto-translate-progress');
       const msg = document.getElementById('auto-translate-msg');
       btn.disabled = true;
-      btn.textContent = 'Se traduce...';
+      btn.textContent = 'Translating...';
       progress.classList.remove('hidden');
-      msg.textContent = 'Se traduc cheile lipsa, asteptati...';
+      msg.textContent = 'Translating missing keys, please wait...';
       try {
         const res = await fetch('/admin/traduceri/api/auto-translate-all', {
           method: 'POST',
@@ -252,21 +252,21 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
         });
         const j = await res.json();
         if (j.ok) {
-          msg.textContent = 'Tradus: ' + j.translated + ' chei noi. Sarite (deja exista): ' + j.skipped + '.';
+          msg.textContent = 'Translated: ' + j.translated + ' new keys. Skipped (already exist): ' + j.skipped + '.';
           setTimeout(() => location.reload(), 2000);
         } else {
-          msg.textContent = 'Eroare: ' + (j.error || 'unknown');
+          msg.textContent = 'Error: ' + (j.error || 'unknown');
         }
       } catch(e) {
-        msg.textContent = 'Eroare de retea: ' + e.message;
+        msg.textContent = 'Network error: ' + e.message;
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Auto-traducere lipsa';
+        btn.textContent = 'Auto-translate missing';
       }
     }
     </script>`;
 
-  return adminLayout('Traduceri', content, 'traduceri', email);
+  return adminLayout('Translations', content, 'traduceri', email);
 }
 
 export const translationsAdmin = new Hono<AdminEnv>();

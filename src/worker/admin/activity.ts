@@ -35,10 +35,10 @@ activity.get('/', async (c) => {
     .join('');
 
   const html = `<!DOCTYPE html>
-<html lang="ro">
+<html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Activitate Admin - ai-grija.ro</title>
+  <title>Admin Activity - ai-grija.ro</title>
   <style>
     body { font-family: Arial, sans-serif; max-width: 1400px; margin: 20px auto; padding: 20px; }
     table { width: 100%; border-collapse: collapse; }
@@ -52,24 +52,24 @@ activity.get('/', async (c) => {
 </head>
 <body>
   <nav>
-    <a href="/admin/campaigns">Campanii</a>
+    <a href="/admin/campaigns">Campaigns</a>
     <a href="/admin/analytics">Analytics</a>
-    <a href="/admin/activity">Activitate</a>
+    <a href="/admin/activity">Activity</a>
   </nav>
-  <h1>📋 Jurnal Activitate Admin</h1>
+  <h1>📋 Admin Activity Log</h1>
   <form method="GET" class="filters">
-    <input name="action" placeholder="Acțiune" value="${escapeHtml(actionFilter ?? '')}"/>
-    <input name="admin" placeholder="Email admin" value="${escapeHtml(adminFilter ?? '')}"/>
+    <input name="action" placeholder="Action" value="${escapeHtml(actionFilter ?? '')}"/>
+    <input name="admin" placeholder="Admin Email" value="${escapeHtml(adminFilter ?? '')}"/>
     <input name="from" type="date" value="${escapeHtml(dateFrom ?? '')}"/>
     <input name="to" type="date" value="${escapeHtml(dateTo ?? '')}"/>
-    <button type="submit">Filtrează</button>
+    <button type="submit">Filter</button>
   </form>
   <table>
     <thead>
-      <tr><th>Data</th><th>Acțiune</th><th>Entitate</th><th>ID</th><th>Admin</th><th>Detalii</th></tr>
+      <tr><th>Date</th><th>Action</th><th>Entity</th><th>ID</th><th>Admin</th><th>Details</th></tr>
     </thead>
     <tbody>
-      ${rows || '<tr><td colspan="6" style="text-align:center;">Nu există activitate înregistrată.</td></tr>'}
+      ${rows || '<tr><td colspan="6" style="text-align:center;">No activity recorded.</td></tr>'}
     </tbody>
   </table>
 </body>

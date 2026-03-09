@@ -67,7 +67,7 @@ describe('drafts router', () => {
     const res = await drafts.fetch(req, env, makeCtx());
     expect(res.status).toBe(200);
     const html = await res.text();
-    expect(html).toContain('Drafturi');
+    expect(html).toContain('AI Drafts');
   });
 
   it('GET /:id returns 404 for unknown campaign', async () => {

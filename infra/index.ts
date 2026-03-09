@@ -110,7 +110,9 @@ new cloudflare.ZeroTrustAccessPolicy("admin-policy", {
   name: "Allow team",
   decision: "allow",
   precedence: 1,
-  includes: [{ emails: ["admin@zen-labs.ro"] }],
+  includes: [
+    { emailDomains: ["zp.digital", "arq.bar", "ai-grija.ro"] },
+  ],
 });
 
 // ---------------------------------------------------------------------------
@@ -201,7 +203,14 @@ new cloudflare.ZeroTrustAccessPolicy("preview-admin-policy", {
   name: "Allow team preview",
   decision: "allow",
   precedence: 1,
-  includes: [{ emails: ["admin@zen-labs.ro"] }],
+  includes: [
+    { emailDomains: ["zp.digital", "arq.bar", "ai-grija.ro"] },
+    { groups: [
+      "b9f39c45-18f7-497a-8a47-6189fa00d942",
+      "86921e1f-ac54-45b7-9104-1ec9b41eaa6b",
+      "ff8ab487-59d9-4eb8-8407-72d0d12b80c2",
+    ] },
+  ],
 });
 
 // Preview secrets — same keys, can use test values

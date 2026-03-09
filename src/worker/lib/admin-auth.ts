@@ -1,6 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
 import type { Env } from './types';
-import { toUint8Array } from './crypto-utils';
 import { structuredLog } from './logger';
 
 interface CFAccessCert {
@@ -70,45 +69,47 @@ async function verifyJWT(token: string, teamDomain: string, kv: KVNamespace): Pr
   const parts = token.split('.');
   if (parts.length !== 3) return null;
 
-  const { kid } = JSON.parse(new TextDecoder().decode(base64urlDecode(parts[0]))) as { kid?: string };
+  const header = JSON.parse(new TextDecoder().decode(base64urlDecode(parts[0]))) as { kid?: string; alg?: string };
 
   const certs = await fetchCFAccessCerts(teamDomain, kv);
   if (!certs) return null;
 
-  // Find matching public cert by kid
-  const matchingCert = certs.public_certs?.find((c) => c.kid === kid) ?? certs.public_certs?.[0];
-  if (!matchingCert) return null;
+  // Find matching JWK key by kid
+  const matchingKey = header.kid
+    ? certs.keys.find((k) => k.kid === header.kid)
+    : certs.keys[0];
+  if (!matchingKey) return null;
 
-  // Import the PEM public key
-  const pemBody = matchingCert.cert
-    .replace(/-----BEGIN CERTIFICATE-----/, '')
-    .replace(/-----END CERTIFICATE-----/, '')
-    .replace(/\s/g, '');
+  // Determine algorithm from JWK key type
+  let algorithm: RsaHashedImportParams | EcKeyImportParams;
+  let verifyAlgorithm: AlgorithmIdentifier | EcdsaParams;
+
+  if (matchingKey.kty === 'RSA') {
+    const algToHash: Record<string, string> = { RS256: 'SHA-256', RS384: 'SHA-384', RS512: 'SHA-512' };
+    const rsaHash = (header.alg && algToHash[header.alg]) ?? 'SHA-256';
+    algorithm = { name: 'RSASSA-PKCS1-v1_5', hash: rsaHash };
+    verifyAlgorithm = 'RSASSA-PKCS1-v1_5';
+  } else if (matchingKey.kty === 'EC') {
+    const curve = matchingKey.crv ?? 'P-256';
+    const ecHashMap: Record<string, string> = { 'P-256': 'SHA-256', 'P-384': 'SHA-384', 'P-521': 'SHA-512' };
+    const ecHash = ecHashMap[curve] ?? 'SHA-256';
+    algorithm = { name: 'ECDSA', namedCurve: curve };
+    verifyAlgorithm = { name: 'ECDSA', hash: ecHash };
+  } else {
+    return null;
+  }
 
   let cryptoKey: CryptoKey;
   try {
-    const derBytes = toUint8Array(base64urlDecode(pemBody));
     cryptoKey = await crypto.subtle.importKey(
-      'spki',
-      derBytes,
-      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+      'jwk',
+      matchingKey as JsonWebKey,
+      algorithm,
       false,
       ['verify']
     );
   } catch {
-    // Try EC key fallback
-    try {
-      const derBytes = toUint8Array(base64urlDecode(pemBody));
-      cryptoKey = await crypto.subtle.importKey(
-        'spki',
-        derBytes,
-        { name: 'ECDSA', namedCurve: 'P-256' },
-        false,
-        ['verify']
-      );
-    } catch {
-      return null;
-    }
+    return null;
   }
 
   const signedData = new TextEncoder().encode(`${parts[0]}.${parts[1]}`) as Uint8Array<ArrayBuffer>;
@@ -116,18 +117,9 @@ async function verifyJWT(token: string, teamDomain: string, kv: KVNamespace): Pr
 
   let valid = false;
   try {
-    valid = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', cryptoKey, signature, signedData);
+    valid = await crypto.subtle.verify(verifyAlgorithm, cryptoKey, signature, signedData);
   } catch {
-    try {
-      valid = await crypto.subtle.verify(
-        { name: 'ECDSA', hash: 'SHA-256' },
-        cryptoKey,
-        signature,
-        signedData
-      );
-    } catch {
-      return null;
-    }
+    return null;
   }
 
   if (!valid) return null;

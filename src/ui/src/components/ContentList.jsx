@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../i18n/index.jsx';
 
 export default function ContentList({ category }) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,7 +11,7 @@ export default function ContentList({ category }) {
     if (!category) return;
     setLoading(true);
     setError(null);
-    fetch(`/${encodeURIComponent(category)}?limit=20`)
+    fetch(`/${encodeURIComponent(category)}?limit=20&lang=${lang}`)
       .then((r) => r.json())
       .then((data) => {
         setItems(Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []));
@@ -21,7 +21,7 @@ export default function ContentList({ category }) {
         setError(t('errors.loadFailed'));
         setLoading(false);
       });
-  }, [category]);
+  }, [category, lang]);
 
   if (loading) {
     return (

@@ -2,23 +2,48 @@ import { escapeHtml } from '../lib/escape-html';
 
 // ─── Category metadata ──────────────────────────────────────────────────────
 
-const CATEGORY_TITLES: Record<string, string> = {
-  ghid: 'Ghiduri de Protectie',
-  educatie: 'Educatie Digitala',
-  amenintari: 'Amenintari Cibernetice',
-  rapoarte: 'Rapoarte Saptamanale',
-  povesti: 'Povesti din Comunitate',
-  presa: 'Comunicate de Presa',
+const CATEGORY_TITLES: Record<string, Record<string, string>> = {
+  ghid: { ro: 'Ghiduri de Protectie', en: 'Protection Guides' },
+  educatie: { ro: 'Educatie Digitala', en: 'Digital Education' },
+  amenintari: { ro: 'Amenintari Cibernetice', en: 'Cyber Threats' },
+  rapoarte: { ro: 'Rapoarte Saptamanale', en: 'Weekly Reports' },
+  povesti: { ro: 'Povesti din Comunitate', en: 'Community Stories' },
+  presa: { ro: 'Comunicate de Presa', en: 'Press Releases' },
 };
 
-const CATEGORY_DESCRIPTIONS: Record<string, string> = {
-  ghid: 'Ghiduri practice de protectie impotriva fraudelor online si phishing-ului.',
-  educatie: 'Articole educative despre securitatea digitala si protectia online.',
-  amenintari: 'Rapoarte despre amenintarile cibernetice active in Romania.',
-  rapoarte: 'Rapoarte saptamanale despre securitatea digitala in Romania.',
-  povesti: 'Povesti reale din comunitatea ai-grija.ro despre fraude online.',
-  presa: 'Comunicate de presa oficiale de la ai-grija.ro.',
+const CATEGORY_DESCRIPTIONS: Record<string, Record<string, string>> = {
+  ghid: { ro: 'Ghiduri practice de protectie impotriva fraudelor online si phishing-ului.', en: 'Practical guides for protection against online fraud and phishing.' },
+  educatie: { ro: 'Articole educative despre securitatea digitala si protectia online.', en: 'Educational articles about digital security and online protection.' },
+  amenintari: { ro: 'Rapoarte despre amenintarile cibernetice active in Romania.', en: 'Reports about active cyber threats in Romania.' },
+  rapoarte: { ro: 'Rapoarte saptamanale despre securitatea digitala in Romania.', en: 'Weekly reports about digital security in Romania.' },
+  povesti: { ro: 'Povesti reale din comunitatea ai-grija.ro despre fraude online.', en: 'Real stories from the ai-grija.ro community about online fraud.' },
+  presa: { ro: 'Comunicate de presa oficiale de la ai-grija.ro.', en: 'Official press releases from ai-grija.ro.' },
 };
+
+const UI_STRINGS: Record<string, Record<string, string>> = {
+  'back-link': { ro: 'Inapoi la', en: 'Back to' },
+  'reading-time': { ro: 'min citire', en: 'min read' },
+  'share': { ro: 'Copiaza linkul', en: 'Copy link' },
+  'share-copied': { ro: 'Copiat!', en: 'Copied!' },
+  'no-articles': { ro: 'Nu exista articole in aceasta categorie momentan.', en: 'No articles in this category yet.' },
+  'no-title': { ro: 'Fara titlu', en: 'Untitled' },
+  'footer': { ro: 'Platforma de prevenire a fraudelor online', en: 'Online fraud prevention platform' },
+  'lang-disclaimer': { ro: '', en: 'This article was automatically translated. The Romanian version is the official version.' },
+  'prev-page': { ro: 'Pagina anterioara', en: 'Previous page' },
+  'next-page': { ro: 'Pagina urmatoare', en: 'Next page' },
+};
+
+function t(key: string, lang: string): string {
+  return UI_STRINGS[key]?.[lang] ?? UI_STRINGS[key]?.ro ?? key;
+}
+
+function getCategoryTitle(category: string, lang: string): string {
+  return CATEGORY_TITLES[category]?.[lang] ?? CATEGORY_TITLES[category]?.ro ?? category;
+}
+
+function getCategoryDesc(category: string, lang: string): string {
+  return CATEGORY_DESCRIPTIONS[category]?.[lang] ?? CATEGORY_DESCRIPTIONS[category]?.ro ?? '';
+}
 
 // ─── Portable Text renderer ─────────────────────────────────────────────────
 
@@ -86,7 +111,7 @@ function renderHeader(): string {
 </nav></div></header>`;
 }
 
-function renderFooter(category: string): string {
+function renderFooter(category: string, lang: string): string {
   return `<footer><div class="container">
 <div class="footer-links">
 <a href="/politica-confidentialitate">Politica de confidentialitate</a>
@@ -94,7 +119,7 @@ function renderFooter(category: string): string {
 <a href="/${escapeHtml(category)}/feed.xml">RSS Feed</a>
 <a href="/feed.xml">RSS Global</a>
 </div>
-<p>&copy; ${new Date().getFullYear()} ai-grija.ro — Platforma de prevenire a fraudelor online</p>
+<p>&copy; ${new Date().getFullYear()} ai-grija.ro — ${escapeHtml(t('footer', lang))}</p>
 </div></footer>`;
 }
 
@@ -145,11 +170,12 @@ function getImageUrl(post: BlogPost): string {
   return post.mainImage.asset?.url ?? '';
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, lang: string = 'ro'): string {
   if (!dateStr) return '';
   try {
     const d = new Date(dateStr);
-    return d.toLocaleDateString('ro-RO', { year: 'numeric', month: 'long', day: 'numeric' });
+    const locale = lang === 'en' ? 'en-US' : 'ro-RO';
+    return d.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' });
   } catch {
     return dateStr;
   }
@@ -164,8 +190,8 @@ export function renderBlogListPage(
   page: number,
   baseUrl: string,
 ): string {
-  const categoryTitle = CATEGORY_TITLES[category] ?? category;
-  const categoryDesc = CATEGORY_DESCRIPTIONS[category] ?? '';
+  const categoryTitle = getCategoryTitle(category, lang);
+  const categoryDesc = getCategoryDesc(category, lang);
   const escapedBase = escapeHtml(baseUrl);
   const escapedCategory = escapeHtml(category);
   const canonicalUrl = `${escapedBase}/${escapedCategory}${lang !== 'ro' ? `?lang=${escapeHtml(lang)}` : ''}${page > 1 ? `${lang !== 'ro' ? '&' : '?'}page=${page}` : ''}`;
@@ -194,17 +220,17 @@ export function renderBlogListPage(
     const slug = getSlug(p);
     const date = getDate(p);
     return `<article class="card">
-<h2><a href="/${escapedCategory}/${escapeHtml(slug)}${lang !== 'ro' ? `?lang=${escapeHtml(lang)}` : ''}">${escapeHtml(p.title ?? 'Fara titlu')}</a></h2>
+<h2><a href="/${escapedCategory}/${escapeHtml(slug)}${lang !== 'ro' ? `?lang=${escapeHtml(lang)}` : ''}">${escapeHtml(p.title ?? t('no-title', lang))}</a></h2>
 ${p.excerpt ? `<p class="excerpt">${escapeHtml(p.excerpt)}</p>` : ''}
 <div class="meta">
-${date ? `<span>${formatDate(date)}</span>` : ''}
+${date ? `<span>${formatDate(date, lang)}</span>` : ''}
 ${p.author?.name ? `<span>${escapeHtml(p.author.name)}</span>` : ''}
 </div>
 </article>`;
   }).join('\n');
 
-  const prevPage = page > 1 ? `<a href="/${escapedCategory}?lang=${escapeHtml(lang)}&page=${page - 1}">&larr; Pagina anterioara</a>` : '<span></span>';
-  const nextPage = safePosts.length >= 20 ? `<a href="/${escapedCategory}?lang=${escapeHtml(lang)}&page=${page + 1}">Pagina urmatoare &rarr;</a>` : '<span></span>';
+  const prevPage = page > 1 ? `<a href="/${escapedCategory}?lang=${escapeHtml(lang)}&page=${page - 1}">&larr; ${escapeHtml(t('prev-page', lang))}</a>` : '<span></span>';
+  const nextPage = safePosts.length >= 20 ? `<a href="/${escapedCategory}?lang=${escapeHtml(lang)}&page=${page + 1}">${escapeHtml(t('next-page', lang))} &rarr;</a>` : '<span></span>';
   const pagination = page > 1 || safePosts.length >= 20 ? `<div class="pagination">${prevPage}${nextPage}</div>` : '';
 
   return `<!DOCTYPE html>
@@ -232,11 +258,11 @@ ${renderHeader()}
 <p>${escapeHtml(categoryDesc)}</p>
 </div>
 <div class="posts">
-${postCards || '<p style="color:#737373">Nu exista articole in aceasta categorie momentan.</p>'}
+${postCards || `<p style="color:#737373">${escapeHtml(t('no-articles', lang))}</p>`}
 </div>
 ${pagination}
 </main>
-${renderFooter(category)}
+${renderFooter(category, lang)}
 </body>
 </html>`;
 }
@@ -253,11 +279,11 @@ export function renderBlogPostPage(
   const date = getDate(post);
   const imageUrl = getImageUrl(post);
   const readTime = estimateReadingTime(post.body);
-  const categoryTitle = CATEGORY_TITLES[category] ?? category;
+  const categoryTitle = getCategoryTitle(category, lang);
   const escapedBase = escapeHtml(baseUrl);
   const escapedCategory = escapeHtml(category);
   const canonicalUrl = `${escapedBase}/${escapedCategory}/${escapeHtml(slug)}`;
-  const title = post.title ?? 'Fara titlu';
+  const title = post.title ?? t('no-title', lang);
 
   const jsonLd = JSON.stringify({
     '@context': 'https://schema.org',
@@ -272,7 +298,8 @@ export function renderBlogPostPage(
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${baseUrl}/${category}/${slug}` },
   });
 
-  const langDisclaimer = lang !== 'ro' ? `<div class="lang-disclaimer">Acest articol a fost tradus automat. Versiunea in limba romana este versiunea oficiala.</div>` : '';
+  const disclaimerText = t('lang-disclaimer', lang);
+  const langDisclaimer = disclaimerText ? `<div class="lang-disclaimer">${escapeHtml(disclaimerText)}</div>` : '';
 
   return `<!DOCTYPE html>
 <html lang="${escapeHtml(lang)}">
@@ -302,8 +329,8 @@ ${renderHeader()}
 <h1>${escapeHtml(title)}</h1>
 <div class="article-meta">
 ${post.author?.name ? `<span>${escapeHtml(post.author.name)}</span>` : ''}
-${date ? `<span>${formatDate(date)}</span>` : ''}
-<span>${readTime} min citire</span>
+${date ? `<span>${formatDate(date, lang)}</span>` : ''}
+<span>${readTime} ${escapeHtml(t('reading-time', lang))}</span>
 </div>
 </div>
 ${imageUrl ? `<img class="article-hero" src="${escapeHtml(imageUrl)}" alt="${escapeHtml(title)}">` : ''}
@@ -313,11 +340,11 @@ ${renderPortableText(post.body)}
 </div>
 </article>
 <div class="share-section">
-<button class="share-btn" onclick="navigator.clipboard.writeText(window.location.href).then(()=>this.textContent='Copiat!')">Copiaza linkul</button>
+<button class="share-btn" data-copied="${escapeHtml(t('share-copied', lang))}" onclick="navigator.clipboard.writeText(window.location.href).then(()=>this.textContent=this.dataset.copied)">${escapeHtml(t('share', lang))}</button>
 </div>
-<a class="back-link" href="/${escapedCategory}${lang !== 'ro' ? `?lang=${escapeHtml(lang)}` : ''}">&larr; Inapoi la ${escapeHtml(categoryTitle)}</a>
+<a class="back-link" href="/${escapedCategory}${lang !== 'ro' ? `?lang=${escapeHtml(lang)}` : ''}">&larr; ${escapeHtml(t('back-link', lang))} ${escapeHtml(categoryTitle)}</a>
 </main>
-${renderFooter(category)}
+${renderFooter(category, lang)}
 </body>
 </html>`;
 }

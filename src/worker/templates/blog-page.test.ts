@@ -105,15 +105,35 @@ describe('renderBlogListPage', () => {
     expect(educatieHtml).toContain('/educatie/feed.xml');
   });
 
-  it('handles non-Romanian language', () => {
+  it('handles non-Romanian language with English title', () => {
     const enHtml = renderBlogListPage(mockPosts, 'ghid', 'en', 1, BASE_URL);
     expect(enHtml).toContain('<html lang="en">');
     expect(enHtml).toContain('?lang=en');
+    expect(enHtml).toContain('<title>Protection Guides — ai-grija.ro</title>');
+    expect(enHtml).toContain('Practical guides for protection against online fraud and phishing.');
   });
 
-  it('handles empty posts array', () => {
+  it('shows English empty state for lang=en', () => {
+    const enHtml = renderBlogListPage([], 'ghid', 'en', 1, BASE_URL);
+    expect(enHtml).toContain('No articles in this category yet.');
+    expect(enHtml).not.toContain('Nu exista articole');
+  });
+
+  it('handles empty posts array in Romanian', () => {
     const emptyHtml = renderBlogListPage([], 'ghid', 'ro', 1, BASE_URL);
     expect(emptyHtml).toContain('Nu exista articole');
+  });
+
+  it('falls back to Romanian for unsupported languages', () => {
+    const frHtml = renderBlogListPage(mockPosts, 'ghid', 'fr', 1, BASE_URL);
+    expect(frHtml).toContain('<html lang="fr">');
+    expect(frHtml).toContain('Ghiduri de Protectie');
+  });
+
+  it('shows English footer for lang=en', () => {
+    const enHtml = renderBlogListPage([], 'ghid', 'en', 1, BASE_URL);
+    expect(enHtml).toContain('Online fraud prevention platform');
+    expect(enHtml).not.toContain('Platforma de prevenire');
   });
 });
 
@@ -162,7 +182,7 @@ describe('renderBlogPostPage', () => {
     expect(html).toContain('iunie');
   });
 
-  it('displays reading time', () => {
+  it('displays reading time in Romanian', () => {
     expect(html).toContain('min citire');
   });
 
@@ -184,19 +204,19 @@ describe('renderBlogPostPage', () => {
     expect(html).toContain('Parola puternica');
   });
 
-  it('contains share button', () => {
+  it('contains share button in Romanian', () => {
     expect(html).toContain('Copiaza linkul');
   });
 
-  it('contains back link to category', () => {
+  it('contains back link to category in Romanian', () => {
     expect(html).toContain('Inapoi la Ghiduri de Protectie');
     expect(html).toContain('href="/ghid"');
   });
 
   it('shows language disclaimer for non-Romanian', () => {
     const enHtml = renderBlogPostPage(post, 'ghid', 'en', BASE_URL);
-    expect(enHtml).toContain('versiunea oficiala');
-    expect(html).not.toContain('versiunea oficiala');
+    expect(enHtml).toContain('automatically translated');
+    expect(html).not.toContain('automatically translated');
   });
 
   it('handles post without image', () => {
@@ -204,5 +224,34 @@ describe('renderBlogPostPage', () => {
     const noImgHtml = renderBlogPostPage(noImgPost, 'ghid', 'ro', BASE_URL);
     expect(noImgHtml).not.toContain('<img class="article-hero"');
     expect(noImgHtml).not.toContain('og:image');
+  });
+
+  it('renders English UI strings for lang=en', () => {
+    const enHtml = renderBlogPostPage(post, 'ghid', 'en', BASE_URL);
+    expect(enHtml).toContain('<html lang="en">');
+    expect(enHtml).toContain('min read');
+    expect(enHtml).toContain('Copy link');
+    expect(enHtml).toContain('Back to Protection Guides');
+    expect(enHtml).not.toContain('min citire');
+    expect(enHtml).not.toContain('Copiaza linkul');
+    expect(enHtml).not.toContain('Inapoi la');
+  });
+
+  it('renders English breadcrumb category title for lang=en', () => {
+    const enHtml = renderBlogPostPage(post, 'ghid', 'en', BASE_URL);
+    expect(enHtml).toContain('Protection Guides');
+  });
+
+  it('renders English footer for lang=en', () => {
+    const enHtml = renderBlogPostPage(post, 'ghid', 'en', BASE_URL);
+    expect(enHtml).toContain('Online fraud prevention platform');
+  });
+
+  it('falls back to Romanian for unsupported language', () => {
+    const frHtml = renderBlogPostPage(post, 'ghid', 'fr', BASE_URL);
+    expect(frHtml).toContain('<html lang="fr">');
+    expect(frHtml).toContain('Ghiduri de Protectie');
+    expect(frHtml).toContain('min citire');
+    expect(frHtml).toContain('Copiaza linkul');
   });
 });

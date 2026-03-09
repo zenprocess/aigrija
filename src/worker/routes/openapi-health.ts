@@ -2,6 +2,7 @@ import { OpenAPIRoute } from 'chanfana';
 import { z } from 'zod';
 import type { Context } from 'hono';
 import type { Env } from '../lib/types';
+import type { AppVariables } from '../lib/request-id';
 
 type ComponentStatus = { status: 'healthy' | 'degraded' | 'unhealthy'; latency_ms?: number; error?: string };
 
@@ -198,12 +199,12 @@ const PROBES: Probe[] = [
   },
 ];
 
-async function probeEndpoint(baseUrl: string, probe: Probe): Promise<{ path: string; status: 'healthy' | 'unhealthy'; latency_ms: number; error?: string }> {
+async function probeEndpoint(baseUrl: string, probe: Probe, fetchFn: typeof fetch = fetch): Promise<{ path: string; status: 'healthy' | 'unhealthy'; latency_ms: number; error?: string }> {
   const start = Date.now();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
   try {
-    const res = await fetch(`${baseUrl}${probe.path}`, { signal: controller.signal });
+    const res = await fetchFn(`${baseUrl}${probe.path}`, { signal: controller.signal });
     const latency_ms = Date.now() - start;
     if (!res.ok) {
       return { path: probe.path, status: 'unhealthy', latency_ms, error: `HTTP ${res.status}` };
@@ -239,12 +240,18 @@ export class DeepHealthEndpoint extends OpenAPIRoute {
     },
   };
 
-  async handle(c: Context<{ Bindings: Env }>) {
+  async handle(c: Context<{ Bindings: Env; Variables: AppVariables }>) {
     const overallStart = Date.now();
     const baseUrl = c.env.BASE_URL || new URL(c.req.url).origin;
 
+    // Use internal routing via appFetch to avoid CF 522 on self-referential requests
+    const appFetch = c.get('appFetch');
+    const fetchFn: typeof fetch = appFetch
+      ? (input, init?) => appFetch(new Request(input.toString(), init))
+      : fetch;
+
     const results = await Promise.allSettled(
-      PROBES.map((probe) => probeEndpoint(baseUrl, probe))
+      PROBES.map((probe) => probeEndpoint(baseUrl, probe, fetchFn))
     );
 
     const endpoints: Record<string, { status: 'healthy' | 'unhealthy'; latency_ms: number; error?: string }> = {};

@@ -58,6 +58,12 @@ const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 // Request ID on all routes
 app.use('*', requestId);
 
+// Expose app.fetch via context so deep health can route internally (avoids CF 522 on self-fetch)
+app.use('*', async (c, next) => {
+  c.set('appFetch', async (req: Request) => app.fetch(req, c.env as any, c.executionCtx));
+  await next();
+});
+
 // Structured logging middleware — log request start and end with duration
 app.use('*', async (c, next) => {
   const rid = c.get('requestId');

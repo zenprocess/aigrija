@@ -22,10 +22,10 @@ describe('adminLayout', () => {
   it('renders all nav items', () => {
     const html = adminLayout('Test', '');
     expect(html).toContain('/admin');
-    expect(html).toContain('/admin/campanii');
-    expect(html).toContain('/admin/drafturi');
-    expect(html).toContain('/admin/ponderi');
-    expect(html).toContain('/admin/traduceri');
+    expect(html).toContain('/admin/campaigns');
+    expect(html).toContain('/admin/drafts');
+    expect(html).toContain('/admin/weights');
+    expect(html).toContain('/admin/translations');
     expect(html).toContain('/admin/config');
   });
 

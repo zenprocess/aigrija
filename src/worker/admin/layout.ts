@@ -1,13 +1,13 @@
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard', icon: '🏠', key: 'dashboard' },
-  { href: '/admin/campanii', label: 'Campaigns', icon: '📋', key: 'campanii' },
-  { href: '/admin/drafturi', label: 'Drafts', icon: '✏️', key: 'drafturi' },
-  { href: '/admin/scrapere', label: 'Scrapers', icon: '🔍', key: 'scrapere' },
-  { href: '/admin/ponderi', label: 'Weights', icon: '⚖️', key: 'ponderi' },
-  { href: '/admin/traduceri', label: 'Translations', icon: '🌐', key: 'traduceri' },
+  { href: '/admin/campaigns', label: 'Campaigns', icon: '📋', key: 'campaigns' },
+  { href: '/admin/drafts', label: 'Drafts', icon: '✏️', key: 'drafts' },
+  { href: '/admin/scrapers', label: 'Scrapers', icon: '🔍', key: 'scrapers' },
+  { href: '/admin/weights', label: 'Weights', icon: '⚖️', key: 'weights' },
+  { href: '/admin/translations', label: 'Translations', icon: '🌐', key: 'translations' },
   { href: '/admin/config', label: 'Config', icon: '⚙️', key: 'config' },
-  { href: '/admin/rapoarte-traduceri', label: 'Translation Reports', icon: '🗒️', key: 'rapoarte-traduceri' },
-  { href: '/admin/generare-continut', label: 'AI Generation', icon: '🤖', key: 'generare-continut' },
+  { href: '/admin/translation-reports', label: 'Translation Reports', icon: '🗒️', key: 'translation-reports' },
+  { href: '/admin/ai-generation', label: 'AI Generation', icon: '🤖', key: 'ai-generation' },
   { href: '/studio', label: 'Studio', icon: '🎨', key: 'studio', external: true },
 ] as const;
 

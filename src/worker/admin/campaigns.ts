@@ -211,7 +211,7 @@ campaignRoutes.get('/', async (c) => {
     ).bind(...params, limit, offset).all<DbCampaign>();
   } catch (err) {
     structuredLog('error', 'admin_campaigns_html_list_failed', { stage: 'admin', error: String(err) });
-    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'campanii', email), 500);
+    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'campaigns', email), 500);
   }
   const total = countRow?.total ?? 0;
   const pages = Math.ceil(total / limit);
@@ -223,36 +223,36 @@ campaignRoutes.get('/', async (c) => {
 
   const rowsHtml = rows.results.map(r => `
     <tr class="border-b hover:bg-gray-50">
-      <td class="py-2 px-3"><a href="/campanii/${r.id}" class="text-blue-600 hover:underline text-sm">${escapeHtml(r.title)}</a></td>
+      <td class="py-2 px-3"><a href="/campaigns/${r.id}" class="text-blue-600 hover:underline text-sm">${escapeHtml(r.title)}</a></td>
       <td class="py-2 px-3 text-xs text-gray-500">${r.source ?? ''}</td>
       <td class="py-2 px-3">${severityBadge(r.severity)}</td>
       <td class="py-2 px-3">${statusPill(r.draft_status)}</td>
       <td class="py-2 px-3 text-xs text-gray-400">${(r.published_at ?? r.created_at ?? '').slice(0, 10)}</td>
       <td class="py-2 px-3 flex gap-2">
-        <a href="/campanii/${r.id}" class="text-xs text-blue-500 hover:underline">Edit</a>
-        <button hx-delete="/campanii/api/${r.id}" hx-target="closest tr" hx-swap="outerHTML" class="text-xs text-red-500 hover:underline">Archive</button>
+        <a href="/campaigns/${r.id}" class="text-xs text-blue-500 hover:underline">Edit</a>
+        <button hx-delete="/campaigns/api/${r.id}" hx-target="closest tr" hx-swap="outerHTML" class="text-xs text-red-500 hover:underline">Archive</button>
       </td>
     </tr>`).join('');
 
   const paginationHtml = Array.from({ length: pages }, (_, i) => i + 1).map(p => `
-    <a href="/campanii${qs({ page: String(p) })}" class="px-3 py-1 rounded border text-sm ${p === page ? 'bg-gray-900 text-white' : 'hover:bg-gray-100'}">${p}</a>
+    <a href="/campaigns${qs({ page: String(p) })}" class="px-3 py-1 rounded border text-sm ${p === page ? 'bg-gray-900 text-white' : 'hover:bg-gray-100'}">${p}</a>
   `).join('');
 
   const body = `
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-xl font-bold">Campaigns (${total})</h1>
-      <a href="/campanii/new" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">+ New Campaign</a>
+      <a href="/campaigns/new" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">+ New Campaign</a>
     </div>
     <div class="flex gap-2 mb-4 flex-wrap">
       <input type="text" name="q" value="${escapeHtml(q)}" placeholder="Search..."
         class="border rounded px-3 py-1.5 text-sm w-64"
-        hx-get="/campanii${qs({})}" hx-target="#campaign-table-wrapper"
+        hx-get="/campaigns${qs({})}" hx-target="#campaign-table-wrapper"
         hx-trigger="keyup changed delay:300ms" hx-push-url="true"/>
-      <select name="severity" class="border rounded px-2 py-1.5 text-sm" hx-get="/campanii" hx-target="#campaign-table-wrapper" hx-push-url="true">
+      <select name="severity" class="border rounded px-2 py-1.5 text-sm" hx-get="/campaigns" hx-target="#campaign-table-wrapper" hx-push-url="true">
         <option value="">All Severities</option>
         ${['critical','high','medium','low'].map(s => `<option value="${s}" ${severity === s ? 'selected' : ''}>${s}</option>`).join('')}
       </select>
-      <select name="status" class="border rounded px-2 py-1.5 text-sm" hx-get="/campanii" hx-target="#campaign-table-wrapper" hx-push-url="true">
+      <select name="status" class="border rounded px-2 py-1.5 text-sm" hx-get="/campaigns" hx-target="#campaign-table-wrapper" hx-push-url="true">
         <option value="">All Statuses</option>
         ${['pending','draft','published'].map(s => `<option value="${s}" ${status === s ? 'selected' : ''}>${s}</option>`).join('')}
       </select>
@@ -274,16 +274,16 @@ campaignRoutes.get('/', async (c) => {
       <div class="flex gap-2 mt-4">${paginationHtml}</div>
     </div>`;
 
-  return c.html(adminLayout('Campaigns', body, 'campanii', email));
+  return c.html(adminLayout('Campaigns', body, 'campaigns', email));
 });
 
 campaignRoutes.get('/new', async (c) => {
   const email = c.get('adminEmail');
   const body = `
-    <div class="mb-4"><a href="/campanii" class="text-blue-500 text-sm hover:underline">&larr; Back</a></div>
+    <div class="mb-4"><a href="/campaigns" class="text-blue-500 text-sm hover:underline">&larr; Back</a></div>
     <h1 class="text-xl font-bold mb-4">New Campaign</h1>
     <div class="bg-white rounded shadow p-6 max-w-lg">
-      <form hx-post="/campanii/api/create" hx-ext="json-enc" hx-swap="none" class="space-y-4 text-sm">
+      <form hx-post="/campaigns/api/create" hx-ext="json-enc" hx-swap="none" class="space-y-4 text-sm">
         <div>
           <label class="block text-gray-500 mb-1">Title *</label>
           <input type="text" name="title" required class="border rounded px-3 py-2 w-full"/>
@@ -309,20 +309,20 @@ campaignRoutes.get('/new', async (c) => {
         <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 w-full">Create</button>
       </form>
     </div>`;
-  return c.html(adminLayout('New Campaign', body, 'campanii', email));
+  return c.html(adminLayout('New Campaign', body, 'campaigns', email));
 });
 
 campaignRoutes.get('/:id', async (c) => {
-  if (c.req.param('id') === 'new') return c.redirect('/campanii/new');
+  if (c.req.param('id') === 'new') return c.redirect('/campaigns/new');
   const email = c.get('adminEmail');
   let row: DbCampaign | null = null;
   try {
     row = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(c.req.param('id')).first<DbCampaign>();
   } catch (err) {
     structuredLog('error', 'admin_campaigns_detail_failed', { stage: 'admin', error: String(err) });
-    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'campanii', email), 500);
+    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'campaigns', email), 500);
   }
-  if (!row) return c.html(adminLayout('Not Found', '<p>Campaign not found.</p>', 'campanii', email), 404);
+  if (!row) return c.html(adminLayout('Not Found', '<p>Campaign not found.</p>', 'campaigns', email), 404);
 
   let brands: string[] = [];
   let iocs: string[] = [];
@@ -330,7 +330,7 @@ campaignRoutes.get('/:id', async (c) => {
   try { iocs = row.iocs ? JSON.parse(row.iocs) : []; } catch { iocs = []; }
 
   const body = `
-    <div class="mb-4"><a href="/campanii" class="text-blue-500 text-sm hover:underline">&larr; Back</a></div>
+    <div class="mb-4"><a href="/campaigns" class="text-blue-500 text-sm hover:underline">&larr; Back</a></div>
     <h1 class="text-xl font-bold mb-4">${escapeHtml(row.title)}</h1>
     <div class="grid grid-cols-2 gap-6">
       <div class="bg-white rounded shadow p-4">
@@ -346,7 +346,7 @@ campaignRoutes.get('/:id', async (c) => {
       </div>
       <div class="bg-white rounded shadow p-4">
         <h2 class="font-semibold mb-3">Edit</h2>
-        <form hx-put="/campanii/api/${row.id}" hx-ext="json-enc" hx-swap="none" class="space-y-3 text-sm">
+        <form hx-put="/campaigns/api/${row.id}" hx-ext="json-enc" hx-swap="none" class="space-y-3 text-sm">
           <div>
             <label class="block text-gray-500 mb-1">Severity</label>
             <select name="severity" class="border rounded px-2 py-1.5 w-full">
@@ -380,7 +380,7 @@ campaignRoutes.get('/:id', async (c) => {
       <p class="text-sm text-gray-700 leading-relaxed">${escapeHtml(row.body_text.slice(0, 2000))}${row.body_text.length > 2000 ? '...' : ''}</p>
     </div>` : ''}`;
 
-  return c.html(adminLayout(row.title, body, 'campanii', email));
+  return c.html(adminLayout(row.title, body, 'campaigns', email));
 });
 
 // ---- Scraper routes --------------------------------------------------------
@@ -396,7 +396,7 @@ scraperRoutes.get('/', async (c) => {
     ).all<{ id: string; source: string; items_found: number; items_new: number; error: string | null; ran_at: string }>();
   } catch (err) {
     structuredLog('error', 'admin_scrapers_list_failed', { stage: 'admin', error: String(err) });
-    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'scrapere', email), 500);
+    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'scrapers', email), 500);
   }
 
   const tableRows = rows.results.map(r => `
@@ -410,7 +410,7 @@ scraperRoutes.get('/', async (c) => {
 
   const body = `
     <h1 class="text-xl font-bold mb-4">Scraper Runs</h1>
-    <form method="post" action="/scrapere/run">
+    <form method="post" action="/scrapers/run">
       <button type="submit" class="mb-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">Run DNSC Now</button>
     </form>
     <table class="w-full bg-white rounded shadow text-sm">
@@ -426,7 +426,7 @@ scraperRoutes.get('/', async (c) => {
       <tbody>${tableRows || '<tr><td colspan="5" class="py-8 text-center text-gray-400">No runs</td></tr>'}</tbody>
     </table>`;
 
-  return c.html(adminLayout('Scrapers', body, 'scrapere', email));
+  return c.html(adminLayout('Scrapers', body, 'scrapers', email));
 });
 
 scraperRoutes.post('/run', async (c) => {

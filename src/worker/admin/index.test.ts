@@ -69,31 +69,47 @@ describe('admin/index', () => {
     expect(html).toContain('test@admin.ro');
   });
 
-  it('GET /campanii renders campaigns page', async () => {
+  it('GET /campaigns renders campaigns page', async () => {
     const { admin } = await import('./index');
-    const req = new Request('http://localhost/campanii');
+    const req = new Request('http://localhost/campaigns');
     const res = await admin.fetch(req, makeEnv(), makeCtx());
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('Campanii');
   });
 
-  it('GET /drafturi renders drafts page', async () => {
+  it('GET /drafts renders drafts page', async () => {
     const { admin } = await import('./index');
-    const req = new Request('http://localhost/drafturi');
+    const req = new Request('http://localhost/drafts');
     const res = await admin.fetch(req, makeEnv(), makeCtx());
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('Drafturi');
   });
 
-  it('GET /scrapere renders scraper page', async () => {
+  it('GET /scrapers renders scraper page', async () => {
     const { admin } = await import('./index');
-    const req = new Request('http://localhost/scrapere');
+    const req = new Request('http://localhost/scrapers');
     const res = await admin.fetch(req, makeEnv(), makeCtx());
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('Scraper');
+  });
+
+  it('GET /campanii redirects 301 to /campaigns', async () => {
+    const { admin } = await import('./index');
+    const req = new Request('http://localhost/campanii');
+    const res = await admin.fetch(req, makeEnv(), makeCtx());
+    expect(res.status).toBe(301);
+    expect(res.headers.get('location')).toBe('/campaigns');
+  });
+
+  it('GET /drafturi redirects 301 to /drafts', async () => {
+    const { admin } = await import('./index');
+    const req = new Request('http://localhost/drafturi');
+    const res = await admin.fetch(req, makeEnv(), makeCtx());
+    expect(res.status).toBe(301);
+    expect(res.headers.get('location')).toBe('/drafts');
   });
 
   it('GET / sets Content-Security-Policy header on HTML responses', async () => {

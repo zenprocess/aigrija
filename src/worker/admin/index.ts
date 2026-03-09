@@ -94,8 +94,8 @@ admin.get('/api/admin/drafts/ai-generated', async (c) => {
   }
 });
 
-// --- Generare Continut HTML page ---
-admin.get('/generare-continut', async (c) => {
+// --- AI Content Generation HTML page ---
+admin.get('/ai-generation', async (c) => {
   const email = c.get('adminEmail');
   let recentDrafts: { id: string; title: string; threat_type: string | null; draft_status: string; created_at: string }[] = [];
   try {
@@ -104,7 +104,7 @@ admin.get('/generare-continut', async (c) => {
     ).all<{ id: string; title: string; threat_type: string | null; draft_status: string; created_at: string }>();
     recentDrafts = rows.results;
   } catch (err) {
-    structuredLog('error', '[admin/generare-continut] DB error', { error: err instanceof Error ? err.message : String(err) });
+    structuredLog('error', '[admin/ai-generation] DB error', { error: err instanceof Error ? err.message : String(err) });
   }
 
   const categoryLabels: Record<string, string> = {
@@ -128,11 +128,11 @@ admin.get('/generare-continut', async (c) => {
   const draftsHtml = recentDrafts.length
     ? recentDrafts.map(d => `
       <tr class="border-b hover:bg-gray-50">
-        <td class="py-2 px-3 text-sm"><a href="/admin/campanii/${escapeHtml(d.id)}" class="text-blue-600 hover:underline">${escapeHtml(d.title)}</a></td>
+        <td class="py-2 px-3 text-sm"><a href="/admin/campaigns/${escapeHtml(d.id)}" class="text-blue-600 hover:underline">${escapeHtml(d.title)}</a></td>
         <td class="py-2 px-3 text-xs text-gray-500">${escapeHtml(categoryLabels[d.threat_type ?? ''] ?? (d.threat_type ?? '-'))}</td>
         <td class="py-2 px-3 text-xs text-gray-400">${escapeHtml((d.created_at ?? '').slice(0, 10))}</td>
         <td class="py-2 px-3">${statusBadge(escapeHtml(d.draft_status))}</td>
-        <td class="py-2 px-3"><a href="/admin/campanii/${escapeHtml(d.id)}" class="text-xs text-blue-500 hover:underline">View</a></td>
+        <td class="py-2 px-3"><a href="/admin/campaigns/${escapeHtml(d.id)}" class="text-xs text-blue-500 hover:underline">View</a></td>
       </tr>`).join('')
     : '<tr><td colspan="5" class="py-8 text-center text-gray-400 text-sm">No drafts generated yet.</td></tr>';
 
@@ -200,7 +200,7 @@ admin.get('/generare-continut', async (c) => {
         if (data.ok) {
           result.className = 'mt-4 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-800';
           const link = document.createElement('a');
-          link.href = '/admin/campanii/' + data.id;
+          link.href = '/admin/campaigns/' + data.id;
           link.className = 'underline font-medium';
           link.textContent = data.title;
           result.textContent = '';
@@ -222,39 +222,103 @@ admin.get('/generare-continut', async (c) => {
     });
     </script>`;
 
-  return c.html(adminLayout('AI Content Generation', content, 'generare-continut', email));
+  return c.html(adminLayout('AI Content Generation', content, 'ai-generation', email));
 });
 
 // --- Sanity Studio SPA ---
 admin.get('/studio', async (c) => {
-  const url = new URL(c.req.url);
-  url.pathname = '/studio/index.html';
-  return c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
+  try {
+    const url = new URL(c.req.url);
+    url.pathname = '/studio/index.html';
+    const response = await c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
+    if (response.status === 404) {
+      const email = c.get('adminEmail');
+      const content = `
+        <div class="bg-white rounded-xl border border-gray-200 p-6 text-center">
+          <div class="text-4xl mb-4">🎨</div>
+          <h2 class="text-gray-700 font-semibold text-lg mb-2">Studio Not Available</h2>
+          <p class="text-gray-500 text-sm">Sanity Studio has not been deployed yet. Please deploy the Studio assets to enable this feature.</p>
+        </div>`;
+      return c.html(adminLayout('Studio', content, 'studio', email));
+    }
+    return response;
+  } catch {
+    const email = c.get('adminEmail');
+    const content = `
+      <div class="bg-white rounded-xl border border-gray-200 p-6 text-center">
+        <div class="text-4xl mb-4">🎨</div>
+        <h2 class="text-gray-700 font-semibold text-lg mb-2">Studio Not Available</h2>
+        <p class="text-gray-500 text-sm">Sanity Studio has not been deployed yet. Please deploy the Studio assets to enable this feature.</p>
+      </div>`;
+    return c.html(adminLayout('Studio', content, 'studio', email));
+  }
 });
 admin.get('/studio/*', async (c) => {
-  const response = await c.env.ASSETS.fetch(c.req.raw);
-  if (response.status !== 404) {
-    return response;
+  try {
+    const response = await c.env.ASSETS.fetch(c.req.raw);
+    if (response.status !== 404) {
+      return response;
+    }
+    // SPA fallback — serve studio/index.html for client-side routing
+    const url = new URL(c.req.url);
+    url.pathname = '/studio/index.html';
+    const fallback = await c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
+    if (fallback.status === 404) {
+      const email = c.get('adminEmail');
+      const content = `
+        <div class="bg-white rounded-xl border border-gray-200 p-6 text-center">
+          <div class="text-4xl mb-4">🎨</div>
+          <h2 class="text-gray-700 font-semibold text-lg mb-2">Studio Not Available</h2>
+          <p class="text-gray-500 text-sm">Sanity Studio has not been deployed yet. Please deploy the Studio assets to enable this feature.</p>
+        </div>`;
+      return c.html(adminLayout('Studio', content, 'studio', email));
+    }
+    return fallback;
+  } catch {
+    const email = c.get('adminEmail');
+    const content = `
+      <div class="bg-white rounded-xl border border-gray-200 p-6 text-center">
+        <div class="text-4xl mb-4">🎨</div>
+        <h2 class="text-gray-700 font-semibold text-lg mb-2">Studio Not Available</h2>
+        <p class="text-gray-500 text-sm">Sanity Studio has not been deployed yet. Please deploy the Studio assets to enable this feature.</p>
+      </div>`;
+    return c.html(adminLayout('Studio', content, 'studio', email));
   }
-  // SPA fallback — serve studio/index.html for client-side routing
-  const url = new URL(c.req.url);
-  url.pathname = '/studio/index.html';
-  return c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
 });
 
 // Mount sub-routers — API routes must be mounted before HTML routes to avoid param conflicts
-admin.route('/campanii/api', campaignApiRoutes);
-admin.route('/campanii', campaignRoutes);
-admin.route('/drafturi', drafts);
-admin.route('/scrapere', scraperRoutes);
-admin.route('/ponderi', weightsAdmin);
-admin.route('/traduceri', translationsAdmin);
+admin.route('/campaigns/api', campaignApiRoutes);
+admin.route('/campaigns', campaignRoutes);
+admin.route('/drafts', drafts);
+admin.route('/scrapers', scraperRoutes);
+admin.route('/weights', weightsAdmin);
+admin.route('/translations', translationsAdmin);
 admin.route('/config', configAdmin);
-admin.route('/rapoarte-traduceri', translationReportsAdmin);
+admin.route('/translation-reports', translationReportsAdmin);
 admin.route('/analytics', analytics);
 admin.route('/activity', activity);
 admin.route("/gdpr", gdprAdmin);
 admin.route("/flags", flagsAdmin);
-admin.route('/abonati', newsletterAdmin);
+admin.route('/subscribers', newsletterAdmin);
+
+// Legacy redirects — 301 from old Romanian paths to new English paths
+const legacyRedirects: Record<string, string> = {
+  '/campanii': '/campaigns',
+  '/drafturi': '/drafts',
+  '/scrapere': '/scrapers',
+  '/ponderi': '/weights',
+  '/traduceri': '/translations',
+  '/rapoarte-traduceri': '/translation-reports',
+  '/generare-continut': '/ai-generation',
+  '/abonati': '/subscribers',
+};
+
+for (const [oldPath, newPath] of Object.entries(legacyRedirects)) {
+  admin.all(`${oldPath}`, (c) => c.redirect(newPath, 301));
+  admin.all(`${oldPath}/*`, (c) => {
+    const rest = c.req.path.slice(oldPath.length);
+    return c.redirect(`${newPath}${rest}`, 301);
+  });
+}
 
 export { admin };

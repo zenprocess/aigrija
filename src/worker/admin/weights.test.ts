@@ -73,14 +73,14 @@ describe('weightsAdmin', () => {
     expect(text).toContain('saved');
   });
 
-  it('POST /reset redirects to /admin/ponderi', async () => {
+  it('POST /reset redirects to /admin/weights', async () => {
     const { weightsAdmin } = await import('./weights');
     const app = makeApp();
     app.route('/', weightsAdmin);
     const req = new Request('http://localhost/reset', { method: 'POST' });
     const res = await app.fetch(req, makeEnv(), makeCtx());
     expect(res.status).toBe(302);
-    expect(res.headers.get('location')).toBe('/admin/ponderi');
+    expect(res.headers.get('location')).toBe('/admin/weights');
   });
 
   it('GET /test returns error for empty URL', async () => {

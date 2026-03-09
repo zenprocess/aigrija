@@ -69,7 +69,7 @@ function weightsPage(weights: RiskWeights, history: { weights: RiskWeights; save
     </tr>`).join('') || '<tr><td colspan="2" class="py-4 text-center text-gray-400 text-sm">No history</td></tr>';
 
   const content = `
-    <form id="weights-form" hx-post="/admin/ponderi/save" hx-target="#save-result" hx-swap="innerHTML">
+    <form id="weights-form" hx-post="/admin/weights/save" hx-target="#save-result" hx-swap="innerHTML">
       ${groups}
       <div class="flex gap-3 mb-6">
         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium">Save Weights</button>
@@ -83,11 +83,11 @@ function weightsPage(weights: RiskWeights, history: { weights: RiskWeights; save
       <div class="flex gap-2">
         <input id="test-url-input" type="url" placeholder="https://example.com"
                class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
-               hx-get="/admin/ponderi/test" hx-trigger="keyup changed delay:600ms"
+               hx-get="/admin/weights/test" hx-trigger="keyup changed delay:600ms"
                hx-include="#weights-form" hx-target="#test-result" hx-swap="innerHTML"
                name="url">
         <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm"
-                hx-get="/admin/ponderi/test" hx-include="#weights-form,#test-url-input"
+                hx-get="/admin/weights/test" hx-include="#weights-form,#test-url-input"
                 hx-target="#test-result" hx-swap="innerHTML">Test</button>
       </div>
       <div id="test-result" class="mt-3"></div>
@@ -118,7 +118,7 @@ function weightsPage(weights: RiskWeights, history: { weights: RiskWeights; save
     }
     </script>`;
 
-  return adminLayout('Classification Weights', content, 'ponderi', email);
+  return adminLayout('Classification Weights', content, 'weights', email);
 }
 
 export const weightsAdmin = new Hono<AdminEnv>();
@@ -148,7 +148,7 @@ weightsAdmin.post('/save', async (c) => {
 
 weightsAdmin.post('/reset', async (c) => {
   await saveWeights(c.env.CACHE, { ...DEFAULT_WEIGHTS });
-  return c.redirect('/admin/ponderi');
+  return c.redirect('/admin/weights');
 });
 
 weightsAdmin.get('/test', async (c) => {

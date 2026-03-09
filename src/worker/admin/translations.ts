@@ -90,7 +90,7 @@ function escHtml(s: string): string {
 function translationsPage(activeLang: Lang, keys: Record<string, string>, overrides: Set<string>, email: string, search = ''): string {
   const tabs = SUPPORTED_LANGS.map(l => {
     const active = l === activeLang;
-    return `<a href="/admin/traduceri?lang=${l}"
+    return `<a href="/admin/translations?lang=${l}"
        class="px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${active ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-gray-500 hover:text-gray-700'}">
        ${LANG_LABELS[l]}
     </a>`;
@@ -141,7 +141,7 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
                class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm">
         <button type="submit" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm">Search</button>
       </form>
-      <a href="/admin/traduceri/api/export?lang=${activeLang}"
+      <a href="/admin/translations/api/export?lang=${activeLang}"
          class="bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-4 py-2 rounded-lg text-sm flex items-center">Export JSON</a>
       <button onclick="showImport()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-lg text-sm">Import JSON</button>
       ${!isRoLang ? `<button onclick="autoTranslateAll('${activeLang}')" id="auto-translate-all-btn"
@@ -177,7 +177,7 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
     async function saveSingle(lang, key, btn) {
       const row = btn.closest('tr');
       const input = row.querySelector('.translation-input');
-      const res = await fetch('/admin/traduceri/api/key', {
+      const res = await fetch('/admin/translations/api/key', {
         method: 'PUT',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({lang, key, value: input.value})
@@ -186,7 +186,7 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
     }
     async function deleteOverride(lang, key, btn) {
       if (!confirm('Delete override? Will revert to static value.')) return;
-      await fetch('/admin/traduceri/api/key', {
+      await fetch('/admin/translations/api/key', {
         method: 'DELETE',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({lang, key})
@@ -197,7 +197,7 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
       const txt = document.getElementById('import-json').value;
       let data;
       try { data = JSON.parse(txt); } catch { document.getElementById('import-result').textContent = 'Invalid JSON.'; return; }
-      const res = await fetch('/admin/traduceri/api/import', {
+      const res = await fetch('/admin/translations/api/import', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({lang, data})
@@ -219,7 +219,7 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
       btn.textContent = '...';
       btn.disabled = true;
       try {
-        const res = await fetch('/admin/traduceri/api/auto-translate', {
+        const res = await fetch('/admin/translations/api/auto-translate', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({lang, key, sourceText})
@@ -245,7 +245,7 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
       progress.classList.remove('hidden');
       msg.textContent = 'Translating missing keys, please wait...';
       try {
-        const res = await fetch('/admin/traduceri/api/auto-translate-all', {
+        const res = await fetch('/admin/translations/api/auto-translate-all', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({lang})
@@ -266,7 +266,7 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
     }
     </script>`;
 
-  return adminLayout('Translations', content, 'traduceri', email);
+  return adminLayout('Translations', content, 'translations', email);
 }
 
 export const translationsAdmin = new Hono<AdminEnv>();

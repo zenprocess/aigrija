@@ -133,7 +133,7 @@ export class DeleteFlagEndpoint extends OpenAPIRoute {
   }
 }
 
-// ── 4. GET /admin/campanii/api/list — list campaigns ─────────────────────────
+// ── 4. GET /admin/campaigns/api/list — list campaigns ─────────────────────────
 
 const CampaignSummarySchema = z.object({
   id: z.string(),
@@ -187,7 +187,7 @@ export class ListCampaignsEndpoint extends OpenAPIRoute {
   }
 }
 
-// ── 5. GET /admin/campanii/api/:id — campaign detail ─────────────────────────
+// ── 5. GET /admin/campaigns/api/:id — campaign detail ─────────────────────────
 
 const CampaignDetailSchema = z.object({
   id: z.string(),
@@ -232,7 +232,7 @@ export class GetCampaignEndpoint extends OpenAPIRoute {
   }
 }
 
-// ── 6. PUT /admin/campanii/api/:id — update campaign ─────────────────────────
+// ── 6. PUT /admin/campaigns/api/:id — update campaign ─────────────────────────
 
 export class UpdateCampaignEndpoint extends OpenAPIRoute {
   schema = {
@@ -275,7 +275,7 @@ export class UpdateCampaignEndpoint extends OpenAPIRoute {
   }
 }
 
-// ── 7. DELETE /admin/campanii/api/:id — archive campaign ─────────────────────
+// ── 7. DELETE /admin/campaigns/api/:id — archive campaign ─────────────────────
 
 export class ArchiveCampaignEndpoint extends OpenAPIRoute {
   schema = {
@@ -302,7 +302,7 @@ export class ArchiveCampaignEndpoint extends OpenAPIRoute {
   }
 }
 
-// ── 8. POST /admin/drafturi/:id/publish — publish campaign to Sanity ─────────
+// ── 8. POST /admin/drafts/:id/publish — publish campaign to Sanity ─────────
 
 export class PublishCampaignEndpoint extends OpenAPIRoute {
   schema = {
@@ -447,7 +447,7 @@ export class DeleteSubscriberEndpoint extends OpenAPIRoute {
   }
 }
 
-// ── 12. POST /admin/ponderi/save — update weights ────────────────────────────
+// ── 12. POST /admin/weights/save — update weights ────────────────────────────
 
 export class UpdateWeightsEndpoint extends OpenAPIRoute {
   schema = {

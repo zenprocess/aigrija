@@ -45,7 +45,7 @@ translationReportsAdmin.get('/', async (c) => {
         <td class="px-4 py-3 text-xs text-gray-600 max-w-xs truncate" title="${esc(r.suggestedText)}">${esc(r.suggestedText)}</td>
         <td class="px-4 py-3 text-xs text-gray-700 max-w-sm">${esc(r.comment)}</td>
         <td class="px-4 py-3">
-          <form method="POST" action="/rapoarte-traduceri/${encodeURIComponent(r.id)}/resolve">
+          <form method="POST" action="/translation-reports/${encodeURIComponent(r.id)}/resolve">
             <button type="submit"
               class="text-xs bg-green-100 hover:bg-green-200 text-green-800 px-2 py-1 rounded transition-colors">
               Resolved
@@ -79,7 +79,7 @@ translationReportsAdmin.get('/', async (c) => {
       </div>`}
     </div>`;
 
-  return c.html(adminLayout('Translation Reports', content, 'rapoarte-traduceri', email));
+  return c.html(adminLayout('Translation Reports', content, 'translation-reports', email));
 });
 
 // Resolve (delete) a report
@@ -100,7 +100,7 @@ translationReportsAdmin.post('/:id/resolve', async (c) => {
     } catch { /* skip */ }
   }
 
-  return c.redirect('/rapoarte-traduceri');
+  return c.redirect('/translation-reports');
 });
 
 export { translationReportsAdmin };

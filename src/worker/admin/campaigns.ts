@@ -211,7 +211,7 @@ campaignRoutes.get('/', async (c) => {
     ).bind(...params, limit, offset).all<DbCampaign>();
   } catch (err) {
     structuredLog('error', 'admin_campaigns_html_list_failed', { stage: 'admin', error: String(err) });
-    return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>', 'campanii', email), 500);
+    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'campanii', email), 500);
   }
   const total = countRow?.total ?? 0;
   const pages = Math.ceil(total / limit);
@@ -240,20 +240,20 @@ campaignRoutes.get('/', async (c) => {
 
   const body = `
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-xl font-bold">Campanii (${total})</h1>
-      <a href="/campanii/new" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">+ Campanie noua</a>
+      <h1 class="text-xl font-bold">Campaigns (${total})</h1>
+      <a href="/campanii/new" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">+ New Campaign</a>
     </div>
     <div class="flex gap-2 mb-4 flex-wrap">
-      <input type="text" name="q" value="${escapeHtml(q)}" placeholder="Cauta..."
+      <input type="text" name="q" value="${escapeHtml(q)}" placeholder="Search..."
         class="border rounded px-3 py-1.5 text-sm w-64"
         hx-get="/campanii${qs({})}" hx-target="#campaign-table-wrapper"
         hx-trigger="keyup changed delay:300ms" hx-push-url="true"/>
       <select name="severity" class="border rounded px-2 py-1.5 text-sm" hx-get="/campanii" hx-target="#campaign-table-wrapper" hx-push-url="true">
-        <option value="">Toate severit.</option>
+        <option value="">All Severities</option>
         ${['critical','high','medium','low'].map(s => `<option value="${s}" ${severity === s ? 'selected' : ''}>${s}</option>`).join('')}
       </select>
       <select name="status" class="border rounded px-2 py-1.5 text-sm" hx-get="/campanii" hx-target="#campaign-table-wrapper" hx-push-url="true">
-        <option value="">Toate statusuri</option>
+        <option value="">All Statuses</option>
         ${['pending','draft','published'].map(s => `<option value="${s}" ${status === s ? 'selected' : ''}>${s}</option>`).join('')}
       </select>
     </div>
@@ -261,55 +261,55 @@ campaignRoutes.get('/', async (c) => {
       <table class="w-full bg-white rounded shadow text-sm">
         <thead class="bg-gray-100 text-left">
           <tr>
-            <th class="py-2 px-3">Titlu</th>
-            <th class="py-2 px-3">Sursa</th>
-            <th class="py-2 px-3">Severitate</th>
+            <th class="py-2 px-3">Title</th>
+            <th class="py-2 px-3">Source</th>
+            <th class="py-2 px-3">Severity</th>
             <th class="py-2 px-3">Status</th>
-            <th class="py-2 px-3">Data</th>
-            <th class="py-2 px-3">Actiuni</th>
+            <th class="py-2 px-3">Date</th>
+            <th class="py-2 px-3">Actions</th>
           </tr>
         </thead>
-        <tbody>${rowsHtml || '<tr><td colspan="6" class="py-8 text-center text-gray-400">Nicio campanie</td></tr>'}</tbody>
+        <tbody>${rowsHtml || '<tr><td colspan="6" class="py-8 text-center text-gray-400">No campaigns</td></tr>'}</tbody>
       </table>
       <div class="flex gap-2 mt-4">${paginationHtml}</div>
     </div>`;
 
-  return c.html(adminLayout('Campanii', body, 'campanii', email));
+  return c.html(adminLayout('Campaigns', body, 'campanii', email));
 });
 
 campaignRoutes.get('/new', async (c) => {
   const email = c.get('adminEmail');
   const body = `
-    <div class="mb-4"><a href="/campanii" class="text-blue-500 text-sm hover:underline">&larr; Inapoi</a></div>
-    <h1 class="text-xl font-bold mb-4">Campanie noua</h1>
+    <div class="mb-4"><a href="/campanii" class="text-blue-500 text-sm hover:underline">&larr; Back</a></div>
+    <h1 class="text-xl font-bold mb-4">New Campaign</h1>
     <div class="bg-white rounded shadow p-6 max-w-lg">
       <form hx-post="/campanii/api/create" hx-ext="json-enc" hx-swap="none" class="space-y-4 text-sm">
         <div>
-          <label class="block text-gray-500 mb-1">Titlu *</label>
+          <label class="block text-gray-500 mb-1">Title *</label>
           <input type="text" name="title" required class="border rounded px-3 py-2 w-full"/>
         </div>
         <div>
-          <label class="block text-gray-500 mb-1">Sursa</label>
+          <label class="block text-gray-500 mb-1">Source</label>
           <input type="text" name="source" value="manual" class="border rounded px-3 py-2 w-full"/>
         </div>
         <div>
-          <label class="block text-gray-500 mb-1">URL Sursa</label>
+          <label class="block text-gray-500 mb-1">Source URL</label>
           <input type="url" name="source_url" class="border rounded px-3 py-2 w-full"/>
         </div>
         <div>
-          <label class="block text-gray-500 mb-1">Severitate</label>
+          <label class="block text-gray-500 mb-1">Severity</label>
           <select name="severity" class="border rounded px-2 py-2 w-full">
             ${['critical','high','medium','low'].map(s => `<option value="${s}">${s}</option>`).join('')}
           </select>
         </div>
         <div>
-          <label class="block text-gray-500 mb-1">Tip amenintare</label>
+          <label class="block text-gray-500 mb-1">Threat Type</label>
           <input type="text" name="threat_type" class="border rounded px-3 py-2 w-full"/>
         </div>
-        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 w-full">Creeaza</button>
+        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 w-full">Create</button>
       </form>
     </div>`;
-  return c.html(adminLayout('Campanie noua', body, 'campanii', email));
+  return c.html(adminLayout('New Campaign', body, 'campanii', email));
 });
 
 campaignRoutes.get('/:id', async (c) => {
@@ -320,9 +320,9 @@ campaignRoutes.get('/:id', async (c) => {
     row = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(c.req.param('id')).first<DbCampaign>();
   } catch (err) {
     structuredLog('error', 'admin_campaigns_detail_failed', { stage: 'admin', error: String(err) });
-    return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>', 'campanii', email), 500);
+    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'campanii', email), 500);
   }
-  if (!row) return c.html(adminLayout('Not Found', '<p>Campanie negasita.</p>', 'campanii', email), 404);
+  if (!row) return c.html(adminLayout('Not Found', '<p>Campaign not found.</p>', 'campanii', email), 404);
 
   let brands: string[] = [];
   let iocs: string[] = [];
@@ -330,53 +330,53 @@ campaignRoutes.get('/:id', async (c) => {
   try { iocs = row.iocs ? JSON.parse(row.iocs) : []; } catch { iocs = []; }
 
   const body = `
-    <div class="mb-4"><a href="/campanii" class="text-blue-500 text-sm hover:underline">&larr; Inapoi</a></div>
+    <div class="mb-4"><a href="/campanii" class="text-blue-500 text-sm hover:underline">&larr; Back</a></div>
     <h1 class="text-xl font-bold mb-4">${escapeHtml(row.title)}</h1>
     <div class="grid grid-cols-2 gap-6">
       <div class="bg-white rounded shadow p-4">
-        <h2 class="font-semibold mb-3">Detalii</h2>
+        <h2 class="font-semibold mb-3">Details</h2>
         <dl class="text-sm space-y-2">
-          <dt class="text-gray-500">Sursa</dt><dd>${row.source ?? '-'}</dd>
-          <dt class="text-gray-500">URL Sursa</dt><dd>${row.source_url ? `<a href="${escapeHtml(row.source_url)}" target="_blank" class="text-blue-500 hover:underline text-xs break-all">${escapeHtml(row.source_url)}</a>` : '-'}</dd>
-          <dt class="text-gray-500">Publicat la</dt><dd>${row.published_at?.slice(0, 10) ?? '-'}</dd>
-          <dt class="text-gray-500">Tip amenintare</dt><dd>${row.threat_type ?? '-'}</dd>
-          <dt class="text-gray-500">Branduri afectate</dt><dd>${brands.join(', ') || '-'}</dd>
-          <dt class="text-gray-500">Status draft</dt><dd>${statusPill(row.draft_status)}</dd>
+          <dt class="text-gray-500">Source</dt><dd>${row.source ?? '-'}</dd>
+          <dt class="text-gray-500">Source URL</dt><dd>${row.source_url ? `<a href="${escapeHtml(row.source_url)}" target="_blank" class="text-blue-500 hover:underline text-xs break-all">${escapeHtml(row.source_url)}</a>` : '-'}</dd>
+          <dt class="text-gray-500">Published at</dt><dd>${row.published_at?.slice(0, 10) ?? '-'}</dd>
+          <dt class="text-gray-500">Threat Type</dt><dd>${row.threat_type ?? '-'}</dd>
+          <dt class="text-gray-500">Affected Brands</dt><dd>${brands.join(', ') || '-'}</dd>
+          <dt class="text-gray-500">Draft Status</dt><dd>${statusPill(row.draft_status)}</dd>
         </dl>
       </div>
       <div class="bg-white rounded shadow p-4">
-        <h2 class="font-semibold mb-3">Editeaza</h2>
+        <h2 class="font-semibold mb-3">Edit</h2>
         <form hx-put="/campanii/api/${row.id}" hx-ext="json-enc" hx-swap="none" class="space-y-3 text-sm">
           <div>
-            <label class="block text-gray-500 mb-1">Severitate</label>
+            <label class="block text-gray-500 mb-1">Severity</label>
             <select name="severity" class="border rounded px-2 py-1.5 w-full">
               ${['critical','high','medium','low'].map(s => `<option value="${s}" ${row!.severity === s ? 'selected' : ''}>${s}</option>`).join('')}
             </select>
           </div>
           <div>
-            <label class="block text-gray-500 mb-1">Tip amenintare</label>
+            <label class="block text-gray-500 mb-1">Threat Type</label>
             <input type="text" name="threat_type" value="${escapeHtml(row.threat_type ?? '')}" class="border rounded px-2 py-1.5 w-full"/>
           </div>
           <div>
-            <label class="block text-gray-500 mb-1">Status draft</label>
+            <label class="block text-gray-500 mb-1">Draft Status</label>
             <select name="draft_status" class="border rounded px-2 py-1.5 w-full">
               ${['pending','draft','published'].map(s => `<option value="${s}" ${row!.draft_status === s ? 'selected' : ''}>${s}</option>`).join('')}
             </select>
           </div>
-          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full">Salveaza</button>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full">Save</button>
         </form>
       </div>
     </div>
     ${iocs.length ? `
     <div class="bg-white rounded shadow p-4 mt-4">
-      <h2 class="font-semibold mb-3">IOC-uri detectate</h2>
+      <h2 class="font-semibold mb-3">Detected IOCs</h2>
       <ul class="text-xs space-y-1 font-mono">
         ${iocs.map(i => `<li class="break-all text-red-700">${escapeHtml(i)}</li>`).join('')}
       </ul>
     </div>` : ''}
     ${row.body_text ? `
     <div class="bg-white rounded shadow p-4 mt-4">
-      <h2 class="font-semibold mb-3">Continut extras</h2>
+      <h2 class="font-semibold mb-3">Extracted Content</h2>
       <p class="text-sm text-gray-700 leading-relaxed">${escapeHtml(row.body_text.slice(0, 2000))}${row.body_text.length > 2000 ? '...' : ''}</p>
     </div>` : ''}`;
 
@@ -396,7 +396,7 @@ scraperRoutes.get('/', async (c) => {
     ).all<{ id: string; source: string; items_found: number; items_new: number; errors: string | null; run_at: string }>();
   } catch (err) {
     structuredLog('error', 'admin_scrapers_list_failed', { stage: 'admin', error: String(err) });
-    return c.html(adminLayout('Eroare', '<p class="text-red-500">Eroare baza de date.</p>', 'scrapere', email), 500);
+    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'scrapere', email), 500);
   }
 
   const tableRows = rows.results.map(r => `
@@ -404,29 +404,29 @@ scraperRoutes.get('/', async (c) => {
       <td class="py-2 px-3">${r.source}</td>
       <td class="py-2 px-3">${r.items_found}</td>
       <td class="py-2 px-3">${r.items_new}</td>
-      <td class="py-2 px-3">${r.errors ? '<span class="text-red-500">Da</span>' : '<span class="text-green-500">Nu</span>'}</td>
+      <td class="py-2 px-3">${r.errors ? '<span class="text-red-500">Yes</span>' : '<span class="text-green-500">No</span>'}</td>
       <td class="py-2 px-3 text-gray-400 text-xs">${r.run_at.slice(0, 19)}</td>
     </tr>`).join('');
 
   const body = `
     <h1 class="text-xl font-bold mb-4">Scraper Runs</h1>
     <form method="post" action="/scrapere/run">
-      <button type="submit" class="mb-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">Ruleaza DNSC acum</button>
+      <button type="submit" class="mb-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">Run DNSC Now</button>
     </form>
     <table class="w-full bg-white rounded shadow text-sm">
       <thead class="bg-gray-100 text-left">
         <tr>
-          <th class="py-2 px-3">Sursa</th>
-          <th class="py-2 px-3">Gasite</th>
-          <th class="py-2 px-3">Noi</th>
-          <th class="py-2 px-3">Erori</th>
-          <th class="py-2 px-3">Data</th>
+          <th class="py-2 px-3">Source</th>
+          <th class="py-2 px-3">Found</th>
+          <th class="py-2 px-3">New</th>
+          <th class="py-2 px-3">Errors</th>
+          <th class="py-2 px-3">Date</th>
         </tr>
       </thead>
-      <tbody>${tableRows || '<tr><td colspan="5" class="py-8 text-center text-gray-400">Nicio rulare</td></tr>'}</tbody>
+      <tbody>${tableRows || '<tr><td colspan="5" class="py-8 text-center text-gray-400">No runs</td></tr>'}</tbody>
     </table>`;
 
-  return c.html(adminLayout('Scraper-e', body, 'scrapere', email));
+  return c.html(adminLayout('Scrapers', body, 'scrapere', email));
 });
 
 scraperRoutes.post('/run', async (c) => {

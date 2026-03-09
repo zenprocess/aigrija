@@ -2,7 +2,10 @@ import type { Context, Next } from 'hono';
 import { checkBudget } from './perf-budget';
 import { structuredLog } from './logger';
 
-export type AppVariables = { requestId: string };
+export type AppVariables = {
+  requestId: string;
+  appFetch?: (req: Request) => Promise<Response>;
+};
 
 export async function requestId(c: Context<{ Variables: AppVariables }>, next: Next) {
   const id = crypto.randomUUID();

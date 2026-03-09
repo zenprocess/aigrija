@@ -58,6 +58,12 @@ const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 // Request ID on all routes
 app.use('*', requestId);
 
+// Expose app.fetch via context so deep health can route internally (avoids CF 522 on self-fetch)
+app.use('*', async (c, next) => {
+  c.set('appFetch', async (req: Request) => app.fetch(req, c.env as any, c.executionCtx));
+  await next();
+});
+
 // Structured logging middleware — log request start and end with duration
 app.use('*', async (c, next) => {
   const rid = c.get('requestId');
@@ -235,13 +241,12 @@ const workerHandler = {
       host === 'pre-admin.ai-grija.ro' ||
       (host === 'localhost' && url.pathname.startsWith('/admin'));
     if (isAdminHost) {
-      if (host === 'localhost') {
-        // Strip /admin prefix for local dev routing
+      if (url.pathname.startsWith('/admin')) {
+        // Strip /admin prefix for all admin hosts (localhost, admin.ai-grija.ro, pre-admin.ai-grija.ro)
         const adminUrl = new URL(request.url);
         adminUrl.pathname = adminUrl.pathname.replace(/^\/admin/, '') || '/';
         return admin.fetch(new Request(adminUrl.toString(), request), env, ctx);
       }
-      // admin.ai-grija.ro / pre-admin.ai-grija.ro — pass through as-is
       return admin.fetch(request, env, ctx);
     }
     return mainFetch(request, env, ctx);

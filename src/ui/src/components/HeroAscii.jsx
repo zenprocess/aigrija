@@ -216,12 +216,14 @@ export default function HeroAscii() {
 
   useEffect(function() {
     fetchCounter().then(function(data) {
-      if (data && data.count) setTargetCount(data.count);
+      if (data && typeof data.count === 'number') setTargetCount(data.count);
+    }).catch(function() {
+      setTargetCount(-1);
     });
   }, []);
 
   useEffect(function() {
-    if (targetCount === 0) return;
+    if (targetCount <= 0) return;
     var start = 0;
     var duration = 2000;
     var increment = targetCount / (duration / 16);
@@ -289,9 +291,11 @@ export default function HeroAscii() {
                 React.createElement('span', { className: 'relative inline-flex rounded-full h-2 w-2 bg-green-500' })
               ),
               React.createElement('span', { className: 'text-xs font-mono text-green-400/80' },
-                count > 0
-                  ? t('hero.counter_done', { count: count.toLocaleString(lang === 'ro' ? 'ro-RO' : undefined) })
-                  : t('hero.counter_loading')
+                targetCount < 0
+                  ? t('hero.counter_done', { count: '—' })
+                  : count > 0
+                    ? t('hero.counter_done', { count: count.toLocaleString(lang === 'ro' ? 'ro-RO' : undefined) })
+                    : t('hero.counter_loading')
               )
             )
           ),

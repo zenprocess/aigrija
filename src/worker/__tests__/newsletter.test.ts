@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import app from '../index';
+import { app } from '../index';
 
 function makeKV(store: Record<string, string> = {}): KVNamespace {
   const data = { ...store };

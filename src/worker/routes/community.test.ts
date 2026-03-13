@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { storeCommunityReport, type CommunityReport } from './community';
-import app from '../index';
+import { app } from '../index';
 
 
 /** Compute the KV key for the current fixed window. */

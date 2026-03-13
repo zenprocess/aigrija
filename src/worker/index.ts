@@ -20,8 +20,8 @@ const cdnApp = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 cdnApp.use('*', cdnProtection);
 cdnApp.all('*', (c) => mainFetch(c.req.raw, c.env, c.executionCtx));
 
-const workerHandler = {
-  fetch: async function(request: Request, env: Parameters<typeof app.fetch>[1], ctx: ExecutionContext) {
+const workerHandler: ExportedHandler<Env> = {
+  fetch: async function(request: Request, env, ctx) {
     const url = new URL(request.url);
     const host = url.hostname;
     const isCdnHost = host === 'cdn.ai-grija.ro' || host === 'pre-cdn.ai-grija.ro';
@@ -41,12 +41,13 @@ const workerHandler = {
     }
     return mainFetch(request, env, ctx);
   },
-  // Expose Hono test helper for unit tests
-  request: app.request.bind(app),
-  async scheduled(event: ScheduledEvent, env: Parameters<typeof app.fetch>[1], ctx: ExecutionContext) {
-    ctx.waitUntil(handleScheduled(event, env as Env));
+  async scheduled(event: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(handleScheduled(event as unknown as ScheduledEvent, env));
   },
 };
+
+// Expose Hono app for unit tests (tests use app.request() which isn't on ExportedHandler)
+export { app };
 
 export default Sentry.withSentry(
   (env: Env) => ({ dsn: env.SENTRY_DSN || '', tracesSampleRate: 1.0 }),

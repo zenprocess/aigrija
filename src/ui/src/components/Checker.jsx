@@ -291,7 +291,7 @@ export default function Checker() {
                 <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
                   <Eye className="w-5 h-5 text-purple-400" /> {t('checker.vision_title')}
                 </h2>
-                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{imageAnalysis}</p>
+                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">{imageAnalysis}</p>
               </div>
             )}
 
@@ -386,7 +386,7 @@ export default function Checker() {
                 </h3>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <p className="font-mono text-xl text-gray-200 mb-2">{result.url_analysis.domain}</p>
+                    <p className="font-mono text-xl text-gray-200 mb-2 break-all">{result.url_analysis.domain}</p>
                     <div className="flex flex-wrap gap-2">
                       {result.url_analysis.flags.map((flag, idx) => (
                         <span key={idx} className="px-2 py-1 text-xs rounded bg-[#0A0A0F] border border-white/10 text-gray-400">

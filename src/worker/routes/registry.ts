@@ -137,7 +137,7 @@ export function registerRoutes(app: AppType): void {
     if (pathExt) {
       const response = await c.env.ASSETS.fetch(c.req.raw);
       if (response.status !== 404 && !response.headers.get('content-type')?.includes('text/html')) {
-        return response;
+        return new Response(response.body, response);
       }
       // Static file not found — return 404 directly, no SPA fallback
       const rid = c.get('requestId') || 'unknown';
@@ -145,7 +145,7 @@ export function registerRoutes(app: AppType): void {
     }
     const response = await c.env.ASSETS.fetch(c.req.raw);
     if (response.status !== 404) {
-      return response;
+      return new Response(response.body, response);
     }
     const rid = c.get('requestId') || 'unknown';
     const accept = c.req.header('Accept') || '';

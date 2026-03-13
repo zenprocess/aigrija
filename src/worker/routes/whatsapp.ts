@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import type { Env, ClassificationResult } from '../lib/types';
 import { createClassifier } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
-import { createRateLimiter } from '../lib/rate-limiter';
+import { createRateLimiter, getRouteRateLimit, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { recordConsent, revokeConsent, updateLastActive } from '../lib/gdpr-consent';
 import { structuredLog } from '../lib/logger';
 import { timingSafeEqual } from '../lib/webhook-verify';
@@ -240,7 +240,8 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
         await recordConsent(c.env, 'wa', from);
         await updateLastActive(c.env, 'wa', from);
 
-        const rl = await createRateLimiter(c.env.CACHE)(`wa:${from}`, 50, 3600);
+        const waLimits = getRouteRateLimit('whatsapp', c.env) ?? ROUTE_RATE_LIMITS['whatsapp'];
+        const rl = await createRateLimiter(c.env.CACHE)(`wa:${from}`, waLimits.limit, waLimits.windowSeconds);
         if (!rl.allowed) {
           await sendWhatsAppMessage(
             accessToken,

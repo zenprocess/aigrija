@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/cloudflare';
 import { Hono } from 'hono';
 import type { Env } from './lib/types';
 import type { AppVariables } from './lib/request-id';
@@ -47,4 +48,7 @@ const workerHandler = {
   },
 };
 
-export default workerHandler;
+export default Sentry.withSentry(
+  (env: Env) => ({ dsn: env.SENTRY_DSN || '', tracesSampleRate: 1.0 }),
+  workerHandler,
+);

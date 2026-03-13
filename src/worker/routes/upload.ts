@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { Env, ClassificationResult } from '../lib/types';
 import type { AppVariables } from '../lib/request-id';
-import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, getRouteRateLimit, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { createClassifier } from '../lib/classifier';
 import { structuredLog } from '../lib/logger';
 import { ImageUploadSchema, formatZodError } from '../lib/schemas';
@@ -26,7 +26,8 @@ upload.post('/api/check/image', async (c) => {
     || c.req.header('x-real-ip')
     || 'unknown';
 
-  const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['check-image'].limit, ROUTE_RATE_LIMITS['check-image'].windowSeconds);
+  const imgLimits = getRouteRateLimit('check-image', c.env) ?? ROUTE_RATE_LIMITS['check-image'];
+  const rl = await createRateLimiter(c.env.CACHE)(ip, imgLimits.limit, imgLimits.windowSeconds);
   applyRateLimitHeaders((k, v) => c.header(k, v), rl);
   const { allowed, remaining, limit } = rl;
 

@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { structuredLog } from '../lib/logger';
 import { z } from 'zod';
 import type { Env } from '../lib/types';
-import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, getRouteRateLimit, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 
 const FeedQuerySchema = z.object({
   format: z.enum(['rss', 'atom', 'json'] as const).optional().default('json'),
@@ -31,7 +31,8 @@ export async function prependFeedEntry(cache: KVNamespace, entry: FeedEntry): Pr
 
 feed.get('/api/feed/latest', async (c) => {
   const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['feed'].limit, ROUTE_RATE_LIMITS['feed'].windowSeconds);
+  const feedLimits = getRouteRateLimit('feed', c.env) ?? ROUTE_RATE_LIMITS['feed'];
+  const rl = await createRateLimiter(c.env.CACHE)(ip, feedLimits.limit, feedLimits.windowSeconds);
   applyRateLimitHeaders((k, v) => c.header(k, v), rl);
   if (!rl.allowed) {
     return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.' } }, 429);

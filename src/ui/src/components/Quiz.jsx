@@ -417,6 +417,7 @@ export default function Quiz() {
   if (finished) {
     return (
       <section className="py-12 px-4 max-w-2xl mx-auto" data-testid="quiz-container">
+        <h1 className="sr-only">{t('quiz.title')}</h1>
         <ScoreSummary score={score} total={questions.length} onRetry={loadQuestions} />
       </section>
     );

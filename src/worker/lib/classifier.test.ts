@@ -1,9 +1,20 @@
-import { describe, it, expect } from 'vitest';
-import { ClassificationValidationError } from './classifier';
+import { describe, it, expect, vi } from 'vitest';
+import { ClassificationValidationError, createClassifier } from './classifier';
 
-// Import internals via re-export trick — we test the validation via the error path
-// since classify() requires a live AI binding. We test stripHtml + validation via
-// exported error class and indirect testing.
+function makeMockAi(response?: string): Ai {
+  const mockResponse = response ?? JSON.stringify({
+    verdict: 'legitimate',
+    confidence: 0.9,
+    scam_type: 'necunoscut',
+    impersonated_entity: null,
+    red_flags: [],
+    explanation: 'Mesajul pare legitim.',
+    recommended_actions: [],
+  });
+  return {
+    run: vi.fn().mockResolvedValue({ response: mockResponse }),
+  } as unknown as Ai;
+}
 
 describe('ClassificationValidationError', () => {
   it('is an instance of Error', () => {
@@ -14,58 +25,54 @@ describe('ClassificationValidationError', () => {
   });
 });
 
-// Test the validation logic via a thin wrapper that re-implements what classify() does
-// (avoids needing an AI binding in unit tests)
-function stripHtml(text: string): string {
-  let result = text;
-  let prev: string;
-  do {
-    prev = result;
-    result = result.replace(/<[^>]*>/g, '');
-  } while (result !== prev);
-  return result;
-}
-
-function validateAndSanitizeInput(text: string): string {
-  const stripped = stripHtml(text);
-  const trimmed = stripped.trim();
-  if (trimmed.length === 0) throw new ClassificationValidationError('Textul nu poate fi gol sau compus doar din spatii.');
-  if (trimmed.length < 3) throw new ClassificationValidationError('Textul este prea scurt pentru analiza (minim 3 caractere).');
-  if (text.length > 5000) throw new ClassificationValidationError('Textul depaseste limita de 5000 caractere.');
-  return trimmed;
-}
-
-describe('input validation', () => {
-  it('rejects empty string', () => {
-    expect(() => validateAndSanitizeInput('')).toThrow(ClassificationValidationError);
+describe('input validation via createClassifier', () => {
+  it('rejects empty string', async () => {
+    const classify = createClassifier(makeMockAi());
+    await expect(classify('')).rejects.toThrow(ClassificationValidationError);
   });
 
-  it('rejects whitespace-only string', () => {
-    expect(() => validateAndSanitizeInput('   ')).toThrow(ClassificationValidationError);
+  it('rejects whitespace-only string', async () => {
+    const classify = createClassifier(makeMockAi());
+    await expect(classify('   ')).rejects.toThrow(ClassificationValidationError);
   });
 
-  it('rejects text shorter than 3 chars after stripping', () => {
-    expect(() => validateAndSanitizeInput('ab')).toThrow(ClassificationValidationError);
+  it('rejects text shorter than 3 chars after stripping', async () => {
+    const classify = createClassifier(makeMockAi());
+    await expect(classify('ab')).rejects.toThrow(ClassificationValidationError);
   });
 
-  it('rejects text longer than 5000 chars', () => {
-    expect(() => validateAndSanitizeInput('a'.repeat(5001))).toThrow(ClassificationValidationError);
+  it('rejects text longer than 5000 chars', async () => {
+    const classify = createClassifier(makeMockAi());
+    await expect(classify('a'.repeat(5001))).rejects.toThrow(ClassificationValidationError);
   });
 
-  it('accepts valid text of exactly 3 chars', () => {
-    expect(validateAndSanitizeInput('abc')).toBe('abc');
+  it('accepts valid text of exactly 3 chars and returns classification result', async () => {
+    const classify = createClassifier(makeMockAi());
+    const result = await classify('abc');
+    expect(result.verdict).toBe('legitimate');
   });
 
-  it('strips HTML tags and trims', () => {
-    expect(validateAndSanitizeInput('  <b>hello world</b>  ')).toBe('hello world');
+  it('strips HTML tags before validation', async () => {
+    const classify = createClassifier(makeMockAi());
+    const result = await classify('<b>hello world</b>');
+    expect(result.verdict).toBe('legitimate');
   });
 
-  it('rejects text that is only HTML tags (empty after strip)', () => {
-    expect(() => validateAndSanitizeInput('<div><br/></div>')).toThrow(ClassificationValidationError);
+  it('rejects text that is only HTML tags (empty after strip)', async () => {
+    const classify = createClassifier(makeMockAi());
+    await expect(classify('<div><br/></div>')).rejects.toThrow(ClassificationValidationError);
   });
 
-  it('strips HTML but validates length after stripping', () => {
+  it('strips HTML but validates length after stripping', async () => {
+    const classify = createClassifier(makeMockAi());
     // tag-heavy text that leaves only 2 chars after strip
-    expect(() => validateAndSanitizeInput('<p>ab</p>')).toThrow(ClassificationValidationError);
+    await expect(classify('<p>ab</p>')).rejects.toThrow(ClassificationValidationError);
+  });
+
+  it('returns result with model_used and ai_disclaimer fields', async () => {
+    const classify = createClassifier(makeMockAi());
+    const result = await classify('Test message for analysis');
+    expect(result.model_used).toBeDefined();
+    expect(result.ai_disclaimer).toBeDefined();
   });
 });

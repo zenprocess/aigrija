@@ -127,6 +127,20 @@ function validateAndSanitizeInput(text: string): string {
   return trimmed;
 }
 
+/**
+ * Factory function that binds an AI binding to the classifier.
+ * Returns a function with the same signature as classify minus the first argument.
+ *
+ * @param ai  Cloudflare Workers AI binding.
+ */
+export function createClassifier(ai: Ai) {
+  return (
+    text: string,
+    url?: string,
+    flags?: ClassifierFlags,
+  ): Promise<ClassificationResult> => classify(ai, text, url, flags);
+}
+
 export async function classify(
   ai: Ai,
   text: string,

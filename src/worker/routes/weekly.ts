@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Env } from '../lib/types';
 import { generateWeeklyDigest, type WeeklyDigest } from '../lib/weekly-digest';
 import { structuredLog } from '../lib/logger';
-import { checkRateLimit } from '../lib/rate-limiter';
+import { createRateLimiter } from '../lib/rate-limiter';
 import { recordConsent, revokeConsent } from '../lib/gdpr-consent';
 import { idempotency } from '../middleware/idempotency';
 
@@ -296,7 +296,7 @@ weekly.post('/api/digest/subscribe', idempotency(), async (c) => {
   // Rate limit: 5 req/hr per IP
   const subIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (c.env.CACHE) {
-    const subRl = await checkRateLimit(c.env.CACHE, `digest-sub:${subIp}`, 5, 3600).catch(() => ({ allowed: true }));
+    const subRl = await createRateLimiter(c.env.CACHE)(`digest-sub:${subIp}`, 5, 3600).catch(() => ({ allowed: true }));
     if (!subRl.allowed) {
       return c.json({ ok: false, error: 'Prea multe cereri. Încearcă din nou mai târziu.' }, 429);
     }
@@ -342,7 +342,7 @@ weekly.post('/api/digest/unsubscribe', idempotency(), async (c) => {
   // Rate limit: 5 req/hr per IP
   const unsubIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (c.env.CACHE) {
-    const unsubRl = await checkRateLimit(c.env.CACHE, `digest-unsub:${unsubIp}`, 5, 3600).catch(() => ({ allowed: true }));
+    const unsubRl = await createRateLimiter(c.env.CACHE)(`digest-unsub:${unsubIp}`, 5, 3600).catch(() => ({ allowed: true }));
     if (!unsubRl.allowed) {
       return c.json({ ok: false, error: 'Prea multe cereri. Încearcă din nou mai târziu.' }, 429);
     }

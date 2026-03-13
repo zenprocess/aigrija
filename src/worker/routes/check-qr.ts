@@ -10,7 +10,7 @@ import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import type { AppVariables } from '../lib/request-id';
 import { analyzeUrl } from '../lib/url-analyzer';
-import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { getFlag } from '../lib/feature-flags';
 import { CheckQrRequestSchema, formatZodError } from '../lib/schemas';
 
@@ -34,7 +34,7 @@ checkQr.post('/api/check-qr', async (c) => {
     c.req.header('x-real-ip') ||
     'unknown';
 
-  const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['check-qr'].limit, ROUTE_RATE_LIMITS['check-qr'].windowSeconds);
+  const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['check-qr'].limit, ROUTE_RATE_LIMITS['check-qr'].windowSeconds);
   applyRateLimitHeaders((k, v) => c.header(k, v), rl);
   const { allowed, remaining, limit } = rl;
 

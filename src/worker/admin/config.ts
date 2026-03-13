@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import type { AdminVariables } from '../lib/admin-auth';
+import type { CspVariables } from '../lib/csp';
 import { adminLayout } from './layout';
 
-type AdminEnv = { Bindings: Env; Variables: AdminVariables };
+type AdminEnv = { Bindings: Env; Variables: AdminVariables & Partial<CspVariables> };
 
 const FEATURE_FLAGS = [
   { name: 'dnsc_scraper', label: 'DNSC Scraper' },
@@ -60,7 +61,7 @@ async function getCbState(kv: KVNamespace, name: string): Promise<string> {
   return 'closed';
 }
 
-async function configPage(kv: KVNamespace, email: string): Promise<string> {
+async function configPage(kv: KVNamespace, email: string, nonce = ''): Promise<string> {
   const [flagStatuses, rateLimits, cbStates] = await Promise.all([
     Promise.all(FEATURE_FLAGS.map(f => getFlagStatus(kv, f.name).then(s => ({ ...f, ...s })))),
     Promise.all(RATE_LIMIT_ENDPOINTS.map(e => getRateLimit(kv, e.name, e.default).then(v => ({ ...e, value: v })))),
@@ -79,8 +80,7 @@ async function configPage(kv: KVNamespace, email: string): Promise<string> {
       <td class="py-3 px-4 text-xs text-gray-400">${f.changedAt ? new Date(f.changedAt).toLocaleString('en-US') : '—'}</td>
       <td class="py-3 px-4">
         <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" ${checked} class="sr-only peer"
-                 onchange="toggleFlag('${f.name}', this.checked)">
+          <input type="checkbox" ${checked} data-flag="${f.name}" class="flag-toggle sr-only peer">
           <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
         </label>
       </td>
@@ -92,8 +92,7 @@ async function configPage(kv: KVNamespace, email: string): Promise<string> {
       <td class="py-3 px-4 text-sm text-gray-700">${r.label}</td>
       <td class="py-3 px-4">
         <input type="number" value="${r.value}" min="1" max="10000"
-               class="border border-gray-200 rounded px-2 py-1 text-sm w-24"
-               onchange="saveRateLimit('${r.name}', this.value)">
+               data-rl="${r.name}" class="rl-input border border-gray-200 rounded px-2 py-1 text-sm w-24">
         <span class="text-xs text-gray-400 ml-1">/ hour</span>
       </td>
       <td class="py-3 px-4 text-xs text-gray-400">default: ${r.default}</td>
@@ -110,14 +109,14 @@ async function configPage(kv: KVNamespace, email: string): Promise<string> {
         <span class="text-xs px-2 py-0.5 rounded-full ${cbStateClass(cb.state)}">${cb.state}</span>
       </td>
       <td class="py-3 px-4">
-        ${cb.state !== 'closed' ? `<button onclick="resetCb('${cb.name}')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded">Reset (close)</button>` : '<span class="text-xs text-gray-300">OK</span>'}
+        ${cb.state !== 'closed' ? `<button data-cb="${cb.name}" class="cb-reset-btn text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded">Reset (close)</button>` : '<span class="text-xs text-gray-300">OK</span>'}
       </td>
     </tr>`).join('');
 
   const cacheButtons = CACHE_PREFIXES.map(p => `
     <div class="flex items-center justify-between py-2 border-b border-gray-100">
       <span class="text-sm text-gray-700">${p.label} <span class="font-mono text-xs text-gray-400">${p.prefix}</span></span>
-      <button onclick="flushCache('${p.prefix}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-1 rounded">Flush</button>
+      <button data-cache="${p.prefix}" class="cache-flush-btn text-xs bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-1 rounded">Flush</button>
     </div>`).join('');
 
   const content = `
@@ -174,7 +173,7 @@ async function configPage(kv: KVNamespace, email: string): Promise<string> {
 
     </div>
 
-    <script>
+    <script nonce="${nonce}">
     function notify(msg, ok = true) {
       const el = document.getElementById('config-notify');
       el.textContent = msg;
@@ -219,16 +218,27 @@ async function configPage(kv: KVNamespace, email: string): Promise<string> {
       document.getElementById('cache-result').textContent = res.ok ? 'Deleted ' + (j.deleted ?? 0) + ' keys.' : 'Flush error.';
       notify(res.ok ? 'Cache flushed.' : 'Cache error.', res.ok);
     }
+    document.addEventListener('change', function(e) {
+      const el = e.target;
+      if (el.classList.contains('flag-toggle')) toggleFlag(el.dataset.flag, el.checked);
+      if (el.classList.contains('rl-input')) saveRateLimit(el.dataset.rl, el.value);
+    });
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.cb-reset-btn, .cache-flush-btn');
+      if (!btn) return;
+      if (btn.classList.contains('cb-reset-btn')) resetCb(btn.dataset.cb);
+      if (btn.classList.contains('cache-flush-btn')) flushCache(btn.dataset.cache);
+    });
     </script>`;
 
-  return adminLayout('System Configuration', content, 'config', email);
+  return adminLayout('System Configuration', content, 'config', email, nonce);
 }
 
 export const configAdmin = new Hono<AdminEnv>();
 
 configAdmin.get('/', async (c) => {
   const email = c.get('adminEmail');
-  return c.html(await configPage(c.env.CACHE, email));
+  return c.html(await configPage(c.env.CACHE, email, c.get('cspNonce') ?? ''));
 });
 
 configAdmin.post('/flag', async (c) => {

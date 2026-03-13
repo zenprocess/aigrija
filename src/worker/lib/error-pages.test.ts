@@ -55,7 +55,7 @@ describe('renderErrorPage', () => {
     const svgs = statuses.map((s) => {
       const html = renderErrorPage(s, 'msg', 'rid');
       // Extract the SVG from within the avatar div
-      const match = html.match(/<div class="av">(<svg[\s\S]*?<\/svg>)<\/div>/);
+      const match = html.match(/<div class="av"[^>]*>(<svg[\s\S]*?<\/svg>)<\/div>/);
       return match ? match[1] : '';
     });
     // All SVGs should be non-empty

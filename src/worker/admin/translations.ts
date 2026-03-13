@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import type { AdminVariables } from '../lib/admin-auth';
+import type { CspVariables } from '../lib/csp';
 import { adminLayout } from './layout';
 
-type AdminEnv = { Bindings: Env; Variables: AdminVariables };
+type AdminEnv = { Bindings: Env; Variables: AdminVariables & CspVariables };
 
 const SUPPORTED_LANGS = ['ro', 'bg', 'hu', 'uk', 'en'] as const;
 type Lang = typeof SUPPORTED_LANGS[number];
@@ -87,7 +88,7 @@ function escHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function translationsPage(activeLang: Lang, keys: Record<string, string>, overrides: Set<string>, email: string, search = ''): string {
+function translationsPage(activeLang: Lang, keys: Record<string, string>, overrides: Set<string>, email: string, search = '', nonce = ''): string {
   const tabs = SUPPORTED_LANGS.map(l => {
     const active = l === activeLang;
     return `<a href="/admin/traduceri?lang=${l}"
@@ -120,11 +121,11 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
               <input type="text" value="${escHtml(currentVal)}" data-key="${escHtml(key)}" data-lang="${activeLang}"
                      class="flex-1 border border-gray-200 rounded px-2 py-1 text-sm translation-input"
                      placeholder="Translation...">
-              <button onclick="saveSingle('${activeLang}','${escHtml(key)}',this)"
+              <button data-action="save" data-lang="${activeLang}" data-key="${escHtml(key)}"
                       class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs shrink-0">Save</button>
-              <button onclick="autoTranslateSingle('${activeLang}','${escHtml(key)}',this)"
+              <button data-action="ai-translate" data-lang="${activeLang}" data-key="${escHtml(key)}"
                       class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs shrink-0" title="AI Auto-translate">AI</button>
-              ${isOverride ? `<button onclick="deleteOverride('${activeLang}','${escHtml(key)}',this)"
+              ${isOverride ? `<button data-action="delete-override" data-lang="${activeLang}" data-key="${escHtml(key)}"
                       class="bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded text-xs shrink-0">X</button>` : ''}
             </div>`
         }
@@ -143,15 +144,15 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
       </form>
       <a href="/admin/traduceri/api/export?lang=${activeLang}"
          class="bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-4 py-2 rounded-lg text-sm flex items-center">Export JSON</a>
-      <button onclick="showImport()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-lg text-sm">Import JSON</button>
-      ${!isRoLang ? `<button onclick="autoTranslateAll('${activeLang}')" id="auto-translate-all-btn"
+      <button id="show-import-btn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-lg text-sm">Import JSON</button>
+      ${!isRoLang ? `<button id="auto-translate-all-btn" data-lang="${activeLang}"
          class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm">Auto-translate missing</button>` : ''}
     </div>
 
     <div id="import-panel" class="hidden bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4">
       <h3 class="text-sm font-medium text-gray-700 mb-2">Bulk JSON Import for ${LANG_LABELS[activeLang]}</h3>
       <textarea id="import-json" rows="6" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono mb-2" placeholder='{"key.path": "valoare", ...}'></textarea>
-      <button onclick="bulkImport('${activeLang}')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm">Import</button>
+      <button id="bulk-import-btn" data-lang="${activeLang}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm">Import</button>
       <div id="import-result" class="mt-2 text-sm"></div>
     </div>
 
@@ -173,7 +174,7 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
     <div id="save-notify" class="fixed bottom-4 right-4 hidden bg-green-600 text-white px-4 py-2 rounded-lg text-sm shadow-lg">Saved!</div>
     <div id="ai-notify" class="fixed bottom-4 right-4 hidden bg-purple-600 text-white px-4 py-2 rounded-lg text-sm shadow-lg">AI Translated!</div>
 
-    <script>
+    <script${nonce ? ` nonce="${nonce}"` : ''}>
     async function saveSingle(lang, key, btn) {
       const row = btn.closest('tr');
       const input = row.querySelector('.translation-input');
@@ -264,6 +265,31 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
         btn.textContent = 'Auto-translate missing';
       }
     }
+
+    // Wire up event listeners (no inline onclick handlers)
+    document.querySelector('tbody').addEventListener('click', function(e) {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const lang = btn.dataset.lang;
+      const key = btn.dataset.key;
+      if (action === 'save') saveSingle(lang, key, btn);
+      else if (action === 'ai-translate') autoTranslateSingle(lang, key, btn);
+      else if (action === 'delete-override') deleteOverride(lang, key, btn);
+    });
+
+    const showImportBtn = document.getElementById('show-import-btn');
+    if (showImportBtn) showImportBtn.addEventListener('click', showImport);
+
+    const autoTranslateAllBtn = document.getElementById('auto-translate-all-btn');
+    if (autoTranslateAllBtn) autoTranslateAllBtn.addEventListener('click', function() {
+      autoTranslateAll(this.dataset.lang);
+    });
+
+    const bulkImportBtn = document.getElementById('bulk-import-btn');
+    if (bulkImportBtn) bulkImportBtn.addEventListener('click', function() {
+      bulkImport(this.dataset.lang);
+    });
     </script>`;
 
   return adminLayout('Translations', content, 'traduceri', email);
@@ -280,7 +306,7 @@ translationsAdmin.get('/', async (c) => {
     getLangKeys(c.env.CACHE, lang),
     getKvOverrides(c.env.CACHE, lang),
   ]);
-  return c.html(translationsPage(lang, keys, overrides, email, search));
+  return c.html(translationsPage(lang, keys, overrides, email, search, c.get('cspNonce')));
 });
 
 translationsAdmin.get('/api/keys', async (c) => {

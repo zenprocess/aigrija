@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../lib/types';
-import { checkRateLimit, applyRateLimitHeaders } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders } from '../lib/rate-limiter';
 import { recordConsent, revokeConsent } from '../lib/gdpr-consent';
 import { withCircuitBreaker, CircuitOpenError } from '../lib/circuit-breaker';
 
@@ -24,7 +24,7 @@ newsletter.post('/api/newsletter/subscribe', async (c) => {
     c.req.header('x-real-ip') ||
     'unknown';
 
-  const rl = await checkRateLimit(c.env.CACHE, `newsletter:${ip}`, 5, 120);
+  const rl = await createRateLimiter(c.env.CACHE)(`newsletter:${ip}`, 5, 120);
   applyRateLimitHeaders((k, v) => c.header(k, v), rl);
 
   if (!rl.allowed) {
@@ -115,7 +115,7 @@ newsletter.post('/api/newsletter/unsubscribe', async (c) => {
     c.req.header('x-real-ip') ||
     'unknown';
 
-  const rl = await checkRateLimit(c.env.CACHE, `newsletter:${ip}`, 5, 120);
+  const rl = await createRateLimiter(c.env.CACHE)(`newsletter:${ip}`, 5, 120);
   applyRateLimitHeaders((k, v) => c.header(k, v), rl);
 
   if (!rl.allowed) {

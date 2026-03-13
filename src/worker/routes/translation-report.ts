@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
-import { checkRateLimit, applyRateLimitHeaders } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders } from '../lib/rate-limiter';
 import { idempotency } from '../middleware/idempotency';
 
 const translationReport = new Hono<{ Bindings: Env }>();
@@ -21,7 +21,7 @@ translationReport.post('/api/translation-report', idempotency(), async (c) => {
     c.req.header('x-real-ip') ||
     'unknown';
 
-  const rl = await checkRateLimit(c.env.CACHE, `translation-report:${ip}`, 5, 3600);
+  const rl = await createRateLimiter(c.env.CACHE)(`translation-report:${ip}`, 5, 3600);
   applyRateLimitHeaders((k, v) => c.header(k, v), rl);
 
   if (!rl.allowed) {

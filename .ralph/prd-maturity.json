@@ -1,0 +1,106 @@
+{
+  "project": "aigrija",
+  "epic": "Maturity 79→85 Sprint",
+  "stories": [
+    {
+      "id": "S-372",
+      "title": "Set up Renovate for automated dependency updates",
+      "issue": 372,
+      "assigned_agent": "devops-cf",
+      "complexity": "low",
+      "status": "pending",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "renovate.json exists in repo root with valid config",
+        "Patch updates set to automerge",
+        "Minor updates grouped weekly",
+        "Major updates as individual PRs",
+        "Cloudflare-specific deps pinned to minor range"
+      ],
+      "context": "Create renovate.json in repo root. Config: automerge patch, group minor weekly, major individual PRs. Pin @cloudflare/workers-types and wrangler to minor range. Enable vulnerability alerts."
+    },
+    {
+      "id": "S-371",
+      "title": "Add Sentry APM for runtime error tracking",
+      "issue": 371,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "medium",
+      "status": "pending",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "@sentry/cloudflare installed in package.json",
+        "Sentry initialized in src/worker/index.ts",
+        "Unhandled errors captured in global error handler",
+        "SENTRY_DSN added to wrangler.toml vars and .dev.vars.example",
+        "TypeScript compiles and unit tests pass"
+      ],
+      "context": "Install @sentry/cloudflare (NOT @sentry/node — this is CF Workers). Initialize in index.ts fetch handler. Wrap with Sentry.withSentry() or use toucanjs/toucan-js if @sentry/cloudflare not available. Capture errors in the global onError handler at line 89-103. Add SENTRY_DSN to Env type in lib/types.ts. Add placeholder to wrangler.toml [vars] and .dev.vars.example."
+    },
+    {
+      "id": "S-374",
+      "title": "Decompose src/worker/index.ts into route registry and middleware chain",
+      "issue": 374,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "medium",
+      "status": "pending",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "src/worker/index.ts is <80 lines (thin entry point)",
+        "Route registration extracted to src/worker/routes/registry.ts",
+        "Middleware chain extracted to src/worker/middleware/chain.ts",
+        "All imports updated across codebase",
+        "All unit and integration tests pass"
+      ],
+      "context": "src/worker/index.ts is ~262 lines and the #1 hotspot. Extract: 1) Route registration (app.route() calls) into routes/registry.ts exporting a function registerRoutes(app). 2) Middleware setup (app.use() calls) into middleware/chain.ts exporting applyMiddleware(app). 3) Keep index.ts as: create app, applyMiddleware(app), registerRoutes(app), export default app. Run npx vitest run after."
+    },
+    {
+      "id": "S-373",
+      "title": "Increase DI adoption in worker modules",
+      "issue": 373,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "medium",
+      "status": "pending",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "rate-limiter.ts accepts KV binding via factory function parameter",
+        "classifier.ts accepts AI binding via factory function parameter",
+        "campaign-aggregator.ts accepts KV binding via parameter",
+        "Route handlers pass bindings from Hono context",
+        "Tests use injected mocks instead of env stubs",
+        "All tests pass"
+      ],
+      "context": "Refactor 3 key modules to accept dependencies as parameters instead of accessing env directly. Pattern: export function createRateLimiter(kv: KVNamespace) { return { isAllowed(key, limit, window) {...} } }. Routes call createRateLimiter(c.env.CACHE). Tests call createRateLimiter(mockKv). Do NOT introduce a DI container — just function parameters."
+    },
+    {
+      "id": "S-370a",
+      "title": "Raise vitest coverage thresholds to 60%",
+      "issue": 370,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "pending",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "vitest.config.ts thresholds: lines 60%, statements 60%, branches 50%, functions 70%",
+        "npx vitest run --coverage passes with new thresholds",
+        "If coverage is below, add tests for uncovered files in src/worker/routes/ and src/worker/lib/"
+      ],
+      "context": "Update vitest.config.ts coverage thresholds. Run npx vitest run --coverage to check current levels. If below new thresholds, add tests for the least-covered files. Focus on src/worker/routes/ and src/worker/lib/ which have the most business logic. Do NOT add trivial tests just to hit numbers — test meaningful behavior."
+    },
+    {
+      "id": "S-370b",
+      "title": "Add tests for uncovered route handlers",
+      "issue": 370,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "medium",
+      "status": "pending",
+      "depends_on": ["S-370a"],
+      "acceptance_criteria": [
+        "Test files exist for all route handlers in src/worker/routes/",
+        "Each test covers happy path and error cases",
+        "Coverage meets 60% lines threshold",
+        "All tests pass"
+      ],
+      "context": "After S-370a sets thresholds, identify route files without tests (check src/worker/routes/*.ts vs src/worker/routes/*.test.ts). Add tests for uncovered handlers. Use miniflare env mocking pattern from existing tests. Focus on: alerts.ts, community.ts, newsletter.ts, feed.ts if they lack tests."
+    }
+  ]
+}

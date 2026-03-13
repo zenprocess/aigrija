@@ -1,0 +1,99 @@
+{
+  "generated_at": "2026-03-12T22:18:33Z",
+  "project_id": "aigrija",
+  "architecture_style": "modular-monolith",
+  "model_status": "provided",
+  "note": "Auto-discovered by scripts/wow-maturity/discover-dimensions.sh — validate with /validate-understanding",
+  "functions": [
+    {
+      "id": "ff-discovered-observability-stack-integration",
+      "fitness_function_id": "ff-discovered-observability-stack-integration",
+      "name": "Observability Stack Integration",
+      "description": "Measures whether an observability MCP (error tracking, metrics, or distributed tracing) is configured and actively used by agents for runtime insight.",
+      "rationale": "Observability MCPs (Sentry MCP, Datadog MCP, Prometheus MCP, Grafana MCP) are available in the MCP catalog but none are installed in aigrija. Agents without observability context cannot surface performance bottlenecks, error trends, or SLA violations from live data.",
+      "weight": 0.09,
+      "enabled": true,
+      "category": "mcp-capability",
+      "collector": {
+        "type": "file-heuristic",
+        "script_path": "scripts/wow-maturity/collect.sh --dimension observability-integration"
+      },
+      "scorer": {
+        "type": "rubric",
+        "rubric_text": "Score 1.0 if at least one observability MCP (Sentry, Datadog, etc.) is configured and has valid credentials; 0.5 if installed but missing credentials; 0.0 if no observability MCP present."
+      }
+    },
+    {
+      "id": "ff-discovered-error-handling-consistency",
+      "fitness_function_id": "ff-discovered-error-handling-consistency",
+      "name": "Error Handling Consistency",
+      "description": "Measures what fraction of source files with async operations also have explicit error handling (try/catch, .catch(), rescue, except). Low coverage means unhandled rejections and silent failures in production.",
+      "rationale": "Found 300 source files in aigrija; 90 have error handling patterns vs 214 with async operations. Inconsistent error handling leads to uncaught exceptions that crash processes or swallow failures silently, making incidents harder to diagnose.",
+      "weight": 0.15,
+      "enabled": true,
+      "category": "resilience",
+      "collector": {
+        "type": "file-heuristic",
+        "script_path": "scripts/wow-maturity/collect.sh --dimension error-handling"
+      },
+      "scorer": {
+        "type": "rubric",
+        "rubric_text": "Score 1.0 if >80% of files with async calls also have error handling; 0.6 if 50-80%; 0.3 if 30-50%; 0.0 if <30% error handling coverage."
+      }
+    },
+    {
+      "id": "ff-discovered-database-migration-discipline",
+      "fitness_function_id": "ff-discovered-database-migration-discipline",
+      "name": "Database Migration Discipline",
+      "description": "Verifies that database migrations are sequential, include rollback (down) scripts, and that raw SQL is not embedded directly in application code outside of migration files.",
+      "rationale": "Found 7 migration file(s) in aigrija; 0 have rollback definitions. Migrations without down scripts prevent safe rollback in production incidents and accumulate schema debt that blocks emergency reverts.",
+      "weight": 0.13,
+      "enabled": true,
+      "category": "data",
+      "collector": {
+        "type": "file-heuristic",
+        "script_path": "scripts/wow-maturity/collect.sh --dimension migration-discipline"
+      },
+      "scorer": {
+        "type": "rubric",
+        "rubric_text": "Score 1.0 if all migrations are sequential and have rollback scripts; 0.6 if sequential but missing rollbacks; 0.3 if partially sequential; 0.0 if no discipline or raw SQL in app code."
+      }
+    },
+    {
+      "id": "ff-discovered-authentication-layer-completeness",
+      "fitness_function_id": "ff-discovered-authentication-layer-completeness",
+      "name": "Authentication Layer Completeness",
+      "description": "Measures whether authentication is implemented as a consistent middleware layer with token validation and centralized auth enforcement — not scattered ad-hoc checks across individual route handlers.",
+      "rationale": "Auth patterns detected in aigrija with 33 middleware/guard definition(s). Ad-hoc auth checks scattered through routes are easy to forget on new endpoints, creating authentication bypass vulnerabilities that are hard to audit.",
+      "weight": 0.18,
+      "enabled": true,
+      "category": "security",
+      "collector": {
+        "type": "file-heuristic",
+        "script_path": "scripts/wow-maturity/collect.sh --dimension auth-completeness"
+      },
+      "scorer": {
+        "type": "rubric",
+        "rubric_text": "Score 1.0 if auth is a dedicated middleware/guard applied globally with token validation; 0.5 if middleware exists but coverage gaps found; 0.0 if auth checks are scattered or no middleware pattern detected."
+      }
+    },
+    {
+      "id": "ff-discovered-modularity-index",
+      "fitness_function_id": "ff-discovered-modularity-index",
+      "name": "Modularity Index",
+      "description": "Measures the balance between dependency injection patterns (constructor injection, IoC containers) and global state usage. High global state indicates tight coupling that resists unit testing and parallel development.",
+      "rationale": "Found 300 source files in aigrija; 1 use DI patterns vs 0 with global state access. Excessive global state creates hidden coupling that makes modules impossible to test in isolation and slows parallel feature development as teams step on each other's state.",
+      "weight": 0.14,
+      "enabled": true,
+      "category": "architecture",
+      "collector": {
+        "type": "file-heuristic",
+        "script_path": "scripts/wow-maturity/collect.sh --dimension modularity-index"
+      },
+      "scorer": {
+        "type": "rubric",
+        "rubric_text": "Score 1.0 if DI patterns dominate and global state is restricted to top-level config; 0.6 if DI is used but global state leaks into business logic; 0.3 if mostly global state with minimal DI; 0.0 if no DI patterns and widespread global mutation detected."
+      }
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import type { Env } from './types';
+import { handleMockQuery } from './sanity-mock-data';
 
 const SANITY_API_VERSION = '2024-01-01';
 
@@ -23,6 +24,11 @@ export async function sanityFetch<T>(
   query: string,
   params: Record<string, string | number | boolean> = {}
 ): Promise<T> {
+  // Use mock data when Sanity is not configured (local dev / E2E without credentials)
+  if (!env.SANITY_PROJECT_ID) {
+    return handleMockQuery<T>(query, params);
+  }
+
   const config = getConfig(env);
   const url = new URL(
     `https://${config.projectId}.${config.useCdn ? 'apicdn' : 'api'}.sanity.io/v${config.apiVersion}/data/query/${config.dataset}`

@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { structuredLog } from '../lib/logger';
 import { z } from 'zod';
 import type { Env } from '../lib/types';
-import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, getRouteRateLimit, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 
 const FeedQuerySchema = z.object({
   format: z.enum(['rss', 'atom', 'json'] as const).optional().default('json'),
@@ -30,6 +30,13 @@ export async function prependFeedEntry(cache: KVNamespace, entry: FeedEntry): Pr
 }
 
 feed.get('/api/feed/latest', async (c) => {
+  const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const feedLimits = getRouteRateLimit('feed', c.env) ?? ROUTE_RATE_LIMITS['feed'];
+  const rl = await createRateLimiter(c.env.CACHE)(ip, feedLimits.limit, feedLimits.windowSeconds);
+  applyRateLimitHeaders((k, v) => c.header(k, v), rl);
+  if (!rl.allowed) {
+    return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.' } }, 429);
+  }
   const _fq = FeedQuerySchema.safeParse({ format: c.req.query('format'), lang: c.req.query('lang') });
   if (!_fq.success) return c.json({ error: { code: 'VALIDATION_ERROR', message: _fq.error.issues.map((i: { message: string }) => i.message).join('; ') } }, 400);
   const raw = await c.env.CACHE.get(FEED_KEY);

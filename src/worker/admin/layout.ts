@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { href: '/studio', label: 'Studio', icon: '🎨', key: 'studio', external: true },
 ] as const;
 
-export function adminLayout(title: string, content: string, activeNav = '', adminEmail = ''): string {
+export function adminLayout(title: string, content: string, activeNav = '', adminEmail = '', nonce = ''): string {
   const navItems = NAV_ITEMS.map(item => {
     const isActive = item.key === activeNav;
     const activeClasses = isActive
@@ -34,8 +34,8 @@ export function adminLayout(title: string, content: string, activeNav = '', admi
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title} — ai-grija Admin</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script src="https://cdn.tailwindcss.com"${nonce ? ` nonce="${nonce}"` : ''}></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"${nonce ? ` nonce="${nonce}"` : ''}></script>
   <style>
     .severity-critical { color: #dc2626; }
     .severity-high     { color: #ea580c; }

@@ -132,8 +132,8 @@ describe("POST /api/check/image", () => {
   });
 
   it("returns 429 when rate limited", async () => {
-    const kv = makeKV({ [rlKey('unknown', 3600)]: '20' });
-    const env = makeEnv({ CACHE: kv });
+    const kv = makeKV({ [rlKey('unknown', 3600)]: '1000' });
+    const env = makeEnv({ CACHE: kv, ENVIRONMENT: 'test' });
     const fd = new FormData();
     fd.append("image", makeImageFile());
     const req = new Request("http://localhost/api/check/image", {

@@ -44,13 +44,22 @@ export class ReportsEndpoint extends OpenAPIRoute {
     const cacheKey = 'community-reports-list';
     const cached = await c.env.CACHE.get(cacheKey);
     if (cached) {
-      c.header('X-Cache', 'HIT');
-      c.header('Cache-Control', 'public, max-age=60');
-      return c.json(JSON.parse(cached));
+      try {
+        const parsed = JSON.parse(cached);
+        c.header('X-Cache', 'HIT');
+        c.header('Cache-Control', 'public, max-age=60');
+        return c.json(parsed);
+      } catch (err) {
+        structuredLog('error', 'community_cache_parse_error', { error: String(err), key: cacheKey });
+        // fall through to fetch fresh data
+      }
     }
 
-    const rawIndex = await c.env.CACHE.get('report-index');
-    const index: string[] = rawIndex ? JSON.parse(rawIndex) : [];
+    const listed = await c.env.CACHE.list({ prefix: 'report-idx:', limit: 500 });
+    const index: string[] = listed.keys.map((k: { name: string }) => {
+      const afterPrefix = k.name.slice('report-idx:'.length);
+      return afterPrefix.slice(afterPrefix.indexOf(':') + 1);
+    });
 
     const reports: CommunityReport[] = [];
     for (const id of index.slice(0, 50)) {

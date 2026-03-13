@@ -27,3 +27,8 @@ ADMIN_API_KEY=dev-admin-key-change-me
 BUTTONDOWN_API_KEY=your-buttondown-api-key
 
 # Workers AI is auto-bound by wrangler dev, no key needed
+
+# Sentry APM — runtime error tracking
+# Get your DSN from: https://sentry.io → Project Settings → Client Keys (DSN)
+# Leave empty to disable Sentry
+SENTRY_DSN=https://your-key@oXXXXXX.ingest.sentry.io/XXXXXXX

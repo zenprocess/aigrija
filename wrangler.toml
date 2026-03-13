@@ -57,6 +57,7 @@ binding = "DRAFT_QUEUE"
 [vars]
 BASE_URL = "https://ai-grija.ro"
 CF_ACCESS_TEAM_DOMAIN = "zenprocess"
+SENTRY_DSN = ""
 
 
 [triggers]

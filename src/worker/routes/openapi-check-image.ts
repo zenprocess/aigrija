@@ -4,8 +4,8 @@ import type { Context } from 'hono';
 import type { Env } from '../lib/types';
 import type { AppVariables } from '../lib/request-id';
 import { ImageUploadSchema, formatZodError } from '../lib/schemas';
-import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
-import { classify } from '../lib/classifier';
+import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createClassifier } from '../lib/classifier';
 import { structuredLog } from '../lib/logger';
 import { VISION_MODEL } from '../lib/constants';
 import { uint8ArrayToBase64 } from '../lib/encoding';
@@ -77,7 +77,7 @@ export class CheckImageEndpoint extends OpenAPIRoute {
       || c.req.header('x-real-ip')
       || 'unknown';
 
-    const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['check-image'].limit, ROUTE_RATE_LIMITS['check-image'].windowSeconds);
+    const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['check-image'].limit, ROUTE_RATE_LIMITS['check-image'].windowSeconds);
     applyRateLimitHeaders((k, v) => c.header(k, v), rl);
     const { allowed, remaining, limit } = rl;
 
@@ -168,7 +168,7 @@ export class CheckImageEndpoint extends OpenAPIRoute {
 
     let classification;
     if (validatedTextContext && validatedTextContext.trim().length >= 3) {
-      classification = await classify(c.env.AI, validatedTextContext);
+      classification = await createClassifier(c.env.AI)(validatedTextContext);
       if (visionVerdict === 'phishing' && classification.verdict === 'likely_safe') {
         classification = { ...classification, verdict: 'suspicious' as const };
       }

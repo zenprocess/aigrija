@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import { generateReport, type ReportType, type ReportParams } from '../lib/report-templates';
-import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { ReportTypeSchema, ReportQuerySchema, formatZodError } from '../lib/schemas';
 
 const report = new Hono<{ Bindings: Env }>();
@@ -16,7 +16,7 @@ report.get('/api/report/:type', async (c) => {
     || c.req.header('x-real-ip')
     || 'unknown';
 
-  const rl = await checkRateLimit(c.env.CACHE, `report:${ip}`, ROUTE_RATE_LIMITS['report'].limit, ROUTE_RATE_LIMITS['report'].windowSeconds);
+  const rl = await createRateLimiter(c.env.CACHE)(`report:${ip}`, ROUTE_RATE_LIMITS['report'].limit, ROUTE_RATE_LIMITS['report'].windowSeconds);
   applyRateLimitHeaders((k, v) => c.header(k, v), rl);
   const { allowed } = rl;
 

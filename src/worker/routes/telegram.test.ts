@@ -16,16 +16,16 @@ vi.mock('../lib/gdpr-consent', () => ({
   updateLastActive: (...args: unknown[]) => mockUpdateLastActive(...args),
 }));
 
-// Mock classify
+// Mock createClassifier
 vi.mock('../lib/classifier', () => ({
-  classify: vi.fn().mockResolvedValue({
+  createClassifier: vi.fn().mockReturnValue(vi.fn().mockResolvedValue({
     verdict: 'phishing',
     confidence: 0.95,
     scam_type: 'bank_impersonation',
     red_flags: ['urgenta', 'link suspect'],
     explanation: 'Mesaj de tip phishing care imita o banca.',
     recommended_actions: ['Nu accesati linkul'],
-  }),
+  })),
 }));
 
 function makeEnv(): Env {
@@ -87,6 +87,28 @@ describe('Telegram webhook — auth', () => {
     const req = makeTelegramRequest({}, 'wrong-secret');
     const res = await app.fetch(req, makeEnv());
     expect(res.status).toBe(401);
+  });
+
+  it('returns 401 when secret has correct length but wrong content (timing-safe)', async () => {
+    const telegram = await importTelegram();
+    const app = new Hono<{ Bindings: Env }>();
+    app.route('/', telegram);
+
+    // Same length as 'test-secret' but different content
+    const req = makeTelegramRequest({}, 'test-XXXXXX');
+    const res = await app.fetch(req, makeEnv());
+    expect(res.status).toBe(401);
+  });
+
+  it('accepts correct secret via timing-safe comparison', async () => {
+    const telegram = await importTelegram();
+    const app = new Hono<{ Bindings: Env }>();
+    app.route('/', telegram);
+
+    const update = { update_id: 99, message: { message_id: 99, chat: { id: 1, type: 'private' }, text: 'test' } };
+    const req = makeTelegramRequest(update, 'test-secret');
+    const res = await app.fetch(req, makeEnv());
+    expect(res.status).toBe(200);
   });
 });
 

@@ -58,6 +58,7 @@ export function renderAlertPage(campaign: Campaign, baseUrl: string, checksMatch
 </head>
 <body>
 <nav><a href="/">ai-grija.ro</a> / <a href="/alerte">Alerte</a></nav>
+<main>
 <h1>${escapeHtml(campaign.name_ro)}</h1>
 <p><span class="badge">${statusBadge}</span><span class="badge">${severityBadge}</span></p>
 ${checksMatched && checksMatched > 0 ? '<p><span class="counter">🔍 ' + checksMatched + ' verificări au identificat această campanie</span></p>' : ''}
@@ -74,6 +75,7 @@ ${campaign.dnsc_alert_url ? `<p><a href="${escapeHtml(campaign.dnsc_alert_url)}"
 <p><small>Prima aparitie: ${escapeHtml(campaign.first_seen)}</small></p>
 <hr>
 <p><a href="/alerte">← Toate alertele</a> | <a href="/">Verifica un mesaj</a></p>
+</main>
 </body>
 </html>`;
 }
@@ -90,19 +92,21 @@ export function renderAlertsIndex(campaigns: Campaign[], baseUrl: string): strin
 <meta name="description" content="Campaniile de phishing active in Romania. Protejati-va de fraude online.">
 <meta property="og:title" content="Alerte phishing Romania — ai-grija.ro">
 <link rel="canonical" href="${escapedBase}/alerte">
-<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:20px;color:#1a1a1a;line-height:1.6}h1{color:#d32f2f}.card{border:1px solid #e0e0e0;border-radius:8px;padding:16px;margin:12px 0}.card h3{margin:0 0 8px}a{color:#1976d2}</style>
+<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:20px;color:#1a1a1a;line-height:1.6}h1{color:#d32f2f}.card{border:1px solid #e0e0e0;border-radius:8px;padding:16px;margin:12px 0}.card h2{margin:0 0 8px}a{color:#1976d2}</style>
 </head>
 <body>
 <nav><a href="/">ai-grija.ro</a></nav>
+<main>
 <h1>Alerte phishing active in Romania</h1>
 <p>${active.length} campanii active monitorizate</p>
 ${campaigns.map(c => `<div class="card">
-<h3><a href="/alerte/${escapeHtml(c.slug)}">${escapeHtml(c.name_ro)}</a></h3>
+<h2><a href="/alerte/${escapeHtml(c.slug)}">${escapeHtml(c.name_ro)}</a></h2>
 <p>${escapeHtml(c.description_ro.substring(0, 150))}...</p>
 <small>${escapeHtml(c.severity)} | ${escapeHtml(c.status)} | ${escapeHtml(c.impersonated_entity)}</small>
 </div>`).join('\n')}
 <hr>
 <p><a href="/">← Verifica un mesaj suspect</a></p>
+</main>
 </body>
 </html>`;
 }

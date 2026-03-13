@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Env } from '../lib/types';
 import type { AppVariables } from '../lib/request-id';
 import { escapeHtml } from '../lib/escape-html';
-import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 
 const OgImageQuerySchema = z.object({
   verdict: z.string().max(64).optional(),
@@ -171,7 +171,7 @@ function buildAlertSvg(title: string, description: string): string {
 // GET /og/image — dynamic SVG for social sharing (verdict)
 og.get('/og/image', async (c) => {
   const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['og'].limit, ROUTE_RATE_LIMITS['og'].windowSeconds);
+  const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['og'].limit, ROUTE_RATE_LIMITS['og'].windowSeconds);
   applyRateLimitHeaders((k, v) => c.header(k, v), rl);
   if (!rl.allowed) {
     return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.' }, request_id: 'unknown' }, 429);

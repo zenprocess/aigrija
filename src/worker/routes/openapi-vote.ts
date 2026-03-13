@@ -2,7 +2,7 @@ import { OpenAPIRoute } from 'chanfana';
 import { z } from 'zod';
 import type { Context } from 'hono';
 import type { Env } from '../lib/types';
-import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { structuredLog } from '../lib/logger';
 import type { CommunityReport } from './community';
 
@@ -60,7 +60,7 @@ export class VoteEndpoint extends OpenAPIRoute {
       || c.req.header('x-real-ip')
       || 'unknown';
 
-    const voteRl = await checkRateLimit(c.env.CACHE, `vote:${ip}`, ROUTE_RATE_LIMITS['vote'].limit, ROUTE_RATE_LIMITS['vote'].windowSeconds);
+    const voteRl = await createRateLimiter(c.env.CACHE)(`vote:${ip}`, ROUTE_RATE_LIMITS['vote'].limit, ROUTE_RATE_LIMITS['vote'].windowSeconds);
     applyRateLimitHeaders((k, v) => c.header(k, v), voteRl);
 
     if (!voteRl.allowed) {
@@ -100,7 +100,6 @@ export class VoteEndpoint extends OpenAPIRoute {
     }
 
     await c.env.CACHE.put(`report:${id}`, JSON.stringify(report), { expirationTtl: 60 * 60 * 24 * 30 });
-    await c.env.CACHE.delete('community-reports-list');
 
     return c.json({ votes_up: report.votes_up, votes_down: report.votes_down });
   }

@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import type { Env, ClassificationResult } from '../lib/types';
 import type { AppVariables } from '../lib/request-id';
-import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
-import { classify } from '../lib/classifier';
+import { createRateLimiter, applyRateLimitHeaders, getRouteRateLimit, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createClassifier } from '../lib/classifier';
 import { structuredLog } from '../lib/logger';
 import { ImageUploadSchema, formatZodError } from '../lib/schemas';
 import { VISION_MODEL } from '../lib/constants';
@@ -26,7 +26,8 @@ upload.post('/api/check/image', async (c) => {
     || c.req.header('x-real-ip')
     || 'unknown';
 
-  const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['check-image'].limit, ROUTE_RATE_LIMITS['check-image'].windowSeconds);
+  const imgLimits = getRouteRateLimit('check-image', c.env) ?? ROUTE_RATE_LIMITS['check-image'];
+  const rl = await createRateLimiter(c.env.CACHE)(ip, imgLimits.limit, imgLimits.windowSeconds);
   applyRateLimitHeaders((k, v) => c.header(k, v), rl);
   const { allowed, remaining, limit } = rl;
 
@@ -84,12 +85,12 @@ upload.post('/api/check/image', async (c) => {
     const licenseKey = `ai:license:${VISION_MODEL}`;
     if (!(await c.env.CACHE.get(licenseKey))) {
       try {
-        await (c.env.AI.run as any)(VISION_MODEL, { prompt: "agree", max_tokens: 1 });
+        await c.env.AI.run(VISION_MODEL, { prompt: "agree", max_tokens: 1 });
         await c.env.CACHE.put(licenseKey, "1", { expirationTtl: 86400 * 30 });
       } catch { /* already accepted or irrelevant */ }
     }
 
-    const visionResult = await (c.env.AI.run as unknown as (model: string, input: { messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image_url?: { url: string } }> }>; max_tokens: number }) => Promise<{ response?: string }>)(VISION_MODEL, {
+    const visionResult = await c.env.AI.run(VISION_MODEL, {
       messages: [{
         role: 'user',
         content: [
@@ -123,7 +124,7 @@ upload.post('/api/check/image', async (c) => {
 
   let classification: ClassificationResult;
   if (validatedTextContext && validatedTextContext.trim().length >= 3) {
-    classification = await classify(c.env.AI, validatedTextContext);
+    classification = await createClassifier(c.env.AI)(validatedTextContext);
     if (visionVerdict === 'phishing' && classification.verdict === 'likely_safe') {
       classification = { ...classification, verdict: 'suspicious' };
     }

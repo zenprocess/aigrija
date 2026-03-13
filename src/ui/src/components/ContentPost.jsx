@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { ArrowLeft, Calendar, User, Clock, Share2, Volume2, Tag } from 'lucide-react';
 import { useTranslation } from '../i18n/index.jsx';
 
 function PortableTextRenderer({ body }) {
   if (!body) return null;
   if (typeof body === 'string') {
-    return <div className="prose-content" dangerouslySetInnerHTML={{ __html: body }} />;
+    return <div className="prose-content" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(body) }} />;
   }
   if (!Array.isArray(body)) return null;
   return (
@@ -13,14 +14,14 @@ function PortableTextRenderer({ body }) {
       {body.map((block, idx) => {
         if (block._type === 'block') {
           const style = block.style || 'normal';
-          const text = (block.children || []).map((child) => {
-            let content = child.text || '';
+          const children = (block.children || []).map((child, childIdx) => {
+            let node = child.text || '';
             const marks = child.marks || [];
-            if (marks.includes('strong')) content = `<strong>${content}</strong>`;
-            if (marks.includes('em')) content = `<em>${content}</em>`;
-            return content;
-          }).join('');
-          const inner = <span dangerouslySetInnerHTML={{ __html: text }} />;
+            if (marks.includes('strong')) node = <strong>{node}</strong>;
+            if (marks.includes('em')) node = <em>{node}</em>;
+            return <React.Fragment key={childIdx}>{node}</React.Fragment>;
+          });
+          const inner = <span>{children}</span>;
           if (style === 'h2') return <h2 key={idx} className="text-2xl font-bold text-white mt-8 mb-3">{inner}</h2>;
           if (style === 'h3') return <h3 key={idx} className="text-xl font-bold text-white mt-6 mb-2">{inner}</h3>;
           if (style === 'h4') return <h4 key={idx} className="text-lg font-semibold text-white mt-4 mb-2">{inner}</h4>;

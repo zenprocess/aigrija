@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Env } from '../lib/types';
 import { sanityFetch } from '../lib/sanity';
 import { structuredLog } from '../lib/logger';
-import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { renderBlogListPage, renderBlogPostPage } from '../templates/blog-page';
 
 const VALID_BLOG_LANGS = ['ro', 'en', 'bg', 'hu', 'uk'] as const;
@@ -586,7 +586,7 @@ blog.get('/feed.xml', async (c) => {
 
 blog.get('/sitemap-content.xml', async (c) => {
   const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['blog'].limit, ROUTE_RATE_LIMITS['blog'].windowSeconds);
+  const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['blog'].limit, ROUTE_RATE_LIMITS['blog'].windowSeconds);
   applyRateLimitHeaders((k, v) => c.header(k, v), rl);
   if (!rl.allowed) {
     return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.' }, request_id: 'unknown' }, 429);

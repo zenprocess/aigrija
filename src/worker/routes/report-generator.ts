@@ -61,6 +61,7 @@ reportGenerator.get('/raport', (c) => {
   </style>
 </head>
 <body>
+  <main>
   <h1>Generator Raport Incident</h1>
   <p>Completați formularul de mai jos pentru a genera un raport pe care îl puteți trimite autorităților.</p>
 
@@ -97,6 +98,7 @@ reportGenerator.get('/raport', (c) => {
     </div>
     <button onclick="window.print()" style="background:#059669;">Tipărește / Salvează PDF</button>
   </div>
+  </main>
 
   <script>
     function generateReport(e) {

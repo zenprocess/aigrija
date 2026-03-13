@@ -67,9 +67,11 @@ ${hreflangs}
       <a class="brand" href="https://ai-grija.ro">ai-grija.ro</a>
       <nav class="lang-switch">${langSwitcher}</nav>
     </header>
+    <main>
     ${disclaimerHtml}
     ${content}
     <a class="back" href="https://ai-grija.ro">\u2190 ai-grija.ro</a>
+    </main>
   </div>
 </body>
 </html>`;

@@ -1,0 +1,92 @@
+{
+  "project": "aigrija",
+  "epic": "Maturity 79→85 Sprint — Retry Wave",
+  "stories": [
+    {
+      "id": "S-374",
+      "title": "Decompose src/worker/index.ts into route registry and middleware chain",
+      "issue": 374,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "medium",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "src/worker/index.ts is <80 lines (thin entry point)",
+        "Route registration extracted to src/worker/routes/registry.ts",
+        "Middleware chain extracted to src/worker/middleware/chain.ts",
+        "All imports updated across codebase",
+        "All unit and integration tests pass"
+      ],
+      "context": "ALREADY COMPLETE — index.ts is 50 lines, registry.ts and chain.ts exist and work.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T07:31:39Z"
+    },
+    {
+      "id": "S-373a",
+      "title": "Wire createRateLimiter and createClassifier factories into route handlers",
+      "issue": 373,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "pending",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "Route handlers in src/worker/routes/ call createRateLimiter(c.env.CACHE) instead of checkRateLimit(c.env.CACHE, ...)",
+        "Route handlers call createClassifier(c.env.AI) instead of classify(c.env.AI, ...)",
+        "TypeScript compiles cleanly",
+        "All 1362+ tests pass"
+      ],
+      "context": "PARTIAL WORK EXISTS: createRateLimiter(cache) is in rate-limiter.ts:107, createClassifier(ai) is in classifier.ts:136. But grep shows ZERO route files import or call these factories — routes still use checkRateLimit() and classify() directly. Wire the factories into routes that use these. campaign-aggregator.ts already accepts KV as parameter — no changes needed there. Run: npx vitest run after changes.",
+      "attempts": 0
+    },
+    {
+      "id": "S-373b",
+      "title": "Update DI tests to use injected mocks via factory functions",
+      "issue": 373,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "pending",
+      "depends_on": ["S-373a"],
+      "acceptance_criteria": [
+        "Tests for rate-limiter use createRateLimiter(mockKv) pattern",
+        "Tests for classifier use createClassifier(mockAi) pattern",
+        "No tests access env stubs directly for these modules",
+        "All tests pass"
+      ],
+      "context": "After S-373a wires factories into routes, update the test files (rate-limiter.test.ts, classifier.test.ts, and any route tests that mock these) to use the factory pattern. Pattern: const limiter = createRateLimiter(mockKv); const result = await limiter(key, limit, window). Run: npx vitest run after changes.",
+      "attempts": 0
+    },
+    {
+      "id": "S-370b-fix",
+      "title": "Fix newsletter.test.ts status 204 bug and verify coverage thresholds",
+      "issue": 370,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "pending",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "newsletter.test.ts line 151 uses status 200 (not 204) in Response constructor",
+        "All 1363 tests pass with 0 failures",
+        "Coverage meets 60% lines threshold"
+      ],
+      "context": "KNOWN BUG: src/worker/routes/newsletter.test.ts:151 creates `new Response('', { status: 204 })` but miniflare's Response constructor rejects 204 as invalid. Fix: change to `new Response(null, { status: 204 })` (null body for 204) OR if the route actually returns 200, change the mock to status 200. Check what the actual newsletter unsubscribe handler returns. Run: npx vitest run after fix.",
+      "attempts": 0
+    },
+    {
+      "id": "S-355b",
+      "title": "Replace inline onclick handlers in admin translations with nonce scripts",
+      "issue": 355,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "pending",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "Zero inline event handlers (onclick, onsubmit, etc.) in src/worker/admin/translations.ts",
+        "All button actions use addEventListener in a <script nonce=...> block",
+        "CSP nonce parameter threaded through from admin middleware",
+        "Admin panel functionality preserved",
+        "TypeScript compiles and all tests pass"
+      ],
+      "context": "src/worker/admin/translations.ts has 6 inline onclick handlers: saveSingle, autoTranslateSingle, deleteOverride, showImport, autoTranslateAll, bulkImport. Pattern to follow: see src/worker/admin/weights.ts which already uses <script nonce=\"${nonce}\"> with addEventListener. The nonce comes from c.get('cspNonce'). Move all inline handlers to a single <script nonce=\"${nonce}\"> block at the bottom of the template. Functions saveSingle, autoTranslateSingle, deleteOverride, showImport, autoTranslateAll, bulkImport must be defined inside that script block. Buttons need data attributes (data-lang, data-key) for the event listeners to read. Run: npx vitest run after changes."
+    }
+  ]
+}

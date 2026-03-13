@@ -4,7 +4,7 @@ import type { Context } from 'hono';
 import type { Env } from '../lib/types';
 import { generateWeeklyDigest } from '../lib/weekly-digest';
 import { structuredLog } from '../lib/logger';
-import { checkRateLimit } from '../lib/rate-limiter';
+import { createRateLimiter } from '../lib/rate-limiter';
 import { recordConsent, revokeConsent } from '../lib/gdpr-consent';
 
 const BUTTONDOWN_BASE = 'https://api.buttondown.com/v1';
@@ -120,7 +120,7 @@ export class DigestSubscribeEndpoint extends OpenAPIRoute {
   async handle(c: Context<{ Bindings: Env }>) {
     const subIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
     if (c.env.CACHE) {
-      const subRl = await checkRateLimit(c.env.CACHE, `digest-sub:${subIp}`, 5, 3600).catch(() => ({ allowed: true }));
+      const subRl = await createRateLimiter(c.env.CACHE)(`digest-sub:${subIp}`, 5, 3600).catch(() => ({ allowed: true }));
       if (!subRl.allowed) {
         return c.json({ ok: false, error: 'Prea multe cereri. Incearca din nou mai tarziu.' }, 429);
       }
@@ -205,7 +205,7 @@ export class DigestUnsubscribeEndpoint extends OpenAPIRoute {
   async handle(c: Context<{ Bindings: Env }>) {
     const unsubIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
     if (c.env.CACHE) {
-      const unsubRl = await checkRateLimit(c.env.CACHE, `digest-unsub:${unsubIp}`, 5, 3600).catch(() => ({ allowed: true }));
+      const unsubRl = await createRateLimiter(c.env.CACHE)(`digest-unsub:${unsubIp}`, 5, 3600).catch(() => ({ allowed: true }));
       if (!unsubRl.allowed) {
         return c.json({ ok: false, error: 'Prea multe cereri. Incearca din nou mai tarziu.' }, 429);
       }

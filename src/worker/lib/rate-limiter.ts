@@ -67,7 +67,7 @@ export function isTestEnvironment(env?: { ENVIRONMENT?: string }): boolean {
 export function getRouteRateLimit(
   route: string,
   env?: { ENVIRONMENT?: string },
-): RouteRateLimitConfig | undefined {
+): RouteRateLimitConfig {
   const testMode = isTestEnvironment(env);
   const table = testMode ? TEST_ROUTE_RATE_LIMITS : ROUTE_RATE_LIMITS;
   return table[route] ?? ROUTE_RATE_LIMITS[route];

@@ -60,4 +60,18 @@ describe('sanityFetch', () => {
     const url: string = fetchMock.mock.calls[0][0];
     expect(url).toContain('/production');
   });
+
+  it('uses mock data when ENVIRONMENT is test, even with SANITY_PROJECT_ID set', async () => {
+    const env = { SANITY_PROJECT_ID: 'testproj', ENVIRONMENT: 'test' } as unknown as Env;
+    const result = await sanityFetch<unknown[]>(env, '*[_type == "blogPost" && category == "ghid"]', { lang: 'ro', from: 0, to: 20 });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(Array.isArray(result)).toBe(true);
+  });
+
+  it('uses mock data when SANITY_PROJECT_ID is absent regardless of ENVIRONMENT', async () => {
+    const env = { SANITY_DATASET: 'production' } as unknown as Env;
+    const result = await sanityFetch<unknown[]>(env, '*[_type == "blogPost" && category == "educatie"]', { lang: 'ro', from: 0, to: 20 });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(Array.isArray(result)).toBe(true);
+  });
 });

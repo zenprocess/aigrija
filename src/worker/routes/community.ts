@@ -75,6 +75,19 @@ community.get('/api/reports', async (c) => {
     return afterPrefix.slice(afterPrefix.indexOf(':') + 1);
   });
 
+  // Fallback: read legacy 'report-index' key for reports created before the per-key migration.
+  if (index.length === 0) {
+    const legacyRaw = await c.env.CACHE.get('report-index');
+    if (legacyRaw) {
+      try {
+        const legacyIds = JSON.parse(legacyRaw) as string[];
+        index.push(...legacyIds);
+      } catch (err) {
+        structuredLog('error', 'legacy_report_index_parse_error', { error: String(err) });
+      }
+    }
+  }
+
   const reports: CommunityReport[] = [];
   for (const id of index.slice(0, 50)) {
     const raw = await c.env.CACHE.get(`report:${id}`);

@@ -169,10 +169,11 @@ export default function ReportForm({ result }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {IDENTITY_FIELDS.map(field => (
                 <div key={field.key}>
-                  <label className="block text-xs text-gray-400 mb-1">
+                  <label htmlFor={'report-form-field-' + field.key} className="block text-xs text-gray-400 mb-1">
                     {field.label}{field.required && <span className="text-red-400 ml-1">*</span>}
                   </label>
                   <input
+                    id={'report-form-field-' + field.key}
                     data-testid={'report-form-field-' + field.key}
                     type="text"
                     value={identity[field.key]}
@@ -262,6 +263,7 @@ export default function ReportForm({ result }) {
                 readOnly
                 value={reportText}
                 rows={16}
+                aria-label={`${t('report_form.preview_title')} — ${activeType?.label}`}
                 className="w-full bg-[#0A0A0F]/90 border border-white/10 rounded-xl p-4 text-sm text-gray-300 font-mono leading-relaxed resize-y focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/30 transition-all"
               />
               <p className="text-xs text-gray-500">

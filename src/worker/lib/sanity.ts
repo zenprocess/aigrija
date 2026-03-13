@@ -24,8 +24,8 @@ export async function sanityFetch<T>(
   query: string,
   params: Record<string, string | number | boolean> = {}
 ): Promise<T> {
-  // Use mock data when Sanity is not configured (local dev / E2E without credentials)
-  if (!env.SANITY_PROJECT_ID) {
+  // Use mock data when in test environment or Sanity is not configured (local dev / E2E without credentials)
+  if (env.ENVIRONMENT === 'test' || env.ENVIRONMENT === 'dev' || !env.SANITY_PROJECT_ID) {
     return handleMockQuery<T>(query, params);
   }
 

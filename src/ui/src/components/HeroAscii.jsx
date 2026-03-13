@@ -167,7 +167,7 @@ function AsciiShield({ isMobile, t }) {
   return (
     React.createElement('div', {
       'data-testid': 'hero-ascii-shield',
-      className: 'relative flex items-center justify-center select-none',
+      className: 'relative flex items-center justify-center select-none overflow-hidden w-full',
       'aria-label': 'Scut AI-GRIJA animat',
       role: 'img',
     },

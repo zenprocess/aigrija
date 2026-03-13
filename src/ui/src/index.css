@@ -162,6 +162,18 @@ iframe {
   max-width: 100%;
 }
 
+/* glass-card: prevent overflow as flex/grid children */
+.glass-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Flex children min-width guard — flex items default to min-width:auto
+   which allows them to grow wider than their container */
+.flex > * {
+  min-width: 0;
+}
+
 /* Custom Scrollbar for dark theme */
 ::-webkit-scrollbar {
   width: 8px;

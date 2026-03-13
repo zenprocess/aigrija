@@ -31,7 +31,7 @@ function PortableTextRenderer({ body }) {
         if (block._type === 'image') {
           return (
             <figure key={idx} className="my-6">
-              <img src={block.asset?.url || block.url} alt={block.alt || ''} className="w-full rounded-xl" />
+              <img src={block.asset?.url || block.url} alt={block.alt || block.caption || ''} className="w-full rounded-xl" />
               {block.caption && <figcaption className="text-sm text-gray-500 text-center mt-2">{block.caption}</figcaption>}
             </figure>
           );

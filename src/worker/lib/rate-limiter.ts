@@ -13,6 +13,66 @@ export interface RouteRateLimitConfig {
  * Pre-defined per-route limits.
  * Callers may use these or supply their own values directly.
  */
+/**
+ * Test/dev-mode rate limit configurations.
+ * All routes get 1000 req/window to avoid test interference.
+ * Window lengths mirror production so window-expiry tests behave correctly.
+ */
+export const TEST_ROUTE_RATE_LIMITS: Record<string, RouteRateLimitConfig> = {
+  'check':       { limit: 1000, windowSeconds: 3600 },
+  'check-image': { limit: 1000, windowSeconds: 3600 },
+  'check-qr':    { limit: 1000, windowSeconds: 3600 },
+  'report':      { limit: 1000, windowSeconds: 3600 },
+  'vote':        { limit: 1000, windowSeconds: 3600 },
+  'telegram':    { limit: 1000, windowSeconds: 3600 },
+  'whatsapp':    { limit: 1000, windowSeconds: 3600 },
+  'counter':     { limit: 1000, windowSeconds: 3600 },
+  'alerts':      { limit: 1000, windowSeconds: 120 },
+  'blog':        { limit: 1000, windowSeconds: 120 },
+  'card':        { limit: 1000, windowSeconds: 120 },
+  'og':          { limit: 1000, windowSeconds: 120 },
+  'feed':        { limit: 1000, windowSeconds: 120 },
+};
+
+/**
+ * Detect whether the current execution context is a test or development environment.
+ *
+ * Checks (in order):
+ *  1. The `ENVIRONMENT` binding on the Cloudflare Workers env object.
+ *  2. `process.env.NODE_ENV` (set to 'test' by Vitest, 'development' by dev servers).
+ */
+export function isTestEnvironment(env?: { ENVIRONMENT?: string }): boolean {
+  // When an explicit ENVIRONMENT binding is provided, it is authoritative.
+  if (env !== undefined && env.ENVIRONMENT !== undefined) {
+    return env.ENVIRONMENT === 'test' || env.ENVIRONMENT === 'dev';
+  }
+  // No explicit binding — fall back to NODE_ENV (set by Vitest / dev servers).
+  try {
+    return (
+      typeof process !== 'undefined' &&
+      (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development')
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Return the rate-limit config for a named route, selecting higher limits
+ * automatically when running in a test or dev environment.
+ *
+ * @param route  Route key (e.g. 'check', 'telegram').
+ * @param env    Optional Cloudflare Workers env object with ENVIRONMENT binding.
+ */
+export function getRouteRateLimit(
+  route: string,
+  env?: { ENVIRONMENT?: string },
+): RouteRateLimitConfig {
+  const testMode = isTestEnvironment(env);
+  const table = testMode ? TEST_ROUTE_RATE_LIMITS : ROUTE_RATE_LIMITS;
+  return table[route] ?? ROUTE_RATE_LIMITS[route];
+}
+
 export const ROUTE_RATE_LIMITS: Record<string, RouteRateLimitConfig> = {
   // High-value AI endpoint — strictest limit
   'check':          { limit: 20,  windowSeconds: 3600 },
@@ -37,6 +97,20 @@ export const ROUTE_RATE_LIMITS: Record<string, RouteRateLimitConfig> = {
   // RSS feeds — crawlers hammer these; stricter
   'feed':           { limit: 30,  windowSeconds: 120 },
 };
+
+/**
+ * Factory function that binds a KV namespace to the rate-limit checker.
+ * Returns a function with the same signature as checkRateLimit minus the first argument.
+ *
+ * @param cache  KV namespace to use for storing counters.
+ */
+export function createRateLimiter(cache: KVNamespace) {
+  return (
+    identifier: string,
+    limit: number = ROUTE_RATE_LIMITS['check'].limit,
+    windowSeconds: number = ROUTE_RATE_LIMITS['check'].windowSeconds,
+  ): Promise<RateLimitResult> => checkRateLimit(cache, identifier, limit, windowSeconds);
+}
 
 export interface RateLimitResult {
   allowed: boolean;

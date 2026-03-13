@@ -1,4 +1,4 @@
-import type { Env, ReportSignal, EmergingCampaign } from './types';
+import type { ReportSignal, EmergingCampaign } from './types';
 
 const REPORT_PREFIX = 'report:';
 const CACHE_KEY = 'cache:emerging-campaigns';
@@ -8,9 +8,9 @@ const DOMAIN_THRESHOLD = 5;
 const SCAM_TYPE_THRESHOLD = 10;
 const DEDUP_TTL = 3600; // 1 hour
 
-export async function aggregateSignals(env: Env): Promise<{ emerging: EmergingCampaign[] }> {
+export async function aggregateSignals(cache: KVNamespace): Promise<{ emerging: EmergingCampaign[] }> {
   // Check cache first
-  const cached = await env.CACHE.get(CACHE_KEY);
+  const cached = await cache.get(CACHE_KEY);
   if (cached) {
     try {
       return JSON.parse(cached) as { emerging: EmergingCampaign[] };
@@ -23,7 +23,7 @@ export async function aggregateSignals(env: Env): Promise<{ emerging: EmergingCa
 
   // List all report keys — read signal data from KV metadata (zero individual gets)
   // limit: 1000 guards against unbounded list scans
-  const listResult = await env.CACHE.list({ prefix: REPORT_PREFIX, limit: 1000 });
+  const listResult = await cache.list({ prefix: REPORT_PREFIX, limit: 1000 });
   const signals: ReportSignal[] = [];
   for (const key of listResult.keys) {
     if (key.metadata) {
@@ -45,9 +45,10 @@ export async function aggregateSignals(env: Env): Promise<{ emerging: EmergingCa
       domainMap.set(signal.url_domain, existing);
     }
 
-    const existing = scamTypeMap.get(signal.scam_type) || [];
-    existing.push(signal);
-    scamTypeMap.set(signal.scam_type, existing);
+    if (!scamTypeMap.has(signal.scam_type)) {
+      scamTypeMap.set(signal.scam_type, []);
+    }
+    scamTypeMap.get(signal.scam_type)!.push(signal);
   }
 
   const emerging: EmergingCampaign[] = [];
@@ -87,7 +88,7 @@ export async function aggregateSignals(env: Env): Promise<{ emerging: EmergingCa
   }
 
   const result = { emerging };
-  await env.CACHE.put(CACHE_KEY, JSON.stringify(result), { expirationTtl: CACHE_TTL });
+  await cache.put(CACHE_KEY, JSON.stringify(result), { expirationTtl: CACHE_TTL });
 
   return result;
 }
@@ -109,7 +110,7 @@ function mostCommon(arr: string[]): string {
 }
 
 export async function storeReportSignal(
-  env: Env,
+  cache: KVNamespace,
   signal: ReportSignal,
   textHash: string,
 ): Promise<void> {
@@ -118,16 +119,16 @@ export async function storeReportSignal(
   // Dedup check: skip if same domain+scam_type+date seen within last hour
   if (signal.url_domain) {
     const dedupKey = `dedup:${signal.url_domain}:${signal.scam_type}:${date}`;
-    const existing = await env.CACHE.get(dedupKey);
+    const existing = await cache.get(dedupKey);
     if (existing) {
       return;
     }
-    await env.CACHE.put(dedupKey, '1', { expirationTtl: DEDUP_TTL });
+    await cache.put(dedupKey, '1', { expirationTtl: DEDUP_TTL });
   }
 
   const key = `${REPORT_PREFIX}${date}:${textHash}`;
   const TTL_30_DAYS = 30 * 24 * 60 * 60;
-  await env.CACHE.put(key, '', { expirationTtl: TTL_30_DAYS, metadata: signal });
+  await cache.put(key, '', { expirationTtl: TTL_30_DAYS, metadata: signal });
   // Invalidate aggregation cache so next request recomputes
-  await env.CACHE.delete(CACHE_KEY);
+  await cache.delete(CACHE_KEY);
 }

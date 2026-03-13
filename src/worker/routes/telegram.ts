@@ -1,13 +1,14 @@
 import { Hono } from 'hono';
 import { structuredLog } from '../lib/logger';
-import type { Env } from '../lib/types';
+import type { Env, ClassificationResult } from '../lib/types';
 import type { AppVariables } from '../lib/request-id';
-import { classify } from '../lib/classifier';
+import { createClassifier } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
-import { checkRateLimit } from '../lib/rate-limiter';
+import { createRateLimiter } from '../lib/rate-limiter';
 import { CAMPAIGNS } from '../data/campaigns';
 import { recordConsent, revokeConsent, updateLastActive } from '../lib/gdpr-consent';
 import { extractUrls, simpleHash, verdictEmoji, verdictLabel, formatAnalysisReply } from '../lib/bot-helpers';
+import { timingSafeEqual } from '../lib/webhook-verify';
 
 const telegram = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
@@ -167,7 +168,7 @@ telegram.post('/webhook/telegram', async (c) => {
 
   // Verify secret token
   const secret = c.req.header('x-telegram-bot-api-secret-token');
-  if (!secret || secret !== c.env.TELEGRAM_WEBHOOK_SECRET) {
+  if (!secret || !c.env.TELEGRAM_WEBHOOK_SECRET || !timingSafeEqual(secret, c.env.TELEGRAM_WEBHOOK_SECRET)) {
     return c.json({ error: { code: 'UNAUTHORIZED', message: 'Acces neautorizat. Token webhook invalid.', request_id: rid } }, 401);
   }
 
@@ -207,9 +208,9 @@ telegram.post('/webhook/telegram', async (c) => {
   if (update.inline_query) {
     const iq = update.inline_query;
     if (iq.query.length >= 3) {
-      let classification: Awaited<ReturnType<typeof classify>>;
+      let classification: ClassificationResult;
       try {
-        classification = await classify(c.env.AI, iq.query);
+        classification = await createClassifier(c.env.AI)(iq.query);
       } catch {
         await answerInlineQuery(token, iq.id, []);
         return c.json({ ok: true });
@@ -316,7 +317,7 @@ telegram.post('/webhook/telegram', async (c) => {
 
   let rlAllowed = true;
   try {
-    const rl = await checkRateLimit(c.env.CACHE, `tg:${userId}`, 50, 3600);
+    const rl = await createRateLimiter(c.env.CACHE)(`tg:${userId}`, 50, 3600);
     rlAllowed = rl.allowed;
   } catch {
     // If rate limiter unavailable, allow the request
@@ -336,9 +337,9 @@ telegram.post('/webhook/telegram', async (c) => {
   const urls = extractUrls(text);
   const firstUrl = urls[0];
 
-  let classification: Awaited<ReturnType<typeof classify>>;
+  let classification: ClassificationResult;
   try {
-    classification = await classify(c.env.AI, text, firstUrl);
+    classification = await createClassifier(c.env.AI)(text, firstUrl);
   } catch (err) {
     structuredLog('error', 'telegram_classify_error', { error: String(err), stack: err instanceof Error ? err.stack : undefined });
     await sendMessage(token, chatId, 'A aparut o eroare la analiza. Te rugam sa incerci din nou.');

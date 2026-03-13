@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { Env } from '../lib/types';
 import type { AppVariables } from '../lib/request-id';
 import { escapeHtml } from '../lib/escape-html';
-import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 
 const CardHashSchema = z.string().min(6, 'Hash prea scurt.').max(128, 'Hash prea lung.');
 
@@ -17,6 +17,12 @@ interface CardMeta {
 
 
 card.get('/card/:hash/image', async (c) => {
+  const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['card'].limit, ROUTE_RATE_LIMITS['card'].windowSeconds);
+  applyRateLimitHeaders((k, v) => c.header(k, v), rl);
+  if (!rl.allowed) {
+    return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.' } }, 429);
+  }
   const _hashResult = CardHashSchema.safeParse(c.req.param('hash'));
   if (!_hashResult.success) {
     const rid = (c.get('requestId')) || 'unknown';
@@ -33,6 +39,12 @@ card.get('/card/:hash/image', async (c) => {
 });
 
 card.get('/card/:hash', async (c) => {
+  const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['card'].limit, ROUTE_RATE_LIMITS['card'].windowSeconds);
+  applyRateLimitHeaders((k, v) => c.header(k, v), rl);
+  if (!rl.allowed) {
+    return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.' } }, 429);
+  }
   const _hashResult2 = CardHashSchema.safeParse(c.req.param('hash'));
   if (!_hashResult2.success) {
     const rid = (c.get('requestId')) || 'unknown';
@@ -66,9 +78,11 @@ card.get('/card/:hash', async (c) => {
 <title>${verdictUpper} - ai-grija.ro</title>
 </head>
 <body>
+<main>
 <h1>${verdictUpper}</h1>
 <p>Ai primit un mesaj suspect? Verifica-l pe <a href="${baseUrl}">ai-grija.ro</a>.</p>
 <p>Tip frauda: ${escapeHtml(meta.scam_type)}</p>
+</main>
 </body>
 </html>`;
 

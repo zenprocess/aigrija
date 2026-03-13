@@ -4,8 +4,8 @@ import type { Context } from 'hono';
 import type { Env } from '../lib/types';
 import type { AppVariables } from '../lib/request-id';
 import { CheckRequestSchema, MAX_TEXT_LENGTH, MAX_URL_LENGTH, formatZodError } from '../lib/schemas';
-import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
-import { classify } from '../lib/classifier';
+import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createClassifier } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
 import { matchCampaigns } from '../lib/campaign-matcher';
 import { BANK_PLAYBOOKS } from '../data/bank-playbooks';
@@ -190,7 +190,7 @@ export class CheckEndpoint extends OpenAPIRoute {
       || c.req.header('x-real-ip')
       || 'unknown';
 
-    const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['check'].limit, ROUTE_RATE_LIMITS['check'].windowSeconds);
+    const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['check'].limit, ROUTE_RATE_LIMITS['check'].windowSeconds);
     applyRateLimitHeaders((k, v) => c.header(k, v), rl);
     const { allowed, remaining, limit } = rl;
 
@@ -246,7 +246,7 @@ export class CheckEndpoint extends OpenAPIRoute {
       getFlag(c.env, 'safe_browsing_enabled', true),
     ]);
 
-    const classification = await classify(c.env.AI, body.text, body.url, { gemma_fallback_enabled: gemmaFallbackEnabled });
+    const classification = await createClassifier(c.env.AI)(body.text, body.url, { gemma_fallback_enabled: gemmaFallbackEnabled });
     const urlAnalysis = body.url
       ? await analyzeUrl(
           body.url,
@@ -303,7 +303,7 @@ export class CheckEndpoint extends OpenAPIRoute {
         confidence: classification.confidence,
         timestamp: Date.now(),
       };
-      c.executionCtx.waitUntil(storeReportSignal(c.env, signal, textHash));
+      c.executionCtx.waitUntil(storeReportSignal(c.env.CACHE, signal, textHash));
       const ipHash = await hashText(ip);
       c.executionCtx.waitUntil(
         storeCommunityReport(c.env.CACHE, rid, {

@@ -1,5 +1,5 @@
 {
-  "project_id": "zenprocess/aigrija",
+  "project_id": "aigrija",
   "visibility": "private",
   "stack": {
     "primary": "typescript",

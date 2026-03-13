@@ -27,6 +27,10 @@ export interface Env {
   /** Comma-separated list of allowed CORS origins. Falls back to hardcoded defaults if unset. */
   CORS_ORIGINS?: string;
   BUTTONDOWN_API_KEY?: string;
+  /** Set to 'test' or 'dev' to enable higher rate limits for non-production environments. */
+  ENVIRONMENT?: string;
+  /** Sentry DSN for error tracking. Leave empty to disable Sentry. */
+  SENTRY_DSN?: string;
 }
 
 /** Hono context variables set by middleware (available via c.get()). */

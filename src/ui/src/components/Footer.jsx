@@ -112,10 +112,11 @@ function TranslationReportModal({ open, onClose }) {
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">
+                <label htmlFor="translation-report-current-text" className="block text-xs font-medium text-gray-400 mb-1">
                   {t('translation_report.current_text')}
                 </label>
                 <input
+                  id="translation-report-current-text"
                   data-testid="translation-report-current-text"
                   type="text"
                   value={currentText}
@@ -125,10 +126,11 @@ function TranslationReportModal({ open, onClose }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">
+                <label htmlFor="translation-report-suggested" className="block text-xs font-medium text-gray-400 mb-1">
                   {t('translation_report.suggested')}
                 </label>
                 <input
+                  id="translation-report-suggested"
                   data-testid="translation-report-suggested"
                   type="text"
                   value={suggestedText}
@@ -138,10 +140,11 @@ function TranslationReportModal({ open, onClose }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">
+                <label htmlFor="translation-report-comment" className="block text-xs font-medium text-gray-400 mb-1">
                   {t('translation_report.comment')} <span className="text-red-400">*</span>
                 </label>
                 <textarea
+                  id="translation-report-comment"
                   data-testid="translation-report-comment"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}

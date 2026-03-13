@@ -5,7 +5,7 @@ import type { AppVariables } from '../lib/request-id';
 import { CAMPAIGNS } from '../data/campaigns';
 import { renderAlertPage, renderAlertsIndex } from '../templates/alert-page';
 import { aggregateSignals } from '../lib/campaign-aggregator';
-import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { structuredLog } from '../lib/logger';
 
 const AlertsQuerySchema = z.object({
@@ -20,7 +20,7 @@ const alerts = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 alerts.get('/api/alerts', async (c) => {
   const rid = c.get('requestId');
   const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['alerts'].limit, ROUTE_RATE_LIMITS['alerts'].windowSeconds);
+  const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['alerts'].limit, ROUTE_RATE_LIMITS['alerts'].windowSeconds);
   applyRateLimitHeaders((k, v) => c.header(k, v), rl);
   if (!rl.allowed) {
     return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.', request_id: rid } }, 429);
@@ -34,7 +34,7 @@ alerts.get('/api/alerts', async (c) => {
   // Merge community-detected emerging campaigns
   let emergingCampaigns: EmergingCampaign[] = [];
   try {
-    const { emerging } = await aggregateSignals(c.env);
+    const { emerging } = await aggregateSignals(c.env.CACHE);
     emergingCampaigns = emerging;
   } catch {
     // Aggregation failure must not break the main alerts response
@@ -58,13 +58,13 @@ alerts.get('/api/alerts', async (c) => {
 alerts.get('/api/alerts/emerging', async (c) => {
   const rid = c.get('requestId');
   const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['alerts'].limit, ROUTE_RATE_LIMITS['alerts'].windowSeconds);
+  const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['alerts'].limit, ROUTE_RATE_LIMITS['alerts'].windowSeconds);
   applyRateLimitHeaders((k, v) => c.header(k, v), rl);
   if (!rl.allowed) {
     return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.', request_id: rid } }, 429);
   }
   try {
-    const result = await aggregateSignals(c.env);
+    const result = await aggregateSignals(c.env.CACHE);
     return c.json(result);
   } catch (err) {
     structuredLog('error', '[alerts/emerging] aggregation failed', { error: String(err) });

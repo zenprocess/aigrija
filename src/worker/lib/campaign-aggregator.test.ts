@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { aggregateSignals, storeReportSignal } from './campaign-aggregator';
-import type { Env, ReportSignal } from './types';
+import type { ReportSignal } from './types';
 
 function makeKV(store: Map<string, string>, metaStore: Map<string, unknown> = new Map()) {
   return {
@@ -25,17 +25,12 @@ function makeKV(store: Map<string, string>, metaStore: Map<string, unknown> = ne
   } as unknown as KVNamespace;
 }
 
-function makeEnv(kv: KVNamespace): Env {
-  return { CACHE: kv } as unknown as Env;
-}
-
 const NOW = Date.now();
 
 describe('storeReportSignal', () => {
   it('stores signal with report: prefix', async () => {
     const store = new Map<string, string>();
     const kv = makeKV(store);
-    const env = makeEnv(kv);
     const signal: ReportSignal = {
       verdict: 'phishing',
       scam_type: 'banking',
@@ -43,7 +38,7 @@ describe('storeReportSignal', () => {
       confidence: 0.95,
       timestamp: NOW,
     };
-    await storeReportSignal(env, signal, 'abc123');
+    await storeReportSignal(kv, signal, 'abc123');
     const keys = [...store.keys()];
     expect(keys.some((k) => k.startsWith('report:'))).toBe(true);
     expect(keys.some((k) => k.endsWith(':abc123'))).toBe(true);
@@ -53,14 +48,13 @@ describe('storeReportSignal', () => {
     const store = new Map<string, string>();
     store.set('cache:emerging-campaigns', '{"emerging":[]}');
     const kv = makeKV(store);
-    const env = makeEnv(kv);
     const signal: ReportSignal = {
       verdict: 'suspicious',
       scam_type: 'delivery',
       confidence: 0.7,
       timestamp: NOW,
     };
-    await storeReportSignal(env, signal, 'xyz');
+    await storeReportSignal(kv, signal, 'xyz');
     expect(store.has('cache:emerging-campaigns')).toBe(false);
   });
 });
@@ -74,16 +68,14 @@ describe('aggregateSignals', () => {
     const store = new Map<string, string>();
     const cached = { emerging: [{ scam_type: 'test', report_count: 99, first_seen: '2026-01-01', last_seen: '2026-01-01', source: 'community', status: 'investigating' }] };
     store.set('cache:emerging-campaigns', JSON.stringify(cached));
-    const env = makeEnv(makeKV(store));
-    const result = await aggregateSignals(env);
+    const result = await aggregateSignals(makeKV(store));
     expect(result.emerging).toHaveLength(1);
     expect(result.emerging[0].scam_type).toBe('test');
   });
 
   it('returns empty when no reports', async () => {
     const store = new Map<string, string>();
-    const env = makeEnv(makeKV(store));
-    const result = await aggregateSignals(env);
+    const result = await aggregateSignals(makeKV(store));
     expect(result.emerging).toHaveLength(0);
   });
 
@@ -94,8 +86,7 @@ describe('aggregateSignals', () => {
       const signal: ReportSignal = { verdict: 'phishing', scam_type: 'banking', url_domain: domain, confidence: 0.9, timestamp: NOW - i * 1000 };
       store.set(`report:2026-01-01:hash${i}`, JSON.stringify(signal));
     }
-    const env = makeEnv(makeKV(store));
-    const result = await aggregateSignals(env);
+    const result = await aggregateSignals(makeKV(store));
     expect(result.emerging.some((e) => e.domain === domain)).toBe(true);
     expect(result.emerging.find((e) => e.domain === domain)?.report_count).toBe(6);
   });
@@ -106,8 +97,7 @@ describe('aggregateSignals', () => {
       const signal: ReportSignal = { verdict: 'phishing', scam_type: 'delivery', confidence: 0.85, timestamp: NOW - i * 1000 };
       store.set(`report:2026-01-01:hash${i}`, JSON.stringify(signal));
     }
-    const env = makeEnv(makeKV(store));
-    const result = await aggregateSignals(env);
+    const result = await aggregateSignals(makeKV(store));
     expect(result.emerging.some((e) => e.scam_type === 'delivery')).toBe(true);
   });
 
@@ -118,9 +108,21 @@ describe('aggregateSignals', () => {
       const signal: ReportSignal = { verdict: 'phishing', scam_type: 'banking', url_domain: 'old-evil.ro', confidence: 0.9, timestamp: oldTimestamp };
       store.set(`report:2026-01-01:old${i}`, JSON.stringify(signal));
     }
-    const env = makeEnv(makeKV(store));
-    const result = await aggregateSignals(env);
+    const result = await aggregateSignals(makeKV(store));
     expect(result.emerging.some((e) => e.domain === 'old-evil.ro')).toBe(false);
+  });
+
+  it('accumulates all signals per scam_type without overwriting entries', async () => {
+    const store = new Map<string, string>();
+    // 15 signals with same scam_type but unique domains — no domain cluster fires (each domain has 1 report)
+    for (let i = 0; i < 15; i++) {
+      const signal: ReportSignal = { verdict: 'phishing', scam_type: 'banking', url_domain: `bank${i}.ro`, confidence: 0.9, timestamp: NOW - i * 1000 };
+      store.set(`report:2026-01-01:acc${i}`, JSON.stringify(signal));
+    }
+    const result = await aggregateSignals(makeKV(store));
+    const campaign = result.emerging.find((e) => e.scam_type === 'banking' && !e.domain);
+    expect(campaign).toBeDefined();
+    expect(campaign?.report_count).toBe(15);
   });
 
   it('sets source and status correctly on emerging campaigns', async () => {
@@ -129,8 +131,7 @@ describe('aggregateSignals', () => {
       const signal: ReportSignal = { verdict: 'phishing', scam_type: 'banking', url_domain: 'fake.ro', confidence: 0.9, timestamp: NOW - i * 1000 };
       store.set(`report:2026-01-01:h${i}`, JSON.stringify(signal));
     }
-    const env = makeEnv(makeKV(store));
-    const result = await aggregateSignals(env);
+    const result = await aggregateSignals(makeKV(store));
     const campaign = result.emerging.find((e) => e.domain === 'fake.ro');
     expect(campaign?.source).toBe('community');
     expect(campaign?.status).toBe('investigating');
@@ -142,7 +143,6 @@ describe('storeReportSignal dedup', () => {
     const store = new Map<string, string>();
     const metaStore = new Map<string, unknown>();
     const kv = makeKV(store, metaStore);
-    const env = makeEnv(kv);
     const date = new Date(NOW).toISOString().split('T')[0];
     const dedupKey = `dedup:evil.com:banking:${date}`;
     store.set(dedupKey, '1');
@@ -154,7 +154,7 @@ describe('storeReportSignal dedup', () => {
       confidence: 0.95,
       timestamp: NOW,
     };
-    await storeReportSignal(env, signal, 'newhash');
+    await storeReportSignal(kv, signal, 'newhash');
     // Should not have stored a report key (dedup skipped it)
     const reportKeys = [...store.keys()].filter(k => k.startsWith('report:'));
     expect(reportKeys).toHaveLength(0);
@@ -163,7 +163,6 @@ describe('storeReportSignal dedup', () => {
   it('stores dedup key when no prior entry', async () => {
     const store = new Map<string, string>();
     const kv = makeKV(store);
-    const env = makeEnv(kv);
     const signal: ReportSignal = {
       verdict: 'phishing',
       scam_type: 'banking',
@@ -171,7 +170,7 @@ describe('storeReportSignal dedup', () => {
       confidence: 0.9,
       timestamp: NOW,
     };
-    await storeReportSignal(env, signal, 'hash999');
+    await storeReportSignal(kv, signal, 'hash999');
     const dedupKeys = [...store.keys()].filter(k => k.startsWith('dedup:'));
     expect(dedupKeys.length).toBeGreaterThan(0);
   });
@@ -179,14 +178,13 @@ describe('storeReportSignal dedup', () => {
   it('stores signal without dedup when no url_domain', async () => {
     const store = new Map<string, string>();
     const kv = makeKV(store);
-    const env = makeEnv(kv);
     const signal: ReportSignal = {
       verdict: 'suspicious',
       scam_type: 'lottery',
       confidence: 0.7,
       timestamp: NOW,
     };
-    await storeReportSignal(env, signal, 'hash-nodomain');
+    await storeReportSignal(kv, signal, 'hash-nodomain');
     const reportKeys = [...store.keys()].filter(k => k.startsWith('report:'));
     expect(reportKeys.length).toBeGreaterThan(0);
   });

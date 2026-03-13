@@ -6,14 +6,14 @@ const mockFetch = vi.fn().mockResolvedValue(new Response('{"messages":[{"id":"mi
 vi.stubGlobal('fetch', mockFetch);
 
 vi.mock('../lib/classifier', () => ({
-  classify: vi.fn().mockResolvedValue({
+  createClassifier: vi.fn().mockReturnValue(vi.fn().mockResolvedValue({
     verdict: 'phishing',
     confidence: 0.95,
     scam_type: 'bank_impersonation',
     red_flags: ['urgenta'],
     explanation: 'Mesaj phishing.',
     recommended_actions: ['Nu accesati linkul'],
-  }),
+  })),
 }));
 
 vi.mock('../lib/url-analyzer', () => ({

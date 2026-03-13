@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
-import type { Env } from '../lib/types';
-import { classify } from '../lib/classifier';
+import type { Env, ClassificationResult } from '../lib/types';
+import { createClassifier } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
-import { checkRateLimit } from '../lib/rate-limiter';
+import { createRateLimiter } from '../lib/rate-limiter';
 import { recordConsent, revokeConsent, updateLastActive } from '../lib/gdpr-consent';
 import { structuredLog } from '../lib/logger';
 import { timingSafeEqual } from '../lib/webhook-verify';
@@ -240,7 +240,7 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
         await recordConsent(c.env, 'wa', from);
         await updateLastActive(c.env, 'wa', from);
 
-        const rl = await checkRateLimit(c.env.CACHE, `wa:${from}`, 50, 3600);
+        const rl = await createRateLimiter(c.env.CACHE)(`wa:${from}`, 50, 3600);
         if (!rl.allowed) {
           await sendWhatsAppMessage(
             accessToken,
@@ -254,9 +254,9 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
         const urls = extractUrls(text);
         const firstUrl = urls[0];
 
-        let classification: Awaited<ReturnType<typeof classify>>;
+        let classification: ClassificationResult;
         try {
-          classification = await classify(c.env.AI, text, firstUrl);
+          classification = await createClassifier(c.env.AI)(text, firstUrl);
         } catch (err) {
           structuredLog('error', 'whatsapp_classify_error', { error: String(err) });
           await sendWhatsAppMessage(

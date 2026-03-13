@@ -1,0 +1,373 @@
+{
+  "generated_at": "2026-03-12T22:17:33Z",
+  "project_dir": "/home/vvladescu/aigrija/OUT-REPO",
+  "summary": {
+    "total_commits": 34,
+    "total_files_in_commits": 459,
+    "analysis_days": 90,
+    "max_commits": 200,
+    "max_files_cap": 100,
+    "bug_commit_count": 20,
+    "hotspot_threshold_commits": 3,
+    "co_change_threshold_commits": 2
+  },
+  "hotspots": [
+    {
+      "file": "src/worker/index.ts",
+      "commit_count": 13,
+      "change_frequency": 1,
+      "bug_correlation": 0.3846,
+      "knowledge_silo_risk": 0
+    }
+  ],
+  "co_change_pairs": [
+    {
+      "file_a": "src/worker/routes/openapi-check-image.ts",
+      "file_b": "src/worker/routes/upload.ts",
+      "co_change_count": 3,
+      "co_change_rate": 0.0882
+    },
+    {
+      "file_a": "src/ui/src/components/Footer.jsx",
+      "file_b": "src/ui/src/components/Header.jsx",
+      "co_change_count": 3,
+      "co_change_rate": 0.0882
+    },
+    {
+      "file_a": "src/ui/src/App.jsx",
+      "file_b": "src/ui/src/components/Header.jsx",
+      "co_change_count": 3,
+      "co_change_rate": 0.0882
+    },
+    {
+      "file_a": "src/ui/src/App.jsx",
+      "file_b": "src/ui/src/components/Footer.jsx",
+      "co_change_count": 3,
+      "co_change_rate": 0.0882
+    },
+    {
+      "file_a": "package-lock.json",
+      "file_b": "package.json",
+      "co_change_count": 3,
+      "co_change_rate": 0.0882
+    },
+    {
+      "file_a": "dist/index.html",
+      "file_b": "src/ui/src/components/Header.jsx",
+      "co_change_count": 3,
+      "co_change_rate": 0.0882
+    },
+    {
+      "file_a": "dist/index.html",
+      "file_b": "src/ui/src/components/Footer.jsx",
+      "co_change_count": 3,
+      "co_change_rate": 0.0882
+    },
+    {
+      "file_a": "dist/index.html",
+      "file_b": "src/ui/src/App.jsx",
+      "co_change_count": 3,
+      "co_change_rate": 0.0882
+    },
+    {
+      "file_a": "src/worker/templates/blog-page.test.ts",
+      "file_b": "src/worker/templates/blog-page.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/routes/upload.test.ts",
+      "file_b": "src/worker/routes/upload.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/routes/openapi-check-image.ts",
+      "file_b": "src/worker/routes/upload.test.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/routes/check.ts",
+      "file_b": "src/worker/routes/telegram.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/routes/alerts.ts",
+      "file_b": "src/worker/routes/telegram.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/routes/alerts.ts",
+      "file_b": "src/worker/routes/check.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/lib/rate-limiter.ts",
+      "file_b": "src/worker/routes/telegram.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/lib/rate-limiter.ts",
+      "file_b": "src/worker/routes/check.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/lib/rate-limiter.ts",
+      "file_b": "src/worker/routes/alerts.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/index.ts",
+      "file_b": "wrangler.toml",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/index.ts",
+      "file_b": "src/worker/routes/telegram.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/index.ts",
+      "file_b": "src/worker/routes/openapi-health.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/index.ts",
+      "file_b": "src/worker/routes/openapi-check-image.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/index.ts",
+      "file_b": "src/worker/routes/openapi-alerts.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/index.ts",
+      "file_b": "src/worker/routes/check.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/index.ts",
+      "file_b": "src/worker/routes/alerts.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/index.ts",
+      "file_b": "src/worker/lib/request-id.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/index.ts",
+      "file_b": "src/worker/lib/rate-limiter.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/index.test.ts",
+      "file_b": "src/worker/routes/telegram.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/index.test.ts",
+      "file_b": "src/worker/routes/check.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/index.test.ts",
+      "file_b": "src/worker/routes/alerts.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/index.test.ts",
+      "file_b": "src/worker/lib/rate-limiter.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/index.test.ts",
+      "file_b": "src/worker/index.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/admin/index.ts",
+      "file_b": "src/worker/index.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/admin/campaigns.ts",
+      "file_b": "src/worker/admin/index.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/admin/analytics.ts",
+      "file_b": "src/worker/admin/index.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/admin/analytics.ts",
+      "file_b": "src/worker/admin/campaigns.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/admin/activity.ts",
+      "file_b": "src/worker/admin/index.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/admin/activity.ts",
+      "file_b": "src/worker/admin/campaigns.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/admin/activity.ts",
+      "file_b": "src/worker/admin/analytics.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/admin/activity.test.ts",
+      "file_b": "src/worker/admin/index.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/admin/activity.test.ts",
+      "file_b": "src/worker/admin/campaigns.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/admin/activity.test.ts",
+      "file_b": "src/worker/admin/analytics.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/worker/admin/activity.test.ts",
+      "file_b": "src/worker/admin/activity.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/ui/src/components/HowItWorks.jsx",
+      "file_b": "src/ui/src/index.css",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/ui/src/components/Hero.jsx",
+      "file_b": "src/ui/src/index.css",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/ui/src/components/Header.jsx",
+      "file_b": "src/worker/index.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/ui/src/components/Header.jsx",
+      "file_b": "src/ui/src/index.css",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/ui/src/components/Header.jsx",
+      "file_b": "src/ui/src/components/Hero.jsx",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/ui/src/components/Footer.jsx",
+      "file_b": "src/worker/index.ts",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/ui/src/components/Footer.jsx",
+      "file_b": "src/ui/src/index.css",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    },
+    {
+      "file_a": "src/ui/src/components/Footer.jsx",
+      "file_b": "src/ui/src/components/Hero.jsx",
+      "co_change_count": 2,
+      "co_change_rate": 0.0588
+    }
+  ],
+  "knowledge_silos": [],
+  "shotgun_surgery": [
+    {
+      "commit": "d6c80d3bf0073702384c41ab755ca4cf68cff29b",
+      "file_count": 13,
+      "modules_touched": 3
+    },
+    {
+      "commit": "58152f7ecbdfc69b27d0bfedf3a7e6db80e76ccf",
+      "file_count": 15,
+      "modules_touched": 2
+    },
+    {
+      "commit": "c74ae731b916e3a67b45491200bf93669811a47a",
+      "file_count": 12,
+      "modules_touched": 4
+    },
+    {
+      "commit": "aedcdb16e6f5fae7c2282cef75cddf6faf48a3ad",
+      "file_count": 28,
+      "modules_touched": 6
+    },
+    {
+      "commit": "b826c54c67ef5f63cbf89c7ac1c767b5c0299a82",
+      "file_count": 25,
+      "modules_touched": 6
+    },
+    {
+      "commit": "f9d763aac2facf939422f8e72fabd68721d443de",
+      "file_count": 14,
+      "modules_touched": 2
+    },
+    {
+      "commit": "79f56266c76a7333bfcc52376117a9d094d0aed8",
+      "file_count": 94,
+      "modules_touched": 15
+    },
+    {
+      "commit": "e0719ed92444b56a096a60c40feb57016ef2542b",
+      "file_count": 17,
+      "modules_touched": 8
+    },
+    {
+      "commit": "66dd442928ae3ffb63333963623cabeec6b9b046",
+      "file_count": 21,
+      "modules_touched": 7
+    }
+  ]
+}

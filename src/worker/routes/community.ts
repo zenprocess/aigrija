@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { structuredLog } from '../lib/logger';
 import { z } from 'zod';
 import type { Env } from '../lib/types';
-import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 
 const CommunityQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional().default(1),
@@ -42,13 +42,14 @@ export async function storeCommunityReport(
     reporter_ip_hash: data.reporter_ip_hash,
   };
 
-  await cache.put(`report:${id}`, JSON.stringify(report), { expirationTtl: 60 * 60 * 24 * 30 });
+  const ttl = 60 * 60 * 24 * 30;
+  await cache.put(`report:${id}`, JSON.stringify(report), { expirationTtl: ttl });
 
-  const rawIndex = await cache.get('report-index');
-  const index: string[] = rawIndex ? JSON.parse(rawIndex) : [];
-  index.unshift(id);
-  const trimmed = index.slice(0, 500);
-  await cache.put('report-index', JSON.stringify(trimmed), { expirationTtl: 60 * 60 * 24 * 30 });
+  // Write a per-report index entry instead of a shared 'report-index' array.
+  // Reverse timestamp makes KV list() return newest entries first (lexicographic ASC = chronological DESC).
+  // This eliminates the read-modify-write race condition where concurrent writes lose each other's IDs.
+  const reverseTs = String(9999999999999 - Date.now()).padStart(13, '0');
+  await cache.put(`report-idx:${reverseTs}:${id}`, id, { expirationTtl: ttl });
 }
 
 community.get('/api/reports', async (c) => {
@@ -57,13 +58,22 @@ community.get('/api/reports', async (c) => {
   const cacheKey = 'community-reports-list';
   const cached = await c.env.CACHE.get(cacheKey);
   if (cached) {
-    c.header('X-Cache', 'HIT');
-    c.header('Cache-Control', 'public, max-age=60');
-    return c.json(JSON.parse(cached));
+    try {
+      const parsed = JSON.parse(cached);
+      c.header('X-Cache', 'HIT');
+      c.header('Cache-Control', 'public, max-age=60');
+      return c.json(parsed);
+    } catch (err) {
+      structuredLog('error', 'community_cache_parse_error', { error: String(err), key: cacheKey });
+      // fall through to fetch fresh data
+    }
   }
 
-  const rawIndex = await c.env.CACHE.get('report-index');
-  const index: string[] = rawIndex ? JSON.parse(rawIndex) : [];
+  const listed = await c.env.CACHE.list({ prefix: 'report-idx:', limit: 500 });
+  const index: string[] = listed.keys.map((k: { name: string }) => {
+    const afterPrefix = k.name.slice('report-idx:'.length);
+    return afterPrefix.slice(afterPrefix.indexOf(':') + 1);
+  });
 
   const reports: CommunityReport[] = [];
   for (const id of index.slice(0, 50)) {
@@ -94,7 +104,7 @@ community.post('/api/reports/:id/vote', async (c) => {
     c.req.header('x-real-ip') ||
     'unknown';
 
-  const voteRl = await checkRateLimit(c.env.CACHE, `vote:${ip}`, ROUTE_RATE_LIMITS['vote'].limit, ROUTE_RATE_LIMITS['vote'].windowSeconds);
+  const voteRl = await createRateLimiter(c.env.CACHE)(`vote:${ip}`, ROUTE_RATE_LIMITS['vote'].limit, ROUTE_RATE_LIMITS['vote'].windowSeconds);
   applyRateLimitHeaders((k, v) => c.header(k, v), voteRl);
 
   if (!voteRl.allowed) {

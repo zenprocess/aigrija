@@ -1,0 +1,327 @@
+{
+  "project": "aigrija",
+  "epic": "Security + E2E + Code Quality Sprint 2026-03-13",
+  "stories": [
+    {
+      "id": "S-352",
+      "title": "Fix XSS via dangerouslySetInnerHTML in ContentPost.jsx",
+      "issue": 352,
+      "assigned_agent": "react-specialist",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "ContentPost.jsx no longer uses dangerouslySetInnerHTML without sanitization",
+        "DOMPurify or @portabletext/react used for safe Sanity content rendering",
+        "Unit tests pass"
+      ],
+      "context": "CRITICAL XSS. File: src/ui/src/components/ContentPost.jsx:8,23. Two instances of dangerouslySetInnerHTML rendering CMS content. Use DOMPurify to sanitize or switch to @portabletext/react.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-12T23:35:42Z"
+    },
+    {
+      "id": "S-353",
+      "title": "Upgrade hono to >=4.12.7 (prototype pollution CVE)",
+      "issue": 353,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "hono version in package.json is >=4.12.7",
+        "pnpm install succeeds",
+        "All unit tests pass",
+        "npm audit shows no hono vulnerabilities"
+      ],
+      "context": "HIGH CVE GHSA-v8w9-8mx6-g223. Run: pnpm add hono@latest. Then run pnpm install && npx vitest run to verify.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-12T23:35:42Z"
+    },
+    {
+      "id": "S-354",
+      "title": "Telegram webhook use timing-safe comparison",
+      "issue": 354,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "telegram.ts uses timingSafeEqual for webhook secret comparison",
+        "Existing WhatsApp timingSafeEqual utility reused",
+        "Unit tests pass"
+      ],
+      "context": "File: src/worker/routes/telegram.ts:170. Replace !== with timingSafeEqual (already used in WhatsApp webhook verification). Import from existing utility.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-12T23:35:42Z"
+    },
+    {
+      "id": "S-355a",
+      "title": "CSP nonce: generate nonce and update CSP header",
+      "issue": 355,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "csp.ts generates a nonce via crypto.randomUUID() per request",
+        "CSP script-src uses nonce-<value> instead of unsafe-inline",
+        "Nonce value is passed to template rendering context",
+        "TypeScript compiles"
+      ],
+      "context": "File: src/worker/lib/csp.ts:14-21. Add nonce generation: const nonce = crypto.randomUUID(). Replace 'unsafe-inline' with 'nonce-${nonce}' in script-src. Pass nonce to c.set('cspNonce', nonce) so templates can access it. Keep unsafe-inline temporarily as fallback until S-355b completes.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T00:06:08Z"
+    },
+    {
+      "id": "S-355b",
+      "title": "CSP nonce: replace inline handlers in admin templates with nonce scripts",
+      "issue": 355,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "failed",
+      "depends_on": [
+        "S-355a"
+      ],
+      "acceptance_criteria": [
+        "No oninput/onclick inline handlers in admin templates",
+        "All inline JS moved to <script nonce=...> blocks",
+        "Admin panel weights page still functions correctly",
+        "TypeScript compiles"
+      ],
+      "context": "File: src/worker/admin/weights.ts:45. Replace oninput=\"document.querySelector(...)\" with addEventListener in a <script nonce=\"${nonce}\"> block. Access nonce from c.get('cspNonce'). Then remove 'unsafe-inline' fallback from csp.ts.",
+      "attempts": 3,
+      "last_attempt_at": "2026-03-13T00:21:15Z",
+      "last_error": "Budget exceeded ($1.00) on attempt 2 — need focused approach"
+    },
+    {
+      "id": "S-357",
+      "title": "Apply secureHeaders() globally",
+      "issue": 357,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "secureHeaders() applied via app.use('*', ...) instead of per-route",
+        "All routes return X-Content-Type-Options, X-Frame-Options headers",
+        "Unit tests pass"
+      ],
+      "context": "File: src/worker/index.ts:107-108. Move secureHeaders() from /alerte/* to global middleware.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-12T23:35:42Z"
+    },
+    {
+      "id": "S-359a",
+      "title": "Accessibility: add <main> landmarks to all React pages",
+      "issue": 359,
+      "assigned_agent": "react-specialist",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "All pages (homepage, alerte, raportare, blog, gdpr) have a <main> landmark",
+        "Each page has exactly one <h1>",
+        "Heading hierarchy is sequential (h1 > h2 > h3)"
+      ],
+      "context": "React SPA pages in src/ui/src/. Wrap page content in <main> element. Fix heading levels — ensure single h1 per page, proper h2/h3 nesting. Check App.jsx and each page component. Run npx vitest run to verify no regressions.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T00:06:08Z"
+    },
+    {
+      "id": "S-359b",
+      "title": "Accessibility: add <main> landmarks to server-rendered admin/template pages",
+      "issue": 359,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "All server-rendered pages (alerte detail, blog, admin) have <main> landmark",
+        "Heading hierarchy correct in HTML templates",
+        "All form inputs have accessible labels or aria-label",
+        "All images have alt text"
+      ],
+      "context": "Server-rendered HTML in src/worker/templates/ and src/worker/admin/. Add <main> wrapper, fix heading levels, add aria-label to form inputs (especially raportare form), add alt to <img> tags. Check e2e/accessibility-full.spec.ts for exact assertions.",
+      "attempts": 2,
+      "last_attempt_at": "2026-03-13T00:13:49Z",
+      "last_error": "TIMEOUT on attempt 0 — retrying with higher timeout"
+    },
+    {
+      "id": "S-360",
+      "title": "Fix responsive CSS overflow at all breakpoints",
+      "issue": 360,
+      "assigned_agent": "react-specialist",
+      "complexity": "medium",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "No horizontal overflow at 375px, 768px, 1024px, 1440px viewports",
+        "All pages: homepage, alerte, raportare, blog, gdpr",
+        "E2E responsive tests pass"
+      ],
+      "context": "Fixes 95 E2E responsive failures. Check e2e/responsive.spec.ts and e2e/responsive-full.spec.ts. Add overflow-x: hidden where needed, fix elements wider than viewport (tables, images, code blocks). Check src/ui/src/index.css and component styles.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-12T23:40:45Z"
+    },
+    {
+      "id": "S-361",
+      "title": "Add favicon.ico to static assets",
+      "issue": 361,
+      "assigned_agent": "react-specialist",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "GET /favicon.ico returns 200 with image content-type",
+        "E2E asset-integrity test passes"
+      ],
+      "context": "Fixes 5 E2E failures. Add a favicon.ico to src/static/ or src/ui/public/ so wrangler serves it. Check e2e/asset-integrity.spec.ts for expected behavior.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-12T23:40:45Z"
+    },
+    {
+      "id": "S-363",
+      "title": "Configure higher rate limits for test environment",
+      "issue": 363,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "Rate limiter detects test/dev environment",
+        "Higher limits applied in test mode (e.g. 1000 req/hour vs 50)",
+        "Production limits unchanged",
+        "Unit tests pass"
+      ],
+      "context": "Fixes 92 E2E failures from 429s. File: src/worker/lib/rate-limiter.ts. Check for DEV or TEST_MODE env var, or detect wrangler dev. Increase limits for non-production.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-12T23:40:45Z"
+    },
+    {
+      "id": "S-366",
+      "title": "Mock Sanity CMS API for local E2E tests",
+      "issue": 366,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "medium",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "Blog/ghid routes work in local dev without Sanity API access",
+        "Sanity mock returns realistic content structure",
+        "E2E blog tests pass locally"
+      ],
+      "context": "Fixes 79 E2E failures from Sanity DNS resolution failure. File: src/worker/lib/sanity.ts:21-53. Add SANITY_MOCK env var check — when true, return hardcoded sample content instead of fetching. Or use Playwright route interception in test setup.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-12T23:40:45Z"
+    },
+    {
+      "id": "S-364a",
+      "title": "Replace report-index array with individual KV keys per report",
+      "issue": 364,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "Each community report stored as individual KV key (e.g. report:{id})",
+        "No shared mutable report-index array in KV",
+        "Report listing uses KV list with prefix instead of reading index",
+        "Existing report data migrated or handled gracefully"
+      ],
+      "context": "File: src/worker/routes/community.ts:48. The race condition exists because multiple requests read-modify-write a shared report-index array. Fix: store each report as its own KV key with prefix 'report:'. Use c.env.CACHE.list({prefix: 'report:'}) to enumerate. This eliminates the shared mutable state entirely. Remove all JSON.parse(rawIndex) patterns.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T00:06:09Z"
+    },
+    {
+      "id": "S-364b",
+      "title": "Add unit tests for concurrent community report submissions",
+      "issue": 364,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [
+        "S-364a"
+      ],
+      "acceptance_criteria": [
+        "Unit test verifies two concurrent report submissions both persist",
+        "Unit test verifies report listing returns all submitted reports",
+        "All existing community.ts tests still pass"
+      ],
+      "context": "After S-364a changes the storage pattern, add tests that simulate concurrent writes. Use vitest with miniflare KV mock. Verify no data loss when two reports are submitted simultaneously.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T00:08:09Z"
+    },
+    {
+      "id": "S-364c",
+      "title": "Update vote endpoints to use individual KV keys",
+      "issue": 364,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [
+        "S-364a"
+      ],
+      "acceptance_criteria": [
+        "Vote up/down reads and writes individual report KV key",
+        "No shared index mutation on vote",
+        "Unit tests pass"
+      ],
+      "context": "File: src/worker/routes/community.ts. After S-364a stores reports individually, update the vote endpoints to read/write the individual report key (report:{id}) directly instead of modifying the index array. This also fixes the vote race condition.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T00:08:10Z"
+    },
+    {
+      "id": "S-365",
+      "title": "Remove unsafe type assertions in upload.ts",
+      "issue": 365,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "No 'as any' or 'as unknown' in upload.ts",
+        "Proper typed interfaces for AI API responses",
+        "TypeScript compiles without errors",
+        "Unit tests pass"
+      ],
+      "context": "File: src/worker/routes/upload.ts:87,92,167. Define AIRunResponse interface. Replace as any with proper types. Add parseInt NaN guard on line 167.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-12T23:46:11Z"
+    },
+    {
+      "id": "S-367",
+      "title": "Add error handling to JSON.parse calls in community.ts",
+      "issue": 367,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "All JSON.parse calls wrapped in try-catch",
+        "Fallback to empty defaults on parse failure",
+        "Structured error logging on parse failure",
+        "Unit tests pass"
+      ],
+      "context": "File: src/worker/routes/community.ts:48,66,73,130. Wrap each JSON.parse in try-catch with default fallback (empty array or null) and structuredLog warning.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-12T23:46:11Z"
+    },
+    {
+      "id": "S-368",
+      "title": "Fix duplicate scamTypeMap population in campaign-aggregator.ts",
+      "issue": 368,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "passed",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "scamTypeMap does not overwrite existing entries",
+        "Map.has() check before insertion or Set-based dedup",
+        "Unit tests pass"
+      ],
+      "context": "File: src/worker/lib/campaign-aggregator.ts:47. Second iteration overwrites first. Use Map.has() guard or accumulate with Set.",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-12T23:46:11Z"
+    }
+  ]
+}

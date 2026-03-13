@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from "../lib/rate-limiter";
+import {
+  createRateLimiter,
+  applyRateLimitHeaders,
+  ROUTE_RATE_LIMITS,
+  TEST_ROUTE_RATE_LIMITS,
+  isTestEnvironment,
+  getRouteRateLimit,
+} from "../lib/rate-limiter";
 
 function makeKV(): KVNamespace & { _store: Map<string, string>; _lastTtl: number | undefined } {
   const store = new Map<string, string>();
@@ -28,7 +35,8 @@ afterEach(() => {
 describe("checkRateLimit", () => {
   it("first request is allowed with remaining = limit - 1", async () => {
     const kv = makeKV();
-    const result = await checkRateLimit(kv, "127.0.0.1", 5, 3600);
+    const rl = createRateLimiter(kv);
+    const result = await rl("127.0.0.1", 5, 3600);
     expect(result.allowed).toBe(true);
     expect(result.remaining).toBe(4);
     expect(result.limit).toBe(5);
@@ -36,30 +44,33 @@ describe("checkRateLimit", () => {
 
   it("returns allowed: false when at limit", async () => {
     const kv = makeKV();
+    const rl = createRateLimiter(kv);
     for (let i = 0; i < 5; i++) {
-      await checkRateLimit(kv, "10.0.0.1", 5, 3600);
+      await rl("10.0.0.1", 5, 3600);
     }
-    const result = await checkRateLimit(kv, "10.0.0.1", 5, 3600);
+    const result = await rl("10.0.0.1", 5, 3600);
     expect(result.allowed).toBe(false);
     expect(result.remaining).toBe(0);
   });
 
   it("different IPs are tracked separately", async () => {
     const kv = makeKV();
+    const rl = createRateLimiter(kv);
     for (let i = 0; i < 5; i++) {
-      await checkRateLimit(kv, "1.1.1.1", 5, 3600);
+      await rl("1.1.1.1", 5, 3600);
     }
-    const ip1 = await checkRateLimit(kv, "1.1.1.1", 5, 3600);
-    const ip2 = await checkRateLimit(kv, "2.2.2.2", 5, 3600);
+    const ip1 = await rl("1.1.1.1", 5, 3600);
+    const ip2 = await rl("2.2.2.2", 5, 3600);
     expect(ip1.allowed).toBe(false);
     expect(ip2.allowed).toBe(true);
   });
 
   it("increments counter on each allowed request", async () => {
     const kv = makeKV();
-    const r1 = await checkRateLimit(kv, "3.3.3.3", 10, 3600);
-    const r2 = await checkRateLimit(kv, "3.3.3.3", 10, 3600);
-    const r3 = await checkRateLimit(kv, "3.3.3.3", 10, 3600);
+    const rl = createRateLimiter(kv);
+    const r1 = await rl("3.3.3.3", 10, 3600);
+    const r2 = await rl("3.3.3.3", 10, 3600);
+    const r3 = await rl("3.3.3.3", 10, 3600);
     expect(r1.remaining).toBe(9);
     expect(r2.remaining).toBe(8);
     expect(r3.remaining).toBe(7);
@@ -67,15 +78,17 @@ describe("checkRateLimit", () => {
 
   it("returns correct limit in response", async () => {
     const kv = makeKV();
-    const result = await checkRateLimit(kv, "4.4.4.4", 20, 3600);
+    const rl = createRateLimiter(kv);
+    const result = await rl("4.4.4.4", 20, 3600);
     expect(result.limit).toBe(20);
   });
 
   it("reset timestamp is at the fixed window boundary, not now + windowSeconds", async () => {
     const windowSeconds = 3600;
     const kv = makeKV();
+    const rl = createRateLimiter(kv);
     const before = Math.floor(Date.now() / 1000);
-    const result = await checkRateLimit(kv, "5.5.5.5", 10, windowSeconds);
+    const result = await rl("5.5.5.5", 10, windowSeconds);
     const after = Math.floor(Date.now() / 1000);
     // Fixed window: reset = (floor(now/window) + 1) * window
     const expectedSlotBefore = Math.floor(before / windowSeconds);
@@ -88,10 +101,11 @@ describe("checkRateLimit", () => {
 
   it("reset is set even when rate limited (allowed: false)", async () => {
     const kv = makeKV();
+    const rl = createRateLimiter(kv);
     for (let i = 0; i < 3; i++) {
-      await checkRateLimit(kv, "6.6.6.6", 3, 3600);
+      await rl("6.6.6.6", 3, 3600);
     }
-    const result = await checkRateLimit(kv, "6.6.6.6", 3, 3600);
+    const result = await rl("6.6.6.6", 3, 3600);
     expect(result.allowed).toBe(false);
     expect(result.reset).toBeGreaterThan(0);
   });
@@ -107,15 +121,16 @@ describe("checkRateLimit — fixed-window expiry", () => {
     // Window slot 0
     vi.setSystemTime(new Date(0 * windowSeconds * 1000));
     const kv = makeKV();
+    const rl = createRateLimiter(kv);
     for (let i = 0; i < 3; i++) {
-      await checkRateLimit(kv, "exp-test", 3, windowSeconds);
+      await rl("exp-test", 3, windowSeconds);
     }
-    const blocked = await checkRateLimit(kv, "exp-test", 3, windowSeconds);
+    const blocked = await rl("exp-test", 3, windowSeconds);
     expect(blocked.allowed).toBe(false);
 
     // Advance to the next window slot — old KV key is no longer used
     vi.setSystemTime(new Date(1 * windowSeconds * 1000));
-    const newWindow = await checkRateLimit(kv, "exp-test", 3, windowSeconds);
+    const newWindow = await rl("exp-test", 3, windowSeconds);
     expect(newWindow.allowed).toBe(true);
     expect(newWindow.remaining).toBe(2);
   });
@@ -128,7 +143,8 @@ describe("checkRateLimit — fixed-window expiry", () => {
     vi.setSystemTime(new Date((slotStart + 900) * 1000));
 
     const kv = makeKV();
-    await checkRateLimit(kv, "ttl-test", 10, windowSeconds);
+    const rl = createRateLimiter(kv);
+    await rl("ttl-test", 10, windowSeconds);
     // TTL should be ~2700 (remaining time), not 3600 (full window)
     expect(kv._lastTtl).toBeDefined();
     expect(kv._lastTtl!).toBeLessThanOrEqual(2700);
@@ -143,9 +159,10 @@ describe("checkRateLimit — fixed-window expiry", () => {
     vi.setSystemTime(new Date(slotStart * 1000));
 
     const kv = makeKV();
-    const r1 = await checkRateLimit(kv, "reset-check", 5, windowSeconds);
+    const rl = createRateLimiter(kv);
+    const r1 = await rl("reset-check", 5, windowSeconds);
     vi.setSystemTime(new Date((slotStart + 1800) * 1000)); // 1800 s later, still same slot
-    const r2 = await checkRateLimit(kv, "reset-check", 5, windowSeconds);
+    const r2 = await rl("reset-check", 5, windowSeconds);
 
     expect(r1.reset).toBe(r2.reset); // same window slot → same boundary
     expect(r1.reset).toBe(slotStart + windowSeconds);
@@ -153,13 +170,14 @@ describe("checkRateLimit — fixed-window expiry", () => {
 
   it("two different identifiers in the same window are independent", async () => {
     const kv = makeKV();
+    const rl = createRateLimiter(kv);
     const windowSeconds = 60;
     vi.useFakeTimers();
     vi.setSystemTime(new Date(0));
 
-    for (let i = 0; i < 3; i++) await checkRateLimit(kv, "A", 3, windowSeconds);
-    const a = await checkRateLimit(kv, "A", 3, windowSeconds);
-    const b = await checkRateLimit(kv, "B", 3, windowSeconds);
+    for (let i = 0; i < 3; i++) await rl("A", 3, windowSeconds);
+    const a = await rl("A", 3, windowSeconds);
+    const b = await rl("B", 3, windowSeconds);
     expect(a.allowed).toBe(false);
     expect(b.allowed).toBe(true);
   });
@@ -176,7 +194,8 @@ describe("checkRateLimit — KV TTL minimum", () => {
     vi.setSystemTime(new Date((slotStart + 119) * 1000));
 
     const kv = makeKV();
-    await checkRateLimit(kv, "ttl-min-test", 10, windowSeconds);
+    const rl = createRateLimiter(kv);
+    await rl("ttl-min-test", 10, windowSeconds);
     expect(kv._lastTtl).toBe(60);
   });
 
@@ -184,7 +203,8 @@ describe("checkRateLimit — KV TTL minimum", () => {
     const kv = makeKV();
     kv.get = async () => null;
     kv.put = async () => { throw new Error("KV unavailable"); };
-    const result = await checkRateLimit(kv, "kv-fail", 5, 3600);
+    const rl = createRateLimiter(kv);
+    const result = await rl("kv-fail", 5, 3600);
     expect(result.allowed).toBe(true);
     expect(result.remaining).toBe(5);
   });
@@ -192,7 +212,8 @@ describe("checkRateLimit — KV TTL minimum", () => {
   it("degrades gracefully when KV get throws", async () => {
     const kv = makeKV();
     kv.get = async () => { throw new Error("KV unavailable"); };
-    const result = await checkRateLimit(kv, "kv-fail-get", 5, 3600);
+    const rl = createRateLimiter(kv);
+    const result = await rl("kv-fail-get", 5, 3600);
     expect(result.allowed).toBe(true);
     expect(result.remaining).toBe(5);
   });
@@ -218,6 +239,97 @@ describe("ROUTE_RATE_LIMITS", () => {
 
   it("check-image has same limit as check (AI-heavy)", () => {
     expect(ROUTE_RATE_LIMITS['check-image'].limit).toBe(ROUTE_RATE_LIMITS['check'].limit);
+  });
+});
+
+// ── isTestEnvironment ────────────────────────────────────────────────────────
+
+describe("isTestEnvironment", () => {
+  it("returns true when ENVIRONMENT binding is 'test'", () => {
+    expect(isTestEnvironment({ ENVIRONMENT: 'test' })).toBe(true);
+  });
+
+  it("returns true when ENVIRONMENT binding is 'dev'", () => {
+    expect(isTestEnvironment({ ENVIRONMENT: 'dev' })).toBe(true);
+  });
+
+  it("returns false when ENVIRONMENT binding is 'production'", () => {
+    expect(isTestEnvironment({ ENVIRONMENT: 'production' })).toBe(false);
+  });
+
+  it("returns false when ENVIRONMENT binding is 'staging'", () => {
+    expect(isTestEnvironment({ ENVIRONMENT: 'staging' })).toBe(false);
+  });
+
+  it("returns true with no argument when NODE_ENV=test (Vitest context)", () => {
+    // Vitest sets NODE_ENV='test', so calling with no env should return true here.
+    expect(isTestEnvironment()).toBe(true);
+  });
+
+  it("returns false when env has no ENVIRONMENT field and NODE_ENV is production", () => {
+    const original = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      expect(isTestEnvironment({})).toBe(false);
+    } finally {
+      process.env.NODE_ENV = original;
+    }
+  });
+});
+
+// ── getRouteRateLimit ────────────────────────────────────────────────────────
+
+describe("getRouteRateLimit", () => {
+  it("returns production limits when ENVIRONMENT is 'production'", () => {
+    const cfg = getRouteRateLimit('check', { ENVIRONMENT: 'production' });
+    expect(cfg.limit).toBe(ROUTE_RATE_LIMITS['check'].limit);
+  });
+
+  it("returns test limits when ENVIRONMENT is 'test'", () => {
+    const cfg = getRouteRateLimit('check', { ENVIRONMENT: 'test' });
+    expect(cfg.limit).toBe(TEST_ROUTE_RATE_LIMITS['check'].limit);
+    expect(cfg.limit).toBeGreaterThan(ROUTE_RATE_LIMITS['check'].limit);
+  });
+
+  it("returns test limits when ENVIRONMENT is 'dev'", () => {
+    const cfg = getRouteRateLimit('telegram', { ENVIRONMENT: 'dev' });
+    expect(cfg.limit).toBe(TEST_ROUTE_RATE_LIMITS['telegram'].limit);
+  });
+
+  it("test limits are >= 1000 req/window for all routes", () => {
+    for (const [route, cfg] of Object.entries(TEST_ROUTE_RATE_LIMITS)) {
+      expect(cfg.limit, `TEST_ROUTE_RATE_LIMITS['${route}'].limit`).toBeGreaterThanOrEqual(1000);
+    }
+  });
+
+  it("production limits are not modified — check route stays at original value", () => {
+    expect(ROUTE_RATE_LIMITS['check'].limit).toBe(20);
+  });
+
+  it("production vote limit is unchanged", () => {
+    expect(ROUTE_RATE_LIMITS['vote'].limit).toBe(10);
+  });
+
+  it("test limits are strictly higher than production limits for every route", () => {
+    for (const route of Object.keys(ROUTE_RATE_LIMITS)) {
+      if (TEST_ROUTE_RATE_LIMITS[route]) {
+        expect(
+          TEST_ROUTE_RATE_LIMITS[route].limit,
+          `test limit for '${route}' should exceed prod limit`,
+        ).toBeGreaterThan(ROUTE_RATE_LIMITS[route].limit);
+      }
+    }
+  });
+
+  it("window seconds are preserved in test mode", () => {
+    expect(getRouteRateLimit('alerts', { ENVIRONMENT: 'test' }).windowSeconds).toBe(120);
+    expect(getRouteRateLimit('check', { ENVIRONMENT: 'test' }).windowSeconds).toBe(3600);
+  });
+
+  it("falls back to production config for unknown route even in test mode", () => {
+    const cfg = getRouteRateLimit('unknown-route', { ENVIRONMENT: 'test' });
+    // unknown route falls back to ROUTE_RATE_LIMITS which returns undefined → both undefined
+    expect(cfg).toBeUndefined();
   });
 });
 

@@ -74,6 +74,30 @@ describe('/api/alerts', () => {
   });
 });
 
+describe('secureHeaders global middleware', () => {
+  it('returns X-Content-Type-Options on /health', async () => {
+    const env = { CACHE: mockKV(), AI: {}, STORAGE: mockR2(), DB: mockD1(), DRAFT_QUEUE: mockQueue() };
+    const res = await app.request('/health', undefined, env);
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+  });
+
+  it('returns X-Frame-Options on /health', async () => {
+    const env = { CACHE: mockKV(), AI: {}, STORAGE: mockR2(), DB: mockD1(), DRAFT_QUEUE: mockQueue() };
+    const res = await app.request('/health', undefined, env);
+    expect(res.headers.get('X-Frame-Options')).toBe('SAMEORIGIN');
+  });
+
+  it('returns X-Content-Type-Options on /api/alerts', async () => {
+    const res = await app.request('/api/alerts');
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+  });
+
+  it('returns X-Frame-Options on /api/alerts', async () => {
+    const res = await app.request('/api/alerts');
+    expect(res.headers.get('X-Frame-Options')).toBe('SAMEORIGIN');
+  });
+});
+
 describe('/alerte/:slug', () => {
   it('returns 404 with error envelope for unknown slug', async () => {
     const env = { BASE_URL: 'https://ai-grija.ro', CACHE: mockKV() };
@@ -82,6 +106,20 @@ describe('/alerte/:slug', () => {
     const body = await res.json() as any;
     expect(body.error.code).toBe('NOT_FOUND');
     expect(body.error.request_id).toBeDefined();
+  });
+});
+
+describe('/favicon.ico', () => {
+  it('returns 200 with image/x-icon content-type', async () => {
+    const res = await app.request('/favicon.ico');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('image/x-icon');
+  });
+
+  it('returns non-empty body', async () => {
+    const res = await app.request('/favicon.ico');
+    const buf = await res.arrayBuffer();
+    expect(buf.byteLength).toBeGreaterThan(0);
   });
 });
 

@@ -16,9 +16,9 @@ import { structuredLog } from '../lib/logger';
 import { gdprAdmin } from './gdpr';
 import { flagsAdmin } from './flags';
 import { newsletterAdmin } from './newsletter';
-import { cspHtmlMiddleware, ADMIN_CSP } from '../lib/csp';
+import { cspNonceMiddleware, ADMIN_CSP, type CspVariables } from '../lib/csp';
 
-type AdminEnv = { Bindings: Env; Variables: AdminVariables };
+type AdminEnv = { Bindings: Env; Variables: AdminVariables & CspVariables };
 
 const admin = new Hono<AdminEnv>();
 
@@ -26,7 +26,7 @@ const admin = new Hono<AdminEnv>();
 admin.use('*', adminAuth);
 
 // Content-Security-Policy middleware for all admin HTML responses — shared from lib/csp
-admin.use('*', cspHtmlMiddleware(ADMIN_CSP));
+admin.use('*', cspNonceMiddleware(ADMIN_CSP));
 
 // --- Dashboard ---
 admin.get('/', (c) => {
@@ -54,7 +54,7 @@ admin.get('/', (c) => {
       <h2 class="text-gray-700 font-medium mb-2">Welcome, ${email}</h2>
       <p class="text-gray-500 text-sm">The admin panel is under construction. Use the navigation on the left to access available sections.</p>
     </div>`;
-  return c.html(adminLayout('Dashboard', content, 'dashboard', email));
+  return c.html(adminLayout('Dashboard', content, 'dashboard', email, c.get('cspNonce')));
 });
 
 // --- Generate Content API ---
@@ -173,7 +173,7 @@ admin.get('/generare-continut', async (c) => {
       </div>
     </div>
 
-    <script>
+    <script nonce="${c.get('cspNonce')}">
     document.getElementById('gen-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       const btn = document.getElementById('gen-btn');
@@ -217,7 +217,7 @@ admin.get('/generare-continut', async (c) => {
     });
     </script>`;
 
-  return c.html(adminLayout('AI Content Generation', content, 'generare-continut', email));
+  return c.html(adminLayout('AI Content Generation', content, 'generare-continut', email, c.get('cspNonce')));
 });
 
 // --- Sanity Studio SPA ---

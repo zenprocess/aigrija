@@ -24,3 +24,25 @@ build/
 coverage/
 research/
 .gitnexus/
+
+# zendev .ralph/ ephemeral artifacts
+.ralph/results/
+.ralph/telemetry/
+.ralph/status/
+.ralph/assessments/
+.ralph/wow-maturity/
+.ralph/benchmarks/
+.ralph/gepa-baseline.json
+.ralph/gepa-history.jsonl
+.ralph/dispatch-status.json
+.ralph/progress.txt
+.ralph/events.jsonl
+.ralph/memory.db
+.ralph/analysis-*.json
+.ralph/recommendations.json
+.ralph/next-actions.json
+.ralph/pr-analysis.json
+.ralph/issue-analysis.json
+.ralph/prompt-library.json
+.ralph/decisions-resolved.json
+.ralph/audit/

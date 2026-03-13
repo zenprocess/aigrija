@@ -4,7 +4,7 @@ import type { Context } from 'hono';
 import type { Env } from '../lib/types';
 import type { AppVariables } from '../lib/request-id';
 import { CAMPAIGNS } from '../data/campaigns';
-import { checkRateLimit, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { aggregateSignals } from '../lib/campaign-aggregator';
 
 const VALID_STATUSES = ['active', 'declining', 'resolved'] as const;
@@ -52,7 +52,7 @@ export class AlertsEndpoint extends OpenAPIRoute {
     const rid = c.get('requestId');
     if (c.env?.CACHE) {
       const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-      const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['alerts'].limit, ROUTE_RATE_LIMITS['alerts'].windowSeconds);
+      const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['alerts'].limit, ROUTE_RATE_LIMITS['alerts'].windowSeconds);
       applyRateLimitHeaders((k, v) => c.header(k, v), rl);
       if (!rl.allowed) {
         return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.', request_id: rid } }, 429);
@@ -122,14 +122,14 @@ export class AlertsEmergingEndpoint extends OpenAPIRoute {
     const rid = c.get('requestId');
     if (c.env?.CACHE) {
       const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-      const rl = await checkRateLimit(c.env.CACHE, ip, ROUTE_RATE_LIMITS['alerts'].limit, ROUTE_RATE_LIMITS['alerts'].windowSeconds);
+      const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['alerts'].limit, ROUTE_RATE_LIMITS['alerts'].windowSeconds);
       applyRateLimitHeaders((k, v) => c.header(k, v), rl);
       if (!rl.allowed) {
         return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.', request_id: rid } }, 429);
       }
     }
     try {
-      const result = await aggregateSignals(c.env);
+      const result = await aggregateSignals(c.env.CACHE);
       return c.json(result);
     } catch {
       return c.json({ emerging: [] });

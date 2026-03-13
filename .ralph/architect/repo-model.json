@@ -1,0 +1,324 @@
+{
+  "version": "1.0.0",
+  "project_id": "aigrija",
+  "generated_at": "2026-03-13T12:00:00Z",
+  "architecture_style": "modular-monolith",
+  "stack": {
+    "languages": [
+      "TypeScript",
+      "Python"
+    ],
+    "frameworks": [
+      "hono",
+      "chanfana",
+      "react",
+      "vite",
+      "tailwindcss",
+      "vitest",
+      "playwright"
+    ],
+    "runtime": "cloudflare-workers",
+    "package_manager": "pnpm"
+  },
+  "modules": [
+    {
+      "name": "worker-core",
+      "path": "src/worker",
+      "type": "service",
+      "cohesion_score": 0.96,
+      "description": "Cloudflare Workers entry point — Hono router, rate limiting, request handling, metrics"
+    },
+    {
+      "name": "worker-routes",
+      "path": "src/worker/routes",
+      "type": "service",
+      "cohesion_score": 0.85,
+      "description": "API route handlers — OpenAPI endpoints for check-image, alerts, health, telegram, upload"
+    },
+    {
+      "name": "worker-admin",
+      "path": "src/worker/admin",
+      "type": "service",
+      "cohesion_score": 0.91,
+      "description": "Admin panel — server-rendered HTML for campaigns, analytics, activity monitoring"
+    },
+    {
+      "name": "worker-middleware",
+      "path": "src/worker/middleware",
+      "type": "shared",
+      "cohesion_score": 0.85,
+      "description": "Hono middleware — rate limiting, request ID, response headers"
+    },
+    {
+      "name": "worker-lib",
+      "path": "src/worker/lib",
+      "type": "shared",
+      "cohesion_score": 0.85,
+      "description": "Shared utilities — rate limiter, request ID generator, response helpers"
+    },
+    {
+      "name": "worker-templates",
+      "path": "src/worker/templates",
+      "type": "shared",
+      "cohesion_score": 0.91,
+      "description": "HTML-over-the-wire templates — blog pages, admin views (server-rendered)"
+    },
+    {
+      "name": "worker-data",
+      "path": "src/worker/data",
+      "type": "shared",
+      "cohesion_score": 0.9,
+      "description": "Data layer — content data, D1 database schemas, seed data"
+    },
+    {
+      "name": "ui-frontend",
+      "path": "src/ui",
+      "type": "service",
+      "cohesion_score": 0.88,
+      "description": "React SPA frontend — landing page components (Hero, Header, Footer, HowItWorks)"
+    },
+    {
+      "name": "static-assets",
+      "path": "src/static",
+      "type": "config",
+      "cohesion_score": 0.95,
+      "description": "Static assets served via Workers asset binding"
+    },
+    {
+      "name": "e2e-tests",
+      "path": "e2e",
+      "type": "test",
+      "cohesion_score": 0.9,
+      "description": "End-to-end tests — Playwright specs, story runner, story parser"
+    },
+    {
+      "name": "scripts-tooling",
+      "path": "scripts",
+      "type": "script",
+      "cohesion_score": 1,
+      "description": "Build and ops tooling — seed content, merkle hashing, ADR indexer, RLM core"
+    },
+    {
+      "name": "infra",
+      "path": "infra",
+      "type": "config",
+      "cohesion_score": 0.95,
+      "description": "Pulumi IaC — Cloudflare Workers, D1, R2, KV, DNS infrastructure definitions"
+    }
+  ],
+  "boundaries": [
+    {
+      "from_module": "worker-core",
+      "to_module": "worker-routes",
+      "coupling_type": "import",
+      "strength": 0.8
+    },
+    {
+      "from_module": "worker-core",
+      "to_module": "worker-admin",
+      "coupling_type": "import",
+      "strength": 0.6
+    },
+    {
+      "from_module": "worker-core",
+      "to_module": "worker-middleware",
+      "coupling_type": "import",
+      "strength": 0.7
+    },
+    {
+      "from_module": "worker-core",
+      "to_module": "worker-lib",
+      "coupling_type": "import",
+      "strength": 0.7
+    },
+    {
+      "from_module": "worker-routes",
+      "to_module": "worker-lib",
+      "coupling_type": "import",
+      "strength": 0.5
+    },
+    {
+      "from_module": "worker-routes",
+      "to_module": "worker-data",
+      "coupling_type": "import",
+      "strength": 0.5
+    },
+    {
+      "from_module": "worker-admin",
+      "to_module": "worker-templates",
+      "coupling_type": "import",
+      "strength": 0.7
+    },
+    {
+      "from_module": "worker-admin",
+      "to_module": "worker-data",
+      "coupling_type": "import",
+      "strength": 0.5
+    }
+  ],
+  "execution_flows": [
+    {
+      "name": "http-request-handling",
+      "entry_point": "src/worker/index.ts#fetch",
+      "steps": [
+        "Hono router receives HTTP request via fetch handler",
+        "Rate limiter middleware checks request against limits",
+        "Request ID middleware assigns tracking ID",
+        "Route matched to handler (routes/, admin/)",
+        "Handler processes request and returns response",
+        "Response headers middleware applies security/CORS headers"
+      ],
+      "modules_involved": [
+        "worker-core",
+        "worker-middleware",
+        "worker-routes",
+        "worker-admin",
+        "worker-lib"
+      ]
+    },
+    {
+      "name": "openapi-check-image",
+      "entry_point": "src/worker/routes/openapi-check-image.ts",
+      "steps": [
+        "Request received at /api/check-image",
+        "Image validated and processed",
+        "Workers AI inference via env.AI.run()",
+        "Result returned as JSON"
+      ],
+      "modules_involved": [
+        "worker-routes",
+        "worker-lib"
+      ]
+    },
+    {
+      "name": "telegram-webhook",
+      "entry_point": "src/worker/routes/telegram.ts",
+      "steps": [
+        "Telegram webhook POST received",
+        "Message parsed and validated",
+        "Command or text processed",
+        "Response sent back to Telegram API"
+      ],
+      "modules_involved": [
+        "worker-routes",
+        "worker-lib"
+      ]
+    },
+    {
+      "name": "admin-panel-render",
+      "entry_point": "src/worker/admin/index.ts",
+      "steps": [
+        "Admin route matched",
+        "D1 database queried for data",
+        "HTML template rendered with data",
+        "Server-rendered HTML response returned"
+      ],
+      "modules_involved": [
+        "worker-admin",
+        "worker-templates",
+        "worker-data"
+      ]
+    },
+    {
+      "name": "alerts-processing",
+      "entry_point": "src/worker/routes/alerts.ts",
+      "steps": [
+        "Alert endpoint receives request",
+        "Alert data validated",
+        "Alert processed and stored",
+        "Notification dispatched"
+      ],
+      "modules_involved": [
+        "worker-routes",
+        "worker-lib",
+        "worker-data"
+      ]
+    },
+    {
+      "name": "merkle-verification",
+      "entry_point": "scripts/lib/merkle.py#main",
+      "steps": [
+        "Merkle script invoked",
+        "File hashes computed",
+        "Merkle root calculated",
+        "Root verified against stored value"
+      ],
+      "modules_involved": [
+        "scripts-tooling"
+      ]
+    },
+    {
+      "name": "rlm-repl-session",
+      "entry_point": "scripts/lib/rlm/rlm_core.py#main",
+      "steps": [
+        "RLM REPL started",
+        "CLI checks and environment setup",
+        "System message built for Romanian context",
+        "LLM sandbox session managed"
+      ],
+      "modules_involved": [
+        "scripts-tooling"
+      ]
+    }
+  ],
+  "hotspots": [
+    {
+      "file": "src/worker/index.ts",
+      "change_frequency": 1,
+      "bug_correlation": 0.38,
+      "knowledge_silo_risk": 0
+    }
+  ],
+  "discovered_dimensions": [
+    {
+      "id": "ff-discovered-observability-stack-integration",
+      "name": "Observability Stack Integration",
+      "description": "Measures whether an observability MCP is configured and actively used for runtime insight",
+      "rationale": "No observability MCP (Sentry, Datadog, etc.) installed — agents lack runtime performance context",
+      "weight": 0.09,
+      "category": "mcp-capability"
+    },
+    {
+      "id": "ff-discovered-error-handling-consistency",
+      "name": "Error Handling Consistency",
+      "description": "Fraction of source files with async operations that also have explicit error handling",
+      "rationale": "90/214 files with async ops have error handling — inconsistent coverage risks silent failures",
+      "weight": 0.15,
+      "category": "resilience"
+    },
+    {
+      "id": "ff-discovered-database-migration-discipline",
+      "name": "Database Migration Discipline",
+      "description": "Verifies migrations are sequential and include rollback scripts",
+      "rationale": "7 migration files found, 0 have rollback definitions — blocks safe production reverts",
+      "weight": 0.13,
+      "category": "data"
+    },
+    {
+      "id": "ff-discovered-authentication-layer-completeness",
+      "name": "Authentication Layer Completeness",
+      "description": "Measures whether auth is implemented as consistent middleware, not scattered checks",
+      "rationale": "33 middleware/guard definitions detected — need to verify coverage across all routes",
+      "weight": 0.18,
+      "category": "security"
+    },
+    {
+      "id": "ff-discovered-modularity-index",
+      "name": "Modularity Index",
+      "description": "Balance between DI patterns and global state usage",
+      "rationale": "Low DI pattern adoption (1/300 files) — tight coupling may resist testing and parallel dev",
+      "weight": 0.14,
+      "category": "architecture"
+    }
+  ],
+  "data_sources": {
+    "gitnexus": true,
+    "lsp": false,
+    "git_log": true,
+    "file_heuristics": false,
+    "dimensions_discovered": true
+  },
+  "locked": true,
+  "locked_by": "vvladescu",
+  "locked_at": "2026-03-12T22:26:42Z"
+}

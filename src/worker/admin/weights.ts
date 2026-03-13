@@ -1,10 +1,11 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import type { AdminVariables } from '../lib/admin-auth';
+import type { CspVariables } from '../lib/csp';
 import { adminLayout } from './layout';
 import { getWeights, saveWeights, getWeightHistory, DEFAULT_WEIGHTS, scoreUrlWithWeights, type RiskWeights } from '../lib/weights';
 
-type AdminEnv = { Bindings: Env; Variables: AdminVariables };
+type AdminEnv = { Bindings: Env; Variables: AdminVariables & Partial<CspVariables> };
 
 const WEIGHT_LABELS: Record<keyof RiskWeights, string> = {
   safeBrowsingMatch: 'Google Safe Browsing',
@@ -34,20 +35,18 @@ function weightRow(key: keyof RiskWeights, current: number, def: number): string
     <td class="py-2 px-3 text-sm text-gray-700">${WEIGHT_LABELS[key]}</td>
     <td class="py-2 px-3">
       <input type="range" name="${key}" min="0" max="1" step="0.05" value="${current}"
-             class="w-full accent-blue-600"
-             oninput="this.nextElementSibling.value=this.value">
+             class="w-full accent-blue-600 weight-range" data-key="${key}">
       <output class="text-xs text-gray-500 ml-1">${current}</output>
     </td>
     <td class="py-2 px-3 text-xs text-gray-400">${def}</td>
     <td class="py-2 px-3">
       <input type="number" name="${key}_num" min="0" max="1" step="0.05" value="${current}"
-             class="w-20 border border-gray-200 rounded px-2 py-1 text-sm text-right"
-             oninput="document.querySelector('input[name=${key}]').value=this.value;document.querySelector('input[name=${key}] + output').value=this.value">
+             class="w-20 border border-gray-200 rounded px-2 py-1 text-sm text-right weight-num" data-key="${key}">
     </td>
   </tr>`;
 }
 
-function weightsPage(weights: RiskWeights, history: { weights: RiskWeights; savedAt: string }[], email: string): string {
+function weightsPage(weights: RiskWeights, history: { weights: RiskWeights; savedAt: string }[], email: string, nonce = ''): string {
   const groups = WEIGHT_GROUPS.map(g => `
     <div class="bg-white rounded-xl border border-gray-200 p-4 mb-4">
       <h3 class="font-semibold text-gray-700 mb-3">${g.label}</h3>
@@ -73,7 +72,7 @@ function weightsPage(weights: RiskWeights, history: { weights: RiskWeights; save
       ${groups}
       <div class="flex gap-3 mb-6">
         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium">Save Weights</button>
-        <button type="button" onclick="resetDefaults()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium">Reset to Default</button>
+        <button type="button" id="weights-reset-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium">Reset to Default</button>
       </div>
       <div id="save-result"></div>
     </form>
@@ -104,7 +103,7 @@ function weightsPage(weights: RiskWeights, history: { weights: RiskWeights; save
       </table>
     </div>
 
-    <script>
+    <script nonce="${nonce}">
     function resetDefaults() {
       const defaults = ${JSON.stringify(DEFAULT_WEIGHTS)};
       for (const [k,v] of Object.entries(defaults)) {
@@ -116,20 +115,22 @@ function weightsPage(weights: RiskWeights, history: { weights: RiskWeights; save
         if (numInput) numInput.value = v;
       }
     }
+    document.getElementById('weights-reset-btn').addEventListener('click', resetDefaults);
     </script>`;
 
-  return adminLayout('Classification Weights', content, 'ponderi', email);
+  return adminLayout('Classification Weights', content, 'ponderi', email, nonce);
 }
 
 export const weightsAdmin = new Hono<AdminEnv>();
 
 weightsAdmin.get('/', async (c) => {
   const email = c.get('adminEmail');
+  const nonce = c.get('cspNonce') ?? '';
   const [weights, history] = await Promise.all([
     getWeights(c.env.CACHE),
     getWeightHistory(c.env.CACHE),
   ]);
-  return c.html(weightsPage(weights, history, email));
+  return c.html(weightsPage(weights, history, email, nonce));
 });
 
 weightsAdmin.post('/save', async (c) => {

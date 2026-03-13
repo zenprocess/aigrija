@@ -1,0 +1,23 @@
+{
+  "project": "aigrija",
+  "epic": "Maturity 79→85 Sprint — Retry Wave 2",
+  "stories": [
+    {
+      "id": "S-373c",
+      "title": "Wire DI factories into 4 route files and update 2 test mocks",
+      "issue": 373,
+      "assigned_agent": "ts-fullstack",
+      "complexity": "low",
+      "status": "pending",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "feed.ts, card.ts, upload.ts, whatsapp.ts use createRateLimiter/createClassifier instead of checkRateLimit/classify",
+        "openapi-vote.test.ts and openapi-translation-report.test.ts mock createRateLimiter instead of checkRateLimit",
+        "TypeScript compiles",
+        "All tests pass (npx vitest run)"
+      ],
+      "context": "EXACT FILES TO CHANGE (no exploration needed):\n\nFactories already exist:\n- src/worker/lib/rate-limiter.ts:107 exports createRateLimiter(cache: KVNamespace)\n- src/worker/lib/classifier.ts:136 exports createClassifier(ai: Ai)\n\nRoute files to update (4 files):\n1. src/worker/routes/feed.ts:5 — change import from checkRateLimit to createRateLimiter (keep applyRateLimitHeaders and ROUTE_RATE_LIMITS). Create limiter at handler top: const limiter = createRateLimiter(c.env.CACHE). Replace checkRateLimit(c.env.CACHE, ...) calls with limiter(...).\n2. src/worker/routes/card.ts:7 — same pattern as feed.ts.\n3. src/worker/routes/upload.ts:4-5 — imports both checkRateLimit and classify. Replace with createRateLimiter and createClassifier. Create both at handler top.\n4. src/worker/routes/whatsapp.ts:3,5 — imports classify and checkRateLimit. Replace with createClassifier and createRateLimiter.\n\nTest files to update (2 files):\n1. src/worker/routes/openapi-vote.test.ts:6,11 — change mock from checkRateLimit to createRateLimiter. Mock createRateLimiter to return a mock function.\n2. src/worker/routes/openapi-translation-report.test.ts:30,35 — same pattern.\n\nDO NOT explore or read other files. These 6 files are the COMPLETE scope. Make the changes, then run: npx vitest run.",
+      "attempts": 0
+    }
+  ]
+}

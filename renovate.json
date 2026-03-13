@@ -1,0 +1,51 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "description": "Patch updates — automerge immediately",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Minor updates — group into weekly PR",
+      "matchUpdateTypes": ["minor"],
+      "groupName": "all minor dependencies",
+      "schedule": ["before 9am on Monday"],
+      "automerge": false
+    },
+    {
+      "description": "Major updates — individual PRs, no automerge",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "rangeStrategy": "bump"
+    },
+    {
+      "description": "Cloudflare-specific deps — pin to minor range (no auto-major)",
+      "matchPackageNames": [
+        "@cloudflare/workers-types",
+        "wrangler",
+        "chanfana"
+      ],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Cloudflare-specific deps — allow minor/patch updates",
+      "matchPackageNames": [
+        "@cloudflare/workers-types",
+        "wrangler",
+        "chanfana"
+      ],
+      "matchUpdateTypes": ["minor", "patch"],
+      "rangeStrategy": "bump",
+      "automerge": false
+    }
+  ],
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 10,
+  "branchPrefix": "renovate/"
+}

@@ -1,0 +1,27 @@
+# Ephemeral — do not commit
+results/
+telemetry/
+status/
+assessments/
+wow-maturity/
+benchmarks/
+gepa-baseline.json
+gepa-history.jsonl
+dispatch-status.json
+progress.txt
+events.jsonl
+memory.db
+analysis-*.json
+recommendations.json
+next-actions.json
+pr-analysis.json
+issue-analysis.json
+prompt-library.json
+decisions-resolved.json
+audit/
+
+# Persistent — DO commit
+!profile.json
+!prd.json
+!vocabulary.json
+!knowledge/

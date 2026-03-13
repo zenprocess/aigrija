@@ -200,7 +200,7 @@ export default function Checker() {
 
             {/* Image Upload */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="image-file-input" className="block text-sm font-medium text-gray-300 mb-2">
                 {t('checker.label_image')}
               </label>
               <div
@@ -219,7 +219,7 @@ export default function Checker() {
                 />
                 {imagePreview ? (
                   <div className="flex items-center gap-4" onClick={(ev) => ev.stopPropagation()}>
-                    <img src={imagePreview} alt="Preview" loading="lazy" className="w-16 h-16 object-cover rounded-lg border border-white/10" />
+                    <img src={imagePreview} alt={imageFile?.name || 'Imagine încărcată'} loading="lazy" className="w-16 h-16 object-cover rounded-lg border border-white/10" />
                     <div className="flex-1 text-left">
                       <p className="text-sm text-gray-300 truncate">{imageFile?.name}</p>
                       <p className="text-xs text-gray-500">{(imageFile?.size / 1024).toFixed(0)} KB</p>
@@ -288,9 +288,9 @@ export default function Checker() {
             {/* Vision Analysis Card */}
             {imageAnalysis && (
               <div className="glass-card p-6 border-l-4 border-l-purple-500">
-                <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
                   <Eye className="w-5 h-5 text-purple-400" /> {t('checker.vision_title')}
-                </h3>
+                </h2>
                 <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{imageAnalysis}</p>
               </div>
             )}

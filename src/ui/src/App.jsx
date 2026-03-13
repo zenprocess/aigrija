@@ -34,9 +34,10 @@ function PageShell({ children }) {
   return (
     <ErrorBoundary>
       <div className="min-h-screen flex flex-col relative selection:bg-green-500/30 selection:text-white overflow-x-hidden">
+        <a href="#main-content" className="skip-to-content">Treci la continut principal</a>
         <div className={`fixed inset-0 bg-[url('${BG_PATTERN}')] opacity-30 pointer-events-none z-0`} />
         <Header />
-        <main className="flex-grow">
+        <main id="main-content" className="flex-grow">
           <Suspense fallback={<LoadingSkeleton />}>
             {children}
           </Suspense>
@@ -113,9 +114,8 @@ function App() {
           <Checker />
           <HowItWorks />
           <ActiveAlerts />
+          <About />
         </main>
-
-        <About />
         <Footer />
         <Suspense fallback={null}><CookieConsent /></Suspense>
       </div>

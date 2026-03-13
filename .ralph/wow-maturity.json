@@ -1,0 +1,24 @@
+{
+  "generated_at": "2026-03-13T00:00:00Z",
+  "project_id": "aigrija",
+  "overall_score": 79,
+  "dimensions": {
+    "adr_coverage": {"score": 85, "weight": 0.08},
+    "test_discipline": {"score": 75, "weight": 0.15},
+    "cicd_maturity": {"score": 80, "weight": 0.10},
+    "security_posture": {"score": 82, "weight": 0.12},
+    "code_organization": {"score": 78, "weight": 0.10},
+    "documentation_health": {"score": 80, "weight": 0.08},
+    "dependency_health": {"score": 72, "weight": 0.10},
+    "api_contract_conformance": {"score": 85, "weight": 0.10},
+    "temporal_coupling": {"score": 73, "weight": 0.07},
+    "observability_readiness": {"score": 68, "weight": 0.10}
+  },
+  "improvements": [
+    {"dimension": "observability_readiness", "suggestion": "Add APM stack (Sentry or Tail Workers) for runtime error tracking and performance monitoring"},
+    {"dimension": "dependency_health", "suggestion": "Set up Renovate/Dependabot for automated dependency updates"},
+    {"dimension": "temporal_coupling", "suggestion": "Break down shotgun-surgery commits; scope branches tighter to single modules"},
+    {"dimension": "test_discipline", "suggestion": "Raise coverage thresholds from 40% to 60% lines; introduce DI patterns"},
+    {"dimension": "code_organization", "suggestion": "Increase DI adoption to reduce tight coupling across modules"}
+  ]
+}

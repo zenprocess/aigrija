@@ -1,0 +1,428 @@
+[
+  {
+    "id": "ADR-0001",
+    "title": "Use Cloudflare Workers as runtime",
+    "status": "accepted",
+    "date": "2026-02-27",
+    "tags": [
+      "runtime",
+      "cloudflare",
+      "infrastructure"
+    ],
+    "constraints": [
+      "MUST use Cloudflare Workers for all server-side code",
+      "MUST NOT use Vercel, AWS Lambda, or other FaaS providers",
+      "MUST NOT import @vercel/* packages",
+      "MUST serve static assets via Workers [assets] binding",
+      "MUST use E2B instead of Vercel Sandbox for code execution"
+    ],
+    "scope_files": [
+      "wrangler.toml",
+      "src/**/*.ts",
+      "src/worker/index.ts"
+    ],
+    "scope_agents": [
+      "ts-fullstack",
+      "devops-cf"
+    ],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0002",
+    "title": "GitHub-Native Project Management",
+    "status": "accepted",
+    "date": "2026-02-27",
+    "tags": [
+      "project-management",
+      "github",
+      "workflow"
+    ],
+    "constraints": [
+      "MUST use GitHub Issues + Milestones + Labels for all project tracking",
+      "MUST NOT use external project management databases or services",
+      "MUST use gh CLI for all automation"
+    ],
+    "scope_files": [
+      ".github/**",
+      "scripts/setup.sh"
+    ],
+    "scope_agents": [
+      "ts-fullstack",
+      "go-backend",
+      "devops-cf"
+    ],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0003",
+    "title": "Five-Layer Secret Prevention",
+    "status": "accepted",
+    "date": "2026-02-27",
+    "tags": [
+      "security",
+      "secrets",
+      "defense-in-depth"
+    ],
+    "constraints": [
+      "MUST implement 5 independent secret prevention layers",
+      "MUST NOT hardcode secrets in source code or config files",
+      "MUST use Infisical for secret storage",
+      "MUST NOT commit .env, .dev.vars, or files containing secrets",
+      "MUST run ggshield scan before every commit"
+    ],
+    "scope_files": [
+      ".env*",
+      "*.pem",
+      "*.key",
+      ".claude/hooks/secret-scan.py",
+      ".claude/hooks/pre-push-scan.py"
+    ],
+    "scope_agents": [
+      "ts-fullstack",
+      "go-backend",
+      "devops-cf"
+    ],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0004",
+    "title": "LiteLLM + Langfuse for Observability and Multi-Model Routing",
+    "status": "proposed",
+    "date": "2026-03-03",
+    "tags": [
+      "observability",
+      "llm-routing",
+      "infrastructure",
+      "cost-tracking"
+    ],
+    "constraints": [
+      "SHOULD route agent dispatches through LiteLLM proxy when ANTHROPIC_BASE_URL is set",
+      "MUST NOT hardcode LiteLLM or Langfuse secrets in config files",
+      "SHOULD fall back to direct Anthropic API if LiteLLM is unavailable"
+    ],
+    "scope_files": [
+      "litellm/**",
+      "scripts/litellm-container.sh",
+      ".dev.vars"
+    ],
+    "scope_agents": [
+      "devops-cf"
+    ],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0005",
+    "title": "Dependency Version Policy — Latest Unless Vulnerable",
+    "status": "accepted",
+    "date": "2026-03-04",
+    "tags": [
+      "dependencies",
+      "security",
+      "ci"
+    ],
+    "constraints": [
+      "Use latest stable version of all dependencies",
+      "Pin to last-known-good version when latest has unpatched vulnerabilities",
+      "Never leave vulnerable production dependencies unaddressed"
+    ],
+    "scope_files": [],
+    "scope_agents": [],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0006",
+    "title": "QA Ownership Model — Runners in zendev, Tests in Target Repo",
+    "status": "accepted",
+    "date": "2026-03-04",
+    "tags": [
+      "qa",
+      "architecture",
+      "testing"
+    ],
+    "constraints": [
+      "Test files live in the target repo (OUT-REPO or imported repo), not in zendev",
+      "zendev owns test runners, story parser, scoring engine, and CI orchestration",
+      "Tests are project artifacts — evidence of quality that travels with the code",
+      "generate-tests.sh is idempotent — never overwrites user customizations"
+    ],
+    "scope_files": [],
+    "scope_agents": [],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0007",
+    "title": "Greptile Review Gate Discipline",
+    "status": "superseded",
+    "date": "2026-03-04",
+    "tags": [
+      "greptile",
+      "merge-gate",
+      "hooks",
+      "process",
+      "lesson-learned"
+    ],
+    "constraints": [
+      "MUST NOT merge any PR without at least one completed Greptile review",
+      "MUST treat 0 reviews as 'not yet reviewed', never as 'approved'",
+      "MUST use exact login match (== 'greptile-apps[bot]') in jq filters, not startswith or contains",
+      "MUST distinguish bot login (greptile-apps[bot]) from mention trigger (@greptile-ai)",
+      "MUST verify file contents after replace_all operations for syntax artifacts"
+    ],
+    "scope_files": [],
+    "scope_agents": [],
+    "superseded_by": "ai-review-gate.py",
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0008",
+    "title": "Three-Tier Agent Model (Opus / Sonnet / Haiku)",
+    "status": "accepted",
+    "date": "2026-02-27",
+    "tags": [
+      "agents",
+      "model-tiers",
+      "cost-optimization"
+    ],
+    "constraints": [
+      "MUST dispatch agents at the correct model tier (opus/sonnet/haiku)",
+      "MUST NOT use opus for scout tasks",
+      "MUST delegate implementation from orchestrator to implementation agents"
+    ],
+    "scope_files": [
+      ".claude/rules/agent-tiers.md",
+      ".claude/rules/orchestrator-role-lock.md"
+    ],
+    "scope_agents": [
+      "orchestrator"
+    ],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0009",
+    "title": "Compressed Agent Communication Protocol (CACP)",
+    "status": "accepted",
+    "date": "2026-02-27",
+    "tags": [
+      "agents",
+      "protocol",
+      "context-efficiency"
+    ],
+    "constraints": [
+      "MUST begin agent responses with STATUS: line",
+      "SHOULD use structured CACP fields for machine-readable output"
+    ],
+    "scope_files": [
+      ".claude/hooks/cacp-enforcement.py",
+      ".claude/rules/compressed-comms.md",
+      ".claude/rules/cacp-enforcement.md"
+    ],
+    "scope_agents": [
+      "ts-fullstack",
+      "go-backend",
+      "devops-cf",
+      "explorer",
+      "qa-specialist"
+    ],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0010",
+    "title": "Hook Architecture — Python Hooks with Exit-Code Convention",
+    "status": "accepted",
+    "date": "2026-03-04",
+    "tags": [
+      "hooks",
+      "enforcement",
+      "security",
+      "architecture"
+    ],
+    "constraints": [
+      "MUST write all hooks in Python 3",
+      "MUST use exit code 2 to block tool calls",
+      "MUST use exit code 0 for advisory/pass-through hooks"
+    ],
+    "scope_files": [
+      ".claude/hooks/*.py",
+      ".claude/settings.json"
+    ],
+    "scope_agents": [
+      "orchestrator"
+    ],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0011",
+    "title": "E2B as Sandbox Provider",
+    "status": "accepted",
+    "date": "2026-02-27",
+    "tags": [
+      "sandbox",
+      "e2b",
+      "cloudflare",
+      "infrastructure"
+    ],
+    "constraints": [
+      "MUST use E2B as the sole sandbox provider",
+      "MUST NOT set SANDBOX_PROVIDER=vercel",
+      "MUST NOT import @vercel/* packages"
+    ],
+    "scope_files": [
+      ".claude/hooks/block-vercel-imports.py"
+    ],
+    "scope_agents": [
+      "ts-fullstack",
+      "devops-cf"
+    ],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0014",
+    "title": "CI-Only Deployments",
+    "status": "accepted",
+    "date": "2026-03-04",
+    "tags": [
+      "deployment",
+      "ci-cd",
+      "cloudflare",
+      "security"
+    ],
+    "constraints": [
+      "MUST deploy only through CI/CD pipeline (GitHub Actions)",
+      "MUST NOT run wrangler deploy from local machines in agent sessions"
+    ],
+    "scope_files": [
+      ".claude/hooks/block-local-deploy.py",
+      ".github/workflows/*.yml"
+    ],
+    "scope_agents": [
+      "devops-cf"
+    ],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0015",
+    "title": "File-Based Event-Driven Ralph Architecture",
+    "status": "accepted",
+    "date": "2026-03-04",
+    "tags": [
+      "ralph",
+      "durability",
+      "event-sourcing"
+    ],
+    "constraints": [],
+    "scope_files": [],
+    "scope_agents": [],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0016",
+    "title": "ADR-0016: External Merkle Root Anchoring via Git Tags",
+    "status": "",
+    "date": "",
+    "tags": [],
+    "constraints": [],
+    "scope_files": [],
+    "scope_agents": [],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0017",
+    "title": "Dispatch Modernization to Native CLI Primitives",
+    "status": "accepted",
+    "date": "2026-03-09",
+    "tags": [
+      "dispatch",
+      "ralph",
+      "cli",
+      "cost-governance",
+      "telemetry"
+    ],
+    "constraints": [
+      "MUST use --output-format json for all headless dispatch",
+      "MUST read model, effort, and budget from agent-tier-config.json",
+      "MUST NOT parse agent output with regex — use jq on JSON envelope"
+    ],
+    "scope_files": [
+      "scripts/ralph/dispatch.sh",
+      ".claude/data/agent-tier-config.json",
+      "scripts/lib/dispatch-telemetry.sh"
+    ],
+    "scope_agents": [
+      "orchestrator"
+    ],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0018",
+    "title": "Knowledge Graph Extension — ADR Nodes in KuzuDB",
+    "status": "accepted",
+    "date": "2026-03-09",
+    "tags": [
+      "architecture",
+      "knowledge-graph",
+      "adr",
+      "kuzu",
+      "gitnexus"
+    ],
+    "constraints": [
+      "MUST extend existing KuzuDB graph, not add a new database",
+      "MUST maintain JSON fallback for KuzuDB incompatibility",
+      "MUST NOT require Docker or external services",
+      "MUST handle heterogeneous ADR formats (rich and simple frontmatter)",
+      "MUST NOT touch Prophet_Trader's Qdrant or zendev-full infrastructure"
+    ],
+    "scope_files": [
+      "scripts/lib/adr-parser.sh",
+      "scripts/lib/kuzu-adr-ingest.mjs",
+      "scripts/steps/13-adr-ingestion.sh"
+    ],
+    "scope_agents": [
+      "ts-fullstack"
+    ],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  },
+  {
+    "id": "ADR-0019",
+    "title": "ADR-0019: Daemon Precondition Gates — Architect-First, ADR-Gated Dispatch",
+    "status": "",
+    "date": "",
+    "tags": [],
+    "constraints": [],
+    "scope_files": [],
+    "scope_agents": [],
+    "superseded_by": null,
+    "deciders": [],
+    "source_repo": "target"
+  }
+]

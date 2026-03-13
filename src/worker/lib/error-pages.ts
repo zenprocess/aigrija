@@ -64,15 +64,15 @@ p{color:#94a3b8;line-height:1.6;margin-bottom:1rem}
 </style>
 </head>
 <body>
-<div class="c">
-<div class="av">${avatarSvg}</div>
+<main class="c">
+<div class="av" aria-hidden="true">${avatarSvg}</div>
 <div class="sc">${status}</div>
 <h1>${def.title}</h1>
 <p>${def.subtitle}</p>
 ${homeLink}
 ${retryHint}
 <div class="rid">ID cerere: ${requestId}</div>
-</div>
+</main>
 </body>
 </html>`;
 }

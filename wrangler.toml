@@ -1,6 +1,7 @@
 name = "ai-grija-ro"
 main = "src/worker/index.ts"
 compatibility_date = "2026-03-01"
+compatibility_flags = ["nodejs_compat"]
 
 routes = [
   { pattern = "ai-grija.ro/*", zone_name = "ai-grija.ro" },

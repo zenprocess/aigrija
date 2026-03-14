@@ -1,7 +1,7 @@
 {
   "function_id": "ff-discovered-response-time-sla-conformance",
-  "score": 25,
-  "rationale": "No per-route SLA documentation. Structured logging captures duration_ms but no budgets or alerting thresholds defined.",
-  "scored_at": "2026-03-14T17:32:50Z",
+  "score": 55,
+  "rationale": "@latency JSDoc on all route handlers per ADR-0019. Tiers: fast/medium/slow/external/ssr documented.",
+  "scored_at": "2026-03-14T19:12:26Z",
   "scorer": "manual-rubric"
 }

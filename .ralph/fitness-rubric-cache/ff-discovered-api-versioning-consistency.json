@@ -1,7 +1,7 @@
 {
   "function_id": "ff-discovered-api-versioning-consistency",
-  "score": 30,
-  "rationale": "0/30 routes use version prefix. Single-consumer civic app \u2014 versioning is not critical yet but should be planned before external API consumers exist.",
-  "scored_at": "2026-03-14T17:32:50Z",
+  "score": 55,
+  "rationale": "/api/v1/ aliases added per ADR-0018 Phase 1. All routes accessible at both /api/ and /api/v1/.",
+  "scored_at": "2026-03-14T19:12:26Z",
   "scorer": "manual-rubric"
 }

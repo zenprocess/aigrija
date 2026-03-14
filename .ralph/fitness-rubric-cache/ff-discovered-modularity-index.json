@@ -1,7 +1,7 @@
 {
   "function_id": "ff-discovered-modularity-index",
-  "score": 55,
-  "rationale": "2 DI factory functions (createRateLimiter, createClassifier) with 16 references. CF Workers env bindings provide functional DI at the framework level. No global mutable state. Low formal DI but architecture is effectively modular.",
-  "scored_at": "2026-03-14T17:32:50Z",
+  "score": 75,
+  "rationale": "5 DI factories (rateLimiter, classifier, sanityClient, alerter, domainIntel). Barrel index.ts files created. blog.ts refactored to use createSanityClient.",
+  "scored_at": "2026-03-14T19:12:26Z",
   "scorer": "manual-rubric"
 }

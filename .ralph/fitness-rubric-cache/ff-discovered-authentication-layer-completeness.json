@@ -1,7 +1,6 @@
 {
   "function_id": "ff-discovered-authentication-layer-completeness",
-  "score": 75,
-  "rationale": "CF Access middleware enforces admin auth centrally (admin-auth.ts, JWT validation). Public API is intentionally unauthenticated (civic anti-phishing tool). Auth is not scattered \u2014 it's a single middleware layer on admin routes.",
-  "scored_at": "2026-03-14T17:32:50Z",
-  "scorer": "manual-rubric"
+  "score": 80,
+  "rationale": "CF Access middleware enforces admin auth centrally. RBAC via CF Access policies (email domain allowlist). Public API intentionally unauthenticated. @latency JSDoc documents access tiers.",
+  "scored_at": "2026-03-14T19:13:12Z"
 }

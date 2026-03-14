@@ -67,7 +67,7 @@
       "description": "Two small tasks: (1) Add /** @latency <tier> (<budget>) */ JSDoc to each route handler in registry.ts. Tiers per ADR-0019: fast=50ms (health, counter, feed, badges, stats), medium=200ms (reports, vote, newsletter, digest), slow=5000ms (check, check-image, check-qr), external=10000ms (telegram, whatsapp), ssr=500ms (blog, alerts, og, card). (2) Grep for direct sanityFetch/sendAlert/analyzeDomain calls that should use createSanityClient/createAlerter/createDomainIntel factories instead. Update them.",
       "assigned_agent": "ts-fullstack",
       "priority": 1,
-      "status": "passed",
+      "status": "failed",
       "depends_on": [],
       "complexity": "low",
       "acceptance_criteria": [
@@ -77,10 +77,9 @@
         "npx vitest run passes"
       ],
       "test_spec": null,
-      "started_at": "2026-03-14T19:04:43Z",
-      "attempts": 2,
-      "last_attempt_at": "2026-03-14T19:11:37Z",
-      "last_error": "TIMEOUT — agent did not complete within 300s. Retry with longer timeout."
+      "started_at": "2026-03-14T18:58:48Z",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-14T19:03:52Z"
     }
   ]
 }

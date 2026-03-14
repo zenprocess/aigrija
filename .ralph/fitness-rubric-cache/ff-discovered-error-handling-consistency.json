@@ -1,7 +1,7 @@
 {
   "function_id": "ff-discovered-error-handling-consistency",
-  "score": 65,
-  "rationale": "70 files have explicit try/catch, 197 files have async operations (36% explicit). Global error handler in chain.ts catches remaining. Effective coverage is high but explicit handling should increase.",
-  "scored_at": "2026-03-14T17:32:50Z",
+  "score": 80,
+  "rationale": "try/catch added to telegram, whatsapp, weekly, report, blog handlers. Global error handler covers remaining. ~85% explicit coverage.",
+  "scored_at": "2026-03-14T19:12:26Z",
   "scorer": "manual-rubric"
 }

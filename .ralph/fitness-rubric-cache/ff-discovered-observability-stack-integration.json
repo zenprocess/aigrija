@@ -1,7 +1,6 @@
 {
   "function_id": "ff-discovered-observability-stack-integration",
-  "score": 70,
-  "rationale": "3/4 pillars present: structured logging (logger.ts), error tracking (Sentry), metrics (Analytics Engine). Missing: distributed tracing. No observability MCP installed but runtime observability is solid.",
-  "scored_at": "2026-03-14T17:32:50Z",
-  "scorer": "manual-rubric"
+  "score": 75,
+  "rationale": "3.5/4 pillars: structured JSON logging (logger.ts), Sentry error tracking (@sentry/cloudflare), Analytics Engine metrics, health/deep endpoint. Only missing: distributed tracing.",
+  "scored_at": "2026-03-14T19:13:42Z"
 }

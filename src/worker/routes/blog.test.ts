@@ -29,9 +29,13 @@ function makeRequest(path: string, method = 'GET', body?: string) {
   return new Request(`https://ai-grija.ro${path}`, init);
 }
 
-vi.mock('../lib/sanity', () => ({
-  sanityFetch: vi.fn(),
-}));
+vi.mock('../lib/sanity', () => {
+  const sf = vi.fn();
+  return {
+    sanityFetch: sf,
+    createSanityClient: vi.fn((_env: unknown) => sf),
+  };
+});
 
 import { sanityFetch } from '../lib/sanity';
 const mockSanityFetch = vi.mocked(sanityFetch);
@@ -130,7 +134,6 @@ describe('language filtering', () => {
     const env = makeEnv();
     await blog.fetch(makeRequest('/ghid?lang=en'), env);
     expect(mockSanityFetch).toHaveBeenCalledWith(
-      expect.anything(),
       expect.any(String),
       expect.objectContaining({ lang: 'en' }),
     );
@@ -141,7 +144,6 @@ describe('language filtering', () => {
     const env = makeEnv();
     await blog.fetch(makeRequest('/ghid'), env);
     expect(mockSanityFetch).toHaveBeenCalledWith(
-      expect.anything(),
       expect.any(String),
       expect.objectContaining({ lang: 'ro' }),
     );

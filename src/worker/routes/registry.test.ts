@@ -152,6 +152,29 @@ describe('registerRoutes', () => {
     expect(res.status).toBe(404);
   });
 
+  it('/api/v1/health returns same status and body as /api/health (v1 alias)', async () => {
+    const app = buildApp();
+    const env = makeEnv();
+    const ctx = makeCtx();
+    const v1Res = await app.fetch(new Request('http://localhost/api/v1/health'), env, ctx);
+    const baseRes = await app.fetch(new Request('http://localhost/api/health'), env, ctx);
+    expect(v1Res.status).toBe(200);
+    expect(v1Res.status).toBe(baseRes.status);
+    const v1Body = await v1Res.json() as any;
+    const baseBody = await baseRes.json() as any;
+    expect(v1Body.status).toBe(baseBody.status);
+  });
+
+  it('/api/v1/alerts returns same status as /api/alerts (v1 alias)', async () => {
+    const app = buildApp();
+    const env = makeEnv();
+    const ctx = makeCtx();
+    const v1Res = await app.fetch(new Request('http://localhost/api/v1/alerts'), env, ctx);
+    const baseRes = await app.fetch(new Request('http://localhost/api/alerts'), env, ctx);
+    expect(v1Res.status).toBe(200);
+    expect(v1Res.status).toBe(baseRes.status);
+  });
+
   it('registers /api/health/metrics endpoint that returns 200', async () => {
     const app = buildApp();
     const res = await app.fetch(

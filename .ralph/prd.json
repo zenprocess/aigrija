@@ -1,76 +1,393 @@
 {
-  "project": "aigrija",
-  "epic": "Quality Sprint — A11y, Responsive, Testing",
+  "project_id": "aigrija",
+  "version": "1.0.0",
+  "branch_name": "ralph/readiness-sprint",
   "stories": [
     {
-      "id": "S-359",
-      "title": "Fix accessibility: heading hierarchy, form labels, image alt text",
-      "issue": 359,
-      "assigned_agent": "react-specialist",
-      "complexity": "medium",
-      "status": "passed",
-      "depends_on": [],
-      "acceptance_criteria": [
-        "Single h1 per page, proper h2-h6 nesting in all components",
-        "All form inputs have associated <label> or aria-label",
-        "All <img> elements have alt text",
-        "TypeScript compiles and all tests pass"
-      ],
-      "context": "The <main> landmark and skip-to-content link are ALREADY in App.jsx (lines 37-40, 107-112). Focus on:\n1. Heading hierarchy: check Hero.jsx, About.jsx, HowItWorks.jsx, Checker.jsx for multiple h1s. Only Hero should have h1, others should use h2+.\n2. Form labels: Checker.jsx has a textarea/input — ensure aria-label or <label htmlFor=...>.\n3. Image alt: check all <img> tags across components.\nAll UI files are in src/ui/src/components/. Run: npx vitest run after changes.",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-13T09:19:47Z"
-    },
-    {
-      "id": "S-360",
-      "title": "Fix responsive CSS overflow at mobile/tablet/desktop",
-      "issue": 360,
-      "assigned_agent": "react-specialist",
-      "complexity": "medium",
-      "status": "passed",
-      "depends_on": [],
-      "acceptance_criteria": [
-        "No horizontal overflow at 375px, 768px, 1024px, 1440px viewports",
-        "All content fits within viewport width on all pages",
-        "TypeScript compiles and all tests pass"
-      ],
-      "context": "App.jsx already has overflow-x-hidden on the container (line 36, 106). Focus on:\n1. Check src/ui/src/index.css for any elements wider than viewport (tables, pre, code blocks).\n2. Check components that render dynamic content: ContentPost.jsx, ContentList.jsx, Checker.jsx.\n3. Add max-w-full, overflow-x-auto to elements that might overflow (tables, code blocks, images).\n4. Ensure responsive Tailwind classes exist on all layout containers.\nAll UI files are in src/ui/src/. Run: npx vitest run after changes.",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-13T09:19:47Z"
-    },
-    {
-      "id": "S-366",
-      "title": "Add Sanity CMS mock for test environment",
-      "issue": 366,
+      "id": "S-381",
+      "title": "Fix XSS in admin severityBadge and statusPill",
+      "description": "Wrap raw string parameters in escapeHtml() in src/worker/admin/campaigns.ts severityBadge() and statusPill() functions. Import escapeHtml from ../lib/escape-html. GitHub issue #381.",
       "assigned_agent": "ts-fullstack",
-      "complexity": "medium",
+      "priority": 1,
       "status": "passed",
       "depends_on": [],
+      "complexity": "low",
+      "github_issue": 381,
       "acceptance_criteria": [
-        "Sanity API calls return mock data when ENVIRONMENT=test or NODE_ENV=test",
-        "Blog, ghid, educatie routes return valid responses in test env",
-        "Mock data is realistic (Romanian content, proper schema)",
+        "severityBadge() wraps s parameter with escapeHtml()",
+        "statusPill() wraps s parameter with escapeHtml()",
+        "Existing campaigns.test.ts passes",
+        "New test: badge with <script> tag renders escaped HTML"
+      ],
+      "test_spec": {
+        "unit": [
+          "severityBadge escapes HTML entities in severity string",
+          "statusPill escapes HTML entities in status string"
+        ],
+        "integration": [],
+        "e2e": [],
+        "wcag": [],
+        "coverage_target": 80
+      },
+      "started_at": "2026-03-13T20:34:55Z",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T20:39:58Z"
+    },
+    {
+      "id": "S-382a",
+      "title": "Add rate limit configs for unprotected POST routes",
+      "description": "Add route configs to ROUTE_RATE_LIMITS in src/worker/lib/rate-limiter.ts for: check, check-image, check-qr, quiz-check, reports-vote, digest-subscribe, newsletter-subscribe, translation-report. GitHub issue #382 (part 1 of 2).",
+      "assigned_agent": "ts-fullstack",
+      "priority": 1,
+      "status": "passed",
+      "depends_on": [],
+      "complexity": "low",
+      "github_issue": 382,
+      "acceptance_criteria": [
+        "ROUTE_RATE_LIMITS has entries for all 8 new routes",
+        "TEST_ROUTE_RATE_LIMITS has corresponding test entries",
+        "Existing rate-limiter.test.ts passes",
+        "New tests verify getRouteRateLimit returns config for each new route"
+      ],
+      "test_spec": {
+        "unit": [
+          "getRouteRateLimit returns config for check route",
+          "getRouteRateLimit returns test limits for check in test env"
+        ],
+        "integration": [],
+        "e2e": [],
+        "wcag": [],
+        "coverage_target": 80
+      },
+      "started_at": "2026-03-13T20:34:55Z",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T20:39:58Z"
+    },
+    {
+      "id": "S-382b1",
+      "title": "Wire rate limiting into check, check-image, check-qr, quiz routes",
+      "description": "Wire getRouteRateLimit + createRateLimiter into 4 POST handlers: openapi-check.ts, openapi-check-image.ts, openapi-check-qr.ts, openapi-quiz.ts. Follow EXACT pattern from feed.ts lines 33-39: import {createRateLimiter, applyRateLimitHeaders, getRouteRateLimit, ROUTE_RATE_LIMITS}, get IP, call getRouteRateLimit(routeName, c.env) ?? ROUTE_RATE_LIMITS[routeName], createRateLimiter(c.env.CACHE)(ip, limits.limit, limits.windowSeconds), applyRateLimitHeaders, check .allowed. GitHub #382.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 1,
+      "status": "passed",
+      "depends_on": [
+        "S-382a"
+      ],
+      "complexity": "low",
+      "github_issue": 382,
+      "acceptance_criteria": [
+        "4 route handlers import and call createRateLimiter + getRouteRateLimit",
+        "Rate limit headers applied",
+        "npx tsc --noEmit passes",
+        "npx vitest run passes"
+      ],
+      "test_spec": null,
+      "started_at": "2026-03-13T21:26:13Z",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T21:31:00Z"
+    },
+    {
+      "id": "S-382b2",
+      "title": "Wire rate limiting into reports, digest, newsletter, translation-report routes",
+      "description": "Wire getRouteRateLimit + createRateLimiter into 4 POST handlers: openapi-reports.ts (vote endpoint), openapi-digest.ts (subscribe), openapi-newsletter.ts (subscribe), openapi-translation-report.ts. Follow EXACT pattern from feed.ts lines 33-39. GitHub #382.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 1,
+      "status": "passed",
+      "depends_on": [
+        "S-382a"
+      ],
+      "complexity": "low",
+      "github_issue": 382,
+      "acceptance_criteria": [
+        "4 route handlers import and call createRateLimiter + getRouteRateLimit",
+        "Rate limit headers applied",
+        "npx tsc --noEmit passes",
+        "npx vitest run passes"
+      ],
+      "test_spec": null,
+      "started_at": "2026-03-13T21:26:13Z",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T21:31:00Z"
+    },
+    {
+      "id": "S-383",
+      "title": "Sanitize campaign content before AI.run() prompt",
+      "description": "Add input sanitization in src/worker/lib/draft-generator.ts before passing campaign data to env.AI.run(). Strip control characters, limit content length, escape prompt-injection sequences. GitHub issue #383.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 1,
+      "status": "passed",
+      "depends_on": [],
+      "complexity": "medium",
+      "github_issue": 383,
+      "acceptance_criteria": [
+        "Campaign content sanitized before prompt construction",
+        "Control characters stripped",
+        "Content truncated to safe length",
+        "Test: prompt injection payload is neutralized"
+      ],
+      "test_spec": {
+        "unit": [
+          "sanitizePromptInput strips control characters",
+          "sanitizePromptInput truncates to max length",
+          "draft generator sanitizes campaign text before AI.run()"
+        ],
+        "integration": [],
+        "e2e": [],
+        "wcag": [],
+        "coverage_target": 80
+      },
+      "started_at": "2026-03-13T20:34:55Z",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T20:39:58Z"
+    },
+    {
+      "id": "S-384a",
+      "title": "Add tests for openapi-admin, openapi-webhooks, openapi-reports",
+      "description": "Create test files for 3 highest-priority untested route files: openapi-admin.ts (489 LOC), openapi-webhooks.ts (248 LOC), openapi-reports.ts. GitHub issue #384 (batch 1).",
+      "assigned_agent": "ts-fullstack",
+      "priority": 2,
+      "status": "passed",
+      "depends_on": [],
+      "complexity": "medium",
+      "github_issue": 384,
+      "acceptance_criteria": [
+        "openapi-admin.test.ts exists with >=5 tests",
+        "openapi-webhooks.test.ts exists with >=3 tests",
+        "openapi-reports.test.ts exists with >=3 tests",
+        "All new tests pass"
+      ],
+      "test_spec": null,
+      "started_at": "2026-03-13T20:34:55Z",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T20:39:58Z"
+    },
+    {
+      "id": "S-384b",
+      "title": "Add tests for remaining 8 untested route files",
+      "description": "Create test files for: openapi-digest.ts, openapi-metrics.ts, openapi-newsletter.ts, openapi-quiz.ts, openapi-check-qr.ts, openapi-check-image.ts, openapi-share.ts, registry.ts. GitHub issue #384 (batch 2).",
+      "assigned_agent": "ts-fullstack",
+      "priority": 2,
+      "status": "passed",
+      "depends_on": [
+        "S-384a"
+      ],
+      "complexity": "medium",
+      "github_issue": 384,
+      "acceptance_criteria": [
+        "8 new test files created with >=2 tests each",
+        "All tests pass",
+        "npx vitest run shows 0 failures"
+      ],
+      "test_spec": null,
+      "started_at": "2026-03-13T21:13:02Z",
+      "attempts": 2,
+      "last_attempt_at": "2026-03-13T20:45:04Z"
+    },
+    {
+      "id": "S-385",
+      "title": "Pass CSP nonce to all admin layout calls",
+      "description": "Add c.get('cspNonce') to all adminLayout() calls in campaigns.ts (5), drafts.ts (2), newsletter.ts (3), translation-reports.ts (1), translations.ts (1). GitHub issue #385.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 2,
+      "status": "passed",
+      "depends_on": [],
+      "complexity": "low",
+      "github_issue": 385,
+      "acceptance_criteria": [
+        "All 12 adminLayout() calls pass nonce parameter",
+        "npx tsc --noEmit passes",
+        "Existing admin tests pass"
+      ],
+      "test_spec": {
+        "unit": [
+          "admin campaign page includes nonce in script tags"
+        ],
+        "integration": [],
+        "e2e": [],
+        "wcag": [],
+        "coverage_target": 80
+      },
+      "started_at": "2026-03-13T20:39:59Z",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T20:45:04Z"
+    },
+    {
+      "id": "S-386",
+      "title": "Add tests for fetch handler hostname routing",
+      "description": "Test index.ts fetch handler: CDN/admin/main host routing, pathname rewriting, case normalization. GitHub issue #386. HOTSPOT: src/worker/index.ts — change_freq: 1.0, bug_corr: 0.43.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 2,
+      "status": "passed",
+      "depends_on": [],
+      "complexity": "medium",
+      "github_issue": 386,
+      "acceptance_criteria": [
+        "Tests for CDN, admin, main host routing",
+        "Host comparison normalized to lowercase",
+        "Hotspot file src/worker/index.ts regression risk assessed"
+      ],
+      "test_spec": {
+        "unit": [
+          "fetch routes cdn host to CDN app",
+          "fetch routes admin host to admin app",
+          "fetch strips /admin prefix",
+          "fetch normalizes hostname case"
+        ],
+        "integration": [],
+        "e2e": [],
+        "wcag": [],
+        "coverage_target": 90
+      },
+      "started_at": "2026-03-13T20:39:59Z",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T20:45:04Z"
+    },
+    {
+      "id": "S-387",
+      "title": "Add tests for middleware chain.ts",
+      "description": "Test applyMiddleware(): request ID, logging, error handler (HTML/JSON), CSP routing. GitHub issue #387.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 2,
+      "status": "passed",
+      "depends_on": [],
+      "complexity": "low",
+      "github_issue": 387,
+      "acceptance_criteria": [
+        "chain.test.ts with >=5 tests",
+        "Error handler tested for HTML and JSON",
         "All tests pass"
       ],
-      "context": "src/worker/lib/sanity.ts makes HTTP calls to apicdn.sanity.io which fails in test/local env. A mock data file already exists at src/worker/lib/sanity-mock-data.ts. Check if sanity.ts already has test-mode detection (similar to rate-limiter.ts isTestEnvironment pattern). If not, add it: when isTestEnvironment(env) returns true, return mock data instead of calling Sanity API. The mock should cover the GROQ queries used by blog/ghid/educatie routes. Run: npx vitest run after changes.",
+      "test_spec": {
+        "unit": [
+          "applyMiddleware sets X-Request-Id",
+          "error handler returns HTML for text/html",
+          "error handler returns JSON for application/json"
+        ],
+        "integration": [],
+        "e2e": [],
+        "wcag": [],
+        "coverage_target": 80
+      },
+      "started_at": "2026-03-13T20:39:59Z",
       "attempts": 1,
-      "last_attempt_at": "2026-03-13T09:19:47Z"
+      "last_attempt_at": "2026-03-13T20:45:04Z"
     },
     {
-      "id": "S-361",
-      "title": "Add favicon.ico to static assets and HTML",
-      "issue": 361,
+      "id": "S-388",
+      "title": "Add data-testid and ARIA to UI components",
+      "description": "Add data-testid to remaining 33% of interactive elements. Add aria-label/role to Quiz options, ReportForm inputs, Checker file upload. GitHub issue #388.",
       "assigned_agent": "react-specialist",
-      "complexity": "low",
+      "priority": 3,
       "status": "passed",
       "depends_on": [],
+      "complexity": "low",
+      "github_issue": 388,
       "acceptance_criteria": [
-        "favicon.ico exists in src/ui/public/ (already there)",
-        "dist/index.html has <link rel='icon' href='/favicon.ico'>",
-        "No 404 for /favicon.ico requests"
+        "All interactive elements have data-testid",
+        "Quiz options have ARIA roles",
+        "Form inputs have aria-label",
+        "npx vitest run passes"
       ],
-      "context": "A favicon.ico already exists at src/ui/public/favicon.ico. Check dist/index.html for a <link rel='icon'> tag. If missing, add it to the <head>. Also check if wrangler.toml static assets config serves the public/ directory. This is a tiny change. Run: npx vitest run after.",
+      "test_spec": {
+        "unit": [],
+        "integration": [],
+        "e2e": [],
+        "wcag": [
+          "Quiz options have appropriate ARIA roles",
+          "Form inputs have aria-label"
+        ],
+        "coverage_target": 80
+      },
+      "started_at": "2026-03-13T20:39:59Z",
       "attempts": 1,
-      "last_attempt_at": "2026-03-13T09:19:47Z"
+      "last_attempt_at": "2026-03-13T20:45:04Z"
+    },
+    {
+      "id": "S-391",
+      "title": "Fix npm audit vulnerabilities",
+      "description": "npm audit fix to update hono and wrangler/undici. Verify no breaking changes. Commit package-lock.json. GitHub issue #391.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 3,
+      "status": "passed",
+      "depends_on": [],
+      "complexity": "low",
+      "github_issue": 391,
+      "acceptance_criteria": [
+        "npm audit shows 0 high/critical",
+        "npx tsc --noEmit passes",
+        "npx vitest run passes",
+        "package-lock.json committed"
+      ],
+      "test_spec": null,
+      "started_at": "2026-03-13T21:13:02Z",
+      "attempts": 2,
+      "last_attempt_at": "2026-03-13T20:50:09Z"
+    },
+    {
+      "id": "S-358",
+      "title": "Deploy BUTTONDOWN_API_KEY to Workers",
+      "description": "Retrieve from Infisical, bind via wrangler secret put to production and preview. GitHub issue #358.",
+      "assigned_agent": "devops-cf",
+      "priority": 3,
+      "status": "failed",
+      "depends_on": [],
+      "complexity": "low",
+      "github_issue": 358,
+      "acceptance_criteria": [
+        "Key bound to production and preview Workers",
+        "Newsletter subscribe endpoint returns 200"
+      ],
+      "test_spec": null,
+      "started_at": "2026-03-13T20:45:05Z",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T20:50:09Z"
+    },
+    {
+      "id": "S-389",
+      "title": "Move Zero Trust config to Pulumi config",
+      "description": "Extract hardcoded email domains and group UUIDs from infra/index.ts into Pulumi config. GitHub issue #389.",
+      "assigned_agent": "devops-cf",
+      "priority": 4,
+      "status": "passed",
+      "depends_on": [],
+      "complexity": "low",
+      "github_issue": 389,
+      "acceptance_criteria": [
+        "Domains from config.require('adminEmailDomains')",
+        "UUIDs from config.require('adminGroupIds')",
+        "pulumi preview shows no resource changes"
+      ],
+      "test_spec": null,
+      "started_at": "2026-03-13T20:45:05Z",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T20:50:09Z"
+    },
+    {
+      "id": "S-390",
+      "title": "Add freshness timestamps to campaign data",
+      "description": "Add last_updated ISO8601 to each campaign in src/worker/data/campaigns.ts. Log warning for >90 day stale. GitHub issue #390.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 4,
+      "status": "passed",
+      "depends_on": [],
+      "complexity": "low",
+      "github_issue": 390,
+      "acceptance_criteria": [
+        "Each campaign has last_updated field",
+        "Warning logged for stale campaigns"
+      ],
+      "test_spec": {
+        "unit": [
+          "stale campaign triggers warning log"
+        ],
+        "integration": [],
+        "e2e": [],
+        "wcag": [],
+        "coverage_target": 80
+      },
+      "started_at": "2026-03-13T20:45:06Z",
+      "attempts": 1,
+      "last_attempt_at": "2026-03-13T20:50:09Z"
     }
   ]
 }

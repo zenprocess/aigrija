@@ -4,6 +4,7 @@ import type { Context } from 'hono';
 import type { Env } from '../lib/types';
 import { structuredLog } from '../lib/logger';
 import type { CommunityReport } from './community';
+import { createRateLimiter, applyRateLimitHeaders, getRouteRateLimit } from '../lib/rate-limiter';
 
 const CommunityReportSchema = z.object({
   id: z.string(),
@@ -41,6 +42,14 @@ export class ReportsEndpoint extends OpenAPIRoute {
   };
 
   async handle(c: Context<{ Bindings: Env }>) {
+    const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const rlCfg = getRouteRateLimit('report', c.env);
+    const rl = await createRateLimiter(c.env.CACHE)(ip, rlCfg.limit, rlCfg.windowSeconds);
+    applyRateLimitHeaders((k, v) => c.header(k, v), rl);
+    if (!rl.allowed) {
+      return c.json({ error: { code: 'RATE_LIMITED', message: 'Limita de cereri depasita. Incercati din nou mai tarziu.' } }, 429);
+    }
+
     const cacheKey = 'community-reports-list';
     const cached = await c.env.CACHE.get(cacheKey);
     if (cached) {

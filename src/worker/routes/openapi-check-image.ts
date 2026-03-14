@@ -4,7 +4,7 @@ import type { Context } from 'hono';
 import type { Env } from '../lib/types';
 import type { AppVariables } from '../lib/request-id';
 import { ImageUploadSchema, formatZodError } from '../lib/schemas';
-import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, getRouteRateLimit } from '../lib/rate-limiter';
 import { createClassifier } from '../lib/classifier';
 import { structuredLog } from '../lib/logger';
 import { VISION_MODEL } from '../lib/constants';
@@ -77,7 +77,8 @@ export class CheckImageEndpoint extends OpenAPIRoute {
       || c.req.header('x-real-ip')
       || 'unknown';
 
-    const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['check-image'].limit, ROUTE_RATE_LIMITS['check-image'].windowSeconds);
+    const rlCfg = getRouteRateLimit('check-image', c.env);
+    const rl = await createRateLimiter(c.env.CACHE)(ip, rlCfg.limit, rlCfg.windowSeconds);
     applyRateLimitHeaders((k, v) => c.header(k, v), rl);
     const { allowed, remaining, limit } = rl;
 

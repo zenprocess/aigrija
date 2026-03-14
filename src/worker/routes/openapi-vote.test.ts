@@ -5,7 +5,7 @@ import { VoteEndpoint } from './openapi-vote';
 vi.mock('../lib/rate-limiter', () => ({
   createRateLimiter: vi.fn(),
   applyRateLimitHeaders: vi.fn(),
-  ROUTE_RATE_LIMITS: { vote: { limit: 10, windowSeconds: 60 } },
+  getRouteRateLimit: vi.fn().mockReturnValue({ limit: 10, windowSeconds: 60 }),
 }));
 
 import { createRateLimiter, applyRateLimitHeaders } from '../lib/rate-limiter';

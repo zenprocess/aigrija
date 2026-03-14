@@ -1,12 +1,13 @@
 import { Hono } from 'hono';
 import type { Env, Campaign } from '../lib/types';
+import type { CspVariables } from '../lib/csp';
 import { structuredLog } from '../lib/logger';
 import { markdownToHtml } from '../lib/markdown';
 import { publishToSanity } from '../lib/sanity-writer';
 import { generateDraft } from '../lib/draft-generator';
 import { adminLayout } from './layout';
 
-const drafts = new Hono<{ Bindings: Env }>();
+const drafts = new Hono<{ Bindings: Env; Variables: CspVariables }>();
 
 // GET /admin/drafts — list campaigns with draft_status in (generated, approved)
 drafts.get('/', async (c) => {
@@ -66,7 +67,7 @@ drafts.get('/', async (c) => {
     </div>`}
   `;
 
-  return c.html(adminLayout('AI Drafts', body));
+  return c.html(adminLayout('AI Drafts', body, '', '', c.get('cspNonce')));
 });
 
 // GET /admin/drafts/:id — review page
@@ -130,7 +131,7 @@ drafts.get('/:id', async (c) => {
     </div>
   `;
 
-  return c.html(adminLayout(`Draft: ${campaign.title}`, body));
+  return c.html(adminLayout(`Draft: ${campaign.title}`, body, '', '', c.get('cspNonce')));
 });
 
 // POST /admin/drafts/:id/approve

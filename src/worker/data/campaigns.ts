@@ -1,3 +1,5 @@
+import { structuredLog } from '../lib/logger';
+
 export interface Campaign {
   id: string;
   slug: string;
@@ -13,6 +15,7 @@ export interface Campaign {
   url_patterns: string[];
   dnsc_alert_url?: string;
   first_seen: string;
+  last_updated: string;
   seo: {
     title: string;
     description: string;
@@ -20,6 +23,23 @@ export interface Campaign {
     og_title: string;
     og_description: string;
   };
+}
+
+const STALE_THRESHOLD_DAYS = 90;
+
+export function checkStaleCampaigns(campaigns: Campaign[] = CAMPAIGNS): void {
+  const now = Date.now();
+  for (const campaign of campaigns) {
+    const updatedMs = new Date(campaign.last_updated).getTime();
+    const ageDays = (now - updatedMs) / (1000 * 60 * 60 * 24);
+    if (ageDays > STALE_THRESHOLD_DAYS) {
+      structuredLog('warn', 'campaign_data_stale', {
+        campaign_id: campaign.id,
+        last_updated: campaign.last_updated,
+        age_days: Math.floor(ageDays),
+      });
+    }
+  }
 }
 
 export const CAMPAIGNS: Campaign[] = [
@@ -50,6 +70,7 @@ export const CAMPAIGNS: Campaign[] = [
     url_patterns: ['ing-romania', 'ing-homebank', 'ing-online', 'ing-verificare'],
     dnsc_alert_url: 'https://dnsc.ro/citeste/dnsc-ing-fraudy-talks',
     first_seen: '2024-01-10',
+    last_updated: '2025-03-01',
     seo: {
       title: 'Alerta phishing: Apeluri false ING Romania (2025) — ai-grija.ro',
       description: 'Campanie activa de spoofing telefonic ING Romania. Cum recunosti frauda si ce sa faci.',
@@ -82,6 +103,7 @@ export const CAMPAIGNS: Campaign[] = [
     url_patterns: ['fanocurier.co', 'fanbox-ro', 'fancurier', 'fan-courier'],
     dnsc_alert_url: 'https://dnsc.ro/citeste/alerta-fancourier-phishing',
     first_seen: '2024-03-15',
+    last_updated: '2025-02-20',
     seo: {
       title: 'Alerta phishing: SMS fals FAN Courier / FANBOX (2025) — ai-grija.ro',
       description: 'SMS-uri false de la FAN Courier care cer date de card.',
@@ -113,6 +135,7 @@ export const CAMPAIGNS: Campaign[] = [
     patterns: ['anaf', 'amenda', 'impozit', 'restant', 'plata obligatorie', 'datorii fiscale'],
     url_patterns: ['anaf-gov', 'anaf-online', 'anaf-plati', 'e-anaf'],
     first_seen: '2023-06-01',
+    last_updated: '2025-01-15',
     seo: {
       title: 'Alerta phishing: Email fals ANAF (2025) — ai-grija.ro',
       description: 'Emailuri false de la ANAF care pretind datorii fiscale.',
@@ -142,6 +165,7 @@ export const CAMPAIGNS: Campaign[] = [
     patterns: ['rovinieta', 'cnair', 'taxa drum', 'valabilitate expirata', 'reinnoire'],
     url_patterns: ['rovinieta-online', 'cnair-plata', 'e-rovinieta'],
     first_seen: '2024-04-01',
+    last_updated: '2025-01-10',
     seo: {
       title: 'Alerta phishing: Rovinieta / CNAIR (2025) — ai-grija.ro',
       description: 'SMS-uri false despre expirarea rovinietei. CNAIR nu trimite notificari prin SMS.',
@@ -172,6 +196,7 @@ export const CAMPAIGNS: Campaign[] = [
     patterns: ['politia', 'dnsc', 'directorat', 'amenda', 'dosar penal', 'mandat'],
     url_patterns: [],
     first_seen: '2024-02-01',
+    last_updated: '2025-02-01',
     seo: {
       title: 'Alerta phishing: Mesaje false Politia Romana (2025) — ai-grija.ro',
       description: 'Emailuri false de la Politia Romana cu amenintari de dosar penal.',
@@ -203,6 +228,7 @@ export const CAMPAIGNS: Campaign[] = [
     patterns: ['investitie', 'profit garantat', 'bitcoin', 'platforma', 'trading', 'castig asigurat'],
     url_patterns: [],
     first_seen: '2023-09-01',
+    last_updated: '2025-01-20',
     seo: {
       title: 'Alerta: Deepfake investitii false (2025) — ai-grija.ro',
       description: 'Reclame false cu deepfake-uri care promoveaza platforme de investitii frauduloase.',

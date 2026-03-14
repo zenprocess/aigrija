@@ -292,7 +292,7 @@ function translationsPage(activeLang: Lang, keys: Record<string, string>, overri
     });
     </script>`;
 
-  return adminLayout('Translations', content, 'traduceri', email);
+  return adminLayout('Translations', content, 'traduceri', email, nonce);
 }
 
 export const translationsAdmin = new Hono<AdminEnv>();

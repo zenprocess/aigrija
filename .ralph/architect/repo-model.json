@@ -1,324 +1,516 @@
 {
   "version": "1.0.0",
   "project_id": "aigrija",
-  "generated_at": "2026-03-13T12:00:00Z",
+  "generated_at": "2026-03-13T19:32:00Z",
   "architecture_style": "modular-monolith",
   "stack": {
     "languages": [
       "TypeScript",
-      "Python"
+      "JavaScript"
     ],
     "frameworks": [
       "hono",
       "chanfana",
       "react",
-      "vite",
+      "zod",
       "tailwindcss",
+      "vite",
       "vitest",
       "playwright"
     ],
     "runtime": "cloudflare-workers",
-    "package_manager": "pnpm"
+    "package_manager": "npm"
   },
   "modules": [
     {
-      "name": "worker-core",
+      "name": "worker-entry",
       "path": "src/worker",
       "type": "service",
-      "cohesion_score": 0.96,
-      "description": "Cloudflare Workers entry point — Hono router, rate limiting, request handling, metrics"
+      "cohesion_score": 0.7,
+      "description": "Cloudflare Worker entry point \u2014 host-based routing (main, CDN, admin), Sentry wrapper, scheduled cron handler",
+      "exports_count": null,
+      "key_symbols": null,
+      "api_surface": {
+        "entry_files": [
+          "src/worker/index.ts"
+        ],
+        "exported_handlers": [
+          "fetch",
+          "scheduled"
+        ],
+        "router_object": true
+      },
+      "documentation_coverage": null
     },
     {
-      "name": "worker-routes",
+      "name": "routes",
       "path": "src/worker/routes",
       "type": "service",
-      "cohesion_score": 0.85,
-      "description": "API route handlers — OpenAPI endpoints for check-image, alerts, health, telegram, upload"
+      "cohesion_score": 0.6,
+      "description": "API routes \u2014 46 source files covering check, upload, alerts, feed, community, blog, telegram, whatsapp, newsletter, quiz, OpenAPI endpoints, and route registry",
+      "exports_count": null,
+      "key_symbols": null,
+      "api_surface": {
+        "entry_files": [
+          "src/worker/routes/registry.ts"
+        ],
+        "exported_handlers": [
+          "registerRoutes"
+        ],
+        "route_count": 30
+      },
+      "documentation_coverage": null
     },
     {
-      "name": "worker-admin",
-      "path": "src/worker/admin",
-      "type": "service",
-      "cohesion_score": 0.91,
-      "description": "Admin panel — server-rendered HTML for campaigns, analytics, activity monitoring"
-    },
-    {
-      "name": "worker-middleware",
-      "path": "src/worker/middleware",
-      "type": "shared",
-      "cohesion_score": 0.85,
-      "description": "Hono middleware — rate limiting, request ID, response headers"
-    },
-    {
-      "name": "worker-lib",
+      "name": "lib",
       "path": "src/worker/lib",
       "type": "shared",
-      "cohesion_score": 0.85,
-      "description": "Shared utilities — rate limiter, request ID generator, response helpers"
+      "cohesion_score": 0.5,
+      "description": "Shared libraries \u2014 63 source files: classifier, rate-limiter, sanity CMS, logger, PII redactor, campaign aggregator, analytics, CSP, error pages, cron handler, types",
+      "exports_count": null,
+      "key_symbols": null,
+      "api_surface": null,
+      "documentation_coverage": null
     },
     {
-      "name": "worker-templates",
+      "name": "middleware",
+      "path": "src/worker/middleware",
+      "type": "shared",
+      "cohesion_score": 0.8,
+      "description": "Middleware chain \u2014 secureHeaders, CORS, CSP, logging, error handling, CDN protection. 4 source files",
+      "exports_count": null,
+      "key_symbols": null,
+      "api_surface": null,
+      "documentation_coverage": null
+    },
+    {
+      "name": "admin",
+      "path": "src/worker/admin",
+      "type": "service",
+      "cohesion_score": 0.75,
+      "description": "Admin panel \u2014 HTML-over-the-wire server-rendered UI. 13 source files: config, weights, translations, layout, index",
+      "exports_count": null,
+      "key_symbols": null,
+      "api_surface": {
+        "entry_files": [
+          "src/worker/admin/index.ts"
+        ],
+        "exported_handlers": [
+          "admin"
+        ],
+        "router_object": true
+      },
+      "documentation_coverage": null
+    },
+    {
+      "name": "templates",
       "path": "src/worker/templates",
       "type": "shared",
-      "cohesion_score": 0.91,
-      "description": "HTML-over-the-wire templates — blog pages, admin views (server-rendered)"
+      "cohesion_score": 0.85,
+      "description": "SSR HTML templates \u2014 alert pages, blog pages, share card rendering. 4 source files",
+      "exports_count": null,
+      "key_symbols": null,
+      "api_surface": null,
+      "documentation_coverage": null
     },
     {
-      "name": "worker-data",
+      "name": "data",
       "path": "src/worker/data",
-      "type": "shared",
+      "type": "config",
       "cohesion_score": 0.9,
-      "description": "Data layer — content data, D1 database schemas, seed data"
+      "description": "Static data files \u2014 campaigns, bank info, known patterns. 5 source files",
+      "exports_count": null,
+      "key_symbols": null,
+      "api_surface": null,
+      "documentation_coverage": null
     },
     {
-      "name": "ui-frontend",
+      "name": "ui",
       "path": "src/ui",
       "type": "service",
-      "cohesion_score": 0.88,
-      "description": "React SPA frontend — landing page components (Hero, Header, Footer, HowItWorks)"
+      "cohesion_score": 0.7,
+      "description": "React SPA \u2014 Vite-built client app with 22 components, i18n (5 languages), hash-based routing. Checker, Quiz, Blog, ContentList, Privacy, Terms, CookieConsent",
+      "exports_count": null,
+      "key_symbols": null,
+      "api_surface": {
+        "entry_files": [
+          "src/ui/src/App.jsx"
+        ],
+        "exported_handlers": [
+          "App"
+        ],
+        "router_object": false
+      },
+      "documentation_coverage": null
     },
     {
-      "name": "static-assets",
-      "path": "src/static",
-      "type": "config",
-      "cohesion_score": 0.95,
-      "description": "Static assets served via Workers asset binding"
-    },
-    {
-      "name": "e2e-tests",
-      "path": "e2e",
+      "name": "tests",
+      "path": "src/worker",
       "type": "test",
-      "cohesion_score": 0.9,
-      "description": "End-to-end tests — Playwright specs, story runner, story parser"
-    },
-    {
-      "name": "scripts-tooling",
-      "path": "scripts",
-      "type": "script",
-      "cohesion_score": 1,
-      "description": "Build and ops tooling — seed content, merkle hashing, ADR indexer, RLM core"
+      "cohesion_score": 0.6,
+      "description": "Unit tests \u2014 119 test files, 1393 tests across routes, lib, admin, templates, and UI components",
+      "exports_count": null,
+      "key_symbols": null,
+      "api_surface": null,
+      "documentation_coverage": null
     },
     {
       "name": "infra",
       "path": "infra",
       "type": "config",
-      "cohesion_score": 0.95,
-      "description": "Pulumi IaC — Cloudflare Workers, D1, R2, KV, DNS infrastructure definitions"
+      "cohesion_score": 0.9,
+      "description": "Pulumi IaC \u2014 Cloudflare resources (KV, R2, D1, Queues, Analytics), CrossGuard policies",
+      "exports_count": null,
+      "key_symbols": null,
+      "api_surface": null,
+      "documentation_coverage": null
     }
   ],
   "boundaries": [
     {
-      "from_module": "worker-core",
-      "to_module": "worker-routes",
+      "from_module": "routes",
+      "to_module": "lib",
+      "coupling_type": "import",
+      "strength": 0.9
+    },
+    {
+      "from_module": "routes",
+      "to_module": "templates",
+      "coupling_type": "import",
+      "strength": 0.4
+    },
+    {
+      "from_module": "routes",
+      "to_module": "data",
+      "coupling_type": "import",
+      "strength": 0.3
+    },
+    {
+      "from_module": "worker-entry",
+      "to_module": "routes",
       "coupling_type": "import",
       "strength": 0.8
     },
     {
-      "from_module": "worker-core",
-      "to_module": "worker-admin",
+      "from_module": "worker-entry",
+      "to_module": "middleware",
+      "coupling_type": "import",
+      "strength": 0.7
+    },
+    {
+      "from_module": "worker-entry",
+      "to_module": "admin",
+      "coupling_type": "import",
+      "strength": 0.5
+    },
+    {
+      "from_module": "middleware",
+      "to_module": "lib",
       "coupling_type": "import",
       "strength": 0.6
     },
     {
-      "from_module": "worker-core",
-      "to_module": "worker-middleware",
-      "coupling_type": "import",
-      "strength": 0.7
-    },
-    {
-      "from_module": "worker-core",
-      "to_module": "worker-lib",
-      "coupling_type": "import",
-      "strength": 0.7
-    },
-    {
-      "from_module": "worker-routes",
-      "to_module": "worker-lib",
+      "from_module": "admin",
+      "to_module": "lib",
       "coupling_type": "import",
       "strength": 0.5
     },
     {
-      "from_module": "worker-routes",
-      "to_module": "worker-data",
-      "coupling_type": "import",
-      "strength": 0.5
-    },
-    {
-      "from_module": "worker-admin",
-      "to_module": "worker-templates",
-      "coupling_type": "import",
+      "from_module": "ui",
+      "to_module": "routes",
+      "coupling_type": "api",
       "strength": 0.7
-    },
-    {
-      "from_module": "worker-admin",
-      "to_module": "worker-data",
-      "coupling_type": "import",
-      "strength": 0.5
     }
   ],
   "execution_flows": [
     {
-      "name": "http-request-handling",
-      "entry_point": "src/worker/index.ts#fetch",
+      "name": "phishing-check",
+      "entry_point": "src/worker/routes/openapi-check.ts#CheckEndpoint",
       "steps": [
-        "Hono router receives HTTP request via fetch handler",
-        "Rate limiter middleware checks request against limits",
-        "Request ID middleware assigns tracking ID",
-        "Route matched to handler (routes/, admin/)",
-        "Handler processes request and returns response",
-        "Response headers middleware applies security/CORS headers"
+        "POST /api/check receives message text",
+        "Rate limiter checks IP quota",
+        "PII redactor masks personal data",
+        "Classifier runs Workers AI (Llama 3.1 8B)",
+        "Campaign aggregator matches known patterns",
+        "Domain analyzer checks URL reputation",
+        "Response with verdict + confidence + red flags"
       ],
       "modules_involved": [
-        "worker-core",
-        "worker-middleware",
-        "worker-routes",
-        "worker-admin",
-        "worker-lib"
+        "routes",
+        "lib"
       ]
     },
     {
-      "name": "openapi-check-image",
-      "entry_point": "src/worker/routes/openapi-check-image.ts",
+      "name": "image-check",
+      "entry_point": "src/worker/routes/openapi-check-image.ts#CheckImageEndpoint",
       "steps": [
-        "Request received at /api/check-image",
-        "Image validated and processed",
-        "Workers AI inference via env.AI.run()",
-        "Result returned as JSON"
+        "POST /api/check/image receives image upload",
+        "Vision validator checks file type/size",
+        "Image stored to R2",
+        "Workers AI vision model (Llava) analyzes image",
+        "Classifier processes vision output",
+        "Response with verdict"
       ],
       "modules_involved": [
-        "worker-routes",
-        "worker-lib"
+        "routes",
+        "lib"
+      ]
+    },
+    {
+      "name": "community-report",
+      "entry_point": "src/worker/routes/community.ts#community",
+      "steps": [
+        "GET /api/reports lists community reports from KV",
+        "Legacy report-index fallback for pre-migration data",
+        "POST /api/reports/:id/vote applies rate-limited voting",
+        "Vote counts stored back to KV"
+      ],
+      "modules_involved": [
+        "routes",
+        "lib"
       ]
     },
     {
       "name": "telegram-webhook",
-      "entry_point": "src/worker/routes/telegram.ts",
+      "entry_point": "src/worker/routes/telegram.ts#telegram",
       "steps": [
-        "Telegram webhook POST received",
-        "Message parsed and validated",
-        "Command or text processed",
-        "Response sent back to Telegram API"
+        "POST /webhook/telegram receives Telegram update",
+        "Bot parses command (/start, /verifica, /sterge)",
+        "Classifier invoked for message check",
+        "Response sent back via Telegram API"
       ],
       "modules_involved": [
-        "worker-routes",
-        "worker-lib"
+        "routes",
+        "lib"
       ]
     },
     {
-      "name": "admin-panel-render",
-      "entry_point": "src/worker/admin/index.ts",
+      "name": "whatsapp-webhook",
+      "entry_point": "src/worker/routes/whatsapp.ts#whatsapp",
       "steps": [
-        "Admin route matched",
-        "D1 database queried for data",
-        "HTML template rendered with data",
-        "Server-rendered HTML response returned"
+        "POST /webhook/whatsapp receives WhatsApp message",
+        "Rate limiter checks per-sender quota",
+        "Classifier invoked for message check",
+        "Response sent via WhatsApp Cloud API"
       ],
       "modules_involved": [
-        "worker-admin",
-        "worker-templates",
-        "worker-data"
+        "routes",
+        "lib"
       ]
     },
     {
-      "name": "alerts-processing",
-      "entry_point": "src/worker/routes/alerts.ts",
+      "name": "blog-content",
+      "entry_point": "src/worker/routes/blog.ts#blog",
       "steps": [
-        "Alert endpoint receives request",
-        "Alert data validated",
-        "Alert processed and stored",
-        "Notification dispatched"
+        "GET /blog or /blog/:slug requested",
+        "Sanity CMS fetched via sanityFetch()",
+        "Mock data returned in test/dev environments",
+        "SSR blog page template rendered"
       ],
       "modules_involved": [
-        "worker-routes",
-        "worker-lib",
-        "worker-data"
+        "routes",
+        "lib",
+        "templates"
       ]
     },
     {
-      "name": "merkle-verification",
-      "entry_point": "scripts/lib/merkle.py#main",
+      "name": "spa-serving",
+      "entry_point": "src/worker/routes/registry.ts#notFound",
       "steps": [
-        "Merkle script invoked",
-        "File hashes computed",
-        "Merkle root calculated",
-        "Root verified against stored value"
+        "Request hits no Hono route",
+        "notFound handler invokes ASSETS.fetch()",
+        "Response cloned for mutable headers",
+        "SPA index.html served with security headers"
       ],
       "modules_involved": [
-        "scripts-tooling"
+        "worker-entry",
+        "routes",
+        "middleware"
       ]
     },
     {
-      "name": "rlm-repl-session",
-      "entry_point": "scripts/lib/rlm/rlm_core.py#main",
+      "name": "admin-panel",
+      "entry_point": "src/worker/admin/index.ts#admin",
       "steps": [
-        "RLM REPL started",
-        "CLI checks and environment setup",
-        "System message built for Romanian context",
-        "LLM sandbox session managed"
+        "Request to admin.ai-grija.ro detected by host routing",
+        "CF Access validates authentication",
+        "Admin Hono app handles route",
+        "HTML-over-the-wire response rendered"
       ],
       "modules_involved": [
-        "scripts-tooling"
+        "worker-entry",
+        "admin",
+        "lib"
+      ]
+    },
+    {
+      "name": "scheduled-crons",
+      "entry_point": "src/worker/lib/cron-handler.ts#handleScheduled",
+      "steps": [
+        "Cron trigger fires (5 schedules configured)",
+        "Campaign scraper runs daily",
+        "R2 cleanup + draft generation daily",
+        "AI content generation on weekdays",
+        "Weekly digest on Mondays",
+        "GDPR auto-purge monthly"
+      ],
+      "modules_involved": [
+        "worker-entry",
+        "lib"
       ]
     }
   ],
   "hotspots": [
     {
       "file": "src/worker/index.ts",
-      "change_frequency": 1,
-      "bug_correlation": 0.38,
+      "change_frequency": 1.0,
+      "bug_correlation": 0.4286,
       "knowledge_silo_risk": 0
     }
   ],
-  "discovered_dimensions": [
-    {
-      "id": "ff-discovered-observability-stack-integration",
-      "name": "Observability Stack Integration",
-      "description": "Measures whether an observability MCP is configured and actively used for runtime insight",
-      "rationale": "No observability MCP (Sentry, Datadog, etc.) installed — agents lack runtime performance context",
-      "weight": 0.09,
-      "category": "mcp-capability"
-    },
-    {
-      "id": "ff-discovered-error-handling-consistency",
-      "name": "Error Handling Consistency",
-      "description": "Fraction of source files with async operations that also have explicit error handling",
-      "rationale": "90/214 files with async ops have error handling — inconsistent coverage risks silent failures",
-      "weight": 0.15,
-      "category": "resilience"
-    },
-    {
-      "id": "ff-discovered-database-migration-discipline",
-      "name": "Database Migration Discipline",
-      "description": "Verifies migrations are sequential and include rollback scripts",
-      "rationale": "7 migration files found, 0 have rollback definitions — blocks safe production reverts",
-      "weight": 0.13,
-      "category": "data"
-    },
-    {
-      "id": "ff-discovered-authentication-layer-completeness",
-      "name": "Authentication Layer Completeness",
-      "description": "Measures whether auth is implemented as consistent middleware, not scattered checks",
-      "rationale": "33 middleware/guard definitions detected — need to verify coverage across all routes",
-      "weight": 0.18,
-      "category": "security"
-    },
-    {
-      "id": "ff-discovered-modularity-index",
-      "name": "Modularity Index",
-      "description": "Balance between DI patterns and global state usage",
-      "rationale": "Low DI pattern adoption (1/300 files) — tight coupling may resist testing and parallel dev",
-      "weight": 0.14,
-      "category": "architecture"
-    }
-  ],
+  "discovered_dimensions": {
+    "generated_at": "2026-03-13T19:33:13Z",
+    "project_id": "aigrija",
+    "architecture_style": "modular-monolith",
+    "model_status": "provided",
+    "note": "Auto-discovered by scripts/wow-maturity/discover-dimensions.sh \u2014 validate with /validate-understanding",
+    "functions": [
+      {
+        "id": "ff-discovered-api-versioning-consistency",
+        "fitness_function_id": "ff-discovered-api-versioning-consistency",
+        "name": "API Versioning Consistency",
+        "description": "Verifies that all HTTP API routes follow a consistent versioning strategy (e.g., /v1/, /v2/ prefixes or Accept-Version header pattern).",
+        "rationale": "Found 30 routes using hono in aigrija. Without consistent versioning, breaking changes silently reach consumers and rollback windows narrow.",
+        "weight": 0.08,
+        "enabled": true,
+        "category": "pattern-match",
+        "collector": {
+          "type": "file-heuristic",
+          "script_path": "scripts/wow-maturity/collect.sh --dimension api-versioning"
+        },
+        "scorer": {
+          "type": "rubric",
+          "rubric_text": "Score 1.0 if all routes have a version prefix or Accept-Version support; 0.5 if >50% are versioned; 0.0 if no versioning found."
+        }
+      },
+      {
+        "id": "ff-discovered-response-time-sla-conformance",
+        "fitness_function_id": "ff-discovered-response-time-sla-conformance",
+        "name": "Response Time SLA Conformance",
+        "description": "Checks that latency budgets are documented per route and that p95 response times are within declared SLA thresholds.",
+        "rationale": "Found 30 API routes in aigrija. At this scale, undocumented latency budgets prevent teams from detecting performance regressions before they reach users.",
+        "weight": 0.08,
+        "enabled": true,
+        "category": "pattern-match",
+        "collector": {
+          "type": "file-heuristic",
+          "script_path": "scripts/wow-maturity/collect.sh --dimension sla-conformance"
+        },
+        "scorer": {
+          "type": "rubric",
+          "rubric_text": "Score 1.0 if all critical routes have documented SLA and p95 monitoring; 0.5 if >50% covered; 0.0 if no SLA documentation found."
+        }
+      },
+      {
+        "id": "ff-discovered-observability-stack-integration",
+        "fitness_function_id": "ff-discovered-observability-stack-integration",
+        "name": "Observability Stack Integration",
+        "description": "Measures whether an observability MCP (error tracking, metrics, or distributed tracing) is configured and actively used by agents for runtime insight.",
+        "rationale": "Observability MCPs (Sentry MCP, Datadog MCP, Prometheus MCP, Grafana MCP) are available in the MCP catalog but none are installed in aigrija. Agents without observability context cannot surface performance bottlenecks, error trends, or SLA violations from live data.",
+        "weight": 0.09,
+        "enabled": true,
+        "category": "mcp-capability",
+        "collector": {
+          "type": "file-heuristic",
+          "script_path": "scripts/wow-maturity/collect.sh --dimension observability-integration"
+        },
+        "scorer": {
+          "type": "rubric",
+          "rubric_text": "Score 1.0 if at least one observability MCP (Sentry, Datadog, etc.) is configured and has valid credentials; 0.5 if installed but missing credentials; 0.0 if no observability MCP present."
+        }
+      },
+      {
+        "id": "ff-discovered-error-handling-consistency",
+        "fitness_function_id": "ff-discovered-error-handling-consistency",
+        "name": "Error Handling Consistency",
+        "description": "Measures what fraction of source files with async operations also have explicit error handling (try/catch, .catch(), rescue, except). Low coverage means unhandled rejections and silent failures in production.",
+        "rationale": "Found 338 source files in aigrija; 175 have error handling patterns vs 340 with async operations. Inconsistent error handling leads to uncaught exceptions that crash processes or swallow failures silently, making incidents harder to diagnose.",
+        "weight": 0.15,
+        "enabled": true,
+        "category": "resilience",
+        "collector": {
+          "type": "file-heuristic",
+          "script_path": "scripts/wow-maturity/collect.sh --dimension error-handling"
+        },
+        "scorer": {
+          "type": "rubric",
+          "rubric_text": "Score 1.0 if >80% of files with async calls also have error handling; 0.6 if 50-80%; 0.3 if 30-50%; 0.0 if <30% error handling coverage."
+        }
+      },
+      {
+        "id": "ff-discovered-database-migration-discipline",
+        "fitness_function_id": "ff-discovered-database-migration-discipline",
+        "name": "Database Migration Discipline",
+        "description": "Verifies that database migrations are sequential, include rollback (down) scripts, and that raw SQL is not embedded directly in application code outside of migration files.",
+        "rationale": "Found 7 migration file(s) in aigrija; 0 have rollback definitions. Migrations without down scripts prevent safe rollback in production incidents and accumulate schema debt that blocks emergency reverts.",
+        "weight": 0.13,
+        "enabled": true,
+        "category": "data",
+        "collector": {
+          "type": "file-heuristic",
+          "script_path": "scripts/wow-maturity/collect.sh --dimension migration-discipline"
+        },
+        "scorer": {
+          "type": "rubric",
+          "rubric_text": "Score 1.0 if all migrations are sequential and have rollback scripts; 0.6 if sequential but missing rollbacks; 0.3 if partially sequential; 0.0 if no discipline or raw SQL in app code."
+        }
+      },
+      {
+        "id": "ff-discovered-authentication-layer-completeness",
+        "fitness_function_id": "ff-discovered-authentication-layer-completeness",
+        "name": "Authentication Layer Completeness",
+        "description": "Measures whether authentication is implemented as a consistent middleware layer with token validation and centralized auth enforcement \u2014 not scattered ad-hoc checks across individual route handlers.",
+        "rationale": "Auth patterns detected in aigrija with 72 middleware/guard definition(s). Ad-hoc auth checks scattered through routes are easy to forget on new endpoints, creating authentication bypass vulnerabilities that are hard to audit.",
+        "weight": 0.18,
+        "enabled": true,
+        "category": "security",
+        "collector": {
+          "type": "file-heuristic",
+          "script_path": "scripts/wow-maturity/collect.sh --dimension auth-completeness"
+        },
+        "scorer": {
+          "type": "rubric",
+          "rubric_text": "Score 1.0 if auth is a dedicated middleware/guard applied globally with token validation; 0.5 if middleware exists but coverage gaps found; 0.0 if auth checks are scattered or no middleware pattern detected."
+        }
+      },
+      {
+        "id": "ff-discovered-modularity-index",
+        "fitness_function_id": "ff-discovered-modularity-index",
+        "name": "Modularity Index",
+        "description": "Measures the balance between dependency injection patterns (constructor injection, IoC containers) and global state usage. High global state indicates tight coupling that resists unit testing and parallel development.",
+        "rationale": "Found 338 source files in aigrija; 5 use DI patterns vs 13 with global state access. Excessive global state creates hidden coupling that makes modules impossible to test in isolation and slows parallel feature development as teams step on each other's state.",
+        "weight": 0.14,
+        "enabled": true,
+        "category": "architecture",
+        "collector": {
+          "type": "file-heuristic",
+          "script_path": "scripts/wow-maturity/collect.sh --dimension modularity-index"
+        },
+        "scorer": {
+          "type": "rubric",
+          "rubric_text": "Score 1.0 if DI patterns dominate and global state is restricted to top-level config; 0.6 if DI is used but global state leaks into business logic; 0.3 if mostly global state with minimal DI; 0.0 if no DI patterns and widespread global mutation detected."
+        }
+      }
+    ]
+  },
   "data_sources": {
-    "gitnexus": true,
+    "gitnexus": false,
     "lsp": false,
     "git_log": true,
-    "file_heuristics": false,
+    "file_heuristics": true,
     "dimensions_discovered": true
   },
   "locked": true,
-  "locked_by": "vvladescu",
-  "locked_at": "2026-03-12T22:26:42Z"
+  "locked_by": "validate-understanding",
+  "locked_at": "2026-03-13T19:44:42Z"
 }

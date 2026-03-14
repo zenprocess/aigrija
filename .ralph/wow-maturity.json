@@ -1,24 +1,131 @@
 {
-  "generated_at": "2026-03-13T00:00:00Z",
+  "format_version": 2,
+  "date": "2026-03-13",
   "project_id": "aigrija",
-  "overall_score": 79,
+  "scope": {
+    "type": "full"
+  },
+  "data_quality": "partial",
+  "model_status": "locked",
+  "baseline_composite": 65.8,
+  "discovered_composite": 50.0,
+  "combined_composite": 59.5,
   "dimensions": {
-    "adr_coverage": {"score": 85, "weight": 0.08},
-    "test_discipline": {"score": 75, "weight": 0.15},
-    "cicd_maturity": {"score": 80, "weight": 0.10},
-    "security_posture": {"score": 82, "weight": 0.12},
-    "code_organization": {"score": 78, "weight": 0.10},
-    "documentation_health": {"score": 80, "weight": 0.08},
-    "dependency_health": {"score": 72, "weight": 0.10},
-    "api_contract_conformance": {"score": 85, "weight": 0.10},
-    "temporal_coupling": {"score": 73, "weight": 0.07},
-    "observability_readiness": {"score": 68, "weight": 0.10}
+    "adr_coverage": {
+      "score": 100,
+      "weight": 0.12,
+      "type": "baseline"
+    },
+    "test_discipline": {
+      "score": 20,
+      "weight": 0.15,
+      "type": "baseline"
+    },
+    "cicd_maturity": {
+      "score": 100,
+      "weight": 0.1,
+      "type": "baseline"
+    },
+    "security_posture": {
+      "score": 80,
+      "weight": 0.12,
+      "type": "baseline"
+    },
+    "code_organization": {
+      "score": 36,
+      "weight": 0.1,
+      "type": "baseline"
+    },
+    "documentation_health": {
+      "score": 80,
+      "weight": 0.08,
+      "type": "baseline"
+    },
+    "dependency_health": {
+      "score": 15,
+      "weight": 0.1,
+      "type": "baseline"
+    },
+    "api_contract_conformance": {
+      "score": 100,
+      "weight": 0.08,
+      "type": "baseline"
+    },
+    "temporal_coupling": {
+      "score": 63,
+      "weight": 0.08,
+      "type": "baseline"
+    },
+    "observability_readiness": {
+      "score": 95,
+      "weight": 0.07,
+      "type": "baseline"
+    }
+  },
+  "discovered_dimensions": {
+    "ff-discovered-api-versioning-consistency": {
+      "name": "API Versioning Consistency",
+      "score": 50,
+      "weight": 0.094,
+      "type": "discovered"
+    },
+    "ff-discovered-response-time-sla-conformance": {
+      "name": "Response Time SLA Conformance",
+      "score": 50,
+      "weight": 0.094,
+      "type": "discovered"
+    },
+    "ff-discovered-observability-stack-integration": {
+      "name": "Observability Stack Integration",
+      "score": 50,
+      "weight": 0.106,
+      "type": "discovered"
+    },
+    "ff-discovered-error-handling-consistency": {
+      "name": "Error Handling Consistency",
+      "score": 50,
+      "weight": 0.176,
+      "type": "discovered"
+    },
+    "ff-discovered-database-migration-discipline": {
+      "name": "Database Migration Discipline",
+      "score": 50,
+      "weight": 0.153,
+      "type": "discovered"
+    },
+    "ff-discovered-authentication-layer-completeness": {
+      "name": "Authentication Layer Completeness",
+      "score": 50,
+      "weight": 0.212,
+      "type": "discovered"
+    },
+    "ff-discovered-modularity-index": {
+      "name": "Modularity Index",
+      "score": 50,
+      "weight": 0.165,
+      "type": "discovered"
+    }
   },
   "improvements": [
-    {"dimension": "observability_readiness", "suggestion": "Add APM stack (Sentry or Tail Workers) for runtime error tracking and performance monitoring"},
-    {"dimension": "dependency_health", "suggestion": "Set up Renovate/Dependabot for automated dependency updates"},
-    {"dimension": "temporal_coupling", "suggestion": "Break down shotgun-surgery commits; scope branches tighter to single modules"},
-    {"dimension": "test_discipline", "suggestion": "Raise coverage thresholds from 40% to 60% lines; introduce DI patterns"},
-    {"dimension": "code_organization", "suggestion": "Increase DI adoption to reduce tight coupling across modules"}
+    {
+      "dimension": "test_discipline",
+      "category": "test",
+      "suggestion": "Run vitest with --coverage, add coverage gate to vitest.config.ts (branches: 40 minimum)"
+    },
+    {
+      "dimension": "code_organization",
+      "category": "org",
+      "suggestion": "Reduce deep relative imports (../../); add barrel index.ts per module for cleaner boundaries"
+    },
+    {
+      "dimension": "dependency_health",
+      "category": "deps",
+      "suggestion": "Run npm audit fix, update outdated deps, ensure pnpm-lock.yaml or package-lock.json is committed"
+    },
+    {
+      "dimension": "temporal_coupling",
+      "category": "temporal",
+      "suggestion": "index.ts hotspot (100% churn) \u2014 decomposition already done, monitor if churn stabilizes"
+    }
   ]
 }

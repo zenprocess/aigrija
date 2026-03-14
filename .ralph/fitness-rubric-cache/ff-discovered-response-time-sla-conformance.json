@@ -1,0 +1,7 @@
+{
+  "function_id": "ff-discovered-response-time-sla-conformance",
+  "score": 25,
+  "rationale": "No per-route SLA documentation. Structured logging captures duration_ms but no budgets or alerting thresholds defined.",
+  "scored_at": "2026-03-14T17:32:50Z",
+  "scorer": "manual-rubric"
+}

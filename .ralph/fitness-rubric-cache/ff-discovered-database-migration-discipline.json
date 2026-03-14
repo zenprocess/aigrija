@@ -1,0 +1,7 @@
+{
+  "function_id": "ff-discovered-database-migration-discipline",
+  "score": 40,
+  "rationale": "8 sequential migration files. 0 rollback/down scripts. README documents process but no automated rollback capability.",
+  "scored_at": "2026-03-14T17:32:50Z",
+  "scorer": "manual-rubric"
+}

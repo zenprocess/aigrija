@@ -1,15 +1,15 @@
 {
   "project_id": "aigrija",
-  "timestamp": "2026-03-13T20:18:31Z",
+  "timestamp": "2026-03-14T17:15:02Z",
   "environment": "production",
   "threshold": 80,
-  "composite_score": 43.8,
+  "composite_score": 75.8,
   "ready": false,
   "signals": {
     "wow_maturity": {
-      "score": 59.5,
+      "score": 68.0,
       "weight": 0.35,
-      "date": "2026-03-13",
+      "date": "2026-03-14",
       "found": true
     },
     "fitness_functions": {
@@ -19,24 +19,24 @@
       "found": true
     },
     "qa_results": {
-      "score": 50,
+      "score": 100,
       "weight": 0.2,
-      "pass": 0,
+      "pass": 1537,
       "fail": 0,
-      "total": 0,
-      "found": false
+      "total": 1537,
+      "found": true
     },
     "test_coverage": {
-      "score": 20,
+      "score": 80,
       "weight": 0.15,
-      "coverage_pct": 20,
+      "coverage_pct": 82.9,
       "required_pct": 80,
       "found": true
     },
     "critical_issues": {
-      "score": 0,
+      "score": 100,
       "weight": 0.1,
-      "open_count": 4,
+      "open_count": 0,
       "found": true
     }
   }

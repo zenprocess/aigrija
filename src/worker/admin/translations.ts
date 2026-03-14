@@ -53,7 +53,7 @@ function flattenKeys(obj: Record<string, unknown>, prefix = ''): Record<string, 
 }
 
 // Reference keys hardcoded from ro.json (flattened)
-import roJson from '../../ui/src/i18n/ro.json';
+import roJson from '@/i18n/ro.json';
 const RO_FLAT = flattenKeys(roJson as Record<string, unknown>);
 
 async function getLangKeys(kv: KVNamespace, lang: Lang): Promise<Record<string, string>> {

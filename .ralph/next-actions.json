@@ -1,15 +1,6 @@
 [
   {
     "rank": 1,
-    "title": "Fix readiness gap: critical issues for production (0/100)",
-    "rationale": "Readiness signal critical issues is low (0/100) — blocks production deployment",
-    "score": 1500,
-    "type": "readiness-gap",
-    "related_issue": null,
-    "suggested_agent": "ts-fullstack"
-  },
-  {
-    "rank": 2,
     "title": "Run vitest with --coverage, add coverage gate to vitest.config.ts (branches: 40 minimum)",
     "rationale": "WoW maturity gap in test_discipline (score 20/100, weight 0.15)",
     "score": 1200,
@@ -18,16 +9,7 @@
     "suggested_agent": "ts-fullstack"
   },
   {
-    "rank": 3,
-    "title": "Fix readiness gap: test coverage for production (20/100)",
-    "rationale": "Readiness signal test coverage is low (20/100) — blocks production deployment",
-    "score": 1200,
-    "type": "readiness-gap",
-    "related_issue": null,
-    "suggested_agent": "ts-fullstack"
-  },
-  {
-    "rank": 4,
+    "rank": 2,
     "title": "Run npm audit fix, update outdated deps, ensure pnpm-lock.yaml or package-lock.json is committed",
     "rationale": "WoW maturity gap in dependency_health (score 15/100, weight 0.1)",
     "score": 850,
@@ -36,7 +18,7 @@
     "suggested_agent": "ts-fullstack"
   },
   {
-    "rank": 5,
+    "rank": 3,
     "title": "Fix readiness gap: fitness functions for production (50/100)",
     "rationale": "Readiness signal fitness functions is low (50/100) — blocks production deployment",
     "score": 750,
@@ -45,16 +27,7 @@
     "suggested_agent": "ts-fullstack"
   },
   {
-    "rank": 6,
-    "title": "Fix readiness gap: qa results for production (50/100)",
-    "rationale": "Readiness signal qa results is low (50/100) — blocks production deployment",
-    "score": 750,
-    "type": "readiness-gap",
-    "related_issue": null,
-    "suggested_agent": "ts-fullstack"
-  },
-  {
-    "rank": 7,
+    "rank": 4,
     "title": "Reduce deep relative imports (../../); add barrel index.ts per module for cleaner boundaries",
     "rationale": "WoW maturity gap in code_organization (score 36/100, weight 0.1)",
     "score": 640,
@@ -63,29 +36,11 @@
     "suggested_agent": "ts-fullstack"
   },
   {
-    "rank": 8,
-    "title": "Fix readiness gap: wow maturity for production (59.5/100)",
-    "rationale": "Readiness signal wow maturity is low (59.5/100) — blocks production deployment",
-    "score": 607,
+    "rank": 5,
+    "title": "Fix readiness gap: wow maturity for production (68/100)",
+    "rationale": "Readiness signal wow maturity is low (68/100) — blocks production deployment",
+    "score": 480,
     "type": "readiness-gap",
-    "related_issue": null,
-    "suggested_agent": "ts-fullstack"
-  },
-  {
-    "rank": 9,
-    "title": "index.ts hotspot (100% churn) — decomposition already done, monitor if churn stabilizes",
-    "rationale": "WoW maturity gap in temporal_coupling (score 63/100, weight 0.08)",
-    "score": 296,
-    "type": "wow-gap",
-    "related_issue": null,
-    "suggested_agent": "ts-fullstack"
-  },
-  {
-    "rank": 10,
-    "title": "Refactor hotspot file src/worker/index.ts (changed in 0% of PRs)",
-    "rationale": "File appears in 0% of PRs, indicating high churn",
-    "score": 60,
-    "type": "refactor",
     "related_issue": null,
     "suggested_agent": "ts-fullstack"
   }

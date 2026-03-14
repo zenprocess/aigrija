@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { sendAlert } from './alerter';
+import { sendAlert, createAlerter } from './alerter';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -61,6 +61,32 @@ describe('sendAlert', () => {
   it('does nothing when TELEGRAM_BOT_TOKEN missing', async () => {
     const env = makeEnv({ TELEGRAM_BOT_TOKEN: undefined });
     await sendAlert(env, 'error', 'no token');
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('createAlerter', () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ result: { message_id: 99 } }),
+    });
+  });
+
+  it('returns configured alerter', async () => {
+    const env = makeEnv();
+    const alerter = createAlerter(env);
+    await alerter('error', 'factory test message');
+    expect(mockFetch).toHaveBeenCalledOnce();
+    const [url] = mockFetch.mock.calls[0];
+    expect(url).toContain('/sendMessage');
+  });
+
+  it('pre-binds env so alerter omits env parameter', async () => {
+    const env = makeEnv({ TELEGRAM_BOT_TOKEN: undefined });
+    const alerter = createAlerter(env);
+    await alerter('error', 'no token test');
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });

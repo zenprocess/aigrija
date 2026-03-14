@@ -1,0 +1,7 @@
+{
+  "function_id": "ff-discovered-api-versioning-consistency",
+  "score": 30,
+  "rationale": "0/30 routes use version prefix. Single-consumer civic app \u2014 versioning is not critical yet but should be planned before external API consumers exist.",
+  "scored_at": "2026-03-14T17:32:50Z",
+  "scorer": "manual-rubric"
+}

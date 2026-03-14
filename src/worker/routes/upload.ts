@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { Env, ClassificationResult } from '../lib/types';
 import type { AppVariables } from '../lib/request-id';
-import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS, type RateLimitResult } from '../lib/rate-limiter';
 import { createClassifier } from '../lib/classifier';
 import { structuredLog } from '../lib/logger';
 import { ImageUploadSchema, formatZodError } from '../lib/schemas';
@@ -26,7 +26,13 @@ upload.post('/api/check/image', async (c) => {
     || c.req.header('x-real-ip')
     || 'unknown';
 
-  const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['check-image'].limit, ROUTE_RATE_LIMITS['check-image'].windowSeconds);
+  let rl: RateLimitResult;
+  try {
+    rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['check-image'].limit, ROUTE_RATE_LIMITS['check-image'].windowSeconds);
+  } catch (err) {
+    structuredLog('error', 'upload_rate_limiter_error', { error: String(err) });
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Eroare interna. Incercati din nou.', request_id: rid } }, 500);
+  }
   applyRateLimitHeaders((k, v) => c.header(k, v), rl);
   const { allowed, remaining, limit } = rl;
 
@@ -123,7 +129,12 @@ upload.post('/api/check/image', async (c) => {
 
   let classification: ClassificationResult;
   if (validatedTextContext && validatedTextContext.trim().length >= 3) {
-    classification = await createClassifier(c.env.AI)(validatedTextContext);
+    try {
+      classification = await createClassifier(c.env.AI)(validatedTextContext);
+    } catch (err) {
+      structuredLog('error', 'upload_classifier_error', { error: String(err) });
+      return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Eroare la analiza textului. Incercati din nou.', request_id: rid } }, 500);
+    }
     if (visionVerdict === 'phishing' && classification.verdict === 'likely_safe') {
       classification = { ...classification, verdict: 'suspicious' };
     }
@@ -163,9 +174,13 @@ upload.post('/api/check/image', async (c) => {
     rate_limit: { remaining, limit },
   };
 
-  const countKey = 'stats:total_checks';
-  const current = parseInt(await c.env.CACHE.get(countKey) || '0', 10);
-  await c.env.CACHE.put(countKey, String(current + 1));
+  try {
+    const countKey = 'stats:total_checks';
+    const current = parseInt(await c.env.CACHE.get(countKey) || '0', 10);
+    await c.env.CACHE.put(countKey, String(current + 1));
+  } catch (err) {
+    structuredLog('error', 'upload_counter_increment_error', { error: String(err) });
+  }
 
   // Store screenshot in R2 for audit trail.
   const ext = imageFile.type.split('/')[1] || 'bin';

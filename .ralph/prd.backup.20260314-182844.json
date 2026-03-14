@@ -103,7 +103,7 @@
       "description": "Add tests to increase branch coverage: telegram.ts (52%→75%), weekly.ts (41%→65%), whatsapp.ts (66%→80%). Focus on uncovered branches identified in coverage report. Check existing test files first — extend them, don't create duplicates.",
       "assigned_agent": "ts-fullstack",
       "priority": 2,
-      "status": "passed",
+      "status": "pending",
       "depends_on": [
         "S-403"
       ],
@@ -116,9 +116,9 @@
         "Overall branch coverage stays above 76%"
       ],
       "test_spec": null,
-      "started_at": "2026-03-14T18:28:52Z",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-14T18:36:39Z",
+      "started_at": "2026-03-14T18:17:38Z",
+      "attempts": 0,
+      "last_attempt_at": "2026-03-14T18:27:48Z",
       "last_error": "TIMEOUT x2 — retrying with 900s timeout"
     }
   ]

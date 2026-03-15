@@ -1,7 +1,12 @@
 import type { Env } from './types';
 import { withCircuitBreaker, CircuitOpenError } from './circuit-breaker';
 
-type AlertLevel = 'warn' | 'error' | 'critical';
+export type AlertLevel = 'warn' | 'error' | 'critical';
+
+export function createAlerter(env: Env) {
+  return (level: AlertLevel, message: string, context?: Record<string, unknown>) =>
+    sendAlert(env, level, message, context);
+}
 
 export async function sendAlert(
   env: Env,

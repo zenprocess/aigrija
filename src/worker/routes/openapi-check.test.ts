@@ -148,7 +148,7 @@ describe("POST /api/check", () => {
   });
 
   it("returns 429 when rate limited", async () => {
-    const kv = makeKV({ [rlKey('unknown', 3600)]: '20' }); // at check limit (20 req/hr)
+    const kv = makeKV({ [rlKey('unknown', 3600)]: '1000' }); // at test env limit (1000 req/hr)
     const app = buildApp();
     const res = await post(app, { text: "Click here to claim your prize immediately" }, makeEnv({ CACHE: kv }), makeCtx());
     expect(res.status).toBe(429);

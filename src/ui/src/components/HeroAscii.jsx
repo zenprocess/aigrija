@@ -252,7 +252,7 @@ export default function HeroAscii() {
       `),
       React.createElement('section', {
         'data-testid': 'hero-ascii-section',
-        className: 'relative min-h-[70vh] flex items-center justify-center pt-12 overflow-hidden bg-gray-950',
+        className: 'relative min-h-[60vh] flex items-center justify-center pt-12 overflow-hidden bg-gray-950',
       },
         React.createElement(CornerAccents),
         React.createElement('div', {
@@ -309,7 +309,7 @@ export default function HeroAscii() {
               React.createElement('span', { className: 'text-green-400' }, t('hero.title_highlight'))
             ),
             React.createElement('p', {
-              className: 'text-base sm:text-xl md:text-2xl text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed font-mono',
+              className: 'text-base sm:text-xl md:text-2xl text-gray-400 mb-12 md:mb-16 max-w-2xl mx-auto leading-relaxed font-mono',
             },
               React.createElement('span', { className: 'text-green-500/60' }, '// '),
               t('hero.subtitle')

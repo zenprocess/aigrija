@@ -261,8 +261,8 @@ describe('POST /api/reports/:id/vote', () => {
 
   it('rate limits after 10 votes per IP', async () => {
     const report: CommunityReport = { id: 'r1', text_snippet: 'test', votes_up: 1, votes_down: 0, created_at: '2026-01-01T00:00:00.000Z', verdict: 'phishing' };
-    // Simulate rate limit already hit (counter at 10)
-    const kv = makeKV({ 'report:r1': JSON.stringify(report), [rlKey('vote:5.5.5.5', 3600)]: '10' });
+    // Simulate rate limit already hit — use test-env threshold (1000) so getRouteRateLimit picks it up
+    const kv = makeKV({ 'report:r1': JSON.stringify(report), [rlKey('vote:5.5.5.5', 3600)]: '1000' });
     const env = {
       CACHE: kv,
       ASSETS: { fetch: vi.fn() },

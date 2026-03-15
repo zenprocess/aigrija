@@ -1,0 +1,34 @@
+{
+  "project_id": "aigrija",
+  "timestamp": "2026-03-14T19:14:22Z",
+  "environment": "production",
+  "threshold": 80,
+  "composite_score": 90.1,
+  "ready": true,
+  "signals": {
+    "wow_maturity": {
+      "score": 87.0,
+      "weight": 0.35
+    },
+    "fitness_functions": {
+      "score": 73.2,
+      "weight": 0.2
+    },
+    "qa_results": {
+      "score": 100,
+      "weight": 0.2,
+      "pass": 1613,
+      "fail": 0
+    },
+    "test_coverage": {
+      "score": 100,
+      "weight": 0.15,
+      "coverage_pct": 82.9
+    },
+    "critical_issues": {
+      "score": 100,
+      "weight": 0.1,
+      "open_count": 0
+    }
+  }
+}

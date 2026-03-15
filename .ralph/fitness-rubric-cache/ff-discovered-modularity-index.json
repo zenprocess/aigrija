@@ -1,0 +1,7 @@
+{
+  "function_id": "ff-discovered-modularity-index",
+  "score": 75,
+  "rationale": "5 DI factories (rateLimiter, classifier, sanityClient, alerter, domainIntel). Barrel index.ts files created. blog.ts refactored to use createSanityClient.",
+  "scored_at": "2026-03-14T19:12:26Z",
+  "scorer": "manual-rubric"
+}

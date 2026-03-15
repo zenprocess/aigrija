@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../lib/types';
-import { sanityFetch } from '../lib/sanity';
+import { createSanityClient } from '../lib/sanity';
 import { structuredLog } from '../lib/logger';
 import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { renderBlogListPage, renderBlogPostPage } from '../templates/blog-page';
@@ -30,6 +30,9 @@ function wantsHtml(c: { req: { header: (name: string) => string | undefined } })
 }
 
 const blog = new Hono<{ Bindings: Env }>();
+
+// /blog → redirect to primary blog section (/ghid) so SSR handles it, not SPA fallback
+blog.get('/blog', (c) => c.redirect('/ghid', 301));
 
 const PAGE_SIZE = 20;
 
@@ -128,7 +131,8 @@ blog.get('/amenintari', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, AMENINTARI_LIST_QUERY, { lang, from, to });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<Record<string, unknown>[]>(AMENINTARI_LIST_QUERY, { lang, from, to });
     if (html) {
       const rendered = renderBlogListPage(posts as never[], 'amenintari', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
@@ -154,7 +158,8 @@ blog.get('/amenintari/feed.xml', async (c) => {
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
   try {
     const query = `*[_type == "threatReport" && language == $lang] | order(firstSeen desc) [0...20] { title, slug, excerpt, firstSeen, author->{ name } }`;
-    const posts = await sanityFetch<RssPost[]>(c.env, query, { lang });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<RssPost[]>(query, { lang });
     const xml = buildRss(posts ?? [], c.env.BASE_URL, '/amenintari/feed.xml', 'ai-grija.ro \u2014 Amenintari', 'Rapoarte de amenintari cibernetice', lang, '/amenintari');
     await kvPut(c.env, cacheKey, xml, 3600);
     c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'MISS');
@@ -175,7 +180,8 @@ blog.get('/amenintari/:slug', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<Record<string, unknown>>(c.env, AMENINTARI_POST_QUERY, { slug, lang });
+    const sanity = createSanityClient(c.env);
+    const post = await sanity<Record<string, unknown>>(AMENINTARI_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Raportul nu a fost gasit.' }, request_id: 'unknown' }, 404);
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'amenintari', lang, c.env.BASE_URL);
@@ -206,7 +212,8 @@ blog.get('/ghid', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, GHID_LIST_QUERY, { lang, from, to });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<Record<string, unknown>[]>(GHID_LIST_QUERY, { lang, from, to });
     if (html) {
       const rendered = renderBlogListPage(posts as never[], 'ghid', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
@@ -232,7 +239,8 @@ blog.get('/ghid/feed.xml', async (c) => {
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
   try {
     const query = `*[(_type == "blogPost" && category == "ghid" || _type == "bankGuide") && language == $lang] | order(publishedAt desc) [0...20] { title, slug, excerpt, publishedAt, author->{ name } }`;
-    const posts = await sanityFetch<RssPost[]>(c.env, query, { lang });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<RssPost[]>(query, { lang });
     const xml = buildRss(posts ?? [], c.env.BASE_URL, '/ghid/feed.xml', 'ai-grija.ro \u2014 Ghiduri', 'Ghiduri de protectie digitala', lang, '/ghid');
     await kvPut(c.env, cacheKey, xml, 3600);
     c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'MISS');
@@ -253,7 +261,8 @@ blog.get('/ghid/:slug', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<Record<string, unknown>>(c.env, GHID_POST_QUERY, { slug, lang });
+    const sanity = createSanityClient(c.env);
+    const post = await sanity<Record<string, unknown>>(GHID_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Ghidul nu a fost gasit.' }, request_id: 'unknown' }, 404);
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'ghid', lang, c.env.BASE_URL);
@@ -284,7 +293,8 @@ blog.get('/educatie', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, EDUCATIE_LIST_QUERY, { lang, from, to });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<Record<string, unknown>[]>(EDUCATIE_LIST_QUERY, { lang, from, to });
     if (html) {
       const rendered = renderBlogListPage(posts as never[], 'educatie', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
@@ -310,7 +320,8 @@ blog.get('/educatie/feed.xml', async (c) => {
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
   try {
     const query = `*[(_type == "blogPost" && category == "educatie" || _type == "schoolModule") && language == $lang] | order(publishedAt desc) [0...20] { title, slug, excerpt, publishedAt, author->{ name } }`;
-    const posts = await sanityFetch<RssPost[]>(c.env, query, { lang });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<RssPost[]>(query, { lang });
     const xml = buildRss(posts ?? [], c.env.BASE_URL, '/educatie/feed.xml', 'ai-grija.ro \u2014 Educatie digitala', 'Articole de educatie digitala', lang, '/educatie');
     await kvPut(c.env, cacheKey, xml, 3600);
     c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'MISS');
@@ -331,7 +342,8 @@ blog.get('/educatie/:slug', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<Record<string, unknown>>(c.env, EDUCATIE_POST_QUERY, { slug, lang });
+    const sanity = createSanityClient(c.env);
+    const post = await sanity<Record<string, unknown>>(EDUCATIE_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Articolul de educatie nu a fost gasit.' }, request_id: 'unknown' }, 404);
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'educatie', lang, c.env.BASE_URL);
@@ -362,7 +374,8 @@ blog.get('/rapoarte', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, RAPOARTE_LIST_QUERY, { lang, from, to });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<Record<string, unknown>[]>(RAPOARTE_LIST_QUERY, { lang, from, to });
     if (html) {
       const rendered = renderBlogListPage(posts as never[], 'rapoarte', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
@@ -389,7 +402,8 @@ blog.get('/rapoarte/:slug', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<Record<string, unknown>>(c.env, RAPOARTE_POST_QUERY, { slug, lang });
+    const sanity = createSanityClient(c.env);
+    const post = await sanity<Record<string, unknown>>(RAPOARTE_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Raportul saptamanal nu a fost gasit.' }, request_id: 'unknown' }, 404);
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'rapoarte', lang, c.env.BASE_URL);
@@ -420,7 +434,8 @@ blog.get('/povesti', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, POVESTI_LIST_QUERY, { lang, from, to });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<Record<string, unknown>[]>(POVESTI_LIST_QUERY, { lang, from, to });
     if (html) {
       const rendered = renderBlogListPage(posts as never[], 'povesti', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
@@ -447,7 +462,8 @@ blog.get('/povesti/:slug', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<Record<string, unknown>>(c.env, POVESTI_POST_QUERY, { slug, lang });
+    const sanity = createSanityClient(c.env);
+    const post = await sanity<Record<string, unknown>>(POVESTI_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Povestea nu a fost gasita.' }, request_id: 'unknown' }, 404);
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'povesti', lang, c.env.BASE_URL);
@@ -478,7 +494,8 @@ blog.get('/presa', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, PRESA_LIST_QUERY, { lang, from, to });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<Record<string, unknown>[]>(PRESA_LIST_QUERY, { lang, from, to });
     if (html) {
       const rendered = renderBlogListPage(posts as never[], 'presa', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
@@ -505,7 +522,8 @@ blog.get('/presa/:slug', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<Record<string, unknown>>(c.env, PRESA_POST_QUERY, { slug, lang });
+    const sanity = createSanityClient(c.env);
+    const post = await sanity<Record<string, unknown>>(PRESA_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Comunicatul de presa nu a fost gasit.' }, request_id: 'unknown' }, 404);
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'presa', lang, c.env.BASE_URL);
@@ -534,7 +552,8 @@ blog.get('/feed.xml', async (c) => {
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
 
   try {
-    const posts = await sanityFetch<RssPost[]>(c.env, RSS_ALL_QUERY, { lang });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<RssPost[]>(RSS_ALL_QUERY, { lang });
     const base = c.env.BASE_URL;
 
     const items = (posts ?? []).map((p) => {
@@ -599,7 +618,8 @@ blog.get('/sitemap-content.xml', async (c) => {
     const base = c.env.BASE_URL;
     type SitemapDoc = { slug: string; language: string; _updatedAt?: string };
     type SitemapResult = { ghid: SitemapDoc[]; educatie: SitemapDoc[]; amenintari: SitemapDoc[]; rapoarte: SitemapDoc[]; povesti: SitemapDoc[]; presa: SitemapDoc[] };
-    const result = await sanityFetch<SitemapResult>(c.env, SITEMAP_QUERY, {});
+    const sanity = createSanityClient(c.env);
+    const result = await sanity<SitemapResult>(SITEMAP_QUERY, {});
     const allDocs = result ?? { ghid: [], educatie: [], amenintari: [], rapoarte: [], povesti: [], presa: [] };
 
     const urlEntries: string[] = [];

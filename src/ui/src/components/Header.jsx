@@ -68,7 +68,7 @@ export default function Header() {
                 onClick={() => setIsContentOpen(!isContentOpen)}
                 className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors text-sm font-medium"
               >
-                Mai mult
+                {t('nav.more')}
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isContentOpen ? 'rotate-180' : ''}`} />
               </button>
               {isContentOpen && (
@@ -99,15 +99,15 @@ export default function Header() {
                 <span>{languages[lang]}</span>
               </button>
               {isLangOpen && (
-                <div className="absolute right-0 top-full mt-2 w-40 glass-card border border-white/10 rounded-xl overflow-hidden shadow-xl z-50">
+                <div className="absolute right-0 top-full mt-2 w-52 glass-card border border-white/10 rounded-xl overflow-hidden shadow-xl z-50">
                   {Object.entries(languages).map(([code]) => (
                     <button
                       key={code}
                       data-testid={`lang-option-${code}`}
                       onClick={() => { setLang(code); setIsLangOpen(false); }}
-                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 ${lang === code ? 'text-blue-400 bg-blue-500/10' : 'text-gray-300 hover:text-white hover:bg-white/10'}`}
+                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 whitespace-nowrap ${lang === code ? 'text-blue-400 bg-blue-500/10' : 'text-gray-300 hover:text-white hover:bg-white/10'}`}
                     >
-                      <span className="font-mono font-bold text-xs">{languages[code]}</span>
+                      <span className="font-mono font-bold text-xs shrink-0">{languages[code]}</span>
                       <span>{languageNames[code]}</span>
                     </button>
                   ))}
@@ -130,15 +130,15 @@ export default function Header() {
                 <span className="text-xs font-bold">{languages[lang]}</span>
               </button>
               {isLangOpen && (
-                <div className="absolute right-0 top-full mt-2 w-40 glass-card border border-white/10 rounded-xl overflow-hidden shadow-xl z-50">
+                <div className="absolute right-0 top-full mt-2 w-52 glass-card border border-white/10 rounded-xl overflow-hidden shadow-xl z-50">
                   {Object.entries(languages).map(([code]) => (
                     <button
                       key={code}
                       data-testid={`lang-option-mobile-${code}`}
                       onClick={() => { setLang(code); setIsLangOpen(false); }}
-                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 ${lang === code ? 'text-blue-400 bg-blue-500/10' : 'text-gray-300 hover:text-white hover:bg-white/10'}`}
+                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 whitespace-nowrap ${lang === code ? 'text-blue-400 bg-blue-500/10' : 'text-gray-300 hover:text-white hover:bg-white/10'}`}
                     >
-                      <span className="font-mono font-bold text-xs">{languages[code]}</span>
+                      <span className="font-mono font-bold text-xs shrink-0">{languages[code]}</span>
                       <span>{languageNames[code]}</span>
                     </button>
                   ))}

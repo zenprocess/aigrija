@@ -69,6 +69,7 @@ const RealSauFraudaQuestion = React.memo(function RealSauFraudaQuestion({ questi
           data-testid="quiz-real-btn"
           disabled={answered}
           onClick={() => onAnswer(false)}
+          aria-label={t('quiz.real_btn')}
           className={cn(
             'flex-1 py-3 px-6 rounded-xl font-semibold transition-all',
             answered ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105',
@@ -81,6 +82,7 @@ const RealSauFraudaQuestion = React.memo(function RealSauFraudaQuestion({ questi
           data-testid="quiz-fraud-btn"
           disabled={answered}
           onClick={() => onAnswer(true)}
+          aria-label={t('quiz.fraud_btn')}
           className={cn(
             'flex-1 py-3 px-6 rounded-xl font-semibold transition-all',
             answered ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105',
@@ -141,6 +143,10 @@ const GasesteSemnaleleQuestion = React.memo(function GasesteSemnaleleQuestion({ 
               key={i}
               data-testid={`quiz-word-${i}`}
               onClick={() => toggleWord(word)}
+              role="button"
+              tabIndex={answered ? -1 : 0}
+              aria-pressed={sel}
+              onKeyDown={(e) => { if (!answered && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleWord(word); } }}
               className={cn(
                 'cursor-pointer rounded px-0.5 transition-colors',
                 sel && !answered ? 'bg-purple-500/40 text-white' : '',
@@ -207,6 +213,9 @@ const CeFaciDacaQuestion = React.memo(function CeFaciDacaQuestion({ question, on
               data-testid={`quiz-option-${i}`}
               disabled={answered}
               onClick={() => toggleOption(opt.text)}
+              role="checkbox"
+              aria-checked={isSelected}
+              aria-label={opt.text}
               className={cn(
                 'w-full text-left py-3 px-4 rounded-xl border transition-all flex gap-3 items-start',
                 answered ? 'cursor-default' : 'hover:border-purple-500/50',
@@ -416,7 +425,7 @@ export default function Quiz() {
 
   if (finished) {
     return (
-      <section className="py-12 px-4 max-w-2xl mx-auto" data-testid="quiz-container">
+      <section className="pb-12 pt-24 px-4 max-w-2xl mx-auto" data-testid="quiz-container">
         <h1 className="sr-only">{t('quiz.title')}</h1>
         <ScoreSummary score={score} total={questions.length} onRetry={loadQuestions} />
       </section>
@@ -427,7 +436,7 @@ export default function Quiz() {
   if (!q) return null;
 
   return (
-    <section className="py-12 px-4 max-w-2xl mx-auto" data-testid="quiz-container">
+    <section className="pb-12 pt-24 px-4 max-w-2xl mx-auto" data-testid="quiz-container">
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold text-white mb-1">{t('quiz.title')}</h1>

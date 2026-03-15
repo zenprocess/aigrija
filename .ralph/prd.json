@@ -1,76 +1,30 @@
 {
-  "project": "aigrija",
-  "epic": "Quality Sprint — A11y, Responsive, Testing",
+  "project_id": "aigrija",
+  "version": "1.0.0",
+  "branch_name": "ralph/i18n-fixes",
   "stories": [
     {
-      "id": "S-359",
-      "title": "Fix accessibility: heading hierarchy, form labels, image alt text",
-      "issue": 359,
+      "id": "S-412",
+      "title": "Fix category heading i18n — add Romanian slug keys to content section",
+      "description": "ContentList.jsx uses t(`content.${category}`) but category is a Romanian slug (amenintari, ghid, educatie) while en.json content section has English keys (threats, guides, education). Fix: add Romanian slug aliases to the content section in ALL 5 i18n files. In en.json: add \"amenintari\": \"Threats\", \"ghid\": \"Guides\", \"educatie\": \"Education\", \"povesti\": \"Real stories\", \"rapoarte\": \"Reports\", \"presa\": \"Press releases\" alongside the existing English keys. Do the same for ro.json, bg.json, hu.json, uk.json — each file should have BOTH the English key AND the Romanian slug key mapping to the correct translation in that language. GitHub #412.",
       "assigned_agent": "react-specialist",
-      "complexity": "medium",
-      "status": "passed",
+      "priority": 1,
+      "status": "in_progress",
       "depends_on": [],
-      "acceptance_criteria": [
-        "Single h1 per page, proper h2-h6 nesting in all components",
-        "All form inputs have associated <label> or aria-label",
-        "All <img> elements have alt text",
-        "TypeScript compiles and all tests pass"
-      ],
-      "context": "The <main> landmark and skip-to-content link are ALREADY in App.jsx (lines 37-40, 107-112). Focus on:\n1. Heading hierarchy: check Hero.jsx, About.jsx, HowItWorks.jsx, Checker.jsx for multiple h1s. Only Hero should have h1, others should use h2+.\n2. Form labels: Checker.jsx has a textarea/input — ensure aria-label or <label htmlFor=...>.\n3. Image alt: check all <img> tags across components.\nAll UI files are in src/ui/src/components/. Run: npx vitest run after changes.",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-13T09:19:47Z"
-    },
-    {
-      "id": "S-360",
-      "title": "Fix responsive CSS overflow at mobile/tablet/desktop",
-      "issue": 360,
-      "assigned_agent": "react-specialist",
-      "complexity": "medium",
-      "status": "passed",
-      "depends_on": [],
-      "acceptance_criteria": [
-        "No horizontal overflow at 375px, 768px, 1024px, 1440px viewports",
-        "All content fits within viewport width on all pages",
-        "TypeScript compiles and all tests pass"
-      ],
-      "context": "App.jsx already has overflow-x-hidden on the container (line 36, 106). Focus on:\n1. Check src/ui/src/index.css for any elements wider than viewport (tables, pre, code blocks).\n2. Check components that render dynamic content: ContentPost.jsx, ContentList.jsx, Checker.jsx.\n3. Add max-w-full, overflow-x-auto to elements that might overflow (tables, code blocks, images).\n4. Ensure responsive Tailwind classes exist on all layout containers.\nAll UI files are in src/ui/src/. Run: npx vitest run after changes.",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-13T09:19:47Z"
-    },
-    {
-      "id": "S-366",
-      "title": "Add Sanity CMS mock for test environment",
-      "issue": 366,
-      "assigned_agent": "ts-fullstack",
-      "complexity": "medium",
-      "status": "passed",
-      "depends_on": [],
-      "acceptance_criteria": [
-        "Sanity API calls return mock data when ENVIRONMENT=test or NODE_ENV=test",
-        "Blog, ghid, educatie routes return valid responses in test env",
-        "Mock data is realistic (Romanian content, proper schema)",
-        "All tests pass"
-      ],
-      "context": "src/worker/lib/sanity.ts makes HTTP calls to apicdn.sanity.io which fails in test/local env. A mock data file already exists at src/worker/lib/sanity-mock-data.ts. Check if sanity.ts already has test-mode detection (similar to rate-limiter.ts isTestEnvironment pattern). If not, add it: when isTestEnvironment(env) returns true, return mock data instead of calling Sanity API. The mock should cover the GROQ queries used by blog/ghid/educatie routes. Run: npx vitest run after changes.",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-13T09:19:47Z"
-    },
-    {
-      "id": "S-361",
-      "title": "Add favicon.ico to static assets and HTML",
-      "issue": 361,
-      "assigned_agent": "react-specialist",
       "complexity": "low",
-      "status": "passed",
+      "github_issue": 412,
+      "started_at": "2026-03-15T18:53:07Z"
+    },
+    {
+      "id": "S-413b",
+      "title": "Replace hardcoded Romanian labels in AlertDetail.jsx with i18n t() calls",
+      "description": "In src/ui/src/components/AlertDetail.jsx, replace all hardcoded Romanian strings with t() i18n calls. Strings to replace: 'Înapoi la alerte' → t('alert_detail.back'), 'Entitate vizată:' → t('alert_detail.target_entity'), 'Prima atestare:' → t('alert_detail.first_reported'), 'Vezi detalii complete' → t('alert_detail.view_details'), 'Alerta nu a fost găsită' → t('alert_detail.not_found'), 'Se încarcă...' → t('alert_detail.loading'). Add the alert_detail section to ALL 5 i18n files with proper translations: en.json (English), ro.json (Romanian), bg.json (Bulgarian), hu.json (Hungarian), uk.json (Ukrainian). For bg/hu/uk use reasonable translations or English fallback. GitHub #413.",
+      "assigned_agent": "react-specialist",
+      "priority": 1,
+      "status": "pending",
       "depends_on": [],
-      "acceptance_criteria": [
-        "favicon.ico exists in src/ui/public/ (already there)",
-        "dist/index.html has <link rel='icon' href='/favicon.ico'>",
-        "No 404 for /favicon.ico requests"
-      ],
-      "context": "A favicon.ico already exists at src/ui/public/favicon.ico. Check dist/index.html for a <link rel='icon'> tag. If missing, add it to the <head>. Also check if wrangler.toml static assets config serves the public/ directory. This is a tiny change. Run: npx vitest run after.",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-13T09:19:47Z"
+      "complexity": "low",
+      "github_issue": 413
     }
   ]
 }

@@ -1,0 +1,110 @@
+{
+  "timestamp": "2026-03-15T14:54:50Z",
+  "project_id": "aigrija",
+  "maturity_date": "2026-03-13",
+  "composite_score": 0,
+  "recommendations": [
+    {
+      "dimension": "test_discipline",
+      "score": 20,
+      "action": "generate",
+      "test_types": [
+        "unit-coverage",
+        "uncovered-files"
+      ],
+      "priority": "high",
+      "estimated_tests": 15,
+      "description": "Unit tests for uncovered files"
+    },
+    {
+      "dimension": "security_posture",
+      "score": 80,
+      "action": "maintain",
+      "test_types": [],
+      "priority": null,
+      "estimated_tests": 0,
+      "description": "Security posture adequate"
+    },
+    {
+      "dimension": "api_contract_conformance",
+      "score": 100,
+      "action": "maintain",
+      "test_types": [],
+      "priority": null,
+      "estimated_tests": 0,
+      "description": "API contract conformance adequate"
+    },
+    {
+      "dimension": "observability_readiness",
+      "score": 95,
+      "action": "maintain",
+      "test_types": [],
+      "priority": null,
+      "estimated_tests": 0,
+      "description": "Observability readiness adequate"
+    },
+    {
+      "dimension": "code_organization",
+      "score": 36,
+      "action": "generate",
+      "test_types": [
+        "boundary-violation",
+        "coupling-tests"
+      ],
+      "priority": "high",
+      "estimated_tests": 10,
+      "description": "Boundary violation and coupling tests"
+    },
+    {
+      "dimension": "adr_coverage",
+      "score": 100,
+      "action": "maintain",
+      "test_types": [],
+      "priority": null,
+      "estimated_tests": 0,
+      "description": "ADR coverage adequate"
+    },
+    {
+      "dimension": "cicd_maturity",
+      "score": 100,
+      "action": "maintain",
+      "test_types": [],
+      "priority": null,
+      "estimated_tests": 0,
+      "description": "CI/CD maturity adequate"
+    },
+    {
+      "dimension": "documentation_health",
+      "score": 80,
+      "action": "maintain",
+      "test_types": [],
+      "priority": null,
+      "estimated_tests": 0,
+      "description": "Documentation health adequate"
+    },
+    {
+      "dimension": "dependency_health",
+      "score": 15,
+      "action": "generate",
+      "test_types": [
+        "vulnerability-scan",
+        "license-check"
+      ],
+      "priority": "high",
+      "estimated_tests": 10,
+      "description": "Dependency vulnerability scan and license compliance tests"
+    },
+    {
+      "dimension": "temporal_coupling",
+      "score": 63,
+      "action": "generate",
+      "test_types": [
+        "event-ordering"
+      ],
+      "priority": "medium",
+      "estimated_tests": 5,
+      "description": "Event ordering and sequencing tests"
+    }
+  ],
+  "total_estimated_tests": 40
+}

@@ -1,11 +1,12 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import type { AdminVariables } from '../lib/admin-auth';
+import type { CspVariables } from '../lib/csp';
 import { adminLayout } from './layout';
 import { escapeHtml } from '../lib/escape-html';
 import { structuredLog } from '../lib/logger';
 
-type AdminEnv = { Bindings: Env; Variables: AdminVariables };
+type AdminEnv = { Bindings: Env; Variables: AdminVariables & CspVariables };
 
 // ---- Types -----------------------------------------------------------------
 
@@ -82,7 +83,7 @@ newsletterAdmin.get('/', async (c) => {
 
   const apiKey = c.env.BUTTONDOWN_API_KEY;
   if (!apiKey) {
-    return c.html(adminLayout('Newsletter Subscribers', '<p class="text-red-500">BUTTONDOWN_API_KEY missing.</p>', 'abonati', email), 500);
+    return c.html(adminLayout('Newsletter Subscribers', '<p class="text-red-500">BUTTONDOWN_API_KEY missing.</p>', 'abonati', email, c.get('cspNonce')), 500);
   }
 
   let data: ButtondownListResponse;
@@ -90,7 +91,7 @@ newsletterAdmin.get('/', async (c) => {
     data = await fetchButtondownSubscribers(apiKey, page);
   } catch (err) {
     structuredLog('error', 'admin_newsletter_list_failed', { error: String(err) });
-    return c.html(adminLayout('Newsletter Subscribers', `<p class="text-red-500">Buttondown API Error: ${escapeHtml(String(err))}</p>`, 'abonati', email), 502);
+    return c.html(adminLayout('Newsletter Subscribers', `<p class="text-red-500">Buttondown API Error: ${escapeHtml(String(err))}</p>`, 'abonati', email, c.get('cspNonce')), 502);
   }
 
   const totalPages = Math.ceil(data.count / PAGE_SIZE);
@@ -138,7 +139,7 @@ newsletterAdmin.get('/', async (c) => {
       <div class="flex gap-2 mt-4">${paginationHtml}</div>
     </div>`;
 
-  return c.html(adminLayout('Newsletter Subscribers', body, 'abonati', email));
+  return c.html(adminLayout('Newsletter Subscribers', body, 'abonati', email, c.get('cspNonce')));
 });
 
 newsletterAdmin.get('/export', async (c) => {

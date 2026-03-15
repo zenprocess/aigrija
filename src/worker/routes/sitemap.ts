@@ -96,6 +96,7 @@ sitemap.get('/sitemap.xml', async (c) => {
     }
   }
 
+  try {
   const today = new Date().toISOString().slice(0, 10);
   const entries: UrlEntry[] = [];
 
@@ -158,6 +159,10 @@ sitemap.get('/sitemap.xml', async (c) => {
   c.header('Cache-Control', 'public, max-age=3600');
   c.header('X-Cache', 'MISS');
   return c.body(xml);
+  } catch (err) {
+    structuredLog('error', 'sitemap_handler_error', { error: String(err) });
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut genera sitemap-ul.' } }, 500);
+  }
 });
 
 // ─── GET /robots.txt ──────────────────────────────────────────────────────────

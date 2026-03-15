@@ -1,0 +1,6 @@
+{
+  "function_id": "ff-discovered-authentication-layer-completeness",
+  "score": 80,
+  "rationale": "CF Access middleware enforces admin auth centrally. RBAC via CF Access policies (email domain allowlist). Public API intentionally unauthenticated. @latency JSDoc documents access tiers.",
+  "scored_at": "2026-03-14T19:13:12Z"
+}

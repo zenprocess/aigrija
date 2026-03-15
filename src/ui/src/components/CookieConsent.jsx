@@ -18,7 +18,7 @@ function saveConsent(analytics) {
   localStorage.setItem('cookie_consent_given', 'true');
 }
 
-export default function CookieConsent() {
+export default function CookieConsent({ onVisibilityChange }) {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -31,6 +31,10 @@ export default function CookieConsent() {
       return () => clearTimeout(timer);
     }
   }, []);
+
+  useEffect(() => {
+    onVisibilityChange?.(visible);
+  }, [visible, onVisibilityChange]);
 
   function handleAcceptAll() {
     saveConsent(true);
@@ -52,14 +56,14 @@ export default function CookieConsent() {
   return (
     <div
       data-testid="consent-banner"
-      className="fixed bottom-0 left-0 right-0 z-50 p-4 flex justify-center consent-banner-enter"
+      className="w-full p-4 flex justify-center bg-gray-900/95 border-t border-white/10 consent-banner-enter"
     >
       <style>{`
         .consent-banner-enter {
           animation: consent-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
         @keyframes consent-slide-up {
-          from { opacity: 0; transform: translateY(24px); }
+          from { opacity: 0; transform: translateY(12px); }
           to { opacity: 1; transform: translateY(0); }
         }
         .consent-settings-panel {
@@ -132,7 +136,7 @@ export default function CookieConsent() {
             data-testid="consent-accept-all"
             type="button"
             onClick={handleAcceptAll}
-            className="flex-1 min-w-[120px] py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors duration-150"
+            className="flex-1 min-w-[120px] py-2 px-4 rounded-xl bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors duration-150"
           >
             {t('consent.accept_all')}
           </button>
@@ -140,7 +144,7 @@ export default function CookieConsent() {
             data-testid="consent-reject-btn"
             type="button"
             onClick={handleRejectAll}
-            className="flex-1 min-w-[100px] py-2 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-gray-300 text-sm font-medium transition-colors duration-150 border border-white/10"
+            className="flex-1 min-w-[100px] py-2 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-gray-200 text-sm font-medium transition-colors duration-150 border border-gray-400"
           >
             {t('consent.reject_all')}
           </button>
@@ -148,7 +152,7 @@ export default function CookieConsent() {
             data-testid="consent-settings-btn"
             type="button"
             onClick={() => setShowSettings((v) => !v)}
-            className="py-2 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-gray-300 text-sm font-medium transition-colors duration-150 border border-white/10"
+            className="py-2 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-gray-200 text-sm font-medium transition-colors duration-150 border border-white/10"
           >
             {t('consent.settings')}
           </button>

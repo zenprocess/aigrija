@@ -179,6 +179,7 @@ telegram.post('/webhook/telegram', async (c) => {
     return c.json({ error: { code: 'BAD_REQUEST', message: 'Corp JSON invalid.', request_id: rid } }, 400);
   }
 
+  try {
   const token = c.env.TELEGRAM_BOT_TOKEN;
   if (!token) {
     structuredLog('error', 'telegram_bot_token_missing', { stage: 'config' });
@@ -372,6 +373,10 @@ telegram.post('/webhook/telegram', async (c) => {
   await sendMessage(token, chatId, replyText, keyboard);
 
   return c.json({ ok: true });
+  } catch (err) {
+    structuredLog('error', 'telegram_webhook_handler_error', { error: String(err), stack: err instanceof Error ? err.stack : undefined });
+    return c.json({ ok: true });
+  }
 });
 
 export { telegram };

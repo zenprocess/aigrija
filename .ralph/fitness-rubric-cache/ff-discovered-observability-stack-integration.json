@@ -1,0 +1,6 @@
+{
+  "function_id": "ff-discovered-observability-stack-integration",
+  "score": 75,
+  "rationale": "3.5/4 pillars: structured JSON logging (logger.ts), Sentry error tracking (@sentry/cloudflare), Analytics Engine metrics, health/deep endpoint. Only missing: distributed tracing.",
+  "scored_at": "2026-03-14T19:13:42Z"
+}

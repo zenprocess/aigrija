@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { campaignApiRoutes } from './campaigns';
+import { campaignApiRoutes, severityBadge, statusPill } from './campaigns';
 
 function makeD1(firstResult: any = null, allResults: any[] = []) {
   const bindMock = {
@@ -127,5 +127,38 @@ describe('campaignApiRoutes', () => {
       const json = await res.json() as any;
       expect(json.ok).toBe(true);
     });
+  });
+});
+
+describe('severityBadge', () => {
+  it('escapes HTML entities in severity string', () => {
+    const result = severityBadge('<script>alert(1)</script>');
+    expect(result).not.toContain('<script>');
+    expect(result).toContain('&lt;script&gt;');
+  });
+
+  it('renders known severity with correct class', () => {
+    const result = severityBadge('critical');
+    expect(result).toContain('bg-red-600');
+    expect(result).toContain('critical');
+  });
+
+  it('renders N/A for null', () => {
+    const result = severityBadge(null);
+    expect(result).toContain('N/A');
+  });
+});
+
+describe('statusPill', () => {
+  it('escapes HTML entities in status string', () => {
+    const result = statusPill('<script>alert(2)</script>');
+    expect(result).not.toContain('<script>');
+    expect(result).toContain('&lt;script&gt;');
+  });
+
+  it('renders known status with correct class', () => {
+    const result = statusPill('published');
+    expect(result).toContain('bg-green-100');
+    expect(result).toContain('published');
   });
 });

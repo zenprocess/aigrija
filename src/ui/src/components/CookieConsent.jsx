@@ -56,14 +56,14 @@ export default function CookieConsent({ onVisibilityChange }) {
   return (
     <div
       data-testid="consent-banner"
-      className="fixed bottom-0 left-0 right-0 z-50 p-4 flex justify-center consent-banner-enter"
+      className="w-full p-4 flex justify-center bg-gray-900/95 border-t border-white/10 consent-banner-enter"
     >
       <style>{`
         .consent-banner-enter {
           animation: consent-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
         @keyframes consent-slide-up {
-          from { opacity: 0; transform: translateY(24px); }
+          from { opacity: 0; transform: translateY(12px); }
           to { opacity: 1; transform: translateY(0); }
         }
         .consent-settings-panel {

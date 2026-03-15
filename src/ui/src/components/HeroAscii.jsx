@@ -252,7 +252,7 @@ export default function HeroAscii() {
       `),
       React.createElement('section', {
         'data-testid': 'hero-ascii-section',
-        className: 'relative min-h-[70vh] flex items-center justify-center pt-12 overflow-hidden bg-gray-950',
+        className: 'relative min-h-[60vh] flex items-center justify-center pt-12 overflow-hidden bg-gray-950',
       },
         React.createElement(CornerAccents),
         React.createElement('div', {

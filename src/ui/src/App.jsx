@@ -31,10 +31,9 @@ const BG_PATTERN = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNj
 const CONTENT_CATEGORIES = ['amenintari', 'ghid', 'educatie', 'povesti', 'rapoarte', 'presa'];
 
 function PageShell({ children }) {
-  const [consentVisible, setConsentVisible] = useState(false);
   return (
     <ErrorBoundary>
-      <div className={`min-h-screen flex flex-col relative selection:bg-green-500/30 selection:text-white overflow-x-hidden${consentVisible ? ' pb-20' : ''}`}>
+      <div className="min-h-screen flex flex-col relative selection:bg-green-500/30 selection:text-white overflow-x-hidden">
         <a href="#main-content" className="skip-to-content">Treci la continut principal</a>
         <div className={`fixed inset-0 bg-[url('${BG_PATTERN}')] opacity-30 pointer-events-none z-0`} />
         <Header />
@@ -43,8 +42,8 @@ function PageShell({ children }) {
             {children}
           </Suspense>
         </main>
+        <Suspense fallback={null}><CookieConsent /></Suspense>
         <Footer />
-        <Suspense fallback={null}><CookieConsent onVisibilityChange={setConsentVisible} /></Suspense>
       </div>
     </ErrorBoundary>
   );
@@ -52,7 +51,6 @@ function PageShell({ children }) {
 
 function App() {
   const [hash, setHash] = useState(window.location.hash);
-  const [consentVisible, setConsentVisible] = useState(false);
 
   useEffect(() => {
     const onHashChange = () => setHash(window.location.hash);
@@ -105,7 +103,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <div className={`min-h-screen flex flex-col relative selection:bg-green-500/30 selection:text-white overflow-x-hidden${consentVisible ? ' pb-20' : ''}`}>
+      <div className="min-h-screen flex flex-col relative selection:bg-green-500/30 selection:text-white overflow-x-hidden">
         <a href="#main-content" className="skip-to-content">Treci la continut principal</a>
         <div className={`fixed inset-0 bg-[url('${BG_PATTERN}')] opacity-30 pointer-events-none z-0`} />
 
@@ -118,8 +116,8 @@ function App() {
           <ActiveAlerts />
           <About />
         </main>
+        <Suspense fallback={null}><CookieConsent /></Suspense>
         <Footer />
-        <Suspense fallback={null}><CookieConsent onVisibilityChange={setConsentVisible} /></Suspense>
       </div>
     </ErrorBoundary>
   );

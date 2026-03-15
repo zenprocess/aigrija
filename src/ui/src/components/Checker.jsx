@@ -141,7 +141,7 @@ export default function Checker() {
   };
 
   return (
-    <section id="verifica" className="py-20 relative z-20">
+    <section id="verifica" className="pt-10 pb-20 relative z-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="glass-card p-6 md:p-8 relative overflow-hidden group">

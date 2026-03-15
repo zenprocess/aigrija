@@ -9,7 +9,7 @@
       "description": "The cookie consent banner in src/ui/src/components/CookieConsent.jsx uses fixed/absolute positioning that overlaps the footer copyright row and 'Zen Labs' attribution. Fix: change the banner from position:fixed to a normal-flow element inserted BEFORE the footer (not overlaying it). If the user hasn't dismissed consent, render the banner as a full-width bar at the bottom of the page flow (not fixed). When dismissed (localStorage has consent), don't render it at all. Remove any z-index hacks. The banner should push the page taller, not cover content. GitHub issue #399.",
       "assigned_agent": "react-specialist",
       "priority": 1,
-      "status": "passed",
+      "status": "pending",
       "depends_on": [],
       "complexity": "low",
       "github_issue": 399,
@@ -20,31 +20,7 @@
         "Footer copyright line fully visible when banner is shown",
         "npx vitest run passes"
       ],
-      "test_spec": null,
-      "attempts": 1
-    },
-    {
-      "id": "S-401b",
-      "title": "Fix hero subtitle garbled text from z-index collision with cookie consent",
-      "description": "On the homepage, text from the cookie consent banner bleeds through behind the hero subtitle area creating garbled overlapping text. The hero section in src/ui/src/components/HeroAscii.jsx has z-10 on its content div, but the cookie consent at position:fixed bottom:0 renders behind it, showing through on some viewports. Fix: ensure the hero section has a solid opaque background (bg-gray-950) that prevents any content behind it from showing through. Also check if the hero section's min-h-[70vh] pushes it into the viewport area where the fixed consent banner sits. This is related to S-399 — if the consent banner moves to normal flow, this may resolve automatically. GitHub issues #400, #401.",
-      "assigned_agent": "react-specialist",
-      "priority": 1,
-      "status": "passed",
-      "depends_on": [
-        "S-399"
-      ],
-      "complexity": "low",
-      "github_issue": 401,
-      "acceptance_criteria": [
-        "No text overlap between hero subtitle and any other component",
-        "Hero subtitle reads cleanly on desktop, tablet, and mobile",
-        "No garbled/layered text visible",
-        "npx vitest run passes"
-      ],
-      "test_spec": null,
-      "started_at": "2026-03-15T08:38:09Z",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-15T08:42:23Z"
+      "test_spec": null
     },
     {
       "id": "S-403b",
@@ -52,7 +28,7 @@
       "description": "On desktop (1440px), there's a ~150px empty dark gap between the hero CTA button and the checker form. In src/ui/src/App.jsx the homepage renders <Hero /><Checker /> sequentially. The gap comes from bottom padding/margin on HeroAscii.jsx and/or top padding on Checker.jsx. Reduce to ~40-60px gap. Check: HeroAscii section has min-h-[70vh] — this may push the checker down. Consider reducing to min-h-[60vh] or adding negative margin on Checker. GitHub issue #403.",
       "assigned_agent": "react-specialist",
       "priority": 2,
-      "status": "passed",
+      "status": "pending",
       "depends_on": [],
       "complexity": "low",
       "github_issue": 403,
@@ -61,8 +37,7 @@
         "Hero still looks good on mobile (no content clipping)",
         "npx vitest run passes"
       ],
-      "test_spec": null,
-      "attempts": 1
+      "test_spec": null
     }
   ]
 }

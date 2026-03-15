@@ -309,7 +309,7 @@ export default function HeroAscii() {
               React.createElement('span', { className: 'text-green-400' }, t('hero.title_highlight'))
             ),
             React.createElement('p', {
-              className: 'text-base sm:text-xl md:text-2xl text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed font-mono',
+              className: 'text-base sm:text-xl md:text-2xl text-gray-400 mb-12 md:mb-16 max-w-2xl mx-auto leading-relaxed font-mono',
             },
               React.createElement('span', { className: 'text-green-500/60' }, '// '),
               t('hero.subtitle')

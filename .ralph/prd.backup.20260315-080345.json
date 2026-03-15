@@ -9,7 +9,7 @@
       "description": "In src/worker/lib/csp.ts, update SECURITY_HEADERS_PUBLIC_CSP to add https://cloud.umami.is to script-src. The current value is: \"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.r2.dev; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'\". Change script-src to: script-src 'self' https://cloud.umami.is. Also add connect-src 'self' https://cloud.umami.is (Umami sends analytics via fetch). GitHub issue #393.",
       "assigned_agent": "ts-fullstack",
       "priority": 1,
-      "status": "passed",
+      "status": "pending",
       "depends_on": [],
       "complexity": "low",
       "github_issue": 393,
@@ -19,10 +19,7 @@
         "npx tsc --noEmit passes",
         "npx vitest run passes"
       ],
-      "test_spec": null,
-      "started_at": "2026-03-15T08:06:08Z",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-15T08:07:23Z"
+      "test_spec": null
     },
     {
       "id": "S-394",
@@ -30,7 +27,7 @@
       "description": "In src/ui/src/components/HeroAscii.jsx, add responsive bottom margin to the subtitle element (around line 311-316). Change className from 'text-base sm:text-xl md:text-2xl text-gray-400 mb-8' to 'text-base sm:text-xl md:text-2xl text-gray-400 mb-12 md:mb-16'. This ensures enough space between subtitle and the CTA buttons below on tablet. GitHub issue #394.",
       "assigned_agent": "react-specialist",
       "priority": 1,
-      "status": "passed",
+      "status": "pending",
       "depends_on": [],
       "complexity": "low",
       "github_issue": 394,
@@ -39,10 +36,7 @@
         "No text overlap with CTA buttons at 768px",
         "npx vitest run passes"
       ],
-      "test_spec": null,
-      "started_at": "2026-03-15T08:06:08Z",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-15T08:07:23Z"
+      "test_spec": null
     },
     {
       "id": "S-395",
@@ -50,7 +44,7 @@
       "description": "In src/ui/src/components/ActiveAlerts.jsx, find where 'Target' is displayed as a label. Replace with the actual alert.target value (the institution name like 'ING Bank', 'ANAF'). If alert.target is empty/null, hide the field entirely instead of showing 'Target'. The data comes from /api/alerts which returns campaign objects with a target field. GitHub issue #395.",
       "assigned_agent": "react-specialist",
       "priority": 1,
-      "status": "passed",
+      "status": "pending",
       "depends_on": [],
       "complexity": "low",
       "github_issue": 395,
@@ -59,10 +53,7 @@
         "Empty targets are hidden",
         "npx vitest run passes"
       ],
-      "test_spec": null,
-      "started_at": "2026-03-15T08:06:08Z",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-15T08:07:23Z"
+      "test_spec": null
     },
     {
       "id": "S-396",
@@ -70,7 +61,7 @@
       "description": "In src/ui/src/components/CookieConsent.jsx, the banner overlays footer content. Fix by adding padding-bottom to the main content area when consent banner is visible. In App.jsx, add a spacer div or pb-20 class to main when the consent state is not yet set. Alternatively, make the consent banner position: sticky at the bottom with a background that doesn't cover content. GitHub issue #396.",
       "assigned_agent": "react-specialist",
       "priority": 2,
-      "status": "passed",
+      "status": "pending",
       "depends_on": [],
       "complexity": "low",
       "github_issue": 396,
@@ -79,10 +70,7 @@
         "Banner does not cover page content",
         "npx vitest run passes"
       ],
-      "test_spec": null,
-      "started_at": "2026-03-15T08:07:25Z",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-15T08:10:28Z"
+      "test_spec": null
     },
     {
       "id": "S-397",
@@ -90,7 +78,7 @@
       "description": "In src/ui/src/components/Quiz.jsx, the quiz title 'Quiz: Do You Recognize Fraud?' is partially hidden behind the fixed header. Add pt-24 to the quiz container div (same pattern used by ContentList.jsx). GitHub issue #397.",
       "assigned_agent": "react-specialist",
       "priority": 2,
-      "status": "passed",
+      "status": "pending",
       "depends_on": [],
       "complexity": "low",
       "github_issue": 397,
@@ -98,10 +86,7 @@
         "Quiz title fully visible below header",
         "npx vitest run passes"
       ],
-      "test_spec": null,
-      "started_at": "2026-03-15T08:07:25Z",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-15T08:10:28Z"
+      "test_spec": null
     },
     {
       "id": "S-398",
@@ -109,7 +94,7 @@
       "description": "In src/ui/src/components/ActiveAlerts.jsx, standardize badge colors: status 'active' = green badge, 'inactive' = gray; severity 'high'/'critical' = red, 'moderate'/'medium' = yellow/amber, 'low' = green. Currently some active badges show as red which is confusing. GitHub issue #398.",
       "assigned_agent": "react-specialist",
       "priority": 3,
-      "status": "passed",
+      "status": "pending",
       "depends_on": [],
       "complexity": "low",
       "github_issue": 398,
@@ -120,10 +105,7 @@
         "Consistent across all campaign cards",
         "npx vitest run passes"
       ],
-      "test_spec": null,
-      "started_at": "2026-03-15T08:07:25Z",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-15T08:10:28Z"
+      "test_spec": null
     }
   ]
 }

@@ -1,15 +1,17 @@
 {
-  "status": "pass",
-  "timestamp": "2026-03-14T16:05:00Z",
+  "status": "fail",
+  "timestamp": "2026-03-14T20:11:02.036Z",
   "results": {
-    "pass": 1537,
-    "fail": 0,
-    "total": 1537,
-    "test_files": 133
+    "pass": 23,
+    "fail": 1,
+    "total": 24,
+    "test_files": 1
   },
-  "coverage": {
-    "statements": 82.9,
-    "branches": 76.1,
-    "functions": 90.7
+  "categories": {
+    "visual": "pass",
+    "console": "pass",
+    "responsive": "pass",
+    "bdd": "fail",
+    "a11y": "pending"
   }
 }

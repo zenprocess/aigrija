@@ -425,7 +425,7 @@ export default function Quiz() {
 
   if (finished) {
     return (
-      <section className="py-12 px-4 max-w-2xl mx-auto" data-testid="quiz-container">
+      <section className="pb-12 pt-24 px-4 max-w-2xl mx-auto" data-testid="quiz-container">
         <h1 className="sr-only">{t('quiz.title')}</h1>
         <ScoreSummary score={score} total={questions.length} onRetry={loadQuestions} />
       </section>
@@ -436,7 +436,7 @@ export default function Quiz() {
   if (!q) return null;
 
   return (
-    <section className="py-12 px-4 max-w-2xl mx-auto" data-testid="quiz-container">
+    <section className="pb-12 pt-24 px-4 max-w-2xl mx-auto" data-testid="quiz-container">
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold text-white mb-1">{t('quiz.title')}</h1>

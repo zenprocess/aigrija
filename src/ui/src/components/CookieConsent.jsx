@@ -18,7 +18,7 @@ function saveConsent(analytics) {
   localStorage.setItem('cookie_consent_given', 'true');
 }
 
-export default function CookieConsent() {
+export default function CookieConsent({ onVisibilityChange }) {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -31,6 +31,10 @@ export default function CookieConsent() {
       return () => clearTimeout(timer);
     }
   }, []);
+
+  useEffect(() => {
+    onVisibilityChange?.(visible);
+  }, [visible, onVisibilityChange]);
 
   function handleAcceptAll() {
     saveConsent(true);

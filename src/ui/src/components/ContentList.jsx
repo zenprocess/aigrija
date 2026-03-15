@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../i18n/index.jsx';
 
+const SLUG_TO_I18N_KEY = {
+  amenintari: 'threats',
+  ghid: 'guides',
+  educatie: 'education',
+  povesti: 'stories',
+  rapoarte: 'reports',
+  presa: 'press',
+};
+
 export default function ContentList({ category }) {
   const { t, lang } = useTranslation();
   const [items, setItems] = useState([]);
@@ -37,7 +46,7 @@ export default function ContentList({ category }) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
-      <h1 className="text-3xl font-bold text-white mb-8 capitalize">{t(`content.${category}`) || category}</h1>
+      <h1 className="text-3xl font-bold text-white mb-8 capitalize">{t(`content.${SLUG_TO_I18N_KEY[category] || category}`) || category}</h1>
       {items.length === 0 ? (
         <p className="text-center text-gray-400 py-8">{t('feed.noItems') || 'No content available'}</p>
       ) : (

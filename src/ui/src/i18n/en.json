@@ -107,7 +107,12 @@
     "title": "Active phishing campaigns",
     "target": "Target:",
     "active": "Active",
-    "view_all": "View all alerts"
+    "view_all": "View all alerts",
+    "back_to_alerts": "Back to alerts",
+    "target_entity": "Target entity:",
+    "first_reported": "First reported:",
+    "view_details": "View full details",
+    "load_error": "The alert could not be loaded."
   },
   "about": {
     "title": "About ai-grija.ro",

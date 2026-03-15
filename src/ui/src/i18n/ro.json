@@ -107,7 +107,12 @@
     "title": "Campanii de phishing active",
     "target": "Țintă:",
     "active": "Activ",
-    "view_all": "Vezi toate alertele"
+    "view_all": "Vezi toate alertele",
+    "back_to_alerts": "Înapoi la alerte",
+    "target_entity": "Entitate vizată:",
+    "first_reported": "Prima atestare:",
+    "view_details": "Vezi detalii complete",
+    "load_error": "Alerta nu a putut fi încărcată."
   },
   "about": {
     "title": "Despre ai-grija.ro",

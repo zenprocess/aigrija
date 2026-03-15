@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ShieldAlert, Calendar } from 'lucide-react';
 import { fetchAlert } from '../utils/api';
+import { useTranslation } from '../i18n';
 
 const SEVERITY_STYLES = {
   critical: 'bg-red-500/20 text-red-400 border-red-500/30',
@@ -16,6 +17,7 @@ const STATUS_STYLES = {
 };
 
 export default function AlertDetail({ slug }) {
+  const { t } = useTranslation();
   const [alert, setAlert] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,7 +41,7 @@ export default function AlertDetail({ slug }) {
           className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
-          Înapoi la alerte
+          {t('alerts.back_to_alerts')}
         </a>
 
         {loading && (
@@ -53,7 +55,7 @@ export default function AlertDetail({ slug }) {
         {!loading && error && (
           <div className="text-center py-20">
             <ShieldAlert className="w-12 h-12 text-red-400 mx-auto mb-4" />
-            <p className="text-red-400 mb-2">Alerta nu a putut fi încărcată.</p>
+            <p className="text-red-400 mb-2">{t('alerts.load_error')}</p>
             <p className="text-sm text-gray-500">{error}</p>
           </div>
         )}
@@ -89,14 +91,14 @@ export default function AlertDetail({ slug }) {
             <div className="space-y-3 mb-8 text-sm text-gray-400">
               {alert.impersonated_entity && (
                 <p>
-                  <span className="text-gray-500">Entitate vizată:</span>{' '}
+                  <span className="text-gray-500">{t('alerts.target_entity')}</span>{' '}
                   <span className="text-gray-200">{alert.impersonated_entity}</span>
                 </p>
               )}
               {alert.first_seen && (
                 <p className="flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5" />
-                  <span className="text-gray-500">Prima atestare:</span>{' '}
+                  <span className="text-gray-500">{t('alerts.first_reported')}</span>{' '}
                   <span className="text-gray-200">{new Date(alert.first_seen).toLocaleDateString('ro-RO')}</span>
                 </p>
               )}
@@ -108,7 +110,7 @@ export default function AlertDetail({ slug }) {
                 href={`/alerte/${slug}`}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 transition-colors text-sm font-medium"
               >
-                Vezi detalii complete
+                {t('alerts.view_details')}
               </a>
             </div>
           </article>

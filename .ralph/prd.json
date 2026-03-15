@@ -1,72 +1,30 @@
 {
   "project_id": "aigrija",
   "version": "1.0.0",
-  "branch_name": "ralph/harden-fixes",
+  "branch_name": "ralph/i18n-fixes",
   "stories": [
     {
-      "id": "S-406",
-      "title": "Translate 'Mai mult' to 'More' in English mode",
-      "description": "In src/ui/src/components/Header.jsx, find where 'Mai mult' is used as the dropdown label for the 'More' menu. Replace the hardcoded Romanian string with t('nav.more') or equivalent i18n call. Then add the key to ALL language files: en.json -> \"nav\": { \"more\": \"More\" }, ro.json already has nav section. Check bg.json, hu.json, uk.json too. GitHub #406.",
+      "id": "S-412",
+      "title": "Fix category heading i18n — add Romanian slug keys to content section",
+      "description": "ContentList.jsx uses t(`content.${category}`) but category is a Romanian slug (amenintari, ghid, educatie) while en.json content section has English keys (threats, guides, education). Fix: add Romanian slug aliases to the content section in ALL 5 i18n files. In en.json: add \"amenintari\": \"Threats\", \"ghid\": \"Guides\", \"educatie\": \"Education\", \"povesti\": \"Real stories\", \"rapoarte\": \"Reports\", \"presa\": \"Press releases\" alongside the existing English keys. Do the same for ro.json, bg.json, hu.json, uk.json — each file should have BOTH the English key AND the Romanian slug key mapping to the correct translation in that language. GitHub #412.",
       "assigned_agent": "react-specialist",
       "priority": 1,
-      "status": "done",
+      "status": "in_progress",
       "depends_on": [],
       "complexity": "low",
-      "github_issue": 406,
-      "started_at": "2026-03-15T14:58:39Z",
-      "completed_at": "2026-03-15T17:10:00Z"
+      "github_issue": 412,
+      "started_at": "2026-03-15T18:53:07Z"
     },
     {
-      "id": "S-407",
-      "title": "Add /#/alerte/<slug> hash route for alert detail in SPA",
-      "description": "In src/ui/src/App.jsx, add a hash route handler for alert detail pages. Add before the CONTENT_CATEGORIES loop: const alerteMatch = hash.match(/^#\\/alerte\\/(.+)$/); if (alerteMatch) return <PageShell><AlertDetail slug={alerteMatch[1]} /></PageShell>; Create a new AlertDetail.jsx component that fetches /api/alerts and finds the matching alert by slug, then renders its details (title, description, target, severity, recommendations). If no match, show 'Alert not found'. GitHub #407.",
+      "id": "S-413b",
+      "title": "Replace hardcoded Romanian labels in AlertDetail.jsx with i18n t() calls",
+      "description": "In src/ui/src/components/AlertDetail.jsx, replace all hardcoded Romanian strings with t() i18n calls. Strings to replace: 'Înapoi la alerte' → t('alert_detail.back'), 'Entitate vizată:' → t('alert_detail.target_entity'), 'Prima atestare:' → t('alert_detail.first_reported'), 'Vezi detalii complete' → t('alert_detail.view_details'), 'Alerta nu a fost găsită' → t('alert_detail.not_found'), 'Se încarcă...' → t('alert_detail.loading'). Add the alert_detail section to ALL 5 i18n files with proper translations: en.json (English), ro.json (Romanian), bg.json (Bulgarian), hu.json (Hungarian), uk.json (Ukrainian). For bg/hu/uk use reasonable translations or English fallback. GitHub #413.",
       "assigned_agent": "react-specialist",
       "priority": 1,
-      "status": "done",
-      "depends_on": [],
-      "complexity": "medium",
-      "github_issue": 407,
-      "started_at": "2026-03-15T14:58:39Z",
-      "completed_at": "2026-03-15T17:10:00Z"
-    },
-    {
-      "id": "S-408",
-      "title": "Fix feed.noItems raw translation key on content categories",
-      "description": "In src/ui/src/components/ContentList.jsx line 39, the t('feed.noItems') call renders the raw key. Check if 'feed.noItems' exists in en.json — it does exist in ro.json (line 267: 'no_posts' not 'noItems'). The key might be wrong. Check the actual key path: ro.json has 'feed': {'noItems': ...} — verify. If the key exists but t() fails, the i18n context may not be available. Also fix line 38-39: move the empty state AFTER the h1 heading so the category title always shows. GitHub #408.",
-      "assigned_agent": "react-specialist",
-      "priority": 1,
-      "status": "done",
+      "status": "pending",
       "depends_on": [],
       "complexity": "low",
-      "github_issue": 408,
-      "started_at": "2026-03-15T14:58:39Z",
-      "completed_at": "2026-03-15T17:10:00Z"
-    },
-    {
-      "id": "S-409",
-      "title": "Fix language dropdown clipping and prefix/name overlap",
-      "description": "In the language switcher component (likely Header.jsx or a LangSwitcher sub-component), the dropdown items show clipped text like 'RORom...', 'BGБъл...'. The dropdown container is too narrow and the language code prefix overlaps with the language name. Fix: increase dropdown min-width to fit longest language name (e.g., min-w-40 or w-48). Separate the prefix code from the name with a space or remove the prefix entirely. Ensure dropdown doesn't overflow the viewport on the right side. GitHub #409.",
-      "assigned_agent": "react-specialist",
-      "priority": 1,
-      "status": "done",
-      "depends_on": [],
-      "complexity": "low",
-      "github_issue": 409,
-      "started_at": "2026-03-15T14:55:01Z",
-      "completed_at": "2026-03-15T17:10:00Z"
-    },
-    {
-      "id": "S-411",
-      "title": "Show category heading even when content list is empty",
-      "description": "In src/ui/src/components/ContentList.jsx, the empty state (items.length === 0) returns at line 38-39 BEFORE the h1 at line 44 is rendered. Fix: restructure so the h1 with translated category name always renders, and the empty message appears below it. Move lines 38-40 to after line 44. GitHub #411.",
-      "assigned_agent": "react-specialist",
-      "priority": 1,
-      "status": "done",
-      "depends_on": [],
-      "complexity": "low",
-      "github_issue": 411,
-      "started_at": "2026-03-15T14:55:01Z",
-      "completed_at": "2026-03-15T17:10:00Z"
+      "github_issue": 413
     }
   ]
 }

@@ -14,6 +14,7 @@ const ContentList = lazy(() => import('./components/ContentList'));
 const ContentPost = lazy(() => import('./components/ContentPost'));
 const Quiz = lazy(() => import('./components/Quiz'));
 const CookieConsent = lazy(() => import('./components/CookieConsent'));
+const AlertDetail = lazy(() => import('./components/AlertDetail'));
 
 function LoadingSkeleton() {
   return (
@@ -78,6 +79,15 @@ function App() {
     return (
       <PageShell>
         <TermsOfService />
+      </PageShell>
+    );
+  }
+
+  const alerteMatch = hash.match(/^#\/alerte\/(.+)$/);
+  if (alerteMatch) {
+    return (
+      <PageShell>
+        <AlertDetail slug={alerteMatch[1]} />
       </PageShell>
     );
   }

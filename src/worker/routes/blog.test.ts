@@ -40,6 +40,17 @@ vi.mock('../lib/sanity', () => {
 import { sanityFetch } from '../lib/sanity';
 const mockSanityFetch = vi.mocked(sanityFetch);
 
+// ─── /blog — redirect to /ghid ───────────────────────────────────────────────
+
+describe('GET /blog', () => {
+  it('redirects to /ghid with 301', async () => {
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/blog'), env);
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe('/ghid');
+  });
+});
+
 // ─── Cross-cutting: empty responses, invalid params, lang filtering ──────────
 
 describe('empty Sanity responses', () => {

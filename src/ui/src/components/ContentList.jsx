@@ -35,29 +35,29 @@ export default function ContentList({ category }) {
     return <p className="text-center text-red-500 py-8 pt-24">{error}</p>;
   }
 
-  if (items.length === 0) {
-    return <p className="text-center text-gray-400 py-8 pt-24">{t('feed.noItems')}</p>;
-  }
-
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
       <h1 className="text-3xl font-bold text-white mb-8 capitalize">{t(`content.${category}`) || category}</h1>
-      <ul className="space-y-4" data-testid="content-list">
-      {items.map((item) => (
-        <li key={item.id} className="glass-card p-4 border border-white/10">
-          <a
-            href={`#/${category}/${item.slug || item.id}`}
-            className="font-semibold text-green-400 hover:text-green-300 hover:underline"
-            data-testid="content-list-item-link"
-          >
-            {item.title}
-          </a>
-          {item.summary && (
-            <p className="text-sm text-gray-400 mt-1">{item.summary}</p>
-          )}
-        </li>
-      ))}
-      </ul>
+      {items.length === 0 ? (
+        <p className="text-center text-gray-400 py-8">{t('feed.noItems') || 'No content available'}</p>
+      ) : (
+        <ul className="space-y-4" data-testid="content-list">
+        {items.map((item) => (
+          <li key={item.id} className="glass-card p-4 border border-white/10">
+            <a
+              href={`#/${category}/${item.slug || item.id}`}
+              className="font-semibold text-green-400 hover:text-green-300 hover:underline"
+              data-testid="content-list-item-link"
+            >
+              {item.title}
+            </a>
+            {item.summary && (
+              <p className="text-sm text-gray-400 mt-1">{item.summary}</p>
+            )}
+          </li>
+        ))}
+        </ul>
+      )}
     </div>
   );
 }

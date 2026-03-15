@@ -258,7 +258,8 @@
     "label": "Limbă"
   },
   "nav": {
-    "blog": "Blog"
+    "blog": "Blog",
+    "more": "Mai mult"
   },
   "blog": {
     "title": "Blog",
@@ -314,6 +315,9 @@
     "choose_correct": "Alege toate acțiunile corecte:",
     "feedback_correct": "✓ Corect!",
     "feedback_incorrect": "✗ Incorect"
+  },
+  "feed": {
+    "noItems": "Nu există conținut disponibil"
   },
   "consent": {
     "banner_text": "Folosim cookie-uri esențiale pentru funcționarea site-ului. Cookie-urile analitice ne ajută să înțelegem cum este utilizat site-ul.",

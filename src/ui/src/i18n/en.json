@@ -249,7 +249,8 @@
     "label": "Language"
   },
   "nav": {
-    "blog": "Blog"
+    "blog": "Blog",
+    "more": "More"
   },
   "blog": {
     "title": "Blog",
@@ -314,6 +315,9 @@
     "choose_correct": "Choose all correct actions:",
     "feedback_correct": "✓ Correct!",
     "feedback_incorrect": "✗ Incorrect"
+  },
+  "feed": {
+    "noItems": "No content available"
   },
   "consent": {
     "banner_text": "We use essential cookies to make the site work. Analytics cookies help us understand how the site is used.",

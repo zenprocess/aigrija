@@ -31,6 +31,9 @@ function wantsHtml(c: { req: { header: (name: string) => string | undefined } })
 
 const blog = new Hono<{ Bindings: Env }>();
 
+// /blog → redirect to primary blog section (/ghid) so SSR handles it, not SPA fallback
+blog.get('/blog', (c) => c.redirect('/ghid', 301));
+
 const PAGE_SIZE = 20;
 
 // ─── KV helpers ──────────────────────────────────────────────────────────────

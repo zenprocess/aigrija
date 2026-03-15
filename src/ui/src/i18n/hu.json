@@ -249,7 +249,8 @@
     "label": "Nyelv"
   },
   "nav": {
-    "blog": "Blog"
+    "blog": "Blog",
+    "more": "Több"
   },
   "blog": {
     "title": "Blog",

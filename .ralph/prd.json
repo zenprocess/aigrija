@@ -1,50 +1,72 @@
 {
   "project_id": "aigrija",
   "version": "1.0.0",
-  "branch_name": "ralph/visual-polish",
+  "branch_name": "ralph/harden-fixes",
   "stories": [
     {
-      "id": "S-404",
-      "title": "Increase cookie consent button contrast on mobile",
-      "description": "In src/ui/src/components/CookieConsent.jsx, the 'Accept all' button uses a dark green that's hard to read on the dark background on mobile. Change to bg-green-500 text-white (or bg-green-600 text-white) for high contrast. The 'Essential only' outline button should use border-gray-400 text-gray-200 instead of the current low-contrast variant. The 'Settings' button should use text-gray-300 for readability. GitHub issue #404.",
+      "id": "S-406",
+      "title": "Translate 'Mai mult' to 'More' in English mode",
+      "description": "In src/ui/src/components/Header.jsx, find where 'Mai mult' is used as the dropdown label for the 'More' menu. Replace the hardcoded Romanian string with t('nav.more') or equivalent i18n call. Then add the key to ALL language files: en.json -> \"nav\": { \"more\": \"More\" }, ro.json already has nav section. Check bg.json, hu.json, uk.json too. GitHub #406.",
       "assigned_agent": "react-specialist",
       "priority": 1,
-      "status": "passed",
+      "status": "done",
       "depends_on": [],
       "complexity": "low",
-      "github_issue": 404,
-      "acceptance_criteria": [
-        "Accept all button clearly readable on dark background",
-        "Essential only button border visible on dark background",
-        "Settings button text visible",
-        "npx vitest run passes"
-      ],
-      "test_spec": null,
-      "started_at": "2026-03-15T09:09:36Z",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-15T09:15:05Z"
+      "github_issue": 406,
+      "started_at": "2026-03-15T14:58:39Z",
+      "completed_at": "2026-03-15T17:10:00Z"
     },
     {
-      "id": "S-405b",
-      "title": "Fix footer link column spacing on mobile",
-      "description": "In src/ui/src/components/Footer.jsx, the CONTENT and LEGAL footer link columns have uneven spacing on mobile — 'Press releases' wraps awkwardly. Add consistent vertical spacing: space-y-1 on mobile links, ensure both columns have equal gap. If columns stack on mobile, add mb-4 between them. GitHub issue #405.",
+      "id": "S-407",
+      "title": "Add /#/alerte/<slug> hash route for alert detail in SPA",
+      "description": "In src/ui/src/App.jsx, add a hash route handler for alert detail pages. Add before the CONTENT_CATEGORIES loop: const alerteMatch = hash.match(/^#\\/alerte\\/(.+)$/); if (alerteMatch) return <PageShell><AlertDetail slug={alerteMatch[1]} /></PageShell>; Create a new AlertDetail.jsx component that fetches /api/alerts and finds the matching alert by slug, then renders its details (title, description, target, severity, recommendations). If no match, show 'Alert not found'. GitHub #407.",
       "assigned_agent": "react-specialist",
       "priority": 1,
-      "status": "passed",
+      "status": "done",
+      "depends_on": [],
+      "complexity": "medium",
+      "github_issue": 407,
+      "started_at": "2026-03-15T14:58:39Z",
+      "completed_at": "2026-03-15T17:10:00Z"
+    },
+    {
+      "id": "S-408",
+      "title": "Fix feed.noItems raw translation key on content categories",
+      "description": "In src/ui/src/components/ContentList.jsx line 39, the t('feed.noItems') call renders the raw key. Check if 'feed.noItems' exists in en.json — it does exist in ro.json (line 267: 'no_posts' not 'noItems'). The key might be wrong. Check the actual key path: ro.json has 'feed': {'noItems': ...} — verify. If the key exists but t() fails, the i18n context may not be available. Also fix line 38-39: move the empty state AFTER the h1 heading so the category title always shows. GitHub #408.",
+      "assigned_agent": "react-specialist",
+      "priority": 1,
+      "status": "done",
       "depends_on": [],
       "complexity": "low",
-      "github_issue": 405,
-      "acceptance_criteria": [
-        "Footer links evenly spaced on mobile",
-        "Press releases text doesn't wrap awkwardly",
-        "CONTENT and LEGAL columns aligned when stacked",
-        "npx vitest run passes"
-      ],
-      "test_spec": null,
-      "last_error": "TIMEOUT — agent did not complete within 300s. This is a simple CSS spacing fix — just read Footer.jsx, add space-y-1 to mobile link containers and mb-4 between stacked columns, verify with vitest.",
-      "started_at": "2026-03-15T09:15:52Z",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-15T09:17:30Z"
+      "github_issue": 408,
+      "started_at": "2026-03-15T14:58:39Z",
+      "completed_at": "2026-03-15T17:10:00Z"
+    },
+    {
+      "id": "S-409",
+      "title": "Fix language dropdown clipping and prefix/name overlap",
+      "description": "In the language switcher component (likely Header.jsx or a LangSwitcher sub-component), the dropdown items show clipped text like 'RORom...', 'BGБъл...'. The dropdown container is too narrow and the language code prefix overlaps with the language name. Fix: increase dropdown min-width to fit longest language name (e.g., min-w-40 or w-48). Separate the prefix code from the name with a space or remove the prefix entirely. Ensure dropdown doesn't overflow the viewport on the right side. GitHub #409.",
+      "assigned_agent": "react-specialist",
+      "priority": 1,
+      "status": "done",
+      "depends_on": [],
+      "complexity": "low",
+      "github_issue": 409,
+      "started_at": "2026-03-15T14:55:01Z",
+      "completed_at": "2026-03-15T17:10:00Z"
+    },
+    {
+      "id": "S-411",
+      "title": "Show category heading even when content list is empty",
+      "description": "In src/ui/src/components/ContentList.jsx, the empty state (items.length === 0) returns at line 38-39 BEFORE the h1 at line 44 is rendered. Fix: restructure so the h1 with translated category name always renders, and the empty message appears below it. Move lines 38-40 to after line 44. GitHub #411.",
+      "assigned_agent": "react-specialist",
+      "priority": 1,
+      "status": "done",
+      "depends_on": [],
+      "complexity": "low",
+      "github_issue": 411,
+      "started_at": "2026-03-15T14:55:01Z",
+      "completed_at": "2026-03-15T17:10:00Z"
     }
   ]
 }

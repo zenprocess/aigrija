@@ -136,7 +136,7 @@ export default function CookieConsent({ onVisibilityChange }) {
             data-testid="consent-accept-all"
             type="button"
             onClick={handleAcceptAll}
-            className="flex-1 min-w-[120px] py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors duration-150"
+            className="flex-1 min-w-[120px] py-2 px-4 rounded-xl bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors duration-150"
           >
             {t('consent.accept_all')}
           </button>
@@ -144,7 +144,7 @@ export default function CookieConsent({ onVisibilityChange }) {
             data-testid="consent-reject-btn"
             type="button"
             onClick={handleRejectAll}
-            className="flex-1 min-w-[100px] py-2 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-gray-300 text-sm font-medium transition-colors duration-150 border border-white/10"
+            className="flex-1 min-w-[100px] py-2 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-gray-200 text-sm font-medium transition-colors duration-150 border border-gray-400"
           >
             {t('consent.reject_all')}
           </button>
@@ -152,7 +152,7 @@ export default function CookieConsent({ onVisibilityChange }) {
             data-testid="consent-settings-btn"
             type="button"
             onClick={() => setShowSettings((v) => !v)}
-            className="py-2 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-gray-300 text-sm font-medium transition-colors duration-150 border border-white/10"
+            className="py-2 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-gray-200 text-sm font-medium transition-colors duration-150 border border-white/10"
           >
             {t('consent.settings')}
           </button>

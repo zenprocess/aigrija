@@ -9,7 +9,7 @@
       "description": "In src/ui/src/components/CookieConsent.jsx, the 'Accept all' button uses a dark green that's hard to read on the dark background on mobile. Change to bg-green-500 text-white (or bg-green-600 text-white) for high contrast. The 'Essential only' outline button should use border-gray-400 text-gray-200 instead of the current low-contrast variant. The 'Settings' button should use text-gray-300 for readability. GitHub issue #404.",
       "assigned_agent": "react-specialist",
       "priority": 1,
-      "status": "passed",
+      "status": "pending",
       "depends_on": [],
       "complexity": "low",
       "github_issue": 404,
@@ -19,10 +19,7 @@
         "Settings button text visible",
         "npx vitest run passes"
       ],
-      "test_spec": null,
-      "started_at": "2026-03-15T09:09:36Z",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-15T09:15:05Z"
+      "test_spec": null
     },
     {
       "id": "S-405b",
@@ -30,7 +27,7 @@
       "description": "In src/ui/src/components/Footer.jsx, the CONTENT and LEGAL footer link columns have uneven spacing on mobile — 'Press releases' wraps awkwardly. Add consistent vertical spacing: space-y-1 on mobile links, ensure both columns have equal gap. If columns stack on mobile, add mb-4 between them. GitHub issue #405.",
       "assigned_agent": "react-specialist",
       "priority": 1,
-      "status": "passed",
+      "status": "pending",
       "depends_on": [],
       "complexity": "low",
       "github_issue": 405,
@@ -40,11 +37,7 @@
         "CONTENT and LEGAL columns aligned when stacked",
         "npx vitest run passes"
       ],
-      "test_spec": null,
-      "last_error": "TIMEOUT — agent did not complete within 300s. This is a simple CSS spacing fix — just read Footer.jsx, add space-y-1 to mobile link containers and mb-4 between stacked columns, verify with vitest.",
-      "started_at": "2026-03-15T09:15:52Z",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-15T09:17:30Z"
+      "test_spec": null
     }
   ]
 }

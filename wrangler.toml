@@ -37,11 +37,13 @@ database_name = "ai-grija-admin"
 # After pulumi up, run: pulumi stack output d1DatabaseId
 # Then replace the placeholder below with the actual ID
 database_id = "9d15ccda-3648-4a93-8856-2ac5b5ffe199"
+migrations_dir = "migrations"
 
 [[d1_databases]]
 binding = "ADMIN_DB"
 database_name = "ai-grija-admin"
 database_id = "9d15ccda-3648-4a93-8856-2ac5b5ffe199"
+migrations_dir = "migrations"
 
 [[queues.producers]]
 queue = "draft-generation"

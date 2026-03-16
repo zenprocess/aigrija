@@ -51,6 +51,18 @@ describe('activity router', () => {
     );
   });
 
+  it('returns 503 with error message when getRecentActivity throws', async () => {
+    const { getRecentActivity } = await import('../lib/activity-log');
+    vi.mocked(getRecentActivity).mockRejectedValueOnce(new Error('no such table: admin_activity'));
+    const env = { ADMIN_DB: {} };
+    const req = new Request('http://localhost/');
+    const res = await activity.fetch(req, env, makeCtx());
+    expect(res.status).toBe(503);
+    const html = await res.text();
+    expect(html).toContain('Activity log unavailable');
+    expect(html).toContain('no such table: admin_activity');
+  });
+
   it('escapes XSS in filter params', async () => {
     const env = { ADMIN_DB: {} };
     const req = new Request('http://localhost/?action=%3Cscript%3Ealert(1)%3C%2Fscript%3E');

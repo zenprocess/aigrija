@@ -16,12 +16,18 @@ activity.get('/', async (c) => {
   const dateFrom = c.req.query('from');
   const dateTo = c.req.query('to');
 
-  const activities = await getRecentActivity(c.env.ADMIN_DB, 100, {
-    action: actionFilter,
-    adminEmail: adminFilter,
-    dateFrom,
-    dateTo,
-  });
+  let activities: Record<string, unknown>[];
+  try {
+    activities = await getRecentActivity(c.env.ADMIN_DB, 100, {
+      action: actionFilter,
+      adminEmail: adminFilter,
+      dateFrom,
+      dateTo,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return c.html(`<h1>Activity log unavailable</h1><pre>${escapeHtml(msg)}</pre>`, 503);
+  }
 
   const rows = activities
     .map(a => `<tr>

@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
+import { adminLayout } from './layout';
 
 type AdminEnv = { Bindings: Env };
 
@@ -31,6 +32,55 @@ async function collectUserKeys(kv: KVNamespace, identifier: string): Promise<str
 }
 
 export const gdprAdmin = new Hono<AdminEnv>();
+
+/**
+ * GET /gdpr
+ * GDPR admin dashboard — lookup tool for export, purge, and consent-log operations.
+ */
+gdprAdmin.get('/', (c) => {
+  const content = `
+    <div class="max-w-xl">
+      <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <h2 class="text-gray-700 font-semibold mb-4">GDPR User Lookup</h2>
+        <p class="text-sm text-gray-500 mb-4">Enter a user identifier (Telegram ID, email, or phone) to export or purge their data.</p>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-sm text-gray-600 mb-1" for="gdpr-id">User Identifier</label>
+            <input type="text" id="gdpr-id" placeholder="e.g. 123456789 or user@example.com"
+              class="border rounded px-3 py-2 w-full text-sm"/>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <a id="btn-export" href="#" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm font-medium">Export Data</a>
+            <a id="btn-consent" href="#" class="inline-block bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm font-medium">Consent Log</a>
+            <a id="btn-purge" href="#" class="inline-block bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm font-medium">Purge Data</a>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-6 text-sm text-gray-500">
+        <p><strong>Export:</strong> GET /admin/gdpr/export/:identifier</p>
+        <p><strong>Consent Log:</strong> GET /admin/gdpr/consent-log/:identifier</p>
+        <p><strong>Purge:</strong> DELETE /admin/gdpr/purge/:identifier</p>
+      </div>
+    </div>
+    <script>
+    document.querySelectorAll('#btn-export,#btn-consent,#btn-purge').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('gdpr-id').value.trim();
+        if (!id) { alert('Enter a user identifier first.'); return; }
+        const map = { 'btn-export': '/admin/gdpr/export/', 'btn-consent': '/admin/gdpr/consent-log/', 'btn-purge': null };
+        if (this.id === 'btn-purge') {
+          if (!confirm('Permanently delete all data for: ' + id + '?')) return;
+          fetch('/admin/gdpr/purge/' + encodeURIComponent(id), { method: 'DELETE' })
+            .then(r => r.json()).then(d => alert(d.ok ? 'Purged ' + d.deleted + ' keys.' : 'Error: ' + d.error));
+        } else {
+          window.location.href = map[this.id] + encodeURIComponent(id);
+        }
+      });
+    });
+    </script>`;
+  return c.html(adminLayout('GDPR', content, 'gdpr'));
+});
 
 /**
  * GET /gdpr/export/:identifier

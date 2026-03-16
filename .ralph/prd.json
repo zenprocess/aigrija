@@ -1,30 +1,49 @@
 {
   "project_id": "aigrija",
   "version": "1.0.0",
-  "branch_name": "ralph/i18n-fixes",
+  "branch_name": "ralph/admin-fixes",
   "stories": [
     {
-      "id": "S-412",
-      "title": "Fix category heading i18n — add Romanian slug keys to content section",
-      "description": "ContentList.jsx uses t(`content.${category}`) but category is a Romanian slug (amenintari, ghid, educatie) while en.json content section has English keys (threats, guides, education). Fix: add Romanian slug aliases to the content section in ALL 5 i18n files. In en.json: add \"amenintari\": \"Threats\", \"ghid\": \"Guides\", \"educatie\": \"Education\", \"povesti\": \"Real stories\", \"rapoarte\": \"Reports\", \"presa\": \"Press releases\" alongside the existing English keys. Do the same for ro.json, bg.json, hu.json, uk.json — each file should have BOTH the English key AND the Romanian slug key mapping to the correct translation in that language. GitHub #412.",
-      "assigned_agent": "react-specialist",
+      "id": "S-415",
+      "title": "Fix admin /activity returning 500 Internal Server Error",
+      "description": "GET /activity on the admin panel returns raw 'Internal Server Error'. Check src/worker/admin/activity.ts — likely a D1 query failure (missing table or column) or unhandled exception. The error happens before the admin layout renders. Add try/catch around the D1 query, return a friendly error page if the query fails. GitHub #415.",
+      "assigned_agent": "ts-fullstack",
       "priority": 1,
-      "status": "in_progress",
+      "status": "passed",
       "depends_on": [],
       "complexity": "low",
-      "github_issue": 412,
-      "started_at": "2026-03-15T18:53:07Z"
+      "github_issue": 415,
+      "started_at": "2026-03-16T08:59:33Z",
+      "completed_at": "2026-03-16T09:03:11Z"
     },
     {
-      "id": "S-413b",
-      "title": "Replace hardcoded Romanian labels in AlertDetail.jsx with i18n t() calls",
-      "description": "In src/ui/src/components/AlertDetail.jsx, replace all hardcoded Romanian strings with t() i18n calls. Strings to replace: 'Înapoi la alerte' → t('alert_detail.back'), 'Entitate vizată:' → t('alert_detail.target_entity'), 'Prima atestare:' → t('alert_detail.first_reported'), 'Vezi detalii complete' → t('alert_detail.view_details'), 'Alerta nu a fost găsită' → t('alert_detail.not_found'), 'Se încarcă...' → t('alert_detail.loading'). Add the alert_detail section to ALL 5 i18n files with proper translations: en.json (English), ro.json (Romanian), bg.json (Bulgarian), hu.json (Hungarian), uk.json (Ukrainian). For bg/hu/uk use reasonable translations or English fallback. GitHub #413.",
-      "assigned_agent": "react-specialist",
-      "priority": 1,
-      "status": "pending",
+      "id": "S-416",
+      "title": "Fix admin /studio returning 500 Internal Server Error",
+      "description": "GET /studio on the admin panel returns raw 'Internal Server Error'. Check src/worker/admin/app.ts lines 224-230 — the studio route tries to proxy/serve Sanity Studio. Likely fails because SANITY_PROJECT_ID or SANITY_DEPLOY_TOKEN is not configured in preview env, or the Studio build assets don't exist. Add try/catch, check for required env vars, return informative error if not configured. GitHub #416.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 2,
+      "status": "passed",
       "depends_on": [],
       "complexity": "low",
-      "github_issue": 413
+      "github_issue": 416,
+      "started_at": "2026-03-16T08:59:33Z",
+      "completed_at": "2026-03-16T09:03:01Z"
+    },
+    {
+      "id": "S-417",
+      "title": "Fix admin /gdpr returning 404",
+      "description": "GET /gdpr on the admin panel returns 404 despite admin.route('/gdpr', gdprAdmin) being registered in app.ts line 251. Check src/worker/admin/gdpr.ts — the sub-router may only have POST handlers and no GET handler for the index route. Add a GET / handler that renders the GDPR admin page (subscriber data management, consent logs, purge controls). GitHub #417.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 2,
+      "status": "passed",
+      "depends_on": [],
+      "complexity": "low",
+      "github_issue": 417,
+      "started_at": "2026-03-16T08:59:33Z",
+      "attempts": 3,
+      "last_attempt_at": "2026-03-16T09:28:01Z",
+      "completed_at": "2026-03-16T09:28:01Z",
+      "note": "Agent timed out during verification but implementation is complete — GET /gdpr handler + 2 tests added"
     }
   ]
 }

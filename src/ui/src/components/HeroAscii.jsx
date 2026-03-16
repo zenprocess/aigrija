@@ -19,21 +19,21 @@ function padRight(text, width) {
 function buildShieldLines(t) {
   const W = 52;
   const bar = repeat('─', W);
-  const v = t('hero.shield_verify') || 'CHECK NOW';
-  const r = t('hero.shield_report') || 'REPORT FRAUD';
-  const p = t('hero.shield_protect') || 'PROTECT YOURSELF';
+  const v = t('hero.shield_verify') || 'VERIFICA';
+  const r = t('hero.shield_report') || 'RAPORTEAZA';
+  const p = t('hero.shield_protect') || 'PROTEJEAZA-TE';
   return [
     '┌' + bar + '┐',
-    '│ ' + padRight('$ ai-grija --scan message.txt', W - 2) + ' │',
+    '│ ' + padRight('$ ai-grija --scan mesaj-suspect.txt', W - 2) + ' │',
     '│' + repeat(' ', W) + '│',
-    '│ ' + padRight('⠋ Analyzing suspicious message...', W - 2) + ' │',
-    '│ ' + padRight('✓ PII redacted (CNP, IBAN masked)', W - 2) + ' │',
-    '│ ' + padRight('✓ Pattern match: known phishing campaign', W - 2) + ' │',
-    '│ ' + padRight('✓ Domain analysis: suspicious URL detected', W - 2) + ' │',
+    '│ ' + padRight('⠋ Se analizeaza mesajul...', W - 2) + ' │',
+    '│ ' + padRight('✓ Date personale mascate (CNP, IBAN)', W - 2) + ' │',
+    '│ ' + padRight('✓ Campanie de phishing identificata', W - 2) + ' │',
+    '│ ' + padRight('✓ Domeniu suspect detectat', W - 2) + ' │',
     '│' + repeat(' ', W) + '│',
     '│ ┌' + repeat('─', W - 4) + '┐ │',
-    '│ │  ⚠  PHISHING DETECTED' + repeat(' ', W - 27) + '│ │',
-    '│ │  Confidence: 94%' + repeat(' ', W - 21) + '│ │',
+    '│ │  ⚠  PHISHING DETECTAT' + repeat(' ', W - 27) + '│ │',
+    '│ │  Incredere: 94%' + repeat(' ', W - 20) + '│ │',
     '│ │  ' + padRight('» ' + v, W - 7) + '│ │',
     '│ │  ' + padRight('» ' + r, W - 7) + '│ │',
     '│ │  ' + padRight('» ' + p, W - 7) + '│ │',
@@ -47,19 +47,19 @@ function buildShieldLines(t) {
 function buildMobileShieldLines(t) {
   const W = 36;
   const bar = repeat('─', W);
-  const v = t('hero.shield_mobile_verify') || 'CHECK';
-  const p = t('hero.shield_mobile_protect') || 'PROTECT';
+  const v = t('hero.shield_mobile_verify') || 'VERIFICA';
+  const p = t('hero.shield_mobile_protect') || 'PROTEJEAZA';
   return [
     '┌' + bar + '┐',
     '│ ' + padRight('$ ai-grija --scan', W - 2) + ' │',
     '│' + repeat(' ', W) + '│',
-    '│ ' + padRight('✓ PII redacted', W - 2) + ' │',
-    '│ ' + padRight('✓ Pattern match found', W - 2) + ' │',
-    '│ ' + padRight('✓ Suspicious URL', W - 2) + ' │',
+    '│ ' + padRight('✓ Date mascate', W - 2) + ' │',
+    '│ ' + padRight('✓ Campanie identificata', W - 2) + ' │',
+    '│ ' + padRight('✓ Domeniu suspect', W - 2) + ' │',
     '│' + repeat(' ', W) + '│',
     '│ ┌' + repeat('─', W - 4) + '┐ │',
     '│ │ ⚠ PHISHING' + repeat(' ', W - 15) + '│ │',
-    '│ │ Confidence: 94%' + repeat(' ', W - 20) + '│ │',
+    '│ │ Incredere: 94%' + repeat(' ', W - 19) + '│ │',
     '│ │ » ' + padRight(v, W - 8) + '│ │',
     '│ │ » ' + padRight(p, W - 8) + '│ │',
     '│ └' + repeat('─', W - 4) + '┘ │',

@@ -393,9 +393,8 @@ export class GenerateContentEndpoint extends OpenAPIRoute {
   async handle(c: Context<{ Bindings: Env; Variables: AppVariables }>) {
     let body: { category?: string; topic?: string } = {};
     try {
-      const raw = await c.req.text();
-      if (raw) body = JSON.parse(raw);
-    } catch { /* ignore, body is optional */ }
+      body = await c.req.json();
+    } catch { /* body is optional */ }
     try {
       const result = await generateStandalonePostWithOverrides(c.env, {
         category: body.category,

@@ -204,7 +204,7 @@ export class DigestUnsubscribeEndpoint extends OpenAPIRoute {
 
   async handle(c: Context<{ Bindings: Env }>) {
     const unsubIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-    const unsubRlCfg = getRouteRateLimit('digest-subscribe', c.env);
+    const unsubRlCfg = getRouteRateLimit('digest-unsubscribe', c.env);
     const unsubRl = await createRateLimiter(c.env.CACHE)(`digest-unsub:${unsubIp}`, unsubRlCfg.limit, unsubRlCfg.windowSeconds);
     applyRateLimitHeaders((k, v) => c.header(k, v), unsubRl);
     if (!unsubRl.allowed) {

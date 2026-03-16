@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import { adminLayout } from './layout';
+import { type AdminVariables } from '../lib/admin-auth';
+import { type CspVariables } from '../lib/csp';
 
-type AdminEnv = { Bindings: Env };
+type AdminEnv = { Bindings: Env; Variables: AdminVariables & CspVariables };
 
 const CHANNELS = ['tg', 'wa', 'email'] as const;
 
@@ -38,6 +40,8 @@ export const gdprAdmin = new Hono<AdminEnv>();
  * GDPR admin dashboard — lookup tool for export, purge, and consent-log operations.
  */
 gdprAdmin.get('/', (c) => {
+  const email = c.get('adminEmail');
+  const nonce = c.get('cspNonce');
   const content = `
     <div class="max-w-xl">
       <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
@@ -62,7 +66,7 @@ gdprAdmin.get('/', (c) => {
         <p><strong>Purge:</strong> DELETE /admin/gdpr/purge/:identifier</p>
       </div>
     </div>
-    <script>
+    <script nonce="${nonce}">
     document.querySelectorAll('#btn-export,#btn-consent,#btn-purge').forEach(btn => {
       btn.addEventListener('click', function(e) {
         e.preventDefault();
@@ -79,7 +83,7 @@ gdprAdmin.get('/', (c) => {
       });
     });
     </script>`;
-  return c.html(adminLayout('GDPR', content, 'gdpr'));
+  return c.html(adminLayout('GDPR', content, 'gdpr', email, nonce));
 });
 
 /**

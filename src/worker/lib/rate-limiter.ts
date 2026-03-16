@@ -34,7 +34,8 @@ export const TEST_ROUTE_RATE_LIMITS: Record<string, RouteRateLimitConfig> = {
   'feed':        { limit: 1000, windowSeconds: 120 },
   'quiz-check':         { limit: 1000, windowSeconds: 3600 },
   'reports-vote':       { limit: 1000, windowSeconds: 3600 },
-  'digest-subscribe':   { limit: 1000, windowSeconds: 3600 },
+  'digest-subscribe':     { limit: 1000, windowSeconds: 3600 },
+  'digest-unsubscribe':   { limit: 1000, windowSeconds: 3600 },
   'newsletter-subscribe': { limit: 1000, windowSeconds: 3600 },
   'translation-report': { limit: 1000, windowSeconds: 3600 },
 };
@@ -106,8 +107,9 @@ export const ROUTE_RATE_LIMITS: Record<string, RouteRateLimitConfig> = {
   // Community report voting
   'reports-vote':       { limit: 10,  windowSeconds: 3600 },
   // Newsletter/digest subscription — tight to prevent spam
-  'digest-subscribe':   { limit: 5,   windowSeconds: 3600 },
-  'newsletter-subscribe': { limit: 5, windowSeconds: 3600 },
+  'digest-subscribe':     { limit: 5,   windowSeconds: 3600 },
+  'digest-unsubscribe':   { limit: 5,   windowSeconds: 3600 },
+  'newsletter-subscribe': { limit: 5,   windowSeconds: 3600 },
   // User-submitted translation reports
   'translation-report': { limit: 10,  windowSeconds: 3600 },
 };

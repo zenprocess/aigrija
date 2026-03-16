@@ -72,7 +72,7 @@ admin.get('/', async (c) => {
       </div>
     </div>
     <div class="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 class="text-gray-700 font-medium mb-2">Welcome, ${email}</h2>
+      <h2 class="text-gray-700 font-medium mb-2">Welcome, ${escapeHtml(email)}</h2>
       <p class="text-gray-500 text-sm">The admin panel is under construction. Use the navigation on the left to access available sections.</p>
     </div>`;
   return c.html(adminLayout('Dashboard', content, 'dashboard', email, c.get('cspNonce')));

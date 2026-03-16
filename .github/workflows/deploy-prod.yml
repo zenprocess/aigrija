@@ -113,23 +113,27 @@ jobs:
       - run: cd infra && npm ci
       - name: Install policy pack
         run: cd infra/policy && npm install
-      - name: Pulumi login (local backend)
+      - name: Pulumi login (R2 backend)
         if: env.PULUMI_CONFIG_PASSPHRASE != ''
-        run: pulumi login --local
+        run: pulumi login s3://ai-grija-pulumi-state --secrets-provider passphrase
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL_S3: ${{ secrets.AWS_ENDPOINT_URL_S3 }}
       - name: Pulumi preview with CrossGuard
         if: env.PULUMI_CONFIG_PASSPHRASE != ''
         uses: pulumi/actions@v6
-        continue-on-error: true
         with:
           command: preview
           stack-name: production
           work-dir: infra
           policyPacks: infra/policy
-          upsert: true
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL_S3: ${{ secrets.AWS_ENDPOINT_URL_S3 }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       - name: Warn if Pulumi passphrase missing
         if: env.PULUMI_CONFIG_PASSPHRASE == ''
@@ -153,6 +157,29 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
+      - run: cd infra && npm ci
+      - name: Install policy pack
+        run: cd infra/policy && npm install
+      - name: Pulumi login (R2 backend)
+        run: pulumi login s3://ai-grija-pulumi-state --secrets-provider passphrase
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL_S3: ${{ secrets.R2_ENDPOINT_URL }}
+      - name: Apply infrastructure changes
+        uses: pulumi/actions@v6
+        with:
+          command: up
+          stack-name: dev
+          work-dir: infra
+          policyPacks: infra/policy
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL_S3: ${{ secrets.R2_ENDPOINT_URL }}
       - name: Deploy to Cloudflare
         id: deploy
         uses: cloudflare/wrangler-action@v3

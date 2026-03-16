@@ -1,0 +1,77 @@
+name: Infrastructure Drift Detection
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Every Monday at 08:00 UTC
+  workflow_dispatch:      # Allow manual trigger
+
+jobs:
+  detect-drift:
+    name: Pulumi drift check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v6
+        with:
+          command: version
+
+      - name: Install infra dependencies
+        run: cd infra && npm ci
+
+      - name: Login to Pulumi R2 state backend
+        run: |
+          pulumi login "s3://ai-grija-pulumi-state?region=auto&endpoint=https://${CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com"
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Run Pulumi preview (expect no changes)
+        id: preview
+        continue-on-error: true
+        run: |
+          pulumi preview --expect-no-changes --stack production --non-interactive 2>&1 | tee /tmp/pulumi-preview.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+        working-directory: infra
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Create drift issue
+        if: steps.preview.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          DIFF=$(cat /tmp/pulumi-preview.txt | head -100)
+          EXISTING=$(gh issue list --label "infra:drift" --state open --json number --jq '.[0].number' 2>/dev/null || echo "")
+          BODY=$(printf '## Infrastructure Drift Detected\n\nPulumi detected changes between the R2 state and the live Cloudflare environment.\n\nThis means resources may have been created or modified outside of Pulumi (e.g., via the Cloudflare dashboard).\n\n### Preview diff (first 100 lines)\n\n```\n%s\n```\n\n### Action required\n\n1. Review the diff above\n2. Either import the manual changes into Pulumi (`pulumi import`)\n3. Or delete the out-of-band resource and re-provision via `pulumi up`\n4. Close this issue once drift is resolved\n\n**Workflow run**: %s\n**Detected**: %s' "$DIFF" "$RUN_URL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)")
+          if [ -n "$EXISTING" ] && [ "$EXISTING" != "null" ]; then
+            gh issue comment "$EXISTING" --body "$(printf 'Drift still present as of %s.\n\nRun: %s\n\n```\n%s\n```' "$(date -u +%Y-%m-%d)" "$RUN_URL" "$DIFF")"
+          else
+            gh issue create \
+              --title "Infra drift detected — $(date -u +%Y-%m-%d)" \
+              --label "infra:drift,auto-detected,priority:high" \
+              --body "$BODY"
+          fi
+
+      - name: Add workflow annotation on drift
+        if: steps.preview.outcome == 'failure'
+        run: echo "::error::Infrastructure drift detected. Pulumi preview found unexpected changes against the R2 state backend. Check the created GitHub issue for details."
+
+      - name: No drift confirmation
+        if: steps.preview.outcome == 'success'
+        run: echo "No infrastructure drift detected. Pulumi state matches live Cloudflare resources."

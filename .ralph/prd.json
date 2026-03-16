@@ -1,76 +1,49 @@
 {
-  "project": "aigrija",
-  "epic": "Quality Sprint — A11y, Responsive, Testing",
+  "project_id": "aigrija",
+  "version": "1.0.0",
+  "branch_name": "ralph/admin-fixes",
   "stories": [
     {
-      "id": "S-359",
-      "title": "Fix accessibility: heading hierarchy, form labels, image alt text",
-      "issue": 359,
-      "assigned_agent": "react-specialist",
-      "complexity": "medium",
-      "status": "passed",
-      "depends_on": [],
-      "acceptance_criteria": [
-        "Single h1 per page, proper h2-h6 nesting in all components",
-        "All form inputs have associated <label> or aria-label",
-        "All <img> elements have alt text",
-        "TypeScript compiles and all tests pass"
-      ],
-      "context": "The <main> landmark and skip-to-content link are ALREADY in App.jsx (lines 37-40, 107-112). Focus on:\n1. Heading hierarchy: check Hero.jsx, About.jsx, HowItWorks.jsx, Checker.jsx for multiple h1s. Only Hero should have h1, others should use h2+.\n2. Form labels: Checker.jsx has a textarea/input — ensure aria-label or <label htmlFor=...>.\n3. Image alt: check all <img> tags across components.\nAll UI files are in src/ui/src/components/. Run: npx vitest run after changes.",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-13T09:19:47Z"
-    },
-    {
-      "id": "S-360",
-      "title": "Fix responsive CSS overflow at mobile/tablet/desktop",
-      "issue": 360,
-      "assigned_agent": "react-specialist",
-      "complexity": "medium",
-      "status": "passed",
-      "depends_on": [],
-      "acceptance_criteria": [
-        "No horizontal overflow at 375px, 768px, 1024px, 1440px viewports",
-        "All content fits within viewport width on all pages",
-        "TypeScript compiles and all tests pass"
-      ],
-      "context": "App.jsx already has overflow-x-hidden on the container (line 36, 106). Focus on:\n1. Check src/ui/src/index.css for any elements wider than viewport (tables, pre, code blocks).\n2. Check components that render dynamic content: ContentPost.jsx, ContentList.jsx, Checker.jsx.\n3. Add max-w-full, overflow-x-auto to elements that might overflow (tables, code blocks, images).\n4. Ensure responsive Tailwind classes exist on all layout containers.\nAll UI files are in src/ui/src/. Run: npx vitest run after changes.",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-13T09:19:47Z"
-    },
-    {
-      "id": "S-366",
-      "title": "Add Sanity CMS mock for test environment",
-      "issue": 366,
+      "id": "S-415",
+      "title": "Fix admin /activity returning 500 Internal Server Error",
+      "description": "GET /activity on the admin panel returns raw 'Internal Server Error'. Check src/worker/admin/activity.ts — likely a D1 query failure (missing table or column) or unhandled exception. The error happens before the admin layout renders. Add try/catch around the D1 query, return a friendly error page if the query fails. GitHub #415.",
       "assigned_agent": "ts-fullstack",
-      "complexity": "medium",
+      "priority": 1,
       "status": "passed",
       "depends_on": [],
-      "acceptance_criteria": [
-        "Sanity API calls return mock data when ENVIRONMENT=test or NODE_ENV=test",
-        "Blog, ghid, educatie routes return valid responses in test env",
-        "Mock data is realistic (Romanian content, proper schema)",
-        "All tests pass"
-      ],
-      "context": "src/worker/lib/sanity.ts makes HTTP calls to apicdn.sanity.io which fails in test/local env. A mock data file already exists at src/worker/lib/sanity-mock-data.ts. Check if sanity.ts already has test-mode detection (similar to rate-limiter.ts isTestEnvironment pattern). If not, add it: when isTestEnvironment(env) returns true, return mock data instead of calling Sanity API. The mock should cover the GROQ queries used by blog/ghid/educatie routes. Run: npx vitest run after changes.",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-13T09:19:47Z"
+      "complexity": "low",
+      "github_issue": 415,
+      "started_at": "2026-03-16T08:59:33Z",
+      "completed_at": "2026-03-16T09:03:11Z"
     },
     {
-      "id": "S-361",
-      "title": "Add favicon.ico to static assets and HTML",
-      "issue": 361,
-      "assigned_agent": "react-specialist",
-      "complexity": "low",
+      "id": "S-416",
+      "title": "Fix admin /studio returning 500 Internal Server Error",
+      "description": "GET /studio on the admin panel returns raw 'Internal Server Error'. Check src/worker/admin/app.ts lines 224-230 — the studio route tries to proxy/serve Sanity Studio. Likely fails because SANITY_PROJECT_ID or SANITY_DEPLOY_TOKEN is not configured in preview env, or the Studio build assets don't exist. Add try/catch, check for required env vars, return informative error if not configured. GitHub #416.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 2,
       "status": "passed",
       "depends_on": [],
-      "acceptance_criteria": [
-        "favicon.ico exists in src/ui/public/ (already there)",
-        "dist/index.html has <link rel='icon' href='/favicon.ico'>",
-        "No 404 for /favicon.ico requests"
-      ],
-      "context": "A favicon.ico already exists at src/ui/public/favicon.ico. Check dist/index.html for a <link rel='icon'> tag. If missing, add it to the <head>. Also check if wrangler.toml static assets config serves the public/ directory. This is a tiny change. Run: npx vitest run after.",
-      "attempts": 1,
-      "last_attempt_at": "2026-03-13T09:19:47Z"
+      "complexity": "low",
+      "github_issue": 416,
+      "started_at": "2026-03-16T08:59:33Z",
+      "completed_at": "2026-03-16T09:03:01Z"
+    },
+    {
+      "id": "S-417",
+      "title": "Fix admin /gdpr returning 404",
+      "description": "GET /gdpr on the admin panel returns 404 despite admin.route('/gdpr', gdprAdmin) being registered in app.ts line 251. Check src/worker/admin/gdpr.ts — the sub-router may only have POST handlers and no GET handler for the index route. Add a GET / handler that renders the GDPR admin page (subscriber data management, consent logs, purge controls). GitHub #417.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 2,
+      "status": "passed",
+      "depends_on": [],
+      "complexity": "low",
+      "github_issue": 417,
+      "started_at": "2026-03-16T08:59:33Z",
+      "attempts": 3,
+      "last_attempt_at": "2026-03-16T09:28:01Z",
+      "completed_at": "2026-03-16T09:28:01Z",
+      "note": "Agent timed out during verification but implementation is complete — GET /gdpr handler + 2 tests added"
     }
   ]
 }

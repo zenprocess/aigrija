@@ -1,0 +1,6 @@
+{
+  "function_id": "ff-discovered-database-migration-discipline",
+  "score": 75,
+  "rationale": "All 5 D1 migrations have sequential numbering and .down.sql rollback scripts. No raw SQL in application code.",
+  "scored_at": "2026-03-14T19:14:22Z"
+}

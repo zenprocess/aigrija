@@ -1,12 +1,9 @@
 import * as Sentry from '@sentry/cloudflare';
 import { Hono } from 'hono';
-import type { Env } from './lib/types';
-import type { AppVariables } from './lib/request-id';
-import { applyMiddleware } from './middleware/chain';
-import { registerRoutes } from './routes/registry';
-import { cdnProtection } from './middleware/cdn-protection';
+import { handleScheduled, type Env, type AppVariables } from './lib';
+import { applyMiddleware, cdnProtection } from './middleware';
+import { registerRoutes } from './routes';
 import { admin } from './admin';
-import { handleScheduled } from './lib/cron-handler';
 
 const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 

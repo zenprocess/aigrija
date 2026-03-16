@@ -54,57 +54,106 @@ export function registerRoutes(app: AppType): void {
   const openapi = createOpenAPIApp(app);
 
   // OpenAPI-documented routes (chanfana — auto-generates /openapi.json)
+  /** @latency slow (5000ms) */
   openapi.post('/api/check', CheckEndpoint);
+  /** @latency slow (5000ms) */
   openapi.post('/api/check/image', CheckImageEndpoint);
+  /** @latency slow (5000ms) */
   openapi.post('/api/check-qr', CheckQrEndpoint);
+  /** @latency ssr (500ms) */
   openapi.get('/api/alerts', AlertsEndpoint);
+  /** @latency ssr (500ms) */
   openapi.get('/api/alerts/emerging', AlertsEmergingEndpoint);
+  /** @latency ssr (500ms) */
   openapi.get('/api/alerts/:slug', AlertsBySlugEndpoint);
+  /** @latency fast (50ms) */
   openapi.get('/health', HealthEndpoint);
+  /** @latency fast (50ms) */
   openapi.get('/health/deep', DeepHealthEndpoint);
+  /** @latency fast (50ms) */
+  openapi.get('/api/health', HealthEndpoint);
+  /** @latency fast (50ms) */
   openapi.get('/api/counter', CounterEndpoint);
+  /** @latency medium (200ms) */
   openapi.get('/api/reports', ReportsEndpoint);
+  /** @latency medium (200ms) */
   openapi.post('/api/reports/:id/vote', VoteEndpoint);
+  /** @latency fast (50ms) */
   openapi.get('/api/feed/latest', FeedEndpoint);
+  /** @latency fast (50ms) */
   openapi.get('/api/stats', StatsEndpoint);
+  /** @latency fast (50ms) */
   openapi.get('/api/badges', BadgesEndpoint);
+  /** @latency medium (200ms) */
   openapi.get('/api/digest/latest', DigestLatestEndpoint);
+  /** @latency medium (200ms) */
   openapi.post('/api/digest/subscribe', DigestSubscribeEndpoint);
+  /** @latency medium (200ms) */
   openapi.post('/api/digest/unsubscribe', DigestUnsubscribeEndpoint);
+  /** @latency medium (200ms) */
   openapi.post('/api/newsletter/subscribe', NewsletterSubscribeEndpoint);
+  /** @latency medium (200ms) */
   openapi.post('/api/newsletter/unsubscribe', NewsletterUnsubscribeEndpoint);
+  /** @latency medium (200ms) */
   openapi.post('/api/translation-report', TranslationReportEndpoint);
+  /** @latency fast (50ms) */
   openapi.get('/api/quiz', QuizEndpoint);
+  /** @latency fast (50ms) */
   openapi.post('/api/quiz/check', QuizCheckEndpoint);
+  /** @latency fast (50ms) */
   openapi.get('/api/health/metrics', MetricsEndpoint);
+  /** @latency fast (50ms) */
   openapi.get('/api/share/:id', ShareEndpoint);
 
   // Admin feature flag routes
   app.route('/', adminFlags);
 
   // Plain Hono routes (no OpenAPI docs needed)
+  /** @latency fast (50ms) */
   app.route('/', counter);
+  /** @latency ssr (500ms) */
   app.route('/', alerts);   // keeps /alerte SSR + legacy /api/alerts (chanfana takes priority)
+  /** @latency fast (50ms) */
   app.route('/', share);
+  /** @latency fast (50ms) */
   app.route('/', sitemap);
+  /** @latency fast (50ms) */
   app.route('/', seo);
+  /** @latency external (10000ms) */
   app.route('/', telegram);
+  /** @latency external (10000ms) */
   app.route('/', whatsapp);
+  /** @latency medium (200ms) */
   app.route('/', report);
+  /** @latency medium (200ms) */
   app.route('/', community);
+  /** @latency ssr (500ms) */
   app.route('/', og);
+  /** @latency slow (5000ms) */
   app.route('/', upload);
+  /** @latency slow (5000ms) */
   app.route('/', checkQr);
+  /** @latency ssr (500ms) */
   app.route('/', blog);
+  /** @latency ssr (500ms) */
   app.route('/', policies);
+  /** @latency ssr (500ms) */
   app.route('/', card);
+  /** @latency fast (50ms) */
   app.route('/', feed);
+  /** @latency medium (200ms) */
   app.route('/', weekly);
+  /** @latency medium (200ms) */
   app.route('/', reportGenerator);
+  /** @latency fast (50ms) */
   app.route('/', metrics);
+  /** @latency fast (50ms) */
   app.route('/', quiz);
+  /** @latency medium (200ms) */
   app.route('/', translationReport);
+  /** @latency medium (200ms) */
   app.route('/', newsletter);
+  /** @latency medium (200ms) */
   app.route('/', gepa);
 
   // Favicon ICO — served inline to avoid ASSETS binding dependency in unit tests
@@ -128,6 +177,18 @@ export function registerRoutes(app: AppType): void {
       200,
       { 'Content-Type': 'application/javascript', 'Cache-Control': 'public, max-age=0, must-revalidate' }
     );
+  });
+
+  // v1 API aliases: /api/v1/* rewrites to /api/* (ADR-0018 Phase 1)
+  app.all('/api/v1/*', async (c) => {
+    const url = new URL(c.req.url);
+    url.pathname = url.pathname.replace('/api/v1/', '/api/');
+    const newReq = new Request(url.toString(), {
+      method: c.req.method,
+      headers: c.req.raw.headers,
+      body: ['GET', 'HEAD'].includes(c.req.method) ? undefined : c.req.raw.body,
+    });
+    return app.fetch(newReq, c.env, c.executionCtx);
   });
 
   // Asset fallback: for any route not matched by Hono, try the ASSETS binding.

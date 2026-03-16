@@ -141,7 +141,7 @@ export default function Checker() {
   };
 
   return (
-    <section id="verifica" className="py-20 relative z-20">
+    <section id="verifica" className="pt-10 pb-20 relative z-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="glass-card p-6 md:p-8 relative overflow-hidden group">
@@ -205,9 +205,13 @@ export default function Checker() {
               </label>
               <div
                 data-testid="checker-image-upload"
+                role="button"
+                tabIndex={0}
+                aria-label={t('checker.label_image')}
                 className={`relative border-2 border-dashed rounded-xl p-4 text-center transition-colors cursor-pointer ${imageSizeError ? 'border-red-500/50 bg-red-500/5' : 'border-white/20 hover:border-blue-500/50 bg-[#0A0A0F]/60'}`}
                 onDragOver={(ev) => ev.preventDefault()}
                 onDrop={(ev) => { ev.preventDefault(); const f = ev.dataTransfer.files[0]; if (f) handleImageChange(f); }}
+                onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); document.getElementById('image-file-input').click(); } }}
                 onClick={() => document.getElementById('image-file-input').click()}
               >
                 <input
@@ -226,6 +230,8 @@ export default function Checker() {
                     </div>
                     <button
                       type="button"
+                      data-testid="checker-image-remove-btn"
+                      aria-label="Elimină imaginea"
                       onClick={() => { setImageFile(null); setImagePreview(null); setImageSizeError(null); }}
                       className="p-2 rounded text-gray-400 hover:text-white hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                     >
@@ -467,8 +473,8 @@ export default function Checker() {
                   <h4 className="text-sm font-medium text-gray-300 mb-3">{t('checker.if_compromised')}</h4>
                   <div className="space-y-2">
                     {result.bank_playbook.if_compromised.map((step, idx) => (
-                      <label key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/5 cursor-pointer hover:bg-white/10 transition-colors">
-                        <input type="checkbox" className="mt-1 w-4 h-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500/50 bg-[#0A0A0F]" />
+                      <label key={idx} data-testid={`checker-bank-step-${idx}`} className="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/5 cursor-pointer hover:bg-white/10 transition-colors">
+                        <input type="checkbox" aria-label={step} className="mt-1 w-4 h-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500/50 bg-[#0A0A0F]" />
                         <span className="text-sm text-gray-300">{step}</span>
                       </label>
                     ))}

@@ -1,11 +1,12 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import type { AdminVariables } from '../lib/admin-auth';
+import type { CspVariables } from '../lib/csp';
 import { adminLayout } from './layout';
 import { escapeHtml } from '../lib/escape-html';
 import { structuredLog } from '../lib/logger';
 
-type AdminEnv = { Bindings: Env; Variables: AdminVariables };
+type AdminEnv = { Bindings: Env; Variables: AdminVariables & CspVariables };
 
 // ---- Types ----------------------------------------------------------------
 
@@ -28,7 +29,7 @@ interface DbCampaign {
 
 // ---- Helpers ---------------------------------------------------------------
 
-function severityBadge(s: string | null): string {
+export function severityBadge(s: string | null): string {
   const map: Record<string, string> = {
     critical: 'bg-red-600 text-white',
     high: 'bg-orange-500 text-white',
@@ -36,17 +37,17 @@ function severityBadge(s: string | null): string {
     low: 'bg-green-500 text-white',
   };
   const cls = (s && map[s]) || 'bg-gray-300 text-black';
-  return `<span class="px-2 py-0.5 rounded text-xs font-semibold ${cls}">${s ?? 'N/A'}</span>`;
+  return `<span class="px-2 py-0.5 rounded text-xs font-semibold ${cls}">${escapeHtml(s ?? 'N/A')}</span>`;
 }
 
-function statusPill(s: string): string {
+export function statusPill(s: string): string {
   const map: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-800',
     draft: 'bg-blue-100 text-blue-800',
     published: 'bg-green-100 text-green-800',
   };
   const cls = map[s] || 'bg-gray-100 text-gray-800';
-  return `<span class="px-2 py-0.5 rounded-full text-xs ${cls}">${s}</span>`;
+  return `<span class="px-2 py-0.5 rounded-full text-xs ${cls}">${escapeHtml(s)}</span>`;
 }
 
 // ---- JSON API routes -------------------------------------------------------
@@ -211,7 +212,7 @@ campaignRoutes.get('/', async (c) => {
     ).bind(...params, limit, offset).all<DbCampaign>();
   } catch (err) {
     structuredLog('error', 'admin_campaigns_html_list_failed', { stage: 'admin', error: String(err) });
-    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'campanii', email), 500);
+    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'campanii', email, c.get('cspNonce')), 500);
   }
   const total = countRow?.total ?? 0;
   const pages = Math.ceil(total / limit);
@@ -274,7 +275,7 @@ campaignRoutes.get('/', async (c) => {
       <div class="flex gap-2 mt-4">${paginationHtml}</div>
     </div>`;
 
-  return c.html(adminLayout('Campaigns', body, 'campanii', email));
+  return c.html(adminLayout('Campaigns', body, 'campanii', email, c.get('cspNonce')));
 });
 
 campaignRoutes.get('/new', async (c) => {
@@ -309,7 +310,7 @@ campaignRoutes.get('/new', async (c) => {
         <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 w-full">Create</button>
       </form>
     </div>`;
-  return c.html(adminLayout('New Campaign', body, 'campanii', email));
+  return c.html(adminLayout('New Campaign', body, 'campanii', email, c.get('cspNonce')));
 });
 
 campaignRoutes.get('/:id', async (c) => {
@@ -320,9 +321,9 @@ campaignRoutes.get('/:id', async (c) => {
     row = await c.env.DB.prepare('SELECT * FROM campaigns WHERE id = ?').bind(c.req.param('id')).first<DbCampaign>();
   } catch (err) {
     structuredLog('error', 'admin_campaigns_detail_failed', { stage: 'admin', error: String(err) });
-    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'campanii', email), 500);
+    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'campanii', email, c.get('cspNonce')), 500);
   }
-  if (!row) return c.html(adminLayout('Not Found', '<p>Campaign not found.</p>', 'campanii', email), 404);
+  if (!row) return c.html(adminLayout('Not Found', '<p>Campaign not found.</p>', 'campanii', email, c.get('cspNonce')), 404);
 
   let brands: string[] = [];
   let iocs: string[] = [];
@@ -380,7 +381,7 @@ campaignRoutes.get('/:id', async (c) => {
       <p class="text-sm text-gray-700 leading-relaxed">${escapeHtml(row.body_text.slice(0, 2000))}${row.body_text.length > 2000 ? '...' : ''}</p>
     </div>` : ''}`;
 
-  return c.html(adminLayout(row.title, body, 'campanii', email));
+  return c.html(adminLayout(row.title, body, 'campanii', email, c.get('cspNonce')));
 });
 
 // ---- Scraper routes --------------------------------------------------------
@@ -396,7 +397,7 @@ scraperRoutes.get('/', async (c) => {
     ).all<{ id: string; source: string; items_found: number; items_new: number; errors: string | null; run_at: string }>();
   } catch (err) {
     structuredLog('error', 'admin_scrapers_list_failed', { stage: 'admin', error: String(err) });
-    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'scrapere', email), 500);
+    return c.html(adminLayout('Error', '<p class="text-red-500">Database error.</p>', 'scrapere', email, c.get('cspNonce')), 500);
   }
 
   const tableRows = rows.results.map(r => `
@@ -426,7 +427,7 @@ scraperRoutes.get('/', async (c) => {
       <tbody>${tableRows || '<tr><td colspan="5" class="py-8 text-center text-gray-400">No runs</td></tr>'}</tbody>
     </table>`;
 
-  return c.html(adminLayout('Scrapers', body, 'scrapere', email));
+  return c.html(adminLayout('Scrapers', body, 'scrapere', email, c.get('cspNonce')));
 });
 
 scraperRoutes.post('/run', async (c) => {

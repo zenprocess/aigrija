@@ -1,0 +1,6 @@
+TAP version 13
+1..4
+ok 1 - tsc --noEmit: no type errors
+ok 2 - vitest: 133 tests passed
+ok 3 - npm audit: no high/critical vulnerabilities
+ok 4 - ggshield scan # SKIP ggshield not installed

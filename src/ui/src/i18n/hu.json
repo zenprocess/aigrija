@@ -107,7 +107,12 @@
     "title": "Aktív adathalász kampányok",
     "target": "Célpont:",
     "active": "Aktív",
-    "view_all": "Az összes riasztás megtekintése"
+    "view_all": "Az összes riasztás megtekintése",
+    "back_to_alerts": "Vissza a riasztásokhoz",
+    "target_entity": "Célszervezet:",
+    "first_reported": "Először jelentve:",
+    "view_details": "Teljes részletek megtekintése",
+    "load_error": "A riasztás nem tölthető be."
   },
   "about": {
     "title": "Az ai-grija.ro-ról",
@@ -249,7 +254,8 @@
     "label": "Nyelv"
   },
   "nav": {
-    "blog": "Blog"
+    "blog": "Blog",
+    "more": "Több"
   },
   "blog": {
     "title": "Blog",

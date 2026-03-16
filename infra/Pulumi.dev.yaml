@@ -2,6 +2,8 @@
 config:
   ai-grija-infra:cloudflareAccountId: "45bbb068e251ef12e83c9d4be4856229"
   ai-grija-infra:cloudflareZoneId: "8605213ab504a728423318afa00d9e2d"
+  ai-grija-infra:adminEmailDomains: "zp.digital,arq.bar,ai-grija.ro"
+  ai-grija-infra:adminGroupIds: "b9f39c45-18f7-497a-8a47-6189fa00d942,86921e1f-ac54-45b7-9104-1ec9b41eaa6b,ff8ab487-59d9-4eb8-8407-72d0d12b80c2"
   ai-grija-infra:googleSafeBrowsingKey:
     secure: v1:JHhcCHpp/pEJQujd:AgW+grgy3vqMhAJLM8J5BUoZQqrCT1Uk5tD9fRZsDja3Y/IhpARzNcKhVjnRWVe742RHhQ0qxQ==
   ai-grija-infra:virustotalApiKey:

@@ -14,6 +14,7 @@ const ContentList = lazy(() => import('./components/ContentList'));
 const ContentPost = lazy(() => import('./components/ContentPost'));
 const Quiz = lazy(() => import('./components/Quiz'));
 const CookieConsent = lazy(() => import('./components/CookieConsent'));
+const AlertDetail = lazy(() => import('./components/AlertDetail'));
 
 function LoadingSkeleton() {
   return (
@@ -42,8 +43,8 @@ function PageShell({ children }) {
             {children}
           </Suspense>
         </main>
-        <Footer />
         <Suspense fallback={null}><CookieConsent /></Suspense>
+        <Footer />
       </div>
     </ErrorBoundary>
   );
@@ -82,6 +83,15 @@ function App() {
     );
   }
 
+  const alerteMatch = hash.match(/^#\/alerte\/(.+)$/);
+  if (alerteMatch) {
+    return (
+      <PageShell>
+        <AlertDetail slug={alerteMatch[1]} />
+      </PageShell>
+    );
+  }
+
   // Content category list pages: /amenintari, /ghid, /educatie, /povesti, /rapoarte, /presa
   for (const cat of CONTENT_CATEGORIES) {
     if (hash === `#/${cat}`) {
@@ -116,8 +126,8 @@ function App() {
           <ActiveAlerts />
           <About />
         </main>
-        <Footer />
         <Suspense fallback={null}><CookieConsent /></Suspense>
+        <Footer />
       </div>
     </ErrorBoundary>
   );

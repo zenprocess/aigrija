@@ -9,7 +9,7 @@ import {
   type GasesteSemnalele,
   type CeFaciDaca,
 } from '../data/quizzes';
-import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, getRouteRateLimit, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 
 const QUIZ_LIMIT = 50;
 const QUIZ_WINDOW = ROUTE_RATE_LIMITS['check'].windowSeconds;
@@ -143,7 +143,8 @@ export class QuizCheckEndpoint extends OpenAPIRoute {
 
   async handle(c: Context<{ Bindings: Env }>) {
     const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For')?.split(',')[0]?.trim() ?? 'unknown';
-    const rl = await createRateLimiter(c.env.CACHE)(`quiz-check:${ip}`, QUIZ_LIMIT, QUIZ_WINDOW);
+    const rlCfg = getRouteRateLimit('quiz-check', c.env);
+    const rl = await createRateLimiter(c.env.CACHE)(`quiz-check:${ip}`, rlCfg.limit, rlCfg.windowSeconds);
     applyRateLimitHeaders((name, value) => c.header(name, value), rl);
 
     if (!rl.allowed) {

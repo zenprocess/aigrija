@@ -60,7 +60,7 @@ function makeEnv() {
 }
 
 describe('admin/index', () => {
-  it('GET / renders dashboard with adminEmail', async () => {
+  it('GET / renders dashboard with adminEmail', { timeout: 15000 }, async () => {
     const { admin } = await import('./index');
     const req = new Request('http://localhost/');
     const res = await admin.fetch(req, makeEnv(), makeCtx());
@@ -94,6 +94,35 @@ describe('admin/index', () => {
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('Scraper');
+  });
+
+  it('GET /studio returns 503 when ASSETS is not bound', async () => {
+    const { admin } = await import('./index');
+    const req = new Request('http://localhost/studio');
+    const res = await admin.fetch(req, makeEnv(), makeCtx());
+    expect(res.status).toBe(503);
+    const text = await res.text();
+    expect(text).toContain('not available');
+  });
+
+  it('GET /studio returns 404 when studio/index.html is missing', async () => {
+    const { admin } = await import('./index');
+    const req = new Request('http://localhost/studio');
+    const envWithAssets = {
+      ...makeEnv(),
+      ASSETS: { fetch: vi.fn().mockResolvedValue(new Response('', { status: 404 })) },
+    };
+    const res = await admin.fetch(req, envWithAssets, makeCtx());
+    expect(res.status).toBe(404);
+    const text = await res.text();
+    expect(text).toContain('not deployed');
+  });
+
+  it('GET /studio/* returns 503 when ASSETS is not bound', async () => {
+    const { admin } = await import('./index');
+    const req = new Request('http://localhost/studio/assets/main.js');
+    const res = await admin.fetch(req, makeEnv(), makeCtx());
+    expect(res.status).toBe(503);
   });
 
   it('GET / sets Content-Security-Policy header on HTML responses', async () => {

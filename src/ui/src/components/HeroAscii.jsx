@@ -12,56 +12,59 @@ function padCenter(text, width) {
 
 function repeat(ch, n) { return ch.repeat(Math.max(0, n)); }
 
+function padRight(text, width) {
+  return text + ' '.repeat(Math.max(0, width - text.length));
+}
+
 function buildShieldLines(t) {
-  const v = t('hero.shield_verify');
-  const r = t('hero.shield_report');
-  const p = t('hero.shield_protect');
-  const label = t('hero.shield_label');
-  const maxLen = Math.max(v.length, r.length, p.length);
-  const boxW = maxLen + 8;
-  const frameW = boxW + 6;
-  const topW = frameW + 4;
+  const W = 52;
+  const bar = repeat('─', W);
+  const v = t('hero.shield_verify') || 'VERIFICA';
+  const r = t('hero.shield_report') || 'RAPORTEAZA';
+  const p = t('hero.shield_protect') || 'PROTEJEAZA-TE';
   return [
-    '    ╔' + repeat('═', topW) + '╗    ',
-    '   ╔╝  [ AI·GRIJA  v2.0 ]' + repeat(' ', topW - 22) + '╚╗   ',
-    '  ║   ┌' + repeat('─', boxW) + '┐   ║  ',
-    '  ║   │  ░ ' + padCenter(v, maxLen) + ' ░  │   ║  ',
-    '  ║   │  ░ ' + padCenter(r, maxLen) + ' ░  │   ║  ',
-    '  ║   │  ░ ' + padCenter(p, maxLen) + ' ░░ │   ║  ',
-    '  ║   └' + repeat('─', boxW) + '┘   ║  ',
-    '  ║   ' + repeat('◆', boxW) + '   ║  ',
-    '  ║   STATUS: [ACTIV] ' + repeat('█', Math.max(4, boxW - 18)) + '   ║  ',
-    '   ╚╗' + repeat(' ', topW) + '╔╝  ',
-    '    ╚╗    ◈ ' + padCenter(label, maxLen) + ' ◈     ╔╝   ',
-    '     ╚╗' + repeat(' ', topW - 2) + '╔╝   ',
-    '      ╚╗   ▲ AI·GRIJA.RO ▲   ╔╝    ',
-    '       ╚╗' + repeat(' ', topW - 6) + '╔╝     ',
-    '        ╚╗' + repeat(' ', topW - 8) + '╔╝      ',
-    '         ╚╗' + repeat(' ', topW - 10) + '╔╝       ',
-    '          ╚╗' + repeat(' ', topW - 12) + '╔╝        ',
-    '           ╚' + repeat('═', topW - 12) + '╝         ',
+    '┌' + bar + '┐',
+    '│ ' + padRight('$ ai-grija --scan mesaj-suspect.txt', W - 2) + ' │',
+    '│' + repeat(' ', W) + '│',
+    '│ ' + padRight('⠋ Se analizeaza mesajul...', W - 2) + ' │',
+    '│ ' + padRight('✓ Date personale mascate (CNP, IBAN)', W - 2) + ' │',
+    '│ ' + padRight('✓ Campanie de phishing identificata', W - 2) + ' │',
+    '│ ' + padRight('✓ Domeniu suspect detectat', W - 2) + ' │',
+    '│' + repeat(' ', W) + '│',
+    '│ ┌' + repeat('─', W - 4) + '┐ │',
+    '│ │  ⚠  PHISHING DETECTAT' + repeat(' ', W - 27) + '│ │',
+    '│ │  Incredere: 94%' + repeat(' ', W - 20) + '│ │',
+    '│ │  ' + padRight('» ' + v, W - 7) + '│ │',
+    '│ │  ' + padRight('» ' + r, W - 7) + '│ │',
+    '│ │  ' + padRight('» ' + p, W - 7) + '│ │',
+    '│ └' + repeat('─', W - 4) + '┘ │',
+    '│' + repeat(' ', W) + '│',
+    '│ ' + padRight('$ _', W - 2) + ' │',
+    '└' + bar + '┘',
   ];
 }
 
 function buildMobileShieldLines(t) {
-  const v = t('hero.shield_mobile_verify');
-  const p = t('hero.shield_mobile_protect');
-  const maxLen = Math.max(v.length, p.length);
-  const boxW = maxLen + 6;
-  const frameW = boxW + 4;
+  const W = 36;
+  const bar = repeat('─', W);
+  const v = t('hero.shield_mobile_verify') || 'VERIFICA';
+  const p = t('hero.shield_mobile_protect') || 'PROTEJEAZA';
   return [
-    '  ╔' + repeat('═', frameW) + '╗  ',
-    ' ╔╝  ◆ AI·GRIJA ◆' + repeat(' ', frameW - 16) + '╚╗ ',
-    ' ║  ┌' + repeat('─', boxW) + '┐  ║ ',
-    ' ║  │ ░ ' + padCenter(v, maxLen) + ' ░  │  ║ ',
-    ' ║  │ ░ ' + padCenter(p, maxLen) + ' ░  │  ║ ',
-    ' ║  └' + repeat('─', boxW) + '┘  ║ ',
-    ' ║  STATUS: [ACTIV]' + repeat(' ', frameW - 16) + '║ ',
-    '  ╚╗' + repeat(' ', frameW) + '╔╝  ',
-    '   ╚╗  AI·GRIJA.RO' + repeat(' ', frameW - 15) + '╔╝   ',
-    '    ╚╗' + repeat(' ', frameW - 4) + '╔╝   ',
-    '     ╚╗' + repeat(' ', frameW - 6) + '╔╝    ',
-    '      ╚' + repeat('═', frameW - 6) + '╝     ',
+    '┌' + bar + '┐',
+    '│ ' + padRight('$ ai-grija --scan', W - 2) + ' │',
+    '│' + repeat(' ', W) + '│',
+    '│ ' + padRight('✓ Date mascate', W - 2) + ' │',
+    '│ ' + padRight('✓ Campanie identificata', W - 2) + ' │',
+    '│ ' + padRight('✓ Domeniu suspect', W - 2) + ' │',
+    '│' + repeat(' ', W) + '│',
+    '│ ┌' + repeat('─', W - 4) + '┐ │',
+    '│ │ ⚠ PHISHING' + repeat(' ', W - 15) + '│ │',
+    '│ │ Incredere: 94%' + repeat(' ', W - 19) + '│ │',
+    '│ │ » ' + padRight(v, W - 8) + '│ │',
+    '│ │ » ' + padRight(p, W - 8) + '│ │',
+    '│ └' + repeat('─', W - 4) + '┘ │',
+    '│ ' + padRight('$ _', W - 2) + ' │',
+    '└' + bar + '┘',
   ];
 }
 
@@ -252,7 +255,7 @@ export default function HeroAscii() {
       `),
       React.createElement('section', {
         'data-testid': 'hero-ascii-section',
-        className: 'relative min-h-[70vh] flex items-center justify-center pt-12 overflow-hidden bg-gray-950',
+        className: 'relative min-h-[60vh] flex items-center justify-center pt-12 overflow-hidden bg-gray-950',
       },
         React.createElement(CornerAccents),
         React.createElement('div', {
@@ -309,7 +312,7 @@ export default function HeroAscii() {
               React.createElement('span', { className: 'text-green-400' }, t('hero.title_highlight'))
             ),
             React.createElement('p', {
-              className: 'text-base sm:text-xl md:text-2xl text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed font-mono',
+              className: 'text-base sm:text-xl md:text-2xl text-gray-400 mb-12 md:mb-16 max-w-2xl mx-auto leading-relaxed font-mono',
             },
               React.createElement('span', { className: 'text-green-500/60' }, '// '),
               t('hero.subtitle')

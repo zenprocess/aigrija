@@ -185,21 +185,21 @@ export default function Footer() {
             <span className="text-xl font-bold tracking-tight text-white">ai-grija<span className="text-green-500">.ro</span></span>
           </div>
 
-          <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm text-gray-400">
-            <div className="flex flex-col gap-2">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:gap-x-8 text-sm text-gray-400">
+            <div className="flex flex-col space-y-1 mb-4 sm:mb-0">
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('footer.section_content')}</span>
-              <a data-testid="footer-link-amenintari" href="#/amenintari" className="hover:text-white transition-colors">{t('content.threats')}</a>
-              <a data-testid="footer-link-ghid" href="#/ghid" className="hover:text-white transition-colors">{t('content.guides')}</a>
-              <a data-testid="footer-link-educatie" href="#/educatie" className="hover:text-white transition-colors">{t('content.education')}</a>
-              <a data-testid="footer-link-povesti" href="#/povesti" className="hover:text-white transition-colors">{t('content.stories')}</a>
-              <a data-testid="footer-link-rapoarte" href="#/rapoarte" className="hover:text-white transition-colors">{t('content.reports')}</a>
-              <a data-testid="footer-link-presa" href="#/presa" className="hover:text-white transition-colors">{t('content.press')}</a>
+              <a data-testid="footer-link-amenintari" href="#/amenintari" className="hover:text-white transition-colors whitespace-nowrap">{t('content.threats')}</a>
+              <a data-testid="footer-link-ghid" href="#/ghid" className="hover:text-white transition-colors whitespace-nowrap">{t('content.guides')}</a>
+              <a data-testid="footer-link-educatie" href="#/educatie" className="hover:text-white transition-colors whitespace-nowrap">{t('content.education')}</a>
+              <a data-testid="footer-link-povesti" href="#/povesti" className="hover:text-white transition-colors whitespace-nowrap">{t('content.stories')}</a>
+              <a data-testid="footer-link-rapoarte" href="#/rapoarte" className="hover:text-white transition-colors whitespace-nowrap">{t('content.reports')}</a>
+              <a data-testid="footer-link-presa" href="#/presa" className="hover:text-white transition-colors whitespace-nowrap">{t('content.press')}</a>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col space-y-1 mb-4 sm:mb-0">
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('footer.section_legal')}</span>
-              <a data-testid="footer-link-confidentialitate" href="#/confidentialitate" className="hover:text-white transition-colors">{t('footer.privacy')}</a>
-              <a data-testid="footer-link-termeni" href="#/termeni" className="hover:text-white transition-colors">{t('footer.terms')}</a>
-              <a data-testid="footer-link-despre" href="#despre" className="hover:text-white transition-colors">{t('footer.about')}</a>
+              <a data-testid="footer-link-confidentialitate" href="#/confidentialitate" className="hover:text-white transition-colors whitespace-nowrap">{t('footer.privacy')}</a>
+              <a data-testid="footer-link-termeni" href="#/termeni" className="hover:text-white transition-colors whitespace-nowrap">{t('footer.terms')}</a>
+              <a data-testid="footer-link-despre" href="#despre" className="hover:text-white transition-colors whitespace-nowrap">{t('footer.about')}</a>
             </div>
           </div>
         </div>

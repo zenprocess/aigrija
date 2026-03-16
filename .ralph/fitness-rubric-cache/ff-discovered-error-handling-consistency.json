@@ -1,0 +1,7 @@
+{
+  "function_id": "ff-discovered-error-handling-consistency",
+  "score": 80,
+  "rationale": "try/catch added to telegram, whatsapp, weekly, report, blog handlers. Global error handler covers remaining. ~85% explicit coverage.",
+  "scored_at": "2026-03-14T19:12:26Z",
+  "scorer": "manual-rubric"
+}

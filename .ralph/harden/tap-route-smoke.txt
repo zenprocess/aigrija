@@ -1,0 +1,67 @@
+TAP version 13
+1..56
+ok 1 - homepage: content present (len=2451)
+ok 2 - homepage: no raw i18n keys
+ok 3 - homepage: no stuck spinners
+ok 4 - homepage: no error messages
+ok 5 - quiz: content present (len=1084)
+ok 6 - quiz: no raw i18n keys
+ok 7 - quiz: no stuck spinners
+ok 8 - quiz: no error messages
+ok 9 - privacy: content present (len=5206)
+ok 10 - privacy: no raw i18n keys
+ok 11 - privacy: no stuck spinners
+ok 12 - privacy: no error messages
+ok 13 - terms: content present (len=2537)
+ok 14 - terms: no raw i18n keys
+ok 15 - terms: no stuck spinners
+ok 16 - terms: no error messages
+ok 17 - threats-list: content present (len=703)
+not ok 18 - threats-list: raw i18n keys: feed.noItems # FAIL
+ok 19 - threats-list: no stuck spinners
+ok 20 - threats-list: no error messages
+ok 21 - guides-list: content present (len=703)
+not ok 22 - guides-list: raw i18n keys: feed.noItems # FAIL
+ok 23 - guides-list: no stuck spinners
+ok 24 - guides-list: no error messages
+ok 25 - education-list: content present (len=703)
+not ok 26 - education-list: raw i18n keys: feed.noItems # FAIL
+ok 27 - education-list: no stuck spinners
+ok 28 - education-list: no error messages
+ok 29 - blog: content present (len=2451)
+ok 30 - blog: no raw i18n keys
+ok 31 - blog: no stuck spinners
+ok 32 - blog: no error messages
+ok 33 - alerts-ssr: content present (len=1465)
+ok 34 - alerts-ssr: no raw i18n keys
+ok 35 - alerts-ssr: no stuck spinners
+ok 36 - alerts-ssr: no error messages
+not ok 37 - health: navigation failed: page.goto: net::ERR_NETWORK_CHANGED at https://pre.ai-grija.ro/health
+Call log:
+[2m  - navigating to "https://pre.ai-grija.ro/health", waiting until "networkidle"[22m
+ # FAIL
+ok 38 - health # SKIP nav failed
+ok 39 - health # SKIP nav failed
+ok 40 - health # SKIP nav failed
+not ok 41 - feed: navigation failed: page.goto: net::ERR_NETWORK_CHANGED at https://pre.ai-grija.ro/api/feed/latest
+Call log:
+[2m  - navigating to "https://pre.ai-grija.ro/api/feed/latest", waiting until "networkidle"[22m
+ # FAIL
+ok 42 - feed # SKIP nav failed
+ok 43 - feed # SKIP nav failed
+ok 44 - feed # SKIP nav failed
+ok 45 - alerts-api: content present (len=1336)
+ok 46 - alerts-api: no raw i18n keys
+ok 47 - alerts-api: no stuck spinners
+ok 48 - alerts-api: no error messages
+ok 49 - quiz-api: content present (len=3262)
+ok 50 - quiz-api: no raw i18n keys
+ok 51 - quiz-api: no stuck spinners
+ok 52 - quiz-api: no error messages
+not ok 53 - v1-health: navigation failed: page.goto: net::ERR_NETWORK_CHANGED at https://pre.ai-grija.ro/api/v1/health
+Call log:
+[2m  - navigating to "https://pre.ai-grija.ro/api/v1/health", waiting until "networkidle"[22m
+ # FAIL
+ok 54 - v1-health # SKIP nav failed
+ok 55 - v1-health # SKIP nav failed
+ok 56 - v1-health # SKIP nav failed

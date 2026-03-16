@@ -331,6 +331,49 @@ describe("getRouteRateLimit", () => {
     // unknown route falls back to ROUTE_RATE_LIMITS which returns undefined → both undefined
     expect(cfg).toBeUndefined();
   });
+
+  it("getRouteRateLimit returns config for quiz-check route", () => {
+    const cfg = getRouteRateLimit('quiz-check', { ENVIRONMENT: 'production' });
+    expect(cfg).toBeDefined();
+    expect(cfg.limit).toBeGreaterThan(0);
+    expect(cfg.windowSeconds).toBeGreaterThanOrEqual(60);
+  });
+
+  it("getRouteRateLimit returns test limits for quiz-check in test env", () => {
+    const prod = getRouteRateLimit('quiz-check', { ENVIRONMENT: 'production' });
+    const test = getRouteRateLimit('quiz-check', { ENVIRONMENT: 'test' });
+    expect(test.limit).toBeGreaterThanOrEqual(1000);
+    expect(test.limit).toBeGreaterThan(prod.limit);
+  });
+
+  it("getRouteRateLimit returns config for reports-vote route", () => {
+    const cfg = getRouteRateLimit('reports-vote', { ENVIRONMENT: 'production' });
+    expect(cfg).toBeDefined();
+    expect(cfg.limit).toBeGreaterThan(0);
+  });
+
+  it("getRouteRateLimit returns config for digest-subscribe route", () => {
+    const cfg = getRouteRateLimit('digest-subscribe', { ENVIRONMENT: 'production' });
+    expect(cfg).toBeDefined();
+    expect(cfg.limit).toBeGreaterThan(0);
+  });
+
+  it("getRouteRateLimit returns config for newsletter-subscribe route", () => {
+    const cfg = getRouteRateLimit('newsletter-subscribe', { ENVIRONMENT: 'production' });
+    expect(cfg).toBeDefined();
+    expect(cfg.limit).toBeGreaterThan(0);
+  });
+
+  it("getRouteRateLimit returns config for translation-report route", () => {
+    const cfg = getRouteRateLimit('translation-report', { ENVIRONMENT: 'production' });
+    expect(cfg).toBeDefined();
+    expect(cfg.limit).toBeGreaterThan(0);
+  });
+
+  it("subscription routes have tighter limits than check route", () => {
+    expect(ROUTE_RATE_LIMITS['digest-subscribe'].limit).toBeLessThanOrEqual(ROUTE_RATE_LIMITS['check'].limit);
+    expect(ROUTE_RATE_LIMITS['newsletter-subscribe'].limit).toBeLessThanOrEqual(ROUTE_RATE_LIMITS['check'].limit);
+  });
 });
 
 // ── applyRateLimitHeaders ───────────────────────────────────────────────────

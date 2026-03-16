@@ -1,10 +1,46 @@
 {
-  "generated_at": "2026-03-12T22:18:33Z",
+  "generated_at": "2026-03-13T19:33:13Z",
   "project_id": "aigrija",
   "architecture_style": "modular-monolith",
   "model_status": "provided",
   "note": "Auto-discovered by scripts/wow-maturity/discover-dimensions.sh — validate with /validate-understanding",
   "functions": [
+    {
+      "id": "ff-discovered-api-versioning-consistency",
+      "fitness_function_id": "ff-discovered-api-versioning-consistency",
+      "name": "API Versioning Consistency",
+      "description": "Verifies that all HTTP API routes follow a consistent versioning strategy (e.g., /v1/, /v2/ prefixes or Accept-Version header pattern).",
+      "rationale": "Found 30 routes using hono in aigrija. Without consistent versioning, breaking changes silently reach consumers and rollback windows narrow.",
+      "weight": 0.08,
+      "enabled": true,
+      "category": "pattern-match",
+      "collector": {
+        "type": "file-heuristic",
+        "script_path": "scripts/wow-maturity/collect.sh --dimension api-versioning"
+      },
+      "scorer": {
+        "type": "rubric",
+        "rubric_text": "Score 1.0 if all routes have a version prefix or Accept-Version support; 0.5 if >50% are versioned; 0.0 if no versioning found."
+      }
+    },
+    {
+      "id": "ff-discovered-response-time-sla-conformance",
+      "fitness_function_id": "ff-discovered-response-time-sla-conformance",
+      "name": "Response Time SLA Conformance",
+      "description": "Checks that latency budgets are documented per route and that p95 response times are within declared SLA thresholds.",
+      "rationale": "Found 30 API routes in aigrija. At this scale, undocumented latency budgets prevent teams from detecting performance regressions before they reach users.",
+      "weight": 0.08,
+      "enabled": true,
+      "category": "pattern-match",
+      "collector": {
+        "type": "file-heuristic",
+        "script_path": "scripts/wow-maturity/collect.sh --dimension sla-conformance"
+      },
+      "scorer": {
+        "type": "rubric",
+        "rubric_text": "Score 1.0 if all critical routes have documented SLA and p95 monitoring; 0.5 if >50% covered; 0.0 if no SLA documentation found."
+      }
+    },
     {
       "id": "ff-discovered-observability-stack-integration",
       "fitness_function_id": "ff-discovered-observability-stack-integration",
@@ -28,7 +64,7 @@
       "fitness_function_id": "ff-discovered-error-handling-consistency",
       "name": "Error Handling Consistency",
       "description": "Measures what fraction of source files with async operations also have explicit error handling (try/catch, .catch(), rescue, except). Low coverage means unhandled rejections and silent failures in production.",
-      "rationale": "Found 300 source files in aigrija; 90 have error handling patterns vs 214 with async operations. Inconsistent error handling leads to uncaught exceptions that crash processes or swallow failures silently, making incidents harder to diagnose.",
+      "rationale": "Found 338 source files in aigrija; 175 have error handling patterns vs 340 with async operations. Inconsistent error handling leads to uncaught exceptions that crash processes or swallow failures silently, making incidents harder to diagnose.",
       "weight": 0.15,
       "enabled": true,
       "category": "resilience",
@@ -64,7 +100,7 @@
       "fitness_function_id": "ff-discovered-authentication-layer-completeness",
       "name": "Authentication Layer Completeness",
       "description": "Measures whether authentication is implemented as a consistent middleware layer with token validation and centralized auth enforcement — not scattered ad-hoc checks across individual route handlers.",
-      "rationale": "Auth patterns detected in aigrija with 33 middleware/guard definition(s). Ad-hoc auth checks scattered through routes are easy to forget on new endpoints, creating authentication bypass vulnerabilities that are hard to audit.",
+      "rationale": "Auth patterns detected in aigrija with 72 middleware/guard definition(s). Ad-hoc auth checks scattered through routes are easy to forget on new endpoints, creating authentication bypass vulnerabilities that are hard to audit.",
       "weight": 0.18,
       "enabled": true,
       "category": "security",
@@ -82,7 +118,7 @@
       "fitness_function_id": "ff-discovered-modularity-index",
       "name": "Modularity Index",
       "description": "Measures the balance between dependency injection patterns (constructor injection, IoC containers) and global state usage. High global state indicates tight coupling that resists unit testing and parallel development.",
-      "rationale": "Found 300 source files in aigrija; 1 use DI patterns vs 0 with global state access. Excessive global state creates hidden coupling that makes modules impossible to test in isolation and slows parallel feature development as teams step on each other's state.",
+      "rationale": "Found 338 source files in aigrija; 5 use DI patterns vs 13 with global state access. Excessive global state creates hidden coupling that makes modules impossible to test in isolation and slows parallel feature development as teams step on each other's state.",
       "weight": 0.14,
       "enabled": true,
       "category": "architecture",

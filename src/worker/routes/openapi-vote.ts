@@ -2,7 +2,7 @@ import { OpenAPIRoute } from 'chanfana';
 import { z } from 'zod';
 import type { Context } from 'hono';
 import type { Env } from '../lib/types';
-import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, getRouteRateLimit } from '../lib/rate-limiter';
 import { structuredLog } from '../lib/logger';
 import type { CommunityReport } from './community';
 
@@ -60,7 +60,8 @@ export class VoteEndpoint extends OpenAPIRoute {
       || c.req.header('x-real-ip')
       || 'unknown';
 
-    const voteRl = await createRateLimiter(c.env.CACHE)(`vote:${ip}`, ROUTE_RATE_LIMITS['vote'].limit, ROUTE_RATE_LIMITS['vote'].windowSeconds);
+    const voteRlCfg = getRouteRateLimit('vote', c.env);
+    const voteRl = await createRateLimiter(c.env.CACHE)(`vote:${ip}`, voteRlCfg.limit, voteRlCfg.windowSeconds);
     applyRateLimitHeaders((k, v) => c.header(k, v), voteRl);
 
     if (!voteRl.allowed) {

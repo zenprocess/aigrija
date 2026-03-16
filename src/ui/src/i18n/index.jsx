@@ -13,6 +13,14 @@ export const LANGUAGES = {
   en: 'EN',
 };
 
+export const LANGUAGE_FLAGS = {
+  ro: '\u{1F1F7}\u{1F1F4}',
+  bg: '\u{1F1E7}\u{1F1EC}',
+  hu: '\u{1F1ED}\u{1F1FA}',
+  uk: '\u{1F1FA}\u{1F1E6}',
+  en: '\u{1F1EC}\u{1F1E7}',
+};
+
 export const LANGUAGE_NAMES = {
   ro: 'Română',
   bg: 'Български',
@@ -90,7 +98,7 @@ export function I18nProvider({ children }) {
   }, [lang]);
 
   return (
-    <LanguageContext.Provider value={{ t, lang, setLang, languages: LANGUAGES, languageNames: LANGUAGE_NAMES }}>
+    <LanguageContext.Provider value={{ t, lang, setLang, languages: LANGUAGES, languageNames: LANGUAGE_NAMES, languageFlags: LANGUAGE_FLAGS }}>
       {children}
     </LanguageContext.Provider>
   );

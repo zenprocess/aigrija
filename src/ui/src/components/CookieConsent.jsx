@@ -14,8 +14,17 @@ export function hasAnalyticsConsent() {
 }
 
 function saveConsent(analytics) {
-  localStorage.setItem('cookie_preferences', JSON.stringify({ essential: true, analytics }));
+  localStorage.setItem('cookie_preferences', JSON.stringify({ essential: true, analytics, timestamp: new Date().toISOString() }));
   localStorage.setItem('cookie_consent_given', 'true');
+}
+
+function injectUmamiScript() {
+  if (document.querySelector('script[data-website-id="da9f42d8-48a1-4326-bef7-64c0b7eaab25"]')) return;
+  const script = document.createElement('script');
+  script.defer = true;
+  script.src = 'https://cloud.umami.is/script.js';
+  script.setAttribute('data-website-id', 'da9f42d8-48a1-4326-bef7-64c0b7eaab25');
+  document.head.appendChild(script);
 }
 
 export default function CookieConsent({ onVisibilityChange }) {
@@ -29,6 +38,8 @@ export default function CookieConsent({ onVisibilityChange }) {
     if (!given) {
       const timer = setTimeout(() => setVisible(true), 800);
       return () => clearTimeout(timer);
+    } else if (hasAnalyticsConsent()) {
+      injectUmamiScript();
     }
   }, []);
 
@@ -38,6 +49,7 @@ export default function CookieConsent({ onVisibilityChange }) {
 
   function handleAcceptAll() {
     saveConsent(true);
+    injectUmamiScript();
     setVisible(false);
   }
 
@@ -48,6 +60,7 @@ export default function CookieConsent({ onVisibilityChange }) {
 
   function handleSavePreferences() {
     saveConsent(analyticsEnabled);
+    if (analyticsEnabled) injectUmamiScript();
     setVisible(false);
   }
 

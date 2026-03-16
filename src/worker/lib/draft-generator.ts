@@ -278,7 +278,7 @@ export async function generateStandalonePost(env: Env): Promise<void> {
       {
         messages: [
           { role: "system", content: "You are a cybersecurity editor. Respond ONLY with a short article title in Romanian, no explanation, no punctuation beyond the title itself." },
-          { role: "user", content: `Sugerează un subiect specific de securitate cibernetică în România pentru o categorie "". Returnează DOAR titlul subiectului, fără explicații.` },
+          { role: "user", content: `Sugerează un subiect specific de securitate cibernetică în România pentru o categorie "${category}". Returnează DOAR titlul subiectului, fără explicații.` },
         ],
         max_tokens: 60,
       }

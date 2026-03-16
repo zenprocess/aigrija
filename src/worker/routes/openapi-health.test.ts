@@ -148,10 +148,10 @@ describe("GET /health/deep", () => {
       const path = new URL(url).pathname;
       if (path === '/health') return new Response(JSON.stringify({ status: 'healthy', components: {} }), { headers: { 'content-type': 'application/json' } });
       if (path === '/api/alerts') return new Response(JSON.stringify({ campaigns: [] }), { headers: { 'content-type': 'application/json' } });
-      if (path === '/api/counter') return new Response(JSON.stringify({ total: 42 }), { headers: { 'content-type': 'application/json' } });
+      if (path === '/api/counter') return new Response(JSON.stringify({ total_checks: 42 }), { headers: { 'content-type': 'application/json' } });
       if (path === '/api/stats') return new Response(JSON.stringify({ checks: 100 }), { headers: { 'content-type': 'application/json' } });
       if (path === '/api/feed/latest') return new Response(JSON.stringify([]), { headers: { 'content-type': 'application/json' } });
-      if (path === '/api/quiz') return new Response(JSON.stringify([]), { headers: { 'content-type': 'application/json' } });
+      if (path === '/api/quiz') return new Response(JSON.stringify({ questions: [], total: 0, lang: 'ro' }), { headers: { 'content-type': 'application/json' } });
       if (path === '/sitemap.xml') return new Response('<?xml version="1.0"?><urlset></urlset>', { headers: { 'content-type': 'application/xml' } });
       if (path === '/robots.txt') return new Response('User-agent: *\nDisallow: /admin/\nSitemap: http://localhost/sitemap.xml', { headers: { 'content-type': 'text/plain' } });
       return new Response('Not Found', { status: 404 });
@@ -177,7 +177,7 @@ describe("GET /health/deep", () => {
       if (path === '/api/alerts') return new Response(JSON.stringify({ campaigns: [] }), { headers: { 'content-type': 'application/json' } });
       if (path === '/api/stats') return new Response(JSON.stringify({}), { headers: { 'content-type': 'application/json' } });
       if (path === '/api/feed/latest') return new Response(JSON.stringify([]), { headers: { 'content-type': 'application/json' } });
-      if (path === '/api/quiz') return new Response(JSON.stringify([]), { headers: { 'content-type': 'application/json' } });
+      if (path === '/api/quiz') return new Response(JSON.stringify({ questions: [], total: 0, lang: 'ro' }), { headers: { 'content-type': 'application/json' } });
       if (path === '/sitemap.xml') return new Response('<urlset></urlset>', { headers: { 'content-type': 'application/xml' } });
       if (path === '/robots.txt') return new Response('User-agent: *\nSitemap: /sitemap.xml', { headers: { 'content-type': 'text/plain' } });
       return new Response('OK');
@@ -199,13 +199,13 @@ describe("GET /health/deep", () => {
   it("detects invalid payload even on 200 response", async () => {
     const mockFetch = vi.fn().mockImplementation((url: string) => {
       const path = new URL(url).pathname;
-      // /api/counter returns 200 but wrong shape (missing total)
+      // /api/counter returns 200 but wrong shape (missing total_checks)
       if (path === '/api/counter') return new Response(JSON.stringify({ count: 42 }), { headers: { 'content-type': 'application/json' } });
       if (path === '/health') return new Response(JSON.stringify({ status: 'healthy', components: {} }), { headers: { 'content-type': 'application/json' } });
       if (path === '/api/alerts') return new Response(JSON.stringify({ campaigns: [] }), { headers: { 'content-type': 'application/json' } });
       if (path === '/api/stats') return new Response(JSON.stringify({}), { headers: { 'content-type': 'application/json' } });
       if (path === '/api/feed/latest') return new Response(JSON.stringify([]), { headers: { 'content-type': 'application/json' } });
-      if (path === '/api/quiz') return new Response(JSON.stringify([]), { headers: { 'content-type': 'application/json' } });
+      if (path === '/api/quiz') return new Response(JSON.stringify({ questions: [], total: 0, lang: 'ro' }), { headers: { 'content-type': 'application/json' } });
       if (path === '/sitemap.xml') return new Response('<urlset></urlset>', { headers: { 'content-type': 'application/xml' } });
       if (path === '/robots.txt') return new Response('User-agent: *\nSitemap: /sitemap.xml', { headers: { 'content-type': 'text/plain' } });
       return new Response('OK');
@@ -217,7 +217,7 @@ describe("GET /health/deep", () => {
     const res = await app.fetch(new Request("http://localhost/health/deep"), env, makeCtx());
     expect(res.status).toBe(503);
     const body = await res.json() as any;
-    expect(body.endpoints['/api/counter'].error).toBe("Missing or invalid total field");
+    expect(body.endpoints['/api/counter'].error).toBe("Missing or invalid total_checks field");
   });
 
   it("human-readable summary lists all failures", async () => {

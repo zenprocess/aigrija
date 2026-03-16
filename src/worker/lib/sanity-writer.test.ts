@@ -68,6 +68,14 @@ describe('buildBlogPostDoc', () => {
     expect(buildBlogPostDoc(baseCampaign, 'content', 'alert').category).toBe('amenintari');
   });
 
+  it('maps press to presa', () => {
+    expect(buildBlogPostDoc(baseCampaign, 'content', 'press').category).toBe('presa');
+  });
+
+  it('maps report to rapoarte', () => {
+    expect(buildBlogPostDoc(baseCampaign, 'content', 'report').category).toBe('rapoarte');
+  });
+
   it('defaults unknown contentType to general', () => {
     expect(buildBlogPostDoc(baseCampaign, 'content', 'unknown').category).toBe('general');
   });

@@ -24,7 +24,6 @@ function makeEnv(kvData: Record<string, string> = {}) {
   return {
     CACHE: makeKV(kvData),
     ADMIN_API_KEY: 'test-key',
-    ADMIN_DB: null,
   };
 }
 

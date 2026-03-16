@@ -25,8 +25,8 @@ function makeCtx(): ExecutionContext {
 // Auth is now handled by adminAuth middleware in the admin app (admin/index.ts).
 // The analytics sub-router itself does not perform auth — these tests exercise the route directly.
 describe('analytics router', () => {
-  it('returns 503 when ADMIN_DB not configured', async () => {
-    const env = { ADMIN_DB: null };
+  it('returns 503 when DB not configured', async () => {
+    const env = { DB: null };
     const req = new Request('http://localhost/');
     const res = await analytics.fetch(req, env, makeCtx());
     expect(res.status).toBe(503);
@@ -34,7 +34,7 @@ describe('analytics router', () => {
 
   it('renders analytics page with charts', async () => {
     const env = {
-      ADMIN_DB: makeD1(
+      DB: makeD1(
         [{ severity: 'high', count: 5 }, { severity: 'low', count: 2 }],
         [{ month: '2025-01', count: 3 }]
       ),

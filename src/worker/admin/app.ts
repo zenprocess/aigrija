@@ -29,25 +29,46 @@ admin.use('*', adminAuth);
 admin.use('*', cspNonceMiddleware(ADMIN_CSP));
 
 // --- Dashboard ---
-admin.get('/', (c) => {
+admin.get('/', async (c) => {
   const email = c.get('adminEmail');
+
+  let totalCampaigns = '—';
+  let pendingDrafts = '—';
+  let scraperRunsToday = '—';
+  let scraperErrorsToday = '—';
+
+  try {
+    const [campaigns, pending, runs, errors] = await Promise.all([
+      c.env.DB.prepare('SELECT COUNT(*) as count FROM campaigns').first<{ count: number }>(),
+      c.env.DB.prepare("SELECT COUNT(*) as count FROM campaigns WHERE draft_status = 'pending'").first<{ count: number }>(),
+      c.env.DB.prepare("SELECT COUNT(*) as count FROM scraper_runs WHERE date(run_at) = date('now')").first<{ count: number }>(),
+      c.env.DB.prepare("SELECT COUNT(*) as count FROM scraper_runs WHERE errors IS NOT NULL AND date(run_at) = date('now')").first<{ count: number }>(),
+    ]);
+    totalCampaigns = String(campaigns?.count ?? 0);
+    pendingDrafts = String(pending?.count ?? 0);
+    scraperRunsToday = String(runs?.count ?? 0);
+    scraperErrorsToday = String(errors?.count ?? 0);
+  } catch {
+    // leave defaults as '—' if DB unavailable
+  }
+
   const content = `
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div class="bg-white rounded-xl border border-gray-200 p-4">
         <div class="text-sm text-gray-500 mb-1">Total Campaigns</div>
-        <div class="text-2xl font-bold text-gray-800">—</div>
+        <div class="text-2xl font-bold text-gray-800">${totalCampaigns}</div>
       </div>
       <div class="bg-white rounded-xl border border-gray-200 p-4">
         <div class="text-sm text-gray-500 mb-1">Pending Drafts</div>
-        <div class="text-2xl font-bold text-yellow-600">—</div>
+        <div class="text-2xl font-bold text-yellow-600">${pendingDrafts}</div>
       </div>
       <div class="bg-white rounded-xl border border-gray-200 p-4">
         <div class="text-sm text-gray-500 mb-1">Scraper Runs Today</div>
-        <div class="text-2xl font-bold text-blue-600">—</div>
+        <div class="text-2xl font-bold text-blue-600">${scraperRunsToday}</div>
       </div>
       <div class="bg-white rounded-xl border border-gray-200 p-4">
         <div class="text-sm text-gray-500 mb-1">Scraper Errors</div>
-        <div class="text-2xl font-bold text-red-600">—</div>
+        <div class="text-2xl font-bold text-red-600">${scraperErrorsToday}</div>
       </div>
     </div>
     <div class="bg-white rounded-xl border border-gray-200 p-6">

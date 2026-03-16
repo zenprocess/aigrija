@@ -23,7 +23,7 @@ function makeApp<T extends object>(method: string, path: string, EndpointClass: 
 }
 
 function makeEnv(overrides: Record<string, unknown> = {}): any {
-  return { CACHE: {}, DB: {}, ADMIN_DB: {}, AI: {}, ...overrides };
+  return { CACHE: {}, DB: {}, AI: {}, ...overrides };
 }
 
 describe('GET /admin/flags (ListFlagsEndpoint)', () => {
@@ -143,28 +143,110 @@ describe('DELETE /admin/campanii/api/:id (ArchiveCampaignEndpoint)', () => {
 });
 
 describe('POST /admin/drafturi/:id/publish (PublishCampaignEndpoint)', () => {
-  it('returns 501 not implemented stub', async () => {
+  it('returns 404 when campaign not found', async () => {
     const app = makeApp('post', '/admin/drafturi/:id/publish', PublishCampaignEndpoint);
+    const env = makeEnv({
+      DB: {
+        prepare: () => ({ bind: () => ({ first: async () => null, run: async () => ({}) }) }),
+      },
+    });
     const res = await app.fetch(
-      new Request('http://localhost/admin/drafturi/campaign-1/publish', { method: 'POST' }),
-      makeEnv(), {} as any
+      new Request('http://localhost/admin/drafturi/nonexistent/publish', { method: 'POST' }),
+      env, {} as any
     );
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 200 with sanityId when campaign exists', async () => {
+    const fakeCampaign = {
+      id: 'camp-1', title: 'Test', source: 'manual', threat_type: 'phishing',
+      severity: 'high', affected_brands: '', body_text: '', draft_content: '# Test',
+    };
+    const app = makeApp('post', '/admin/drafturi/:id/publish', PublishCampaignEndpoint);
+    const env = makeEnv({
+      SANITY_WRITE_TOKEN: 'tok',
+      SANITY_PROJECT_ID: 'proj',
+      DB: {
+        prepare: () => ({
+          bind: () => ({
+            first: async () => fakeCampaign,
+            run: async () => ({}),
+          }),
+        }),
+      },
+    });
+    // publishToSanity will call fetch() — mock it for this test
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({ results: [{ id: 'sanity-doc-1' }] }), {
+      status: 200, headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await app.fetch(
+      new Request('http://localhost/admin/drafturi/camp-1/publish', { method: 'POST' }),
+      env, {} as any
+    );
+    globalThis.fetch = origFetch;
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+    expect(body).toHaveProperty('sanityId');
   });
 });
 
 describe('POST /admin/api/generate-content (GenerateContentEndpoint)', () => {
-  it('returns 501 not implemented stub', async () => {
+  it('returns 200 with id and title on success', async () => {
     const app = makeApp('post', '/admin/api/generate-content', GenerateContentEndpoint);
+    let aiCallCount = 0;
+    const env = makeEnv({
+      AI: {
+        run: async () => {
+          aiCallCount++;
+          return { response: aiCallCount === 1 ? 'Titlu test articol' : '# Articol complet\n\nConținut test.' };
+        },
+      },
+      DB: {
+        prepare: () => ({
+          bind: () => ({ run: async () => ({}) }),
+        }),
+      },
+    });
     const res = await app.fetch(
       new Request('http://localhost/admin/api/generate-content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category: 'amenintari' }),
       }),
-      makeEnv(), {} as any
+      env, {} as any
     );
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(true);
+    expect(typeof body.id).toBe('string');
+    expect(typeof body.title).toBe('string');
+  });
+
+  it('returns 500 when AI generation fails', async () => {
+    const app = makeApp('post', '/admin/api/generate-content', GenerateContentEndpoint);
+    const env = makeEnv({
+      AI: {
+        run: async () => { throw new Error('AI unavailable'); },
+      },
+      DB: {
+        prepare: () => ({
+          bind: () => ({ run: async () => ({}) }),
+        }),
+      },
+    });
+    const res = await app.fetch(
+      new Request('http://localhost/admin/api/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: 'ghid' }),
+      }),
+      env, {} as any
+    );
+    expect(res.status).toBe(500);
+    const body = await res.json() as any;
+    expect(body.ok).toBe(false);
   });
 });
 

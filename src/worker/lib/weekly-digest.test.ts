@@ -33,7 +33,7 @@ function makeEnv(kvStore: Record<string, string> = {}, dbResults: unknown[] = []
   return {
     CACHE: makeKv(kvStore),
     DB: makeDb(dbResults),
-    ADMIN_DB: makeDb([]),
+
     BASE_URL: 'https://ai-grija.ro',
   };
 }

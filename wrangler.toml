@@ -39,12 +39,6 @@ database_name = "ai-grija-admin"
 database_id = "9d15ccda-3648-4a93-8856-2ac5b5ffe199"
 migrations_dir = "migrations"
 
-[[d1_databases]]
-binding = "ADMIN_DB"
-database_name = "ai-grija-admin"
-database_id = "9d15ccda-3648-4a93-8856-2ac5b5ffe199"
-migrations_dir = "migrations"
-
 [[queues.producers]]
 queue = "draft-generation"
 binding = "DRAFT_QUEUE"
@@ -100,11 +94,6 @@ binding = "DB"
 database_name = "ai-grija-admin-preview"
 database_id = "4d78649f-36ef-49bf-bcc1-672c61c5dd93"
 
-
-[[env.preview.d1_databases]]
-binding = "ADMIN_DB"
-database_name = "ai-grija-admin-preview"
-database_id = "4d78649f-36ef-49bf-bcc1-672c61c5dd93"
 
 [env.preview.ai]
 binding = "AI"

@@ -1,8 +1,10 @@
 import { OpenAPIRoute } from 'chanfana';
 import { z } from 'zod';
 import type { Context } from 'hono';
-import type { Env } from '../lib/types';
+import type { Env, Campaign } from '../lib/types';
 import type { AppVariables } from '../lib/request-id';
+import { publishToSanity } from '../lib/sanity-writer';
+import { generateStandalonePostWithOverrides } from '../lib/draft-generator';
 
 // ── Shared schemas ───────────────────────────────────────────────────────────
 
@@ -333,7 +335,18 @@ export class PublishCampaignEndpoint extends OpenAPIRoute {
   };
 
   async handle(c: Context<{ Bindings: Env; Variables: AppVariables }>) {
-    return c.json({ ok: false, error: 'Not implemented in OpenAPI stub' }, 501);
+    const id = c.req.param('id');
+    const campaign = await c.env.DB.prepare(`SELECT * FROM campaigns WHERE id = ?`).bind(id).first<Campaign>();
+    if (!campaign) return c.json({ error: 'Not found' }, 404);
+    try {
+      const result = await publishToSanity(campaign, campaign.draft_content || '', 'threatReport', c.env);
+      await c.env.DB.prepare(`UPDATE campaigns SET draft_status='published', updated_at=? WHERE id=?`)
+        .bind(new Date().toISOString(), id).run();
+      return c.json({ ok: true, sanityId: result.id });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return c.json({ ok: false, error: message }, 500);
+    }
   }
 }
 
@@ -378,7 +391,21 @@ export class GenerateContentEndpoint extends OpenAPIRoute {
   };
 
   async handle(c: Context<{ Bindings: Env; Variables: AppVariables }>) {
-    return c.json({ ok: false, error: 'Not implemented in OpenAPI stub' }, 501);
+    let body: { category?: string; topic?: string } = {};
+    try {
+      const raw = await c.req.text();
+      if (raw) body = JSON.parse(raw);
+    } catch { /* ignore, body is optional */ }
+    try {
+      const result = await generateStandalonePostWithOverrides(c.env, {
+        category: body.category,
+        topic: body.topic,
+      });
+      return c.json({ ok: true, id: result.id, title: result.title });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      return c.json({ ok: false, error: message }, 500);
+    }
   }
 }
 

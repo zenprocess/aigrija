@@ -32,7 +32,7 @@ function makeEnv(overrides: Partial<Record<string, unknown>> = {}): Env {
     WHATSAPP_ACCESS_TOKEN: '',
     WHATSAPP_PHONE_NUMBER_ID: '',
     ADMIN_API_KEY: 'secret',
-    ADMIN_DB: {} as D1Database,
+    DB: {} as D1Database,
     ...overrides,
   } as Env;
 }

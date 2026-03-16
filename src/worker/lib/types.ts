@@ -3,7 +3,6 @@ export interface Env {
   AI: Ai;
   CACHE: KVNamespace;
   DB: D1Database;
-  ADMIN_DB: D1Database;
   DRAFT_QUEUE: Queue;
   STORAGE: R2Bucket;
   BASE_URL: string;

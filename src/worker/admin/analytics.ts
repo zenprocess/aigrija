@@ -6,16 +6,16 @@ const analytics = new Hono<{ Bindings: Env }>();
 
 analytics.get('/', async (c) => {
 
-  if (!c.env.ADMIN_DB) {
-    return c.html('<h1>ADMIN_DB not configured</h1>', 503);
+  if (!c.env.DB) {
+    return c.html('<h1>DB not configured</h1>', 503);
   }
 
   let severityRows: { results: { severity: string; count: number }[] } = { results: [] };
   let monthRows: { results: { month: string; count: number }[] } = { results: [] };
   try {
     [severityRows, monthRows] = await Promise.all([
-      c.env.ADMIN_DB.prepare('SELECT severity, COUNT(*) as count FROM campaigns GROUP BY severity').all() as Promise<{ results: { severity: string; count: number }[] }>,
-      c.env.ADMIN_DB.prepare("SELECT strftime('%Y-%m', created_at) as month, COUNT(*) as count FROM campaigns GROUP BY month ORDER BY month").all() as Promise<{ results: { month: string; count: number }[] }>,
+      c.env.DB.prepare('SELECT severity, COUNT(*) as count FROM campaigns GROUP BY severity').all() as Promise<{ results: { severity: string; count: number }[] }>,
+      c.env.DB.prepare("SELECT strftime('%Y-%m', created_at) as month, COUNT(*) as count FROM campaigns GROUP BY month ORDER BY month").all() as Promise<{ results: { month: string; count: number }[] }>,
     ]);
   } catch (err) {
     structuredLog('error', 'admin_analytics_query_failed', { stage: 'admin', error: String(err) });

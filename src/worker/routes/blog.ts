@@ -54,22 +54,22 @@ async function kvDeleteByPrefix(env: Env, prefix: string): Promise<void> {
 // ─── Sanity GROQ queries ──────────────────────────────────────────────────────
 
 const GHID_LIST_QUERY = `*[(_type == "blogPost" && category == "ghid" || _type == "bankGuide") && language == $lang] | order(publishedAt desc) [$from...$to] { _type, title, "slug": slug.current, excerpt, publishedAt, mainImage, categories[]->{ title, "slug": slug.current }, author->{ name } }`;
-const GHID_POST_QUERY = `coalesce(*[_type == "blogPost" && category == "ghid" && slug.current == $slug && language == $lang][0], *[_type == "bankGuide" && slug.current == $slug && language == $lang][0]) { ..., body, author->{ name, image, bio }, categories[]->{ title, "slug": slug.current } }`;
+const GHID_POST_QUERY = `coalesce(*[_type == "blogPost" && category == "ghid" && slug.current == $slug && language == $lang][0], *[_type == "bankGuide" && slug.current == $slug && language == $lang][0]) { ..., "slug": slug.current, body, author->{ name, image, bio }, categories[]->{ title, "slug": slug.current } }`;
 
 const EDUCATIE_LIST_QUERY = `*[(_type == "blogPost" && category == "educatie" || _type == "schoolModule") && language == $lang] | order(publishedAt desc) [$from...$to] { _type, title, "slug": slug.current, excerpt, publishedAt, mainImage, categories[]->{ title, "slug": slug.current }, author->{ name } }`;
-const EDUCATIE_POST_QUERY = `coalesce(*[_type == "blogPost" && category == "educatie" && slug.current == $slug && language == $lang][0], *[_type == "schoolModule" && slug.current == $slug && language == $lang][0]) { ..., body, author->{ name, image, bio }, categories[]->{ title, "slug": slug.current } }`;
+const EDUCATIE_POST_QUERY = `coalesce(*[_type == "blogPost" && category == "educatie" && slug.current == $slug && language == $lang][0], *[_type == "schoolModule" && slug.current == $slug && language == $lang][0]) { ..., "slug": slug.current, body, author->{ name, image, bio }, categories[]->{ title, "slug": slug.current } }`;
 
 const AMENINTARI_LIST_QUERY = `*[_type == "threatReport" && language == $lang] | order(firstSeen desc) [$from...$to] { title, "slug": slug.current, excerpt, firstSeen, severity, categories[]->{ title, "slug": slug.current } }`;
-const AMENINTARI_POST_QUERY = `*[_type == "threatReport" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, "slug": slug.current } }`;
+const AMENINTARI_POST_QUERY = `*[_type == "threatReport" && slug.current == $slug && language == $lang][0] { ..., "slug": slug.current, body, categories[]->{ title, "slug": slug.current } }`;
 
 const RAPOARTE_LIST_QUERY = `*[_type == "weeklyDigest" && language == $lang] | order(publishedAt desc) [$from...$to] { title, "slug": slug.current, excerpt, publishedAt, categories[]->{ title, "slug": slug.current } }`;
-const RAPOARTE_POST_QUERY = `*[_type == "weeklyDigest" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, "slug": slug.current } }`;
+const RAPOARTE_POST_QUERY = `*[_type == "weeklyDigest" && slug.current == $slug && language == $lang][0] { ..., "slug": slug.current, body, categories[]->{ title, "slug": slug.current } }`;
 
 const POVESTI_LIST_QUERY = `*[_type == "communityStory" && language == $lang] | order(publishedAt desc) [$from...$to] { title, "slug": slug.current, excerpt, publishedAt, author->{ name }, categories[]->{ title, "slug": slug.current } }`;
-const POVESTI_POST_QUERY = `*[_type == "communityStory" && slug.current == $slug && language == $lang][0] { ..., body, author->{ name, image, bio }, categories[]->{ title, "slug": slug.current } }`;
+const POVESTI_POST_QUERY = `*[_type == "communityStory" && slug.current == $slug && language == $lang][0] { ..., "slug": slug.current, body, author->{ name, image, bio }, categories[]->{ title, "slug": slug.current } }`;
 
 const PRESA_LIST_QUERY = `*[_type == "pressRelease" && language == $lang] | order(publishedAt desc) [$from...$to] { title, "slug": slug.current, excerpt, publishedAt, categories[]->{ title, "slug": slug.current } }`;
-const PRESA_POST_QUERY = `*[_type == "pressRelease" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, "slug": slug.current } }`;
+const PRESA_POST_QUERY = `*[_type == "pressRelease" && slug.current == $slug && language == $lang][0] { ..., "slug": slug.current, body, categories[]->{ title, "slug": slug.current } }`;
 
 const SITEMAP_QUERY = `{
   "ghid": *[(_type == "blogPost" && category == "ghid") || _type == "bankGuide"] { "slug": slug.current, "language": language, "_updatedAt": _updatedAt },
@@ -139,6 +139,22 @@ async function fetchListWithFallback(
   return { posts, fallback: false };
 }
 
+async function fetchPostWithFallback(
+  sanity: SanityListClient,
+  query: string,
+  slug: string,
+  lang: string,
+): Promise<{ post: Record<string, unknown> | null; fallback: boolean }> {
+  const post = await sanity<Record<string, unknown>>(query, { slug, lang });
+  if (!post && lang !== 'ro') {
+    const roPost = await sanity<Record<string, unknown>>(query, { slug, lang: 'ro' });
+    if (roPost) {
+      return { post: roPost, fallback: true };
+    }
+  }
+  return { post, fallback: false };
+}
+
 // ─── /amenintari — Threat Reports ────────────────────────────────────────────
 
 blog.get('/amenintari', async (c) => {
@@ -203,8 +219,9 @@ blog.get('/amenintari/:slug', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
     const sanity = createSanityClient(c.env);
-    const post = await sanity<Record<string, unknown>>(AMENINTARI_POST_QUERY, { slug, lang });
+    const { post, fallback } = await fetchPostWithFallback(sanity, AMENINTARI_POST_QUERY, slug, lang);
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Raportul nu a fost gasit.' }, request_id: 'unknown' }, 404);
+    if (fallback) c.header('X-Content-Language', 'ro');
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'amenintari', lang, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 600);
@@ -285,8 +302,9 @@ blog.get('/ghid/:slug', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
     const sanity = createSanityClient(c.env);
-    const post = await sanity<Record<string, unknown>>(GHID_POST_QUERY, { slug, lang });
+    const { post, fallback } = await fetchPostWithFallback(sanity, GHID_POST_QUERY, slug, lang);
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Ghidul nu a fost gasit.' }, request_id: 'unknown' }, 404);
+    if (fallback) c.header('X-Content-Language', 'ro');
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'ghid', lang, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 600);
@@ -367,8 +385,9 @@ blog.get('/educatie/:slug', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
     const sanity = createSanityClient(c.env);
-    const post = await sanity<Record<string, unknown>>(EDUCATIE_POST_QUERY, { slug, lang });
+    const { post, fallback } = await fetchPostWithFallback(sanity, EDUCATIE_POST_QUERY, slug, lang);
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Articolul de educatie nu a fost gasit.' }, request_id: 'unknown' }, 404);
+    if (fallback) c.header('X-Content-Language', 'ro');
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'educatie', lang, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 600);
@@ -428,8 +447,9 @@ blog.get('/rapoarte/:slug', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
     const sanity = createSanityClient(c.env);
-    const post = await sanity<Record<string, unknown>>(RAPOARTE_POST_QUERY, { slug, lang });
+    const { post, fallback } = await fetchPostWithFallback(sanity, RAPOARTE_POST_QUERY, slug, lang);
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Raportul saptamanal nu a fost gasit.' }, request_id: 'unknown' }, 404);
+    if (fallback) c.header('X-Content-Language', 'ro');
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'rapoarte', lang, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 600);
@@ -489,8 +509,9 @@ blog.get('/povesti/:slug', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
     const sanity = createSanityClient(c.env);
-    const post = await sanity<Record<string, unknown>>(POVESTI_POST_QUERY, { slug, lang });
+    const { post, fallback } = await fetchPostWithFallback(sanity, POVESTI_POST_QUERY, slug, lang);
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Povestea nu a fost gasita.' }, request_id: 'unknown' }, 404);
+    if (fallback) c.header('X-Content-Language', 'ro');
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'povesti', lang, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 600);
@@ -550,8 +571,9 @@ blog.get('/presa/:slug', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
     const sanity = createSanityClient(c.env);
-    const post = await sanity<Record<string, unknown>>(PRESA_POST_QUERY, { slug, lang });
+    const { post, fallback } = await fetchPostWithFallback(sanity, PRESA_POST_QUERY, slug, lang);
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Comunicatul de presa nu a fost gasit.' }, request_id: 'unknown' }, 404);
+    if (fallback) c.header('X-Content-Language', 'ro');
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'presa', lang, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 600);

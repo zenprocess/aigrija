@@ -148,7 +148,7 @@ const PROBES: Probe[] = [
     path: '/api/counter',
     validate: async (res) => {
       const body = await res.json() as any;
-      if (typeof body.total !== 'number') return 'Missing or invalid total field';
+      if (typeof body.total_checks !== 'number') return 'Missing or invalid total_checks field';
       return null;
     },
   },
@@ -172,7 +172,8 @@ const PROBES: Probe[] = [
     path: '/api/quiz',
     validate: async (res) => {
       const body = await res.json() as any;
-      if (!Array.isArray(body)) return 'Response is not an array';
+      if (!body || typeof body !== 'object' || Array.isArray(body)) return 'Response is not a JSON object';
+      if (!Array.isArray(body.questions)) return 'Missing or invalid questions array';
       return null;
     },
   },

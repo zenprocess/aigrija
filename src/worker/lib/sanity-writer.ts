@@ -39,6 +39,8 @@ function buildBlogPostDoc(campaign: Campaign, draftContent: string, contentType:
     education: 'educatie',
     alert: 'amenintari',
     blogPost: 'general',
+    press: 'presa',
+    report: 'rapoarte',
   };
 
   return {

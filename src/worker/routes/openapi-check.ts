@@ -7,7 +7,7 @@ import { CheckRequestSchema, MAX_TEXT_LENGTH, MAX_URL_LENGTH, formatZodError } f
 import { createRateLimiter, applyRateLimitHeaders, getRouteRateLimit } from '../lib/rate-limiter';
 import { createClassifier } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
-import { matchCampaigns } from '../lib/campaign-matcher';
+import { matchCampaigns, matchCampaignsFromDB } from '../lib/campaign-matcher';
 import { BANK_PLAYBOOKS } from '../data/bank-playbooks';
 import { getFlag } from '../lib/feature-flags';
 import { matchScamPattern } from '../data/scam-patterns';
@@ -259,6 +259,9 @@ export class CheckEndpoint extends OpenAPIRoute {
         )
       : undefined;
     const campaignMatches = matchCampaigns(body.text, body.url);
+    const dbCampaignMatches = await matchCampaignsFromDB(body.text, body.url, c.env.DB, c.env.CACHE);
+    const staticSlugs = new Set(campaignMatches.map(m => m.campaign.slug));
+    const uniqueDbMatches = dbCampaignMatches.filter(m => !staticSlugs.has(m.slug));
 
     let bank_playbook = undefined;
     if (classification.impersonated_entity) {
@@ -274,12 +277,20 @@ export class CheckEndpoint extends OpenAPIRoute {
       request_id: rid,
       classification,
       url_analysis: urlAnalysis,
-      matched_campaigns: campaignMatches.map(m => ({
-        campaign_id: m.campaign.id,
-        campaign_name: m.campaign.name_ro,
-        slug: m.campaign.slug,
-        score: m.score,
-      })),
+      matched_campaigns: [
+        ...campaignMatches.map(m => ({
+          campaign_id: m.campaign.id,
+          campaign_name: m.campaign.name_ro,
+          slug: m.campaign.slug,
+          score: m.score,
+        })),
+        ...uniqueDbMatches.map(m => ({
+          campaign_id: m.campaign_id,
+          campaign_name: m.campaign_name,
+          slug: m.slug,
+          score: m.score,
+        })),
+      ].sort((a, b) => b.score - a.score),
       bank_playbook: bank_playbook ? {
         entity: classification.impersonated_entity || campaignMatches[0]?.campaign.impersonated_entity || '',
         official_domain: bank_playbook.official_domain,

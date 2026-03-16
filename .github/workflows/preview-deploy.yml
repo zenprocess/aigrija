@@ -2,12 +2,12 @@
 # Triggers on feature/fix branches and PRs targeting main.
 #
 # Job graph (optimized critical path):
-#   typecheck ──┐
-#   test ───────├─ deploy-preview ─ health-check
-#               │                       ├─ smoke-test
-#               │                       ├─ greptile-gate (PR only, continue-on-error)
-#               │                       └─ bowser-test (depends on health-check only)
-#               │                             └─ allure-report (always)
+#   typecheck ──────┐
+#   test ───────────├─ deploy-preview ─ health-check
+#   infra-validate ─┘                       ├─ smoke-test
+#                                           ├─ greptile-gate (PR only, continue-on-error)
+#                                           └─ bowser-test (depends on health-check only)
+#                                                 └─ allure-report (always)
 #
 # Key design decisions:
 #   - cancel-in-progress on PRs only — push runs on feat/fix branches are not cancelled
@@ -99,13 +99,68 @@ jobs:
           retention-days: 14
 
   # ---------------------------------------------------------------------------
+  # Infrastructure validation — CrossGuard policy check via Pulumi preview.
+  # Runs in parallel with typecheck and test so policy violations on feature
+  # branches are caught before the deploy runs. Mirrors the infra-validate job
+  # in pr-checks.yml. Skips gracefully if PULUMI_CONFIG_PASSPHRASE is missing.
+  # ---------------------------------------------------------------------------
+  infra-validate:
+    name: Infrastructure validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate infra config
+        run: bash scripts/validate-infra.sh
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install infra dependencies
+        run: cd infra && npm ci
+
+      - name: Install policy pack
+        run: cd infra/policy && npm install
+
+      - name: Pulumi login (R2 backend)
+        if: env.PULUMI_CONFIG_PASSPHRASE != ''
+        run: pulumi login s3://ai-grija-pulumi-state --secrets-provider passphrase
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL_S3: ${{ secrets.AWS_ENDPOINT_URL_S3 }}
+
+      - name: Pulumi preview with CrossGuard
+        if: env.PULUMI_CONFIG_PASSPHRASE != ''
+        uses: pulumi/actions@v6
+        with:
+          command: preview
+          stack-name: dev
+          work-dir: infra
+          policyPacks: infra/policy
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL_S3: ${{ secrets.AWS_ENDPOINT_URL_S3 }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Warn if Pulumi passphrase missing
+        if: env.PULUMI_CONFIG_PASSPHRASE == ''
+        run: echo "::warning::PULUMI_CONFIG_PASSPHRASE not set — infrastructure validation skipped. Add it to GitHub secrets."
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+
+  # ---------------------------------------------------------------------------
   # Build + deploy to preview environment.
   # Uses nick-fields/retry@v3 for proper exponential backoff + jitter.
   # Wrangler deploy is idempotent (assets use content-hash addressing).
   # ---------------------------------------------------------------------------
   deploy-preview:
     name: Deploy to preview
-    needs: [typecheck, test]
+    needs: [typecheck, test, infra-validate]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

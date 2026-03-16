@@ -2,75 +2,21 @@
  * Infra policy unit tests
  *
  * These tests validate the LOGIC of each policy rule in isolation — no Pulumi
- * runtime or Cloudflare API required. Each helper mirrors the exact condition
- * used in infra/policy/index.ts so that a policy change without a matching
- * test change will break CI.
+ * runtime or Cloudflare API required. Check functions are imported directly
+ * from infra/policy/checks.ts so that a policy change automatically affects
+ * these tests (no duplicated logic that can drift out of sync).
  */
 
 import { describe, it, expect } from "vitest";
-
-// ---------------------------------------------------------------------------
-// Helpers — mirror policy logic exactly
-// ---------------------------------------------------------------------------
-
-/** Returns violation message if the R2 location is non-European, else null. */
-function checkR2EuropeanRegion(name: string, location: string | undefined): string | null {
-  if (location && !["EEUR", "WEUR"].includes(location)) {
-    return `R2 bucket '${name}' is in ${location}, must be EEUR or WEUR for GDPR compliance`;
-  }
-  return null;
-}
-
-/** Returns violation message if the DNS record is not proxied, else null. */
-function checkDnsProxied(name: string, proxied: boolean | undefined): string | null {
-  if (proxied !== true) {
-    return `DNS record '${name}' must have proxied=true`;
-  }
-  return null;
-}
-
-/** Returns violation message if the Access session duration is not in the allowed set. */
-function checkAccessSessionDuration(name: string, duration: string | undefined): string | null {
-  const allowed = ["24h", "12h", "1h"];
-  if (duration && !allowed.includes(duration)) {
-    return `Access app '${name}' session duration ${duration} exceeds 24h policy`;
-  }
-  return null;
-}
-
-/** Returns violation message if the worker secret name is empty. */
-function checkWorkerSecretName(name: string | undefined): string | null {
-  if (!name || name.trim() === "") {
-    return "Worker secret has empty name";
-  }
-  return null;
-}
-
-interface FakeResource {
-  type: string;
-  props: Record<string, unknown>;
-}
-
-/** Returns list of admin domains NOT protected by any Access app in the resource list. */
-function checkAdminDomainsProtected(resources: FakeResource[]): string[] {
-  const accessApps = resources.filter(
-    r => r.type === "cloudflare:index/zeroTrustAccessApplication:ZeroTrustAccessApplication"
-  );
-  const adminDomains = ["admin.ai-grija.ro", "pre-admin.ai-grija.ro"];
-  const protectedDomains = accessApps.map(a => a.props.domain as string).filter(Boolean);
-  return adminDomains.filter(d => !protectedDomains.includes(d));
-}
-
-/** Returns list of resource types that have fewer than 2 instances. */
-function checkPreviewMirrorsProduction(resources: FakeResource[]): string[] {
-  const requiredTypes = [
-    "cloudflare:index/workersKvNamespace:WorkersKvNamespace",
-    "cloudflare:index/r2Bucket:R2Bucket",
-    "cloudflare:index/d1Database:D1Database",
-    "cloudflare:index/queue:Queue",
-  ];
-  return requiredTypes.filter(type => resources.filter(r => r.type === type).length < 2);
-}
+import {
+  checkR2EuropeanRegion,
+  checkDnsProxied,
+  checkAccessSessionDuration,
+  checkWorkerSecretName,
+  checkAdminDomainsProtected,
+  checkPreviewMirrorsProduction,
+  type PolicyResource,
+} from "../policy/checks";
 
 // ---------------------------------------------------------------------------
 // r2-bucket-european-region
@@ -215,7 +161,7 @@ describe("no-empty-worker-secrets", () => {
 // ---------------------------------------------------------------------------
 
 describe("admin-domains-require-access", () => {
-  const fullResources: FakeResource[] = [
+  const fullResources: PolicyResource[] = [
     {
       type: "cloudflare:index/zeroTrustAccessApplication:ZeroTrustAccessApplication",
       props: { domain: "admin.ai-grija.ro" },
@@ -231,7 +177,7 @@ describe("admin-domains-require-access", () => {
   });
 
   it("fails when admin.ai-grija.ro has no Access app", () => {
-    const resources: FakeResource[] = [
+    const resources: PolicyResource[] = [
       {
         type: "cloudflare:index/zeroTrustAccessApplication:ZeroTrustAccessApplication",
         props: { domain: "pre-admin.ai-grija.ro" },
@@ -249,7 +195,7 @@ describe("admin-domains-require-access", () => {
   });
 
   it("ignores non-Access resources", () => {
-    const resources: FakeResource[] = [
+    const resources: PolicyResource[] = [
       ...fullResources,
       { type: "cloudflare:index/r2Bucket:R2Bucket", props: { domain: "admin.ai-grija.ro" } },
     ];
@@ -262,7 +208,7 @@ describe("admin-domains-require-access", () => {
 // ---------------------------------------------------------------------------
 
 describe("preview-mirrors-production", () => {
-  const mirroredResources: FakeResource[] = [
+  const mirroredResources: PolicyResource[] = [
     // KV x2
     { type: "cloudflare:index/workersKvNamespace:WorkersKvNamespace", props: { title: "ai-grija-cache" } },
     { type: "cloudflare:index/workersKvNamespace:WorkersKvNamespace", props: { title: "ai-grija-cache-preview" } },

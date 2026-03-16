@@ -13,7 +13,7 @@ if [ "$CRON_HANDLERS" -gt "$CRON_CONFIG" ]; then
 fi
 
 # Check required bindings exist
-for BINDING in CACHE STORAGE DB ADMIN_DB AI DRAFT_QUEUE ANALYTICS; do
+for BINDING in CACHE STORAGE DB AI DRAFT_QUEUE ANALYTICS; do
   if ! grep -q "binding = \"$BINDING\"" "$WRANGLER"; then
     echo "ERROR: Missing binding $BINDING in wrangler.toml"
     ERRORS=$((ERRORS + 1))
@@ -21,7 +21,7 @@ for BINDING in CACHE STORAGE DB ADMIN_DB AI DRAFT_QUEUE ANALYTICS; do
 done
 
 # Check preview env mirrors prod bindings
-for BINDING in CACHE STORAGE DB ADMIN_DB AI DRAFT_QUEUE ANALYTICS; do
+for BINDING in CACHE STORAGE DB AI DRAFT_QUEUE ANALYTICS; do
   if ! grep -A2 'env.preview' "$WRANGLER" | grep -q "$BINDING" && ! grep -q "env.preview.*$BINDING" "$WRANGLER"; then
     # More thorough check
     if ! grep -c "binding = \"$BINDING\"" "$WRANGLER" | grep -q "2"; then
@@ -29,6 +29,28 @@ for BINDING in CACHE STORAGE DB ADMIN_DB AI DRAFT_QUEUE ANALYTICS; do
     fi
   fi
 done
+
+# ---------------------------------------------------------------------------
+# R2 state bucket versioning check
+# Requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID env vars.
+# Skips gracefully if credentials are absent (local dev without API token).
+# ---------------------------------------------------------------------------
+if [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+  echo -n "R2 state bucket versioning... "
+  VERSIONING_STATE=$(curl -sf \
+    "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/r2/buckets/ai-grija-pulumi-state/versioning" \
+    -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+    2>/dev/null | jq -r '.result.state // "unknown"' 2>/dev/null || echo "api-error")
+  if [ "$VERSIONING_STATE" = "enabled" ]; then
+    echo "OK (enabled)"
+  else
+    echo "WARN: versioning state='$VERSIONING_STATE' — enable it via CF Dashboard → R2 → ai-grija-pulumi-state → Settings → Versioning"
+    echo "      See docs/runbook-pulumi-state.md for step-by-step instructions."
+    ERRORS=$((ERRORS + 1))
+  fi
+else
+  echo "SKIP: R2 versioning check (set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID to enable)"
+fi
 
 if [ "$ERRORS" -gt 0 ]; then
   echo "FAILED: $ERRORS infrastructure validation errors"

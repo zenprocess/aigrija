@@ -134,6 +134,7 @@ const secretDefs: { configKey: string; secretName: string }[] = [
   { configKey: "telegramAdminChatId",    secretName: "TELEGRAM_ADMIN_CHAT_ID" },
   { configKey: "sanityWriteToken",       secretName: "SANITY_WRITE_TOKEN" },
   { configKey: "launchdarklySDKKey",     secretName: "LAUNCHDARKLY_SDK_KEY" },
+  { configKey: "phishtankApiKey",        secretName: "PHISHTANK_API_KEY" },
 ];
 
 for (const { configKey, secretName } of secretDefs) {
@@ -222,6 +223,25 @@ for (const { configKey, secretName } of secretDefs) {
 }
 
 // ---------------------------------------------------------------------------
+// R2 Bucket — CDN assets (error pages, static files) served via cdn.ai-grija.ro
+// Referenced by CF Custom Error Pages below. ADR-0016.
+// ---------------------------------------------------------------------------
+const cdnBucket = new cloudflare.R2Bucket("ai-grija-assets", {
+  accountId,
+  name: "ai-grija-assets",
+  location: "EEUR",
+});
+
+// CDN subdomain — cdn.ai-grija.ro proxied to Workers dev subdomain
+new cloudflare.Record("dns-cdn", {
+  zoneId,
+  name: "cdn",
+  type: "CNAME",
+  content: "ai-grija-ro.workers.dev",
+  proxied: true,
+});
+
+// ---------------------------------------------------------------------------
 // CF Custom Error Pages — served from R2 CDN for edge-level 500 and 1000 errors
 // ---------------------------------------------------------------------------
 const cfErrorPageUrl = "https://cdn.ai-grija.ro/cf-error.html";
@@ -254,3 +274,4 @@ export const previewDbId = previewDb.id;
 export const previewR2BucketName = previewR2.name;
 export const previewQueueId = previewQueue.id;
 export const stateBucketName = stateBucket.name;
+export const cdnBucketName = cdnBucket.name;

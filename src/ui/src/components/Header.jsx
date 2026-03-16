@@ -99,7 +99,7 @@ export default function Header() {
                 <span>{languages[lang]}</span>
               </button>
               {isLangOpen && (
-                <div className="absolute right-0 top-full mt-2 min-w-[200px] glass-card border border-white/10 rounded-xl overflow-hidden shadow-xl z-50">
+                <div className="absolute right-0 top-full mt-2 w-48 glass-card border border-white/10 rounded-xl shadow-xl z-50">
                   {Object.entries(languages).map(([code]) => (
                     <button
                       key={code}
@@ -130,7 +130,7 @@ export default function Header() {
                 <span className="text-xs font-bold">{languages[lang]}</span>
               </button>
               {isLangOpen && (
-                <div className="absolute right-0 top-full mt-2 min-w-[200px] glass-card border border-white/10 rounded-xl overflow-hidden shadow-xl z-50">
+                <div className="absolute right-0 top-full mt-2 w-48 glass-card border border-white/10 rounded-xl shadow-xl z-50">
                   {Object.entries(languages).map(([code]) => (
                     <button
                       key={code}

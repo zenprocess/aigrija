@@ -23,12 +23,9 @@ export default function Header() {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     } else {
-      // Not on the home page — navigate home first, then scroll to section
+      // Not on the home page — persist scroll intent, then navigate home
+      sessionStorage.setItem('pendingScrollId', id);
       window.location.hash = '';
-      setTimeout(() => {
-        const el = document.getElementById(id);
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
     }
   };
 
@@ -94,15 +91,24 @@ export default function Header() {
                 onClick={() => setIsLangOpen(!isLangOpen)}
                 className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors text-sm font-medium px-2 py-1 rounded-lg hover:bg-white/10"
                 aria-label={t('lang_switcher.label')}
+                aria-haspopup="listbox"
+                aria-expanded={isLangOpen}
               >
                 <span className="text-base">{languageFlags?.[lang] || languages[lang]}</span>
                 <span>{languages[lang]}</span>
               </button>
               {isLangOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 glass-card border border-white/10 rounded-xl shadow-xl z-50">
+                <div
+                  role="listbox"
+                  aria-label={t('lang_switcher.label')}
+                  className="absolute right-0 top-full mt-2 w-48 glass-card border border-white/10 rounded-xl shadow-xl z-50"
+                >
                   {Object.entries(languages).map(([code]) => (
                     <button
                       key={code}
+                      role="option"
+                      aria-selected={lang === code}
+                      aria-label={languageNames[code]}
                       data-testid={`lang-option-${code}`}
                       onClick={() => { setLang(code); setIsLangOpen(false); }}
                       className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-3 ${lang === code ? 'text-blue-400 bg-blue-500/10' : 'text-gray-300 hover:text-white hover:bg-white/10'}`}
@@ -125,15 +131,24 @@ export default function Header() {
                 onClick={() => setIsLangOpen(!isLangOpen)}
                 className="text-gray-300 hover:text-white p-3 min-h-[44px] flex items-center gap-1"
                 aria-label={t('lang_switcher.label')}
+                aria-haspopup="listbox"
+                aria-expanded={isLangOpen}
               >
                 <Globe className="w-5 h-5" />
                 <span className="text-xs font-bold">{languages[lang]}</span>
               </button>
               {isLangOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 glass-card border border-white/10 rounded-xl shadow-xl z-50">
+                <div
+                  role="listbox"
+                  aria-label={t('lang_switcher.label')}
+                  className="absolute right-0 top-full mt-2 w-48 glass-card border border-white/10 rounded-xl shadow-xl z-50"
+                >
                   {Object.entries(languages).map(([code]) => (
                     <button
                       key={code}
+                      role="option"
+                      aria-selected={lang === code}
+                      aria-label={languageNames[code]}
                       data-testid={`lang-option-mobile-${code}`}
                       onClick={() => { setLang(code); setIsLangOpen(false); }}
                       className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-3 ${lang === code ? 'text-blue-400 bg-blue-500/10' : 'text-gray-300 hover:text-white hover:bg-white/10'}`}

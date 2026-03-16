@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { sanityFetch } from './sanity';
+import { sanityFetch, createSanityClient } from './sanity';
 import type { Env } from './types';
 
 const baseEnv = {
@@ -73,5 +73,33 @@ describe('sanityFetch', () => {
     const result = await sanityFetch<unknown[]>(env, '*[_type == "blogPost" && category == "educatie"]', { lang: 'ro', from: 0, to: 20 });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(Array.isArray(result)).toBe(true);
+  });
+});
+
+describe('createSanityClient', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('returns working client', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ result: ['doc1'] }) });
+    const client = createSanityClient(baseEnv);
+    const result = await client<unknown[]>('*');
+    expect(result).toEqual(['doc1']);
+  });
+
+  it('pre-binds env so client omits env parameter', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ result: null }) });
+    const client = createSanityClient(baseEnv);
+    await client('*');
+    const url: string = fetchMock.mock.calls[0][0];
+    expect(url).toContain('testproj.apicdn.sanity.io');
   });
 });

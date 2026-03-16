@@ -57,6 +57,24 @@ describe('GDPR admin endpoints', () => {
     await kv.put('consent:email:user123', JSON.stringify({ consented_at: '2025-01-03T00:00:00Z', channel: 'email', id: 'user123' }));
   });
 
+  describe('GET /gdpr', () => {
+    it('returns 200 with HTML dashboard', async () => {
+      const { app, env } = buildApp(kv);
+      const res = await req(app, env, 'GET', '/gdpr');
+      expect(res.status).toBe(200);
+      const ct = res.headers.get('content-type') ?? '';
+      expect(ct).toContain('text/html');
+    });
+
+    it('contains GDPR lookup form', async () => {
+      const { app, env } = buildApp(kv);
+      const res = await req(app, env, 'GET', '/gdpr');
+      const html = await res.text();
+      expect(html).toContain('GDPR');
+      expect(html).toContain('gdpr-id');
+    });
+  });
+
   describe('GET /gdpr/export/:identifier', () => {
     it('returns all KV entries for a known identifier', async () => {
       const { app, env } = buildApp(kv);

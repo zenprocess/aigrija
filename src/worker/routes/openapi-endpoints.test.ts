@@ -211,7 +211,7 @@ describe("CheckEndpoint — POST /api/check", () => {
   });
 
   it("returns 429 when rate limit is exceeded", async () => {
-    const kv = makeKV({ [rlKey("unknown", 3600)]: "20" });
+    const kv = makeKV({ [rlKey("unknown", 3600)]: "1000" });
     const app = buildCheckApp();
     const res = await app.fetch(
       new Request("http://localhost/api/check", {
@@ -338,7 +338,7 @@ describe("CheckImageEndpoint — POST /api/check/image", () => {
   });
 
   it("returns 429 when rate limited", async () => {
-    const kv = makeKV({ [rlKey("unknown", 3600)]: "20" });
+    const kv = makeKV({ [rlKey("unknown", 3600)]: "1000" });
     const formData = new FormData();
     const imageBlob = new Blob([new Uint8Array(100)], { type: "image/png" });
     formData.append("image", new File([imageBlob], "test.png", { type: "image/png" }));
@@ -502,7 +502,7 @@ describe("CheckQrEndpoint — POST /api/check-qr", () => {
   });
 
   it("returns 429 when rate limited", async () => {
-    const kv = makeKV({ [rlKey("unknown", 3600)]: "30" });
+    const kv = makeKV({ [rlKey("unknown", 3600)]: "1000" });
     const app = buildQrApp();
     const res = await app.fetch(
       new Request("http://localhost/api/check-qr", {
@@ -595,7 +595,7 @@ describe("HealthEndpoint — GET /health", () => {
 
 describe("Rate limit response format", () => {
   it("rate limit error has consistent shape across endpoints", async () => {
-    const kv = makeKV({ [rlKey("unknown", 3600)]: "100" });
+    const kv = makeKV({ [rlKey("unknown", 3600)]: "1000" });
 
     const checkApp = buildCheckApp();
     const checkRes = await checkApp.fetch(

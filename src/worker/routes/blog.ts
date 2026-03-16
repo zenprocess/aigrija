@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../lib/types';
-import { sanityFetch } from '../lib/sanity';
+import { createSanityClient } from '../lib/sanity';
 import { structuredLog } from '../lib/logger';
 import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
 import { renderBlogListPage, renderBlogPostPage } from '../templates/blog-page';
@@ -31,6 +31,9 @@ function wantsHtml(c: { req: { header: (name: string) => string | undefined } })
 
 const blog = new Hono<{ Bindings: Env }>();
 
+// /blog → redirect to primary blog section (/ghid) so SSR handles it, not SPA fallback
+blog.get('/blog', (c) => c.redirect('/ghid', 301));
+
 const PAGE_SIZE = 20;
 
 // ─── KV helpers ──────────────────────────────────────────────────────────────
@@ -50,23 +53,23 @@ async function kvDeleteByPrefix(env: Env, prefix: string): Promise<void> {
 
 // ─── Sanity GROQ queries ──────────────────────────────────────────────────────
 
-const GHID_LIST_QUERY = `*[(_type == "blogPost" && category == "ghid" || _type == "bankGuide") && language == $lang] | order(publishedAt desc) [$from...$to] { _type, title, slug, excerpt, publishedAt, mainImage, categories[]->{ title, slug }, author->{ name } }`;
-const GHID_POST_QUERY = `coalesce(*[_type == "blogPost" && category == "ghid" && slug.current == $slug && language == $lang][0], *[_type == "bankGuide" && slug.current == $slug && language == $lang][0]) { ..., body, author->{ name, image, bio }, categories[]->{ title, slug } }`;
+const GHID_LIST_QUERY = `*[(_type == "blogPost" && category == "ghid" || _type == "bankGuide") && language == $lang] | order(publishedAt desc) [$from...$to] { _type, title, "slug": slug.current, excerpt, publishedAt, mainImage, categories[]->{ title, "slug": slug.current }, author->{ name } }`;
+const GHID_POST_QUERY = `coalesce(*[_type == "blogPost" && category == "ghid" && slug.current == $slug && language == $lang][0], *[_type == "bankGuide" && slug.current == $slug && language == $lang][0]) { ..., body, author->{ name, image, bio }, categories[]->{ title, "slug": slug.current } }`;
 
-const EDUCATIE_LIST_QUERY = `*[(_type == "blogPost" && category == "educatie" || _type == "schoolModule") && language == $lang] | order(publishedAt desc) [$from...$to] { _type, title, slug, excerpt, publishedAt, mainImage, categories[]->{ title, slug }, author->{ name } }`;
-const EDUCATIE_POST_QUERY = `coalesce(*[_type == "blogPost" && category == "educatie" && slug.current == $slug && language == $lang][0], *[_type == "schoolModule" && slug.current == $slug && language == $lang][0]) { ..., body, author->{ name, image, bio }, categories[]->{ title, slug } }`;
+const EDUCATIE_LIST_QUERY = `*[(_type == "blogPost" && category == "educatie" || _type == "schoolModule") && language == $lang] | order(publishedAt desc) [$from...$to] { _type, title, "slug": slug.current, excerpt, publishedAt, mainImage, categories[]->{ title, "slug": slug.current }, author->{ name } }`;
+const EDUCATIE_POST_QUERY = `coalesce(*[_type == "blogPost" && category == "educatie" && slug.current == $slug && language == $lang][0], *[_type == "schoolModule" && slug.current == $slug && language == $lang][0]) { ..., body, author->{ name, image, bio }, categories[]->{ title, "slug": slug.current } }`;
 
-const AMENINTARI_LIST_QUERY = `*[_type == "threatReport" && language == $lang] | order(firstSeen desc) [$from...$to] { title, slug, excerpt, firstSeen, severity, categories[]->{ title, slug } }`;
-const AMENINTARI_POST_QUERY = `*[_type == "threatReport" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, slug } }`;
+const AMENINTARI_LIST_QUERY = `*[_type == "threatReport" && language == $lang] | order(firstSeen desc) [$from...$to] { title, "slug": slug.current, excerpt, firstSeen, severity, categories[]->{ title, "slug": slug.current } }`;
+const AMENINTARI_POST_QUERY = `*[_type == "threatReport" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, "slug": slug.current } }`;
 
-const RAPOARTE_LIST_QUERY = `*[_type == "weeklyDigest" && language == $lang] | order(publishedAt desc) [$from...$to] { title, slug, excerpt, publishedAt, categories[]->{ title, slug } }`;
-const RAPOARTE_POST_QUERY = `*[_type == "weeklyDigest" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, slug } }`;
+const RAPOARTE_LIST_QUERY = `*[_type == "weeklyDigest" && language == $lang] | order(publishedAt desc) [$from...$to] { title, "slug": slug.current, excerpt, publishedAt, categories[]->{ title, "slug": slug.current } }`;
+const RAPOARTE_POST_QUERY = `*[_type == "weeklyDigest" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, "slug": slug.current } }`;
 
-const POVESTI_LIST_QUERY = `*[_type == "communityStory" && language == $lang] | order(publishedAt desc) [$from...$to] { title, slug, excerpt, publishedAt, author->{ name }, categories[]->{ title, slug } }`;
-const POVESTI_POST_QUERY = `*[_type == "communityStory" && slug.current == $slug && language == $lang][0] { ..., body, author->{ name, image, bio }, categories[]->{ title, slug } }`;
+const POVESTI_LIST_QUERY = `*[_type == "communityStory" && language == $lang] | order(publishedAt desc) [$from...$to] { title, "slug": slug.current, excerpt, publishedAt, author->{ name }, categories[]->{ title, "slug": slug.current } }`;
+const POVESTI_POST_QUERY = `*[_type == "communityStory" && slug.current == $slug && language == $lang][0] { ..., body, author->{ name, image, bio }, categories[]->{ title, "slug": slug.current } }`;
 
-const PRESA_LIST_QUERY = `*[_type == "pressRelease" && language == $lang] | order(publishedAt desc) [$from...$to] { title, slug, excerpt, publishedAt, categories[]->{ title, slug } }`;
-const PRESA_POST_QUERY = `*[_type == "pressRelease" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, slug } }`;
+const PRESA_LIST_QUERY = `*[_type == "pressRelease" && language == $lang] | order(publishedAt desc) [$from...$to] { title, "slug": slug.current, excerpt, publishedAt, categories[]->{ title, "slug": slug.current } }`;
+const PRESA_POST_QUERY = `*[_type == "pressRelease" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, "slug": slug.current } }`;
 
 const SITEMAP_QUERY = `{
   "ghid": *[(_type == "blogPost" && category == "ghid") || _type == "bankGuide"] { "slug": slug.current, "language": language, "_updatedAt": _updatedAt },
@@ -77,16 +80,16 @@ const SITEMAP_QUERY = `{
   "presa": *[_type == "pressRelease"] { "slug": slug.current, "language": language, "_updatedAt": _updatedAt }
 }`;
 
-const RSS_ALL_QUERY = `*[(_type == "blogPost" || _type == "threatReport" || _type == "weeklyDigest" || _type == "communityStory" || _type == "pressRelease") && language == $lang] | order(coalesce(publishedAt, firstSeen) desc) [0...20] { _type, title, slug, excerpt, publishedAt, firstSeen, category, author->{ name } }`;
+const RSS_ALL_QUERY = `*[(_type == "blogPost" || _type == "threatReport" || _type == "weeklyDigest" || _type == "communityStory" || _type == "pressRelease") && language == $lang] | order(coalesce(publishedAt, firstSeen) desc) [0...20] { _type, title, "slug": slug.current, excerpt, publishedAt, firstSeen, category, author->{ name } }`;
 
 // ─── RSS builder helper ───────────────────────────────────────────────────────
 
-type RssPost = { _type?: string; title: string; slug: { current: string }; excerpt?: string; publishedAt?: string; firstSeen?: string; category?: string; author?: { name: string } };
+type RssPost = { _type?: string; title: string; slug: string; excerpt?: string; publishedAt?: string; firstSeen?: string; category?: string; author?: { name: string } };
 
 function buildRss(posts: RssPost[], base: string, feedPath: string, title: string, description: string, lang: string, pathPrefix: string): string {
   const items = (posts ?? []).map((p) => {
     const date = p.publishedAt || p.firstSeen || '';
-    const link = `${base}${pathPrefix}/${p.slug?.current ?? ''}`;
+    const link = `${base}${pathPrefix}/${p.slug ?? ''}`;
     const pubDate = date ? new Date(date).toUTCString() : '';
     return [
       '<item>',
@@ -128,7 +131,8 @@ blog.get('/amenintari', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, AMENINTARI_LIST_QUERY, { lang, from, to });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<Record<string, unknown>[]>(AMENINTARI_LIST_QUERY, { lang, from, to });
     if (html) {
       const rendered = renderBlogListPage(posts as never[], 'amenintari', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
@@ -153,8 +157,9 @@ blog.get('/amenintari/feed.xml', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
   try {
-    const query = `*[_type == "threatReport" && language == $lang] | order(firstSeen desc) [0...20] { title, slug, excerpt, firstSeen, author->{ name } }`;
-    const posts = await sanityFetch<RssPost[]>(c.env, query, { lang });
+    const query = `*[_type == "threatReport" && language == $lang] | order(firstSeen desc) [0...20] { title, "slug": slug.current, excerpt, firstSeen, author->{ name } }`;
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<RssPost[]>(query, { lang });
     const xml = buildRss(posts ?? [], c.env.BASE_URL, '/amenintari/feed.xml', 'ai-grija.ro \u2014 Amenintari', 'Rapoarte de amenintari cibernetice', lang, '/amenintari');
     await kvPut(c.env, cacheKey, xml, 3600);
     c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'MISS');
@@ -175,7 +180,8 @@ blog.get('/amenintari/:slug', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<Record<string, unknown>>(c.env, AMENINTARI_POST_QUERY, { slug, lang });
+    const sanity = createSanityClient(c.env);
+    const post = await sanity<Record<string, unknown>>(AMENINTARI_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Raportul nu a fost gasit.' }, request_id: 'unknown' }, 404);
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'amenintari', lang, c.env.BASE_URL);
@@ -206,7 +212,8 @@ blog.get('/ghid', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, GHID_LIST_QUERY, { lang, from, to });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<Record<string, unknown>[]>(GHID_LIST_QUERY, { lang, from, to });
     if (html) {
       const rendered = renderBlogListPage(posts as never[], 'ghid', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
@@ -231,8 +238,9 @@ blog.get('/ghid/feed.xml', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
   try {
-    const query = `*[(_type == "blogPost" && category == "ghid" || _type == "bankGuide") && language == $lang] | order(publishedAt desc) [0...20] { title, slug, excerpt, publishedAt, author->{ name } }`;
-    const posts = await sanityFetch<RssPost[]>(c.env, query, { lang });
+    const query = `*[(_type == "blogPost" && category == "ghid" || _type == "bankGuide") && language == $lang] | order(publishedAt desc) [0...20] { title, "slug": slug.current, excerpt, publishedAt, author->{ name } }`;
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<RssPost[]>(query, { lang });
     const xml = buildRss(posts ?? [], c.env.BASE_URL, '/ghid/feed.xml', 'ai-grija.ro \u2014 Ghiduri', 'Ghiduri de protectie digitala', lang, '/ghid');
     await kvPut(c.env, cacheKey, xml, 3600);
     c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'MISS');
@@ -253,7 +261,8 @@ blog.get('/ghid/:slug', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<Record<string, unknown>>(c.env, GHID_POST_QUERY, { slug, lang });
+    const sanity = createSanityClient(c.env);
+    const post = await sanity<Record<string, unknown>>(GHID_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Ghidul nu a fost gasit.' }, request_id: 'unknown' }, 404);
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'ghid', lang, c.env.BASE_URL);
@@ -284,7 +293,8 @@ blog.get('/educatie', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, EDUCATIE_LIST_QUERY, { lang, from, to });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<Record<string, unknown>[]>(EDUCATIE_LIST_QUERY, { lang, from, to });
     if (html) {
       const rendered = renderBlogListPage(posts as never[], 'educatie', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
@@ -309,8 +319,9 @@ blog.get('/educatie/feed.xml', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
   try {
-    const query = `*[(_type == "blogPost" && category == "educatie" || _type == "schoolModule") && language == $lang] | order(publishedAt desc) [0...20] { title, slug, excerpt, publishedAt, author->{ name } }`;
-    const posts = await sanityFetch<RssPost[]>(c.env, query, { lang });
+    const query = `*[(_type == "blogPost" && category == "educatie" || _type == "schoolModule") && language == $lang] | order(publishedAt desc) [0...20] { title, "slug": slug.current, excerpt, publishedAt, author->{ name } }`;
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<RssPost[]>(query, { lang });
     const xml = buildRss(posts ?? [], c.env.BASE_URL, '/educatie/feed.xml', 'ai-grija.ro \u2014 Educatie digitala', 'Articole de educatie digitala', lang, '/educatie');
     await kvPut(c.env, cacheKey, xml, 3600);
     c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'MISS');
@@ -331,7 +342,8 @@ blog.get('/educatie/:slug', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<Record<string, unknown>>(c.env, EDUCATIE_POST_QUERY, { slug, lang });
+    const sanity = createSanityClient(c.env);
+    const post = await sanity<Record<string, unknown>>(EDUCATIE_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Articolul de educatie nu a fost gasit.' }, request_id: 'unknown' }, 404);
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'educatie', lang, c.env.BASE_URL);
@@ -362,7 +374,8 @@ blog.get('/rapoarte', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, RAPOARTE_LIST_QUERY, { lang, from, to });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<Record<string, unknown>[]>(RAPOARTE_LIST_QUERY, { lang, from, to });
     if (html) {
       const rendered = renderBlogListPage(posts as never[], 'rapoarte', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
@@ -389,7 +402,8 @@ blog.get('/rapoarte/:slug', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<Record<string, unknown>>(c.env, RAPOARTE_POST_QUERY, { slug, lang });
+    const sanity = createSanityClient(c.env);
+    const post = await sanity<Record<string, unknown>>(RAPOARTE_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Raportul saptamanal nu a fost gasit.' }, request_id: 'unknown' }, 404);
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'rapoarte', lang, c.env.BASE_URL);
@@ -420,7 +434,8 @@ blog.get('/povesti', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, POVESTI_LIST_QUERY, { lang, from, to });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<Record<string, unknown>[]>(POVESTI_LIST_QUERY, { lang, from, to });
     if (html) {
       const rendered = renderBlogListPage(posts as never[], 'povesti', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
@@ -447,7 +462,8 @@ blog.get('/povesti/:slug', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<Record<string, unknown>>(c.env, POVESTI_POST_QUERY, { slug, lang });
+    const sanity = createSanityClient(c.env);
+    const post = await sanity<Record<string, unknown>>(POVESTI_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Povestea nu a fost gasita.' }, request_id: 'unknown' }, 404);
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'povesti', lang, c.env.BASE_URL);
@@ -478,7 +494,8 @@ blog.get('/presa', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const posts = await sanityFetch<Record<string, unknown>[]>(c.env, PRESA_LIST_QUERY, { lang, from, to });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<Record<string, unknown>[]>(PRESA_LIST_QUERY, { lang, from, to });
     if (html) {
       const rendered = renderBlogListPage(posts as never[], 'presa', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
@@ -505,7 +522,8 @@ blog.get('/presa/:slug', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
-    const post = await sanityFetch<Record<string, unknown>>(c.env, PRESA_POST_QUERY, { slug, lang });
+    const sanity = createSanityClient(c.env);
+    const post = await sanity<Record<string, unknown>>(PRESA_POST_QUERY, { slug, lang });
     if (!post) return c.json({ error: { code: 'NOT_FOUND', message: 'Comunicatul de presa nu a fost gasit.' }, request_id: 'unknown' }, 404);
     if (html) {
       const rendered = renderBlogPostPage(post as never, 'presa', lang, c.env.BASE_URL);
@@ -534,7 +552,8 @@ blog.get('/feed.xml', async (c) => {
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
 
   try {
-    const posts = await sanityFetch<RssPost[]>(c.env, RSS_ALL_QUERY, { lang });
+    const sanity = createSanityClient(c.env);
+    const posts = await sanity<RssPost[]>(RSS_ALL_QUERY, { lang });
     const base = c.env.BASE_URL;
 
     const items = (posts ?? []).map((p) => {
@@ -545,7 +564,7 @@ blog.get('/feed.xml', async (c) => {
       else if (p._type === 'communityStory') prefix = '/povesti';
       else if (p._type === 'pressRelease') prefix = '/presa';
       else if (p._type === 'blogPost' && p.category === 'educatie') prefix = '/educatie';
-      const link = `${base}${prefix}/${p.slug?.current ?? ''}`;
+      const link = `${base}${prefix}/${p.slug ?? ''}`;
       const pubDate = date ? new Date(date).toUTCString() : '';
       return [
         '<item>',
@@ -596,10 +615,11 @@ blog.get('/sitemap-content.xml', async (c) => {
   if (cached) { c.header('Content-Type', 'application/xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
 
   try {
-    const base = c.env.BASE_URL;
+    const base = c.env.BASE_URL ?? 'https://ai-grija.ro';
     type SitemapDoc = { slug: string; language: string; _updatedAt?: string };
     type SitemapResult = { ghid: SitemapDoc[]; educatie: SitemapDoc[]; amenintari: SitemapDoc[]; rapoarte: SitemapDoc[]; povesti: SitemapDoc[]; presa: SitemapDoc[] };
-    const result = await sanityFetch<SitemapResult>(c.env, SITEMAP_QUERY, {});
+    const sanity = createSanityClient(c.env);
+    const result = await sanity<SitemapResult>(SITEMAP_QUERY, {});
     const allDocs = result ?? { ghid: [], educatie: [], amenintari: [], rapoarte: [], povesti: [], presa: [] };
 
     const urlEntries: string[] = [];
@@ -616,12 +636,13 @@ blog.get('/sitemap-content.xml', async (c) => {
       ].filter(Boolean).join('\n');
     };
 
-    for (const doc of allDocs.ghid ?? []) urlEntries.push(makeEntry(`/ghid/${doc.slug}`, doc, 'monthly', '0.7'));
-    for (const doc of allDocs.educatie ?? []) urlEntries.push(makeEntry(`/educatie/${doc.slug}`, doc, 'weekly', '0.7'));
-    for (const doc of allDocs.amenintari ?? []) urlEntries.push(makeEntry(`/amenintari/${doc.slug}`, doc, 'weekly', '0.8'));
-    for (const doc of allDocs.rapoarte ?? []) urlEntries.push(makeEntry(`/rapoarte/${doc.slug}`, doc, 'weekly', '0.7'));
-    for (const doc of allDocs.povesti ?? []) urlEntries.push(makeEntry(`/povesti/${doc.slug}`, doc, 'monthly', '0.6'));
-    for (const doc of allDocs.presa ?? []) urlEntries.push(makeEntry(`/presa/${doc.slug}`, doc, 'monthly', '0.6'));
+    // Skip entries with empty/null slugs to prevent 404 URLs in the sitemap
+    for (const doc of allDocs.ghid ?? []) { if (doc.slug) urlEntries.push(makeEntry(`/ghid/${doc.slug}`, doc, 'monthly', '0.7')); }
+    for (const doc of allDocs.educatie ?? []) { if (doc.slug) urlEntries.push(makeEntry(`/educatie/${doc.slug}`, doc, 'weekly', '0.7')); }
+    for (const doc of allDocs.amenintari ?? []) { if (doc.slug) urlEntries.push(makeEntry(`/amenintari/${doc.slug}`, doc, 'weekly', '0.8')); }
+    for (const doc of allDocs.rapoarte ?? []) { if (doc.slug) urlEntries.push(makeEntry(`/rapoarte/${doc.slug}`, doc, 'weekly', '0.7')); }
+    for (const doc of allDocs.povesti ?? []) { if (doc.slug) urlEntries.push(makeEntry(`/povesti/${doc.slug}`, doc, 'monthly', '0.6')); }
+    for (const doc of allDocs.presa ?? []) { if (doc.slug) urlEntries.push(makeEntry(`/presa/${doc.slug}`, doc, 'monthly', '0.6')); }
 
     const xml = [
       '<?xml version="1.0" encoding="UTF-8"?>',

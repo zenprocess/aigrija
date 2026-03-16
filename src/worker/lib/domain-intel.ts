@@ -1,3 +1,4 @@
+import type { Env } from './types';
 import { CircuitBreaker, CircuitOpenError } from './circuit-breaker';
 import { withRetry } from './retry';
 import { structuredLog } from './logger';
@@ -51,6 +52,10 @@ function isRetryable(err: unknown): boolean {
     return (err as { status: number }).status >= 500;
   }
   return false;
+}
+
+export function createDomainIntel(env: Env) {
+  return (domain: string) => getDomainIntel(domain, env.CACHE);
 }
 
 export async function getDomainIntel(domain: string, kv?: KVNamespace): Promise<DomainIntel> {

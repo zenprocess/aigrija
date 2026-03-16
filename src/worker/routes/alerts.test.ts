@@ -23,7 +23,7 @@ function makeEnv(): Env {
     WHATSAPP_ACCESS_TOKEN: '',
     WHATSAPP_PHONE_NUMBER_ID: '',
     ADMIN_API_KEY: '',
-    ADMIN_DB: {} as D1Database,
+    DB: {} as D1Database,
   } as Env;
 }
 

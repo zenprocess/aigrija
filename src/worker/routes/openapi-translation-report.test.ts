@@ -5,6 +5,7 @@ import { TranslationReportEndpoint } from './openapi-translation-report';
 vi.mock('../lib/rate-limiter', () => ({
   createRateLimiter: vi.fn(),
   applyRateLimitHeaders: vi.fn(),
+  getRouteRateLimit: vi.fn().mockReturnValue({ limit: 5, windowSeconds: 3600 }),
 }));
 
 import { createRateLimiter, applyRateLimitHeaders } from '../lib/rate-limiter';

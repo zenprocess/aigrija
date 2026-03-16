@@ -26,9 +26,11 @@ export default function ActiveAlerts() {
 
   const getSeverityStyles = (severity) => {
     switch (severity) {
+      case 'critical':
       case 'high': return { border: 'border-l-red-500', badge: 'bg-red-500/20 text-red-400 border-red-500/30', glow: 'shadow-[inset_4px_0_0_rgba(220,38,38,1)]' };
+      case 'moderate':
       case 'medium': return { border: 'border-l-yellow-500', badge: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', glow: 'shadow-[inset_4px_0_0_rgba(245,158,11,1)]' };
-      case 'low': return { border: 'border-l-blue-500', badge: 'bg-blue-500/20 text-blue-400 border-blue-500/30', glow: 'shadow-[inset_4px_0_0_rgba(59,130,246,1)]' };
+      case 'low': return { border: 'border-l-green-500', badge: 'bg-green-500/20 text-green-400 border-green-500/30', glow: 'shadow-[inset_4px_0_0_rgba(34,197,94,1)]' };
       default: return { border: 'border-l-gray-500', badge: 'bg-gray-500/20 text-gray-400 border-gray-500/30', glow: '' };
     }
   };
@@ -53,14 +55,12 @@ export default function ActiveAlerts() {
             {alerts.map((alert, idx) => {
               const slug = alert.slug || alert.id || idx;
               return (
-                <div
+                <a
                   key={idx}
                   data-testid={`alert-card-${idx}`}
-                  className={`glass-card p-6 border-l-4 ${getSeverityStyles(alert.severity).border} transition-all hover:bg-white/10 cursor-pointer`}
-                  onClick={() => { window.location.hash = `/alerte/${slug}`; }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location.hash = `/alerte/${slug}`; } }}
+                  href={`#/alerte/${slug}`}
+                  onClick={(e) => { e.preventDefault(); window.location.hash = `/alerte/${slug}`; }}
+                  className={`glass-card p-6 border-l-4 ${getSeverityStyles(alert.severity).border} transition-all hover:bg-white/10 cursor-pointer block`}
                 >
                   <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-3">
                     <div>
@@ -68,21 +68,26 @@ export default function ActiveAlerts() {
                         {alert.severity === 'high' && <ShieldAlert className="w-5 h-5 text-red-400" />}
                         {alert.name}
                       </h3>
-                      <p className="text-sm text-gray-400 mt-1">{t('alerts.target')} <span className="text-gray-300 font-medium">{alert.entity}</span></p>
+                      {alert.target && <p className="text-sm text-gray-300 font-medium mt-1">{alert.target}</p>}
                     </div>
                     <div className="flex gap-2 shrink-0">
                       <span className={`px-2.5 py-1 rounded text-xs font-bold border ${getSeverityStyles(alert.severity).badge}`}>
                         {alert.severity.toUpperCase()}
                       </span>
                       {alert.status === 'active' && (
-                        <span className="px-2.5 py-1 rounded text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
+                        <span className="px-2.5 py-1 rounded text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
                           {t('alerts.active')}
+                        </span>
+                      )}
+                      {alert.status === 'inactive' && (
+                        <span className="px-2.5 py-1 rounded text-xs font-medium bg-gray-500/10 text-gray-400 border border-gray-500/20">
+                          {t('alerts.inactive') || 'INACTIVE'}
                         </span>
                       )}
                     </div>
                   </div>
                   <p className="text-gray-300 text-sm leading-relaxed">{alert.description}</p>
-                </div>
+                </a>
               );
             })}
           </div>

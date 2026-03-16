@@ -191,6 +191,7 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
     return c.json({ ok: true });
   }
 
+  try {
   for (const entry of body.entry ?? []) {
     for (const change of entry.changes ?? []) {
       const value = change.value;
@@ -240,8 +241,14 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
         await recordConsent(c.env, 'wa', from);
         await updateLastActive(c.env, 'wa', from);
 
-        const rl = await createRateLimiter(c.env.CACHE)(`wa:${from}`, 50, 3600);
-        if (!rl.allowed) {
+        let rlAllowed = true;
+        try {
+          const rl = await createRateLimiter(c.env.CACHE)(`wa:${from}`, 50, 3600);
+          rlAllowed = rl.allowed;
+        } catch {
+          rlAllowed = true;
+        }
+        if (!rlAllowed) {
           await sendWhatsAppMessage(
             accessToken,
             phoneNumberId,
@@ -302,6 +309,10 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
   }
 
   return c.json({ ok: true });
+  } catch (err) {
+    structuredLog('error', 'whatsapp_webhook_handler_error', { error: String(err), stack: err instanceof Error ? err.stack : undefined });
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Eroare interna.' } }, 500);
+  }
 });
 
 export { whatsapp };

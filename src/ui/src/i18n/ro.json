@@ -107,7 +107,12 @@
     "title": "Campanii de phishing active",
     "target": "Țintă:",
     "active": "Activ",
-    "view_all": "Vezi toate alertele"
+    "view_all": "Vezi toate alertele",
+    "back_to_alerts": "Înapoi la alerte",
+    "target_entity": "Entitate vizată:",
+    "first_reported": "Prima atestare:",
+    "view_details": "Vezi detalii complete",
+    "load_error": "Alerta nu a putut fi încărcată."
   },
   "about": {
     "title": "Despre ai-grija.ro",
@@ -258,7 +263,8 @@
     "label": "Limbă"
   },
   "nav": {
-    "blog": "Blog"
+    "blog": "Blog",
+    "more": "Mai mult"
   },
   "blog": {
     "title": "Blog",
@@ -314,6 +320,9 @@
     "choose_correct": "Alege toate acțiunile corecte:",
     "feedback_correct": "✓ Corect!",
     "feedback_incorrect": "✗ Incorect"
+  },
+  "feed": {
+    "noItems": "Nu există conținut disponibil"
   },
   "consent": {
     "banner_text": "Folosim cookie-uri esențiale pentru funcționarea site-ului. Cookie-urile analitice ne ajută să înțelegem cum este utilizat site-ul.",

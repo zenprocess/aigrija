@@ -12,14 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.25.0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
+          cache: 'npm'
+      - run: npm ci
       - run: npx tsc --noEmit
 
   unit-tests:
@@ -27,14 +24,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.25.0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
+          cache: 'npm'
+      - run: npm ci
       - name: Run unit tests with coverage
         run: npx vitest run --coverage
       - name: Upload coverage report
@@ -65,17 +59,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.25.0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
+          cache: 'npm'
+      - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Build SPA assets
-        run: pnpm run build
+        run: npm run build
       - name: Run Playwright tests
         run: |
           npx playwright test 2>&1 | tee playwright-output.txt; PWEXIT=${PIPESTATUS[0]}
@@ -95,16 +86,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.25.0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - name: Run pnpm audit
-        run: pnpm audit --audit-level=high
+          cache: 'npm'
+      - run: npm ci
+      - name: Run npm audit
+        run: npm audit --audit-level=high
 
   infra-validate:
     name: Infrastructure validation

@@ -2,7 +2,7 @@ import { OpenAPIRoute } from 'chanfana';
 import { z } from 'zod';
 import type { Context } from 'hono';
 import type { Env } from '../lib/types';
-import { createRateLimiter, applyRateLimitHeaders } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, getRouteRateLimit } from '../lib/rate-limiter';
 
 const TranslationReportRequestSchema = z.object({
   lang: z.string().min(1).max(10).describe('Codul limbii (ex: ro, en, bg)'),
@@ -57,7 +57,8 @@ export class TranslationReportEndpoint extends OpenAPIRoute {
       || c.req.header('x-real-ip')
       || 'unknown';
 
-    const rl = await createRateLimiter(c.env.CACHE)(`translation-report:${ip}`, 5, 3600);
+    const rlCfg = getRouteRateLimit('translation-report', c.env);
+    const rl = await createRateLimiter(c.env.CACHE)(`translation-report:${ip}`, rlCfg.limit, rlCfg.windowSeconds);
     applyRateLimitHeaders((k, v) => c.header(k, v), rl);
 
     if (!rl.allowed) {

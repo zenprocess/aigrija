@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import type { Env } from '../lib/types';
 import type { AdminVariables } from '../lib/admin-auth';
+import type { CspVariables } from '../lib/csp';
 import { adminLayout } from './layout';
 
-type AdminEnv = { Bindings: Env; Variables: AdminVariables };
+type AdminEnv = { Bindings: Env; Variables: AdminVariables & CspVariables };
 
 const translationReportsAdmin = new Hono<AdminEnv>();
 
@@ -79,7 +80,7 @@ translationReportsAdmin.get('/', async (c) => {
       </div>`}
     </div>`;
 
-  return c.html(adminLayout('Translation Reports', content, 'rapoarte-traduceri', email));
+  return c.html(adminLayout('Translation Reports', content, 'rapoarte-traduceri', email, c.get('cspNonce')));
 });
 
 // Resolve (delete) a report

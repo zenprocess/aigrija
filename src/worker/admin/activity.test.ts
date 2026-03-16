@@ -21,15 +21,15 @@ function makeCtx(): ExecutionContext {
 // Auth is now handled by adminAuth middleware in the admin app (admin/index.ts).
 // The activity sub-router itself does not perform auth — these tests exercise the route directly.
 describe('activity router', () => {
-  it('returns 503 when ADMIN_DB not configured', async () => {
-    const env = { ADMIN_DB: null };
+  it('returns 503 when DB not configured', async () => {
+    const env = { DB: null };
     const req = new Request('http://localhost/');
     const res = await activity.fetch(req, env, makeCtx());
     expect(res.status).toBe(503);
   });
 
   it('renders activity log page', async () => {
-    const env = { ADMIN_DB: {} };
+    const env = { DB: {} };
     const req = new Request('http://localhost/');
     const res = await activity.fetch(req, env, makeCtx());
     expect(res.status).toBe(200);
@@ -41,7 +41,7 @@ describe('activity router', () => {
 
   it('passes filter params to getRecentActivity', async () => {
     const { getRecentActivity } = await import('../lib/activity-log');
-    const env = { ADMIN_DB: {} };
+    const env = { DB: {} };
     const req = new Request('http://localhost/?action=approve&admin=admin@test.ro');
     await activity.fetch(req, env, makeCtx());
     expect(getRecentActivity).toHaveBeenCalledWith(
@@ -51,8 +51,20 @@ describe('activity router', () => {
     );
   });
 
+  it('returns 503 with error message when getRecentActivity throws', async () => {
+    const { getRecentActivity } = await import('../lib/activity-log');
+    vi.mocked(getRecentActivity).mockRejectedValueOnce(new Error('no such table: admin_activity'));
+    const env = { DB: {} };
+    const req = new Request('http://localhost/');
+    const res = await activity.fetch(req, env, makeCtx());
+    expect(res.status).toBe(503);
+    const html = await res.text();
+    expect(html).toContain('Activity log unavailable');
+    expect(html).toContain('no such table: admin_activity');
+  });
+
   it('escapes XSS in filter params', async () => {
-    const env = { ADMIN_DB: {} };
+    const env = { DB: {} };
     const req = new Request('http://localhost/?action=%3Cscript%3Ealert(1)%3C%2Fscript%3E');
     const res = await activity.fetch(req, env, makeCtx());
     const html = await res.text();

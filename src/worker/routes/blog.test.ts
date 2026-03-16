@@ -29,12 +29,27 @@ function makeRequest(path: string, method = 'GET', body?: string) {
   return new Request(`https://ai-grija.ro${path}`, init);
 }
 
-vi.mock('../lib/sanity', () => ({
-  sanityFetch: vi.fn(),
-}));
+vi.mock('../lib/sanity', () => {
+  const sf = vi.fn();
+  return {
+    sanityFetch: sf,
+    createSanityClient: vi.fn((_env: unknown) => sf),
+  };
+});
 
 import { sanityFetch } from '../lib/sanity';
 const mockSanityFetch = vi.mocked(sanityFetch);
+
+// ─── /blog — redirect to /ghid ───────────────────────────────────────────────
+
+describe('GET /blog', () => {
+  it('redirects to /ghid with 301', async () => {
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/blog'), env);
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe('/ghid');
+  });
+});
 
 // ─── Cross-cutting: empty responses, invalid params, lang filtering ──────────
 
@@ -130,7 +145,6 @@ describe('language filtering', () => {
     const env = makeEnv();
     await blog.fetch(makeRequest('/ghid?lang=en'), env);
     expect(mockSanityFetch).toHaveBeenCalledWith(
-      expect.anything(),
       expect.any(String),
       expect.objectContaining({ lang: 'en' }),
     );
@@ -141,7 +155,6 @@ describe('language filtering', () => {
     const env = makeEnv();
     await blog.fetch(makeRequest('/ghid'), env);
     expect(mockSanityFetch).toHaveBeenCalledWith(
-      expect.anything(),
       expect.any(String),
       expect.objectContaining({ lang: 'ro' }),
     );
@@ -451,10 +464,11 @@ describe('GET /feed.xml', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns combined RSS feed', async () => {
+    // GROQ projects "slug": slug.current — mock returns string slugs, not raw Sanity objects
     const posts = [
-      { _type: 'blogPost', category: 'ghid', title: 'Ghid RSS', slug: { current: 'g1' }, publishedAt: '2024-01-01T00:00:00Z', author: { name: 'Autor' } },
-      { _type: 'threatReport', title: 'Amenintare RSS', slug: { current: 'a1' }, firstSeen: '2024-01-02T00:00:00Z' },
-      { _type: 'blogPost', category: 'educatie', title: 'Educatie RSS', slug: { current: 'e1' }, publishedAt: '2024-01-03T00:00:00Z' },
+      { _type: 'blogPost', category: 'ghid', title: 'Ghid RSS', slug: 'g1', publishedAt: '2024-01-01T00:00:00Z', author: { name: 'Autor' } },
+      { _type: 'threatReport', title: 'Amenintare RSS', slug: 'a1', firstSeen: '2024-01-02T00:00:00Z' },
+      { _type: 'blogPost', category: 'educatie', title: 'Educatie RSS', slug: 'e1', publishedAt: '2024-01-03T00:00:00Z' },
     ];
     mockSanityFetch.mockResolvedValue(posts);
     const env = makeEnv();
@@ -492,6 +506,31 @@ describe('GET /sitemap-content.xml', () => {
     expect(text).toContain('/ghid/ghid-1');
     expect(text).toContain('/educatie/edu-1');
     expect(text).toContain('/amenintari/raport-1');
+  });
+
+  it('skips entries with empty or null slug to prevent 404 URLs', async () => {
+    const result = {
+      ghid: [
+        { slug: 'valid-ghid', language: 'ro', _updatedAt: '2024-01-01T00:00:00Z' },
+        { slug: '', language: 'ro', _updatedAt: '2024-01-01T00:00:00Z' },
+        { slug: null as unknown as string, language: 'ro', _updatedAt: '2024-01-01T00:00:00Z' },
+      ],
+      educatie: [],
+      amenintari: [],
+      rapoarte: [],
+      povesti: [],
+      presa: [],
+    };
+    mockSanityFetch.mockResolvedValue(result);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/sitemap-content.xml'), env);
+    expect(res.status).toBe(200);
+    const text = await res.text();
+    expect(text).toContain('/ghid/valid-ghid');
+    // Empty and null slugs must not produce URLs (would 404)
+    expect(text).not.toContain('/ghid/null');
+    expect(text).not.toContain('/ghid/undefined');
+    expect(text).not.toMatch(/<loc>[^<]*\/ghid\/<\/loc>/);
   });
 });
 

@@ -4,7 +4,7 @@ import type { Context } from 'hono';
 import type { Env } from '../lib/types';
 import type { AppVariables } from '../lib/request-id';
 import { CheckRequestSchema, MAX_TEXT_LENGTH, MAX_URL_LENGTH, formatZodError } from '../lib/schemas';
-import { createRateLimiter, applyRateLimitHeaders, ROUTE_RATE_LIMITS } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, getRouteRateLimit } from '../lib/rate-limiter';
 import { createClassifier } from '../lib/classifier';
 import { analyzeUrl } from '../lib/url-analyzer';
 import { matchCampaigns } from '../lib/campaign-matcher';
@@ -190,7 +190,8 @@ export class CheckEndpoint extends OpenAPIRoute {
       || c.req.header('x-real-ip')
       || 'unknown';
 
-    const rl = await createRateLimiter(c.env.CACHE)(ip, ROUTE_RATE_LIMITS['check'].limit, ROUTE_RATE_LIMITS['check'].windowSeconds);
+    const rlCfg = getRouteRateLimit('check', c.env);
+    const rl = await createRateLimiter(c.env.CACHE)(ip, rlCfg.limit, rlCfg.windowSeconds);
     applyRateLimitHeaders((k, v) => c.header(k, v), rl);
     const { allowed, remaining, limit } = rl;
 
@@ -253,7 +254,8 @@ export class CheckEndpoint extends OpenAPIRoute {
           safeBrowsingEnabled ? c.env.GOOGLE_SAFE_BROWSING_KEY : undefined,
           c.env.VIRUSTOTAL_API_KEY,
           c.env.CACHE,
-          c.env.URLHAUS_AUTH_KEY
+          c.env.URLHAUS_AUTH_KEY,
+          phishtankEnabled ? c.env.PHISHTANK_API_KEY : undefined
         )
       : undefined;
     const campaignMatches = matchCampaigns(body.text, body.url);

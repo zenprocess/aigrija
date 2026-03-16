@@ -7,6 +7,8 @@ const config = new pulumi.Config();
 const accountId = config.require("cloudflareAccountId");
 const zoneId = config.require("cloudflareZoneId");
 const workerName = "ai-grija-ro";
+const adminEmailDomains = config.require("adminEmailDomains").split(",");
+const adminGroupIds = config.require("adminGroupIds").split(",");
 
 // ---------------------------------------------------------------------------
 // KV Namespace — used as CACHE binding in wrangler.toml
@@ -111,7 +113,7 @@ new cloudflare.ZeroTrustAccessPolicy("admin-policy", {
   decision: "allow",
   precedence: 1,
   includes: [
-    { emailDomains: ["zp.digital", "arq.bar", "ai-grija.ro"] },
+    { emailDomains: adminEmailDomains },
   ],
 });
 
@@ -204,12 +206,8 @@ new cloudflare.ZeroTrustAccessPolicy("preview-admin-policy", {
   decision: "allow",
   precedence: 1,
   includes: [
-    { emailDomains: ["zp.digital", "arq.bar", "ai-grija.ro"] },
-    { groups: [
-      "b9f39c45-18f7-497a-8a47-6189fa00d942",
-      "86921e1f-ac54-45b7-9104-1ec9b41eaa6b",
-      "ff8ab487-59d9-4eb8-8407-72d0d12b80c2",
-    ] },
+    { emailDomains: adminEmailDomains },
+    { groups: adminGroupIds },
   ],
 });
 

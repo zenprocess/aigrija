@@ -6,7 +6,7 @@ import type { Env } from '../lib/types';
 import type { AppVariables } from '../lib/request-id';
 import { requestId } from '../lib/request-id';
 import { structuredLog } from '../lib/logger';
-import { cspMiddleware, PUBLIC_CSP } from '../lib/csp';
+import { cspMiddleware, cspHtmlMiddleware, PUBLIC_CSP, SECURITY_HEADERS_PUBLIC_CSP } from '../lib/csp';
 import { renderErrorPage } from '../lib/error-pages';
 
 type AppType = Hono<{ Bindings: Env; Variables: AppVariables }>;
@@ -64,7 +64,10 @@ export function applyMiddleware(app: AppType): void {
   // Security headers on all routes
   app.use('*', secureHeaders());
 
-  // Content-Security-Policy for SSR pages — shared middleware from lib/csp
+  // Default CSP on all HTML responses (SPA shell, error pages)
+  app.use('*', cspHtmlMiddleware(SECURITY_HEADERS_PUBLIC_CSP));
+
+  // Stricter CSP for SSR pages with nonce support — overrides the default above
   const publicCsp = cspMiddleware(PUBLIC_CSP);
   app.use('/alerte/*', publicCsp);
   app.use('/alerte', publicCsp);

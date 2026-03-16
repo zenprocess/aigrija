@@ -1,0 +1,7 @@
+TAP version 13
+1..5
+ok 1 - lang-switcher: dropdown opened (2 options found)
+ok 2 - lang-ro: nav text: "ai-grija.ro | Verifică | Cum funcționează | Alerte | Amenințări | Ghiduri | Educație | Mai mult | RO"
+not ok 3 - lang-en: nav has no Romanian ("Mai mult"=true). Text: "ai-grija.ro | Check | How it works | Alerts | Threats | Guides | Education | Mai mult | EN" # FAIL
+not ok 4 - alert-detail: hash route shows detail content, not homepage (isHomepage=true) # FAIL
+not ok 5 - content-amenintari: no raw i18n key visible (hasRawKey=true) # FAIL

@@ -1,12 +1,9 @@
 import * as Sentry from '@sentry/cloudflare';
 import { Hono } from 'hono';
-import type { Env } from './lib/types';
-import type { AppVariables } from './lib/request-id';
-import { applyMiddleware } from './middleware/chain';
-import { registerRoutes } from './routes/registry';
-import { cdnProtection } from './middleware/cdn-protection';
+import { handleScheduled, handleDraftQueue, type Env, type AppVariables } from './lib';
+import { applyMiddleware, cdnProtection } from './middleware';
+import { registerRoutes } from './routes';
 import { admin } from './admin';
-import { handleScheduled } from './lib/cron-handler';
 
 const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
@@ -44,6 +41,7 @@ const workerHandler: ExportedHandler<Env> = {
   async scheduled(event: ScheduledController, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(handleScheduled(event as unknown as ScheduledEvent, env));
   },
+  queue: handleDraftQueue as ExportedHandlerQueueHandler<Env>,
 };
 
 // Expose Hono app for unit tests (tests use app.request() which isn't on ExportedHandler)

@@ -3,6 +3,37 @@ import { structuredLog } from './logger';
 
 const DRAFT_MODEL = '@cf/meta/llama-3.1-8b-instruct';
 
+// ── Input sanitization ────────────────────────────────────────────────────────
+
+/** Control characters: 0x00-0x08, 0x0B, 0x0C, 0x0E-0x1F, 0x7F. Tab/LF/CR are kept. */
+const CONTROL_CHAR_RE = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
+
+/** Prompt-injection sequences that attempt role-switching or instruction override. */
+const INJECTION_RE = [
+  /\n[ \t]*(system|human|assistant|user|ai)\s*:/gi,
+  /<\|im_(start|end)\|>/gi,
+  /ignore\s+(all\s+)?previous\s+instructions/gi,
+  /disregard\s+(all\s+)?previous/gi,
+  /forget\s+(everything|all)\s+(above|previous)/gi,
+  /new\s+(system\s+)?instructions?\s*:/gi,
+];
+
+const MAX_BODY_LENGTH = 2000;
+
+/**
+ * Sanitize a string before embedding it in an AI prompt.
+ * 1. Strips control characters (keeps \\t, \\n, \\r).
+ * 2. Neutralizes prompt-injection sequences.
+ * 3. Truncates to maxLength.
+ */
+export function sanitizePromptInput(input: string, maxLength: number = 500): string {
+  let s = input.replace(CONTROL_CHAR_RE, '');
+  for (const re of INJECTION_RE) {
+    s = s.replace(re, '[redacted]');
+  }
+  return s.length > maxLength ? s.slice(0, maxLength) : s;
+}
+
 // GEPA-optimized prompts: structured output schema, evaluation criteria, few-shot examples
 
 const BASE_SYSTEM = `Ești un expert în securitate cibernetică care scrie articole de informare publică în limba română.
@@ -139,14 +170,17 @@ Publicul tău: cetățeni, jurnaliști, reprezentanți ai instituțiilor.
 Ton: profesional, bazat pe date, echilibrat. Returnează Markdown valid. 600-800 cuvinte total.`;
 
 function buildUserMessage(campaign: Campaign): string {
-  const brands = campaign.affected_brands || 'Nespecificat';
-  const body = (campaign.body_text || '').slice(0, 2000);
-  return `Titlu campanie: ${campaign.title}
+  const title = sanitizePromptInput(campaign.title || '');
+  const threatType = sanitizePromptInput(campaign.threat_type || 'necunoscut');
+  const brands = sanitizePromptInput(campaign.affected_brands || 'Nespecificat');
+  const body = sanitizePromptInput(campaign.body_text || '', MAX_BODY_LENGTH);
+  const source = sanitizePromptInput(campaign.source_url || campaign.source || 'Necunoscută');
+  return `Titlu campanie: ${title}
 Data: ${campaign.created_at || new Date().toISOString().split('T')[0]}
-Tip amenințare: ${campaign.threat_type || 'necunoscut'}
+Tip amenințare: ${threatType}
 Entități afectate: ${brands}
 Detalii: ${body}
-Sursă: ${campaign.source_url || campaign.source || 'Necunoscută'}`;
+Sursă: ${source}`;
 }
 
 export async function generateDraft(campaignId: string, env: Env): Promise<void> {
@@ -281,12 +315,13 @@ export async function generateStandalonePost(env: Env): Promise<void> {
 
   // Step 3: insert into D1 as admin draft
   const id = crypto.randomUUID();
+  const slug = topic.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-') + '-' + id.slice(0, 8);
   const now = new Date().toISOString();
   try {
     await env.DB.prepare(
-      `INSERT INTO campaigns (id, title, source, draft_status, draft_content, severity, threat_type, created_at, updated_at)
-       VALUES (?, ?, 'ai-generated', 'generated', ?, 'medium', ?, ?, ?)`
-    ).bind(id, topic, articleContent, category, now, now).run();
+      `INSERT INTO campaigns (id, slug, title, source, draft_status, draft_content, severity, threat_type, created_at, updated_at)
+       VALUES (?, ?, ?, 'ai-generated', 'generated', ?, 'medium', ?, ?, ?)`
+    ).bind(id, slug, topic, articleContent, category, now, now).run();
     structuredLog('info', '[draft-generator] Standalone post inserted', { id, category, topic, contentLength: articleContent.length });
   } catch (err) {
     structuredLog('error', '[draft-generator] Failed to insert standalone post', { id, category, topic, error: String(err) });
@@ -366,12 +401,13 @@ export async function generateStandalonePostWithOverrides(env: Env, options: Gen
 
   // Step 3: insert into D1 as admin draft
   const id = crypto.randomUUID();
+  const slug = topic.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-') + '-' + id.slice(0, 8);
   const now = new Date().toISOString();
   try {
     await env.DB.prepare(
-      `INSERT INTO campaigns (id, title, source, draft_status, draft_content, severity, threat_type, created_at, updated_at)
-       VALUES (?, ?, 'ai-generated', 'generated', ?, 'medium', ?, ?, ?)`
-    ).bind(id, topic, articleContent, category, now, now).run();
+      `INSERT INTO campaigns (id, slug, title, source, draft_status, draft_content, severity, threat_type, created_at, updated_at)
+       VALUES (?, ?, ?, 'ai-generated', 'generated', ?, 'medium', ?, ?, ?)`
+    ).bind(id, slug, topic, articleContent, category, now, now).run();
     structuredLog("info", "[draft-generator] Standalone post inserted (with overrides)", { id, category, topic, contentLength: articleContent.length });
   } catch (err) {
     structuredLog("error", "[draft-generator] Failed to insert standalone post", { id, category, topic, error: String(err) });

@@ -7,7 +7,9 @@ export const fetchCounter = async () => {
   try {
     const res = await fetch('/api/counter');
     if (!res.ok) throw new Error('Network response was not ok');
-    return await res.json();
+    const data = await res.json();
+    // API returns { total_checks } — normalize to { count } for consumers
+    return { count: data.total_checks ?? data.count ?? 0 };
   } catch (error) {
     // Sandbox fallback
     await delay(500);
@@ -99,6 +101,12 @@ export const checkContent = async (text, url) => {
     }
   }
 };
+export const fetchAlert = async (slug) => {
+  const res = await fetch(`/api/alerts/${encodeURIComponent(slug)}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+};
+
 export const checkImage = async (imageFile, textContext) => {
   const formData = new FormData();
   formData.append('image', imageFile);

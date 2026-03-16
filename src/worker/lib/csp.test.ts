@@ -185,4 +185,18 @@ describe('CSP policy constants', () => {
     expect(SECURITY_HEADERS_PUBLIC_CSP).toContain("default-src 'self'");
     expect(SECURITY_HEADERS_PUBLIC_CSP).toContain("base-uri 'self'");
   });
+
+  it("SECURITY_HEADERS_PUBLIC_CSP script-src does not contain 'unsafe-inline'", () => {
+    const scriptSrc = SECURITY_HEADERS_PUBLIC_CSP.split(';')
+      .find((d) => d.trim().startsWith('script-src'));
+    expect(scriptSrc).toBeDefined();
+    expect(scriptSrc).not.toContain("'unsafe-inline'");
+  });
+
+  it("SECURITY_HEADERS_PUBLIC_CSP script-src allows 'self' and umami", () => {
+    const scriptSrc = SECURITY_HEADERS_PUBLIC_CSP.split(';')
+      .find((d) => d.trim().startsWith('script-src'))!;
+    expect(scriptSrc).toContain("'self'");
+    expect(scriptSrc).toContain('https://cloud.umami.is');
+  });
 });

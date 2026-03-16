@@ -1,0 +1,70 @@
+{
+  "timestamp": "2026-03-15T17:50:07Z",
+  "project_id": "aigrija",
+  "files_audited": 27,
+  "adrs_audited": 20,
+  "findings": [
+    {
+      "file": "docs/disaster-recovery.md",
+      "type": "orphan",
+      "severity": "low",
+      "detail": "Not linked from any other document"
+    },
+    {
+      "file": "docs/zero-trust-idp.md",
+      "type": "orphan",
+      "severity": "low",
+      "detail": "Not linked from any other document"
+    },
+    {
+      "file": "docs/adrs/0013-crossguard-policy-as-code.md",
+      "type": "stub",
+      "severity": "low",
+      "detail": "Contains 2 TODO/TBD markers"
+    },
+    {
+      "file": "docs/adrs/0015-pulumi-r2-state-backend.md",
+      "type": "orphan",
+      "severity": "low",
+      "detail": "Not linked from any other document"
+    },
+    {
+      "file": "docs/adrs/0016-r2-cdn-architecture.md",
+      "type": "orphan",
+      "severity": "low",
+      "detail": "Not linked from any other document"
+    },
+    {
+      "file": "docs/adrs/0017-github-sub-issues.md",
+      "type": "orphan",
+      "severity": "low",
+      "detail": "Not linked from any other document"
+    },
+    {
+      "file": "docs/adrs/README.md",
+      "type": "adr_hygiene",
+      "severity": "low",
+      "detail": "Missing Constraints/Consequences section"
+    },
+    {
+      "file": "docs/adrs/0018-api-versioning-strategy.md",
+      "type": "orphan",
+      "severity": "low",
+      "detail": "Not linked from any other document"
+    },
+    {
+      "file": "docs/adrs/0019-latency-budgets-per-route.md",
+      "type": "orphan",
+      "severity": "low",
+      "detail": "Not linked from any other document"
+    }
+  ],
+  "score": {
+    "reality": 85,
+    "freshness": 80,
+    "completeness": 90,
+    "hygiene": 100,
+    "link_health": 100
+  },
+  "composite": 91
+}

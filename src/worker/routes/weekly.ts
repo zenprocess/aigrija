@@ -319,11 +319,17 @@ weekly.post('/api/digest/subscribe', idempotency(), async (c) => {
     return c.json({ ok: false, error: 'Serviciu indisponibil momentan.' }, 503);
   }
 
-  const bdRes = await fetch(`${BUTTONDOWN_BASE}/subscribers`, {
-    method: 'POST',
-    headers: { 'Authorization': `Token ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: parsed.data.email, type: 'regular', tags: ['digest'] }),
-  });
+  let bdRes: Response;
+  try {
+    bdRes = await fetch(`${BUTTONDOWN_BASE}/subscribers`, {
+      method: 'POST',
+      headers: { 'Authorization': `Token ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: parsed.data.email, type: 'regular', tags: ['digest'] }),
+    });
+  } catch (err) {
+    structuredLog('error', 'digest_subscribe_fetch_error', { error: String(err) });
+    return c.json({ ok: false, error: 'Eroare la procesarea abonarii. Incearca din nou.' }, 502);
+  }
 
   if (!bdRes.ok) {
     if (bdRes.status === 400) {
@@ -365,10 +371,16 @@ weekly.post('/api/digest/unsubscribe', idempotency(), async (c) => {
     return c.json({ ok: false, error: 'Serviciu indisponibil momentan.' }, 503);
   }
 
-  const bdRes = await fetch(`${BUTTONDOWN_BASE}/subscribers/${encodeURIComponent(parsed.data.email)}`, {
-    method: 'DELETE',
-    headers: { 'Authorization': `Token ${apiKey}` },
-  });
+  let bdRes: Response;
+  try {
+    bdRes = await fetch(`${BUTTONDOWN_BASE}/subscribers/${encodeURIComponent(parsed.data.email)}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Token ${apiKey}` },
+    });
+  } catch (err) {
+    structuredLog('error', 'digest_unsubscribe_fetch_error', { error: String(err) });
+    return c.json({ ok: false, error: 'Eroare la procesarea dezabonarii. Incearca din nou.' }, 502);
+  }
 
   if (bdRes.status === 404) {
     return c.json({ ok: false, error: 'Aceasta adresa nu este abonata.' }, 404);

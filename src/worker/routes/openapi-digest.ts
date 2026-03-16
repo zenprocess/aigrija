@@ -4,7 +4,7 @@ import type { Context } from 'hono';
 import type { Env } from '../lib/types';
 import { generateWeeklyDigest } from '../lib/weekly-digest';
 import { structuredLog } from '../lib/logger';
-import { createRateLimiter } from '../lib/rate-limiter';
+import { createRateLimiter, applyRateLimitHeaders, getRouteRateLimit } from '../lib/rate-limiter';
 import { recordConsent, revokeConsent } from '../lib/gdpr-consent';
 
 const BUTTONDOWN_BASE = 'https://api.buttondown.com/v1';
@@ -119,11 +119,11 @@ export class DigestSubscribeEndpoint extends OpenAPIRoute {
 
   async handle(c: Context<{ Bindings: Env }>) {
     const subIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-    if (c.env.CACHE) {
-      const subRl = await createRateLimiter(c.env.CACHE)(`digest-sub:${subIp}`, 5, 3600).catch(() => ({ allowed: true }));
-      if (!subRl.allowed) {
-        return c.json({ ok: false, error: 'Prea multe cereri. Incearca din nou mai tarziu.' }, 429);
-      }
+    const subRlCfg = getRouteRateLimit('digest-subscribe', c.env);
+    const subRl = await createRateLimiter(c.env.CACHE)(`digest-sub:${subIp}`, subRlCfg.limit, subRlCfg.windowSeconds);
+    applyRateLimitHeaders((k, v) => c.header(k, v), subRl);
+    if (!subRl.allowed) {
+      return c.json({ ok: false, error: 'Prea multe cereri. Incearca din nou mai tarziu.' }, 429);
     }
 
     let body: unknown;
@@ -204,11 +204,11 @@ export class DigestUnsubscribeEndpoint extends OpenAPIRoute {
 
   async handle(c: Context<{ Bindings: Env }>) {
     const unsubIp = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-    if (c.env.CACHE) {
-      const unsubRl = await createRateLimiter(c.env.CACHE)(`digest-unsub:${unsubIp}`, 5, 3600).catch(() => ({ allowed: true }));
-      if (!unsubRl.allowed) {
-        return c.json({ ok: false, error: 'Prea multe cereri. Incearca din nou mai tarziu.' }, 429);
-      }
+    const unsubRlCfg = getRouteRateLimit('digest-unsubscribe', c.env);
+    const unsubRl = await createRateLimiter(c.env.CACHE)(`digest-unsub:${unsubIp}`, unsubRlCfg.limit, unsubRlCfg.windowSeconds);
+    applyRateLimitHeaders((k, v) => c.header(k, v), unsubRl);
+    if (!unsubRl.allowed) {
+      return c.json({ ok: false, error: 'Prea multe cereri. Incearca din nou mai tarziu.' }, 429);
     }
 
     let body: unknown;

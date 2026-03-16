@@ -71,6 +71,7 @@ const STATIC_PAGES: UrlEntry[] = [
 
 interface CampaignRow {
   id: string;
+  slug: string;
   title: string;
   updated_at: string;
 }
@@ -96,6 +97,7 @@ sitemap.get('/sitemap.xml', async (c) => {
     }
   }
 
+  try {
   const today = new Date().toISOString().slice(0, 10);
   const entries: UrlEntry[] = [];
 
@@ -104,38 +106,35 @@ sitemap.get('/sitemap.xml', async (c) => {
     entries.push({ ...page, loc: base + page.loc, lastmod: today });
   }
 
-  // 2) Campaigns from D1 (preferred) or fallback to static CAMPAIGNS array
-  let usedD1 = false;
+  // 2) Campaigns — always use the static CAMPAIGNS array as the source of truth.
+  // The /alerte/:slug SSR handler only serves campaigns in this array, so any
+  // D1-only campaign URL would return 404 and harm SEO rankings.
+  const validSlugs = new Set(CAMPAIGNS.map(ca => ca.slug));
+
+  // Optionally sync lastmod from D1 for campaigns that are in the static array
+  let d1LastmodBySlug: Map<string, string> = new Map();
   if (c.env.DB) {
     try {
       const result = await c.env.DB.prepare(
-        `SELECT id, title, updated_at FROM campaigns WHERE draft_status = 'published' ORDER BY updated_at DESC LIMIT 500`
-      ).all<CampaignRow>();
-      const rows = result.results ?? [];
-      for (const row of rows) {
-        entries.push({
-          loc: `${base}/alerte/${escapeXml(row.id)}`,
-          lastmod: row.updated_at ? row.updated_at.slice(0, 10) : undefined,
-          changefreq: 'weekly',
-          priority: '0.8',
-        });
+        `SELECT slug, updated_at FROM campaigns WHERE draft_status = 'published' AND slug IS NOT NULL ORDER BY updated_at DESC LIMIT 500`
+      ).all<{ slug: string; updated_at: string }>();
+      for (const row of result.results ?? []) {
+        if (row.slug && validSlugs.has(row.slug) && row.updated_at) {
+          d1LastmodBySlug.set(row.slug, row.updated_at.slice(0, 10));
+        }
       }
-      usedD1 = true;
     } catch (err) {
-      structuredLog('error', 'sitemap_db_query_failed', { error: String(err) });
+      structuredLog('warn', 'sitemap_db_lastmod_failed', { error: String(err) });
     }
   }
 
-  // Fallback: use the static CAMPAIGNS array if D1 not available or failed
-  if (!usedD1) {
-    for (const ca of CAMPAIGNS) {
-      entries.push({
-        loc: `${base}/alerte/${ca.slug}`,
-        lastmod: ca.first_seen ? ca.first_seen.slice(0, 10) : undefined,
-        changefreq: 'weekly',
-        priority: '0.8',
-      });
-    }
+  for (const ca of CAMPAIGNS) {
+    entries.push({
+      loc: `${base}/alerte/${ca.slug}`,
+      lastmod: d1LastmodBySlug.get(ca.slug) ?? (ca.first_seen ? ca.first_seen.slice(0, 10) : undefined),
+      changefreq: 'weekly',
+      priority: '0.8',
+    });
   }
 
   const xml = buildUrlset(entries);
@@ -158,6 +157,10 @@ sitemap.get('/sitemap.xml', async (c) => {
   c.header('Cache-Control', 'public, max-age=3600');
   c.header('X-Cache', 'MISS');
   return c.body(xml);
+  } catch (err) {
+    structuredLog('error', 'sitemap_handler_error', { error: String(err) });
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Nu am putut genera sitemap-ul.' } }, 500);
+  }
 });
 
 // ─── GET /robots.txt ──────────────────────────────────────────────────────────

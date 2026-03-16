@@ -1,0 +1,43 @@
+{
+  "project_id": "aigrija",
+  "version": "1.0.0",
+  "branch_name": "ralph/visual-polish",
+  "stories": [
+    {
+      "id": "S-404",
+      "title": "Increase cookie consent button contrast on mobile",
+      "description": "In src/ui/src/components/CookieConsent.jsx, the 'Accept all' button uses a dark green that's hard to read on the dark background on mobile. Change to bg-green-500 text-white (or bg-green-600 text-white) for high contrast. The 'Essential only' outline button should use border-gray-400 text-gray-200 instead of the current low-contrast variant. The 'Settings' button should use text-gray-300 for readability. GitHub issue #404.",
+      "assigned_agent": "react-specialist",
+      "priority": 1,
+      "status": "pending",
+      "depends_on": [],
+      "complexity": "low",
+      "github_issue": 404,
+      "acceptance_criteria": [
+        "Accept all button clearly readable on dark background",
+        "Essential only button border visible on dark background",
+        "Settings button text visible",
+        "npx vitest run passes"
+      ],
+      "test_spec": null
+    },
+    {
+      "id": "S-405b",
+      "title": "Fix footer link column spacing on mobile",
+      "description": "In src/ui/src/components/Footer.jsx, the CONTENT and LEGAL footer link columns have uneven spacing on mobile — 'Press releases' wraps awkwardly. Add consistent vertical spacing: space-y-1 on mobile links, ensure both columns have equal gap. If columns stack on mobile, add mb-4 between them. GitHub issue #405.",
+      "assigned_agent": "react-specialist",
+      "priority": 1,
+      "status": "pending",
+      "depends_on": [],
+      "complexity": "low",
+      "github_issue": 405,
+      "acceptance_criteria": [
+        "Footer links evenly spaced on mobile",
+        "Press releases text doesn't wrap awkwardly",
+        "CONTENT and LEGAL columns aligned when stacked",
+        "npx vitest run passes"
+      ],
+      "test_spec": null
+    }
+  ]
+}

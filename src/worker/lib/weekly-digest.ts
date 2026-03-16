@@ -9,9 +9,9 @@ export interface WeeklyDigestResult {
 
 /** @deprecated Use generateWeeklyDigest(env) instead */
 export async function generateWeeklyDigestLegacy(env: Env): Promise<WeeklyDigestResult | null> {
-  if (!env.ADMIN_DB) return null;
+  if (!env.DB) return null;
 
-  const campaign = await env.ADMIN_DB.prepare(
+  const campaign = await env.DB.prepare(
     `SELECT * FROM campaigns WHERE created_at > datetime('now', '-7 days')
      ORDER BY CASE severity WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END,
      created_at DESC LIMIT 1`

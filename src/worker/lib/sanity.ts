@@ -19,6 +19,11 @@ function getConfig(env: Env): SanityConfig {
   };
 }
 
+export function createSanityClient(env: Env) {
+  return <T>(query: string, params: Record<string, string | number | boolean> = {}) =>
+    sanityFetch<T>(env, query, params);
+}
+
 export async function sanityFetch<T>(
   env: Env,
   query: string,

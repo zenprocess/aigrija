@@ -12,56 +12,59 @@ function padCenter(text, width) {
 
 function repeat(ch, n) { return ch.repeat(Math.max(0, n)); }
 
+function padRight(text, width) {
+  return text + ' '.repeat(Math.max(0, width - text.length));
+}
+
 function buildShieldLines(t) {
-  const v = t('hero.shield_verify');
-  const r = t('hero.shield_report');
-  const p = t('hero.shield_protect');
-  const label = t('hero.shield_label');
-  const maxLen = Math.max(v.length, r.length, p.length);
-  const boxW = maxLen + 8;
-  const frameW = boxW + 6;
-  const topW = frameW + 4;
+  const W = 52;
+  const bar = repeat('─', W);
+  const v = t('hero.shield_verify') || 'CHECK NOW';
+  const r = t('hero.shield_report') || 'REPORT FRAUD';
+  const p = t('hero.shield_protect') || 'PROTECT YOURSELF';
   return [
-    '    ╔' + repeat('═', topW) + '╗    ',
-    '   ╔╝  [ AI·GRIJA  v2.0 ]' + repeat(' ', topW - 22) + '╚╗   ',
-    '  ║   ┌' + repeat('─', boxW) + '┐   ║  ',
-    '  ║   │  ░ ' + padCenter(v, maxLen) + ' ░  │   ║  ',
-    '  ║   │  ░ ' + padCenter(r, maxLen) + ' ░  │   ║  ',
-    '  ║   │  ░ ' + padCenter(p, maxLen) + ' ░░ │   ║  ',
-    '  ║   └' + repeat('─', boxW) + '┘   ║  ',
-    '  ║   ' + repeat('◆', boxW) + '   ║  ',
-    '  ║   STATUS: [ACTIV] ' + repeat('█', Math.max(4, boxW - 18)) + '   ║  ',
-    '   ╚╗' + repeat(' ', topW) + '╔╝  ',
-    '    ╚╗    ◈ ' + padCenter(label, maxLen) + ' ◈     ╔╝   ',
-    '     ╚╗' + repeat(' ', topW - 2) + '╔╝   ',
-    '      ╚╗   ▲ AI·GRIJA.RO ▲   ╔╝    ',
-    '       ╚╗' + repeat(' ', topW - 6) + '╔╝     ',
-    '        ╚╗' + repeat(' ', topW - 8) + '╔╝      ',
-    '         ╚╗' + repeat(' ', topW - 10) + '╔╝       ',
-    '          ╚╗' + repeat(' ', topW - 12) + '╔╝        ',
-    '           ╚' + repeat('═', topW - 12) + '╝         ',
+    '┌' + bar + '┐',
+    '│ ' + padRight('$ ai-grija --scan message.txt', W - 2) + ' │',
+    '│' + repeat(' ', W) + '│',
+    '│ ' + padRight('⠋ Analyzing suspicious message...', W - 2) + ' │',
+    '│ ' + padRight('✓ PII redacted (CNP, IBAN masked)', W - 2) + ' │',
+    '│ ' + padRight('✓ Pattern match: known phishing campaign', W - 2) + ' │',
+    '│ ' + padRight('✓ Domain analysis: suspicious URL detected', W - 2) + ' │',
+    '│' + repeat(' ', W) + '│',
+    '│ ┌' + repeat('─', W - 4) + '┐ │',
+    '│ │  ⚠  PHISHING DETECTED' + repeat(' ', W - 27) + '│ │',
+    '│ │  Confidence: 94%' + repeat(' ', W - 21) + '│ │',
+    '│ │  ' + padRight('» ' + v, W - 7) + '│ │',
+    '│ │  ' + padRight('» ' + r, W - 7) + '│ │',
+    '│ │  ' + padRight('» ' + p, W - 7) + '│ │',
+    '│ └' + repeat('─', W - 4) + '┘ │',
+    '│' + repeat(' ', W) + '│',
+    '│ ' + padRight('$ _', W - 2) + ' │',
+    '└' + bar + '┘',
   ];
 }
 
 function buildMobileShieldLines(t) {
-  const v = t('hero.shield_mobile_verify');
-  const p = t('hero.shield_mobile_protect');
-  const maxLen = Math.max(v.length, p.length);
-  const boxW = maxLen + 6;
-  const frameW = boxW + 4;
+  const W = 36;
+  const bar = repeat('─', W);
+  const v = t('hero.shield_mobile_verify') || 'CHECK';
+  const p = t('hero.shield_mobile_protect') || 'PROTECT';
   return [
-    '  ╔' + repeat('═', frameW) + '╗  ',
-    ' ╔╝  ◆ AI·GRIJA ◆' + repeat(' ', frameW - 16) + '╚╗ ',
-    ' ║  ┌' + repeat('─', boxW) + '┐  ║ ',
-    ' ║  │ ░ ' + padCenter(v, maxLen) + ' ░  │  ║ ',
-    ' ║  │ ░ ' + padCenter(p, maxLen) + ' ░  │  ║ ',
-    ' ║  └' + repeat('─', boxW) + '┘  ║ ',
-    ' ║  STATUS: [ACTIV]' + repeat(' ', frameW - 16) + '║ ',
-    '  ╚╗' + repeat(' ', frameW) + '╔╝  ',
-    '   ╚╗  AI·GRIJA.RO' + repeat(' ', frameW - 15) + '╔╝   ',
-    '    ╚╗' + repeat(' ', frameW - 4) + '╔╝   ',
-    '     ╚╗' + repeat(' ', frameW - 6) + '╔╝    ',
-    '      ╚' + repeat('═', frameW - 6) + '╝     ',
+    '┌' + bar + '┐',
+    '│ ' + padRight('$ ai-grija --scan', W - 2) + ' │',
+    '│' + repeat(' ', W) + '│',
+    '│ ' + padRight('✓ PII redacted', W - 2) + ' │',
+    '│ ' + padRight('✓ Pattern match found', W - 2) + ' │',
+    '│ ' + padRight('✓ Suspicious URL', W - 2) + ' │',
+    '│' + repeat(' ', W) + '│',
+    '│ ┌' + repeat('─', W - 4) + '┐ │',
+    '│ │ ⚠ PHISHING' + repeat(' ', W - 15) + '│ │',
+    '│ │ Confidence: 94%' + repeat(' ', W - 20) + '│ │',
+    '│ │ » ' + padRight(v, W - 8) + '│ │',
+    '│ │ » ' + padRight(p, W - 8) + '│ │',
+    '│ └' + repeat('─', W - 4) + '┘ │',
+    '│ ' + padRight('$ _', W - 2) + ' │',
+    '└' + bar + '┘',
   ];
 }
 

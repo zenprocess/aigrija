@@ -615,7 +615,7 @@ blog.get('/sitemap-content.xml', async (c) => {
   if (cached) { c.header('Content-Type', 'application/xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
 
   try {
-    const base = c.env.BASE_URL;
+    const base = c.env.BASE_URL ?? 'https://ai-grija.ro';
     type SitemapDoc = { slug: string; language: string; _updatedAt?: string };
     type SitemapResult = { ghid: SitemapDoc[]; educatie: SitemapDoc[]; amenintari: SitemapDoc[]; rapoarte: SitemapDoc[]; povesti: SitemapDoc[]; presa: SitemapDoc[] };
     const sanity = createSanityClient(c.env);
@@ -636,12 +636,13 @@ blog.get('/sitemap-content.xml', async (c) => {
       ].filter(Boolean).join('\n');
     };
 
-    for (const doc of allDocs.ghid ?? []) urlEntries.push(makeEntry(`/ghid/${doc.slug}`, doc, 'monthly', '0.7'));
-    for (const doc of allDocs.educatie ?? []) urlEntries.push(makeEntry(`/educatie/${doc.slug}`, doc, 'weekly', '0.7'));
-    for (const doc of allDocs.amenintari ?? []) urlEntries.push(makeEntry(`/amenintari/${doc.slug}`, doc, 'weekly', '0.8'));
-    for (const doc of allDocs.rapoarte ?? []) urlEntries.push(makeEntry(`/rapoarte/${doc.slug}`, doc, 'weekly', '0.7'));
-    for (const doc of allDocs.povesti ?? []) urlEntries.push(makeEntry(`/povesti/${doc.slug}`, doc, 'monthly', '0.6'));
-    for (const doc of allDocs.presa ?? []) urlEntries.push(makeEntry(`/presa/${doc.slug}`, doc, 'monthly', '0.6'));
+    // Skip entries with empty/null slugs to prevent 404 URLs in the sitemap
+    for (const doc of allDocs.ghid ?? []) { if (doc.slug) urlEntries.push(makeEntry(`/ghid/${doc.slug}`, doc, 'monthly', '0.7')); }
+    for (const doc of allDocs.educatie ?? []) { if (doc.slug) urlEntries.push(makeEntry(`/educatie/${doc.slug}`, doc, 'weekly', '0.7')); }
+    for (const doc of allDocs.amenintari ?? []) { if (doc.slug) urlEntries.push(makeEntry(`/amenintari/${doc.slug}`, doc, 'weekly', '0.8')); }
+    for (const doc of allDocs.rapoarte ?? []) { if (doc.slug) urlEntries.push(makeEntry(`/rapoarte/${doc.slug}`, doc, 'weekly', '0.7')); }
+    for (const doc of allDocs.povesti ?? []) { if (doc.slug) urlEntries.push(makeEntry(`/povesti/${doc.slug}`, doc, 'monthly', '0.6')); }
+    for (const doc of allDocs.presa ?? []) { if (doc.slug) urlEntries.push(makeEntry(`/presa/${doc.slug}`, doc, 'monthly', '0.6')); }
 
     const xml = [
       '<?xml version="1.0" encoding="UTF-8"?>',

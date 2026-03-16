@@ -315,12 +315,13 @@ export async function generateStandalonePost(env: Env): Promise<void> {
 
   // Step 3: insert into D1 as admin draft
   const id = crypto.randomUUID();
+  const slug = topic.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-') + '-' + id.slice(0, 8);
   const now = new Date().toISOString();
   try {
     await env.DB.prepare(
-      `INSERT INTO campaigns (id, title, source, draft_status, draft_content, severity, threat_type, created_at, updated_at)
-       VALUES (?, ?, 'ai-generated', 'generated', ?, 'medium', ?, ?, ?)`
-    ).bind(id, topic, articleContent, category, now, now).run();
+      `INSERT INTO campaigns (id, slug, title, source, draft_status, draft_content, severity, threat_type, created_at, updated_at)
+       VALUES (?, ?, ?, 'ai-generated', 'generated', ?, 'medium', ?, ?, ?)`
+    ).bind(id, slug, topic, articleContent, category, now, now).run();
     structuredLog('info', '[draft-generator] Standalone post inserted', { id, category, topic, contentLength: articleContent.length });
   } catch (err) {
     structuredLog('error', '[draft-generator] Failed to insert standalone post', { id, category, topic, error: String(err) });
@@ -400,12 +401,13 @@ export async function generateStandalonePostWithOverrides(env: Env, options: Gen
 
   // Step 3: insert into D1 as admin draft
   const id = crypto.randomUUID();
+  const slug = topic.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-') + '-' + id.slice(0, 8);
   const now = new Date().toISOString();
   try {
     await env.DB.prepare(
-      `INSERT INTO campaigns (id, title, source, draft_status, draft_content, severity, threat_type, created_at, updated_at)
-       VALUES (?, ?, 'ai-generated', 'generated', ?, 'medium', ?, ?, ?)`
-    ).bind(id, topic, articleContent, category, now, now).run();
+      `INSERT INTO campaigns (id, slug, title, source, draft_status, draft_content, severity, threat_type, created_at, updated_at)
+       VALUES (?, ?, ?, 'ai-generated', 'generated', ?, 'medium', ?, ?, ?)`
+    ).bind(id, slug, topic, articleContent, category, now, now).run();
     structuredLog("info", "[draft-generator] Standalone post inserted (with overrides)", { id, category, topic, contentLength: articleContent.length });
   } catch (err) {
     structuredLog("error", "[draft-generator] Failed to insert standalone post", { id, category, topic, error: String(err) });

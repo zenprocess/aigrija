@@ -42,6 +42,11 @@ describe('renderAlertPage', () => {
     // The description contains quotes which should be escaped
     expect(html).toContain('&quot;');
   });
+
+  it('renders dark theme on html element', () => {
+    expect(html).toContain('html{background:#0a0a0a');
+    expect(html).toContain('color-scheme:dark');
+  });
 });
 
 describe('renderAlertsIndex', () => {

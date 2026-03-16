@@ -284,3 +284,30 @@ describe('generateDraft AI mock', () => {
     expect(updateCall).toContain('draft_content');
   });
 });
+
+describe('generateStandalonePostWithOverrides', () => {
+  it('inserts campaign with slug into D1', async () => {
+    const mockRun = vi.fn()
+      .mockResolvedValueOnce({ response: 'Atac phishing nou' }) // topic
+      .mockResolvedValueOnce({ response: '# Article\nContent here.' }); // article
+    const mockRunDb = vi.fn().mockResolvedValue({});
+    const mockBind = vi.fn().mockReturnValue({ run: mockRunDb });
+    const mockPrepare = vi.fn().mockReturnValue({ bind: mockBind });
+
+    const mockEnv = {
+      AI: { run: mockRun },
+      DB: { prepare: mockPrepare },
+    };
+
+    const { generateStandalonePostWithOverrides } = await import('./draft-generator');
+    const result = await generateStandalonePostWithOverrides(mockEnv as any, { category: 'amenintari' });
+
+    expect(result.id).toBeTruthy();
+    expect(result.title).toBeTruthy();
+
+    const insertSql = mockPrepare.mock.calls[0][0] as string;
+    expect(insertSql).toContain('INSERT INTO campaigns');
+    expect(insertSql).toContain('slug');
+    expect(insertSql).toContain('id');
+  });
+});

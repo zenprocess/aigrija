@@ -195,7 +195,7 @@ admin.get('/generare-continut', async (c) => {
         if (data.ok) {
           result.className = 'mt-4 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-800';
           const link = document.createElement('a');
-          link.href = '/admin/campanii/' + data.id;
+          link.href = '/admin/drafturi/' + data.id;
           link.className = 'underline font-medium';
           link.textContent = data.title;
           result.textContent = '';

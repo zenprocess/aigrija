@@ -187,6 +187,60 @@ describe("GET /sitemap.xml", () => {
     const res = await sitemap.fetch(new Request("http://localhost/sitemap.xml"), makeEnv(), makeCtx());
     expect(res.headers.get("X-Cache")).toBe("MISS");
   });
+
+  it("always includes all static CAMPAIGNS slugs (source of truth for SSR)", async () => {
+    // Static CAMPAIGNS is the only source for /alerte/:slug SSR — all must appear
+    const env = makeEnv();
+    const res = await sitemap.fetch(new Request("http://localhost/sitemap.xml"), env, makeCtx());
+    const body = await res.text();
+    expect(body).toContain("/alerte/apel-fals-ing-romania-2025");
+    expect(body).toContain("/alerte/fanbox-sms-phishing-2025");
+    expect(body).toContain("/alerte/email-fals-anaf-amenzi-2025");
+    expect(body).toContain("/alerte/rovinieta-cnair-false-2025");
+    expect(body).toContain("/alerte/mesaje-false-politia-romana-2025");
+    expect(body).toContain("/alerte/deepfake-investitii-false-2025");
+  });
+
+  it("excludes D1-only campaigns not in static CAMPAIGNS to prevent 404s", async () => {
+    // D1 may have extra campaigns that have no SSR detail page → they would 404
+    const mockDb = {
+      prepare: () => ({
+        all: async () => ({
+          results: [
+            // D1-only slug (not in static CAMPAIGNS) — must NOT appear in sitemap
+            { slug: "d1-only-campaign-not-in-static-2025", updated_at: "2026-01-01T00:00:00Z" },
+            // This slug IS in static CAMPAIGNS — lastmod can be enriched from D1
+            { slug: "apel-fals-ing-romania-2025", updated_at: "2026-02-01T00:00:00Z" },
+          ],
+        }),
+        bind: () => ({}),
+        first: async () => null,
+        run: async () => ({}),
+        raw: async () => [],
+      }),
+      exec: async () => ({}),
+      batch: async () => [],
+      dump: async () => new ArrayBuffer(0),
+    };
+    const env = makeEnv({ DB: mockDb });
+    const res = await sitemap.fetch(new Request("http://localhost/sitemap.xml"), env, makeCtx());
+    const body = await res.text();
+    // D1-only campaign must NOT appear (its /alerte/:slug would return 404)
+    expect(body).not.toContain("/alerte/d1-only-campaign-not-in-static-2025");
+    // Static CAMPAIGNS still appear (with D1-enriched lastmod when available)
+    expect(body).toContain("/alerte/apel-fals-ing-romania-2025");
+    // Other static campaigns also appear
+    expect(body).toContain("/alerte/fanbox-sms-phishing-2025");
+  });
+
+  it("falls back to static CAMPAIGNS when D1 is unavailable", async () => {
+    const env = makeEnv(); // no DB binding
+    const res = await sitemap.fetch(new Request("http://localhost/sitemap.xml"), env, makeCtx());
+    const body = await res.text();
+    // All static CAMPAIGNS must still appear without D1
+    expect(body).toContain("/alerte/apel-fals-ing-romania-2025");
+    expect(body).toContain("/alerte/fanbox-sms-phishing-2025");
+  });
 });
 
 // ─── Integration tests for GET /robots.txt ──────────────────────────────────

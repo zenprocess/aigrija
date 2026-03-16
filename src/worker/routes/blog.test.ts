@@ -506,6 +506,31 @@ describe('GET /sitemap-content.xml', () => {
     expect(text).toContain('/educatie/edu-1');
     expect(text).toContain('/amenintari/raport-1');
   });
+
+  it('skips entries with empty or null slug to prevent 404 URLs', async () => {
+    const result = {
+      ghid: [
+        { slug: 'valid-ghid', language: 'ro', _updatedAt: '2024-01-01T00:00:00Z' },
+        { slug: '', language: 'ro', _updatedAt: '2024-01-01T00:00:00Z' },
+        { slug: null as unknown as string, language: 'ro', _updatedAt: '2024-01-01T00:00:00Z' },
+      ],
+      educatie: [],
+      amenintari: [],
+      rapoarte: [],
+      povesti: [],
+      presa: [],
+    };
+    mockSanityFetch.mockResolvedValue(result);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/sitemap-content.xml'), env);
+    expect(res.status).toBe(200);
+    const text = await res.text();
+    expect(text).toContain('/ghid/valid-ghid');
+    // Empty and null slugs must not produce URLs (would 404)
+    expect(text).not.toContain('/ghid/null');
+    expect(text).not.toContain('/ghid/undefined');
+    expect(text).not.toMatch(/<loc>[^<]*\/ghid\/<\/loc>/);
+  });
 });
 
 // ─── POST /content/webhook ────────────────────────────────────────────────────

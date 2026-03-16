@@ -55,14 +55,12 @@ export default function ActiveAlerts() {
             {alerts.map((alert, idx) => {
               const slug = alert.slug || alert.id || idx;
               return (
-                <div
+                <a
                   key={idx}
                   data-testid={`alert-card-${idx}`}
-                  className={`glass-card p-6 border-l-4 ${getSeverityStyles(alert.severity).border} transition-all hover:bg-white/10 cursor-pointer`}
-                  onClick={() => { window.location.hash = `/alerte/${slug}`; }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location.hash = `/alerte/${slug}`; } }}
+                  href={`#/alerte/${slug}`}
+                  onClick={(e) => { e.preventDefault(); window.location.hash = `/alerte/${slug}`; }}
+                  className={`glass-card p-6 border-l-4 ${getSeverityStyles(alert.severity).border} transition-all hover:bg-white/10 cursor-pointer block`}
                 >
                   <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-3">
                     <div>
@@ -89,7 +87,7 @@ export default function ActiveAlerts() {
                     </div>
                   </div>
                   <p className="text-gray-300 text-sm leading-relaxed">{alert.description}</p>
-                </div>
+                </a>
               );
             })}
           </div>

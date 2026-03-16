@@ -36,7 +36,7 @@ drafts.get('/', async (c) => {
 
   const rows_html = campaigns.map((c) => `
     <tr class="border-t hover:bg-gray-50">
-      <td class="py-2 px-3 text-sm font-medium"><a href="/admin/drafts/${c.id}" class="text-blue-600 hover:underline">${escHtml(c.title || '')}</a></td>
+      <td class="py-2 px-3 text-sm font-medium"><a href="/admin/drafturi/${c.id}" class="text-blue-600 hover:underline">${escHtml(c.title || '')}</a></td>
       <td class="py-2 px-3 text-sm text-gray-600">${escHtml(c.threat_type || '')}</td>
       <td class="py-2 px-3 text-sm">${escHtml(c.severity || '')}</td>
       <td class="py-2 px-3 text-sm">${statusBadge(c.draft_status)}</td>
@@ -87,7 +87,7 @@ drafts.get('/:id', async (c) => {
   const authParam = key ? `?key=${encodeURIComponent(key)}` : '';
 
   const actionBtn = (action: string, label: string, color: string) =>
-    `<form method="POST" action="/admin/drafts/${id}/${action}${authParam}" class="inline">
+    `<form method="POST" action="/admin/drafturi/${id}/${action}${authParam}" class="inline">
       <button type="submit" class="px-3 py-1.5 rounded text-sm font-medium text-white ${color} hover:opacity-90">${label}</button>
     </form>`;
 
@@ -122,7 +122,7 @@ drafts.get('/:id', async (c) => {
         <div class="prose max-w-none text-sm overflow-y-auto max-h-[70vh]">${draftHtml}</div>
         <div class="mt-4 border-t pt-4">
           <h3 class="text-sm font-medium text-gray-700 mb-2">Edit Draft</h3>
-          <form method="POST" action="/admin/drafts/${id}/edit${authParam}">
+          <form method="POST" action="/admin/drafturi/${id}/edit${authParam}">
             <textarea name="draft_content" rows="12" class="w-full border rounded p-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-400">${escHtml(campaign.draft_content || '')}</textarea>
             <button type="submit" class="mt-2 px-3 py-1.5 rounded bg-gray-700 text-white text-sm hover:bg-gray-800">Save Draft</button>
           </form>
@@ -140,7 +140,7 @@ drafts.post('/:id/approve', async (c) => {
   await c.env.DB.prepare(`UPDATE campaigns SET draft_status='approved', updated_at=? WHERE id=?`)
     .bind(new Date().toISOString(), id).run();
   structuredLog('info', '[admin/drafts] Approved', { campaignId: id });
-  return c.redirect(`/admin/drafts/${id}`);
+  return c.redirect(`/admin/drafturi/${id}`);
 });
 
 // POST /admin/drafts/:id/reject
@@ -149,7 +149,7 @@ drafts.post('/:id/reject', async (c) => {
   await c.env.DB.prepare(`UPDATE campaigns SET draft_status='rejected', updated_at=? WHERE id=?`)
     .bind(new Date().toISOString(), id).run();
   structuredLog('info', '[admin/drafts] Rejected', { campaignId: id });
-  return c.redirect(`/admin/drafts/${id}`);
+  return c.redirect(`/admin/drafturi/${id}`);
 });
 
 // POST /admin/drafts/:id/edit
@@ -165,7 +165,7 @@ drafts.post('/:id/edit', async (c) => {
   await c.env.DB.prepare(`UPDATE campaigns SET draft_content=?, draft_status='generated', updated_at=? WHERE id=?`)
     .bind(content, new Date().toISOString(), id).run();
   structuredLog('info', '[admin/drafts] Edited', { campaignId: id, contentLength: content.length });
-  return c.redirect(`/admin/drafts/${id}`);
+  return c.redirect(`/admin/drafturi/${id}`);
 });
 
 // POST /admin/drafts/:id/publish
@@ -204,7 +204,7 @@ drafts.post('/:id/regenerate', async (c) => {
     }
   }
 
-  return c.redirect(`/admin/drafts/${id}`);
+  return c.redirect(`/admin/drafturi/${id}`);
 });
 
 // POST /admin/drafts/:id/publish-multi

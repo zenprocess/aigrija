@@ -1,49 +1,73 @@
 {
   "project_id": "aigrija",
   "version": "1.0.0",
-  "branch_name": "ralph/admin-fixes",
+  "branch_name": "ralph/journey-bdd",
   "stories": [
     {
-      "id": "S-415",
-      "title": "Fix admin /activity returning 500 Internal Server Error",
-      "description": "GET /activity on the admin panel returns raw 'Internal Server Error'. Check src/worker/admin/activity.ts — likely a D1 query failure (missing table or column) or unhandled exception. The error happens before the admin layout renders. Add try/catch around the D1 query, return a friendly error page if the query fails. GitHub #415.",
+      "id": "S-501",
+      "title": "Implement Journey 4: SEO & Link Integrity crawl",
+      "description": "Create e2e/journeys/04-seo-links.spec.ts. Using Playwright: (1) Fetch /sitemap.xml, parse all <loc> URLs, HTTP GET each one, assert 200. (2) Navigate to homepage, collect ALL <a href> elements, filter internal links (ai-grija.ro), click each one, verify destination is not 404 and not the homepage when it shouldn't be. (3) Navigate to /#/quiz, /#/amenintari, /#/alerte/apel-fals-ing-romania-2025 and collect+click all links. Write results to e2e/results/04-seo-links.json: {total_links, passed, failed, failures: [{url, status, reason}]}. BASE_URL from env or default https://ai-grija.ro.",
       "assigned_agent": "ts-fullstack",
       "priority": 1,
-      "status": "passed",
+      "status": "pending",
       "depends_on": [],
-      "complexity": "low",
-      "github_issue": 415,
-      "started_at": "2026-03-16T08:59:33Z",
-      "completed_at": "2026-03-16T09:03:11Z"
+      "complexity": "medium",
+      "github_issue": null
     },
     {
-      "id": "S-416",
-      "title": "Fix admin /studio returning 500 Internal Server Error",
-      "description": "GET /studio on the admin panel returns raw 'Internal Server Error'. Check src/worker/admin/app.ts lines 224-230 — the studio route tries to proxy/serve Sanity Studio. Likely fails because SANITY_PROJECT_ID or SANITY_DEPLOY_TOKEN is not configured in preview env, or the Studio build assets don't exist. Add try/catch, check for required env vars, return informative error if not configured. GitHub #416.",
+      "id": "S-502",
+      "title": "Implement Journey 6: Visual Consistency checks",
+      "description": "Create e2e/journeys/06-visual-consistency.spec.ts. Using Playwright: (1) For each page (/, /#/quiz, /#/amenintari, /#/alerte/apel-fals-ing-romania-2025, /alerte/apel-fals-ing-romania-2025), check that document.body background-color is dark (each RGB channel < 50). Flag any page with light background. (2) Check hero terminal box: get all lines of the canvas alt-text or the pre-rendered text, verify left border chars align vertically with right border chars. (3) At 3 viewports (375, 768, 1440), verify document.body.scrollWidth <= viewport width (no horizontal overflow). Write results to e2e/results/06-visual.json.",
       "assigned_agent": "ts-fullstack",
-      "priority": 2,
-      "status": "passed",
+      "priority": 1,
+      "status": "pending",
       "depends_on": [],
-      "complexity": "low",
-      "github_issue": 416,
-      "started_at": "2026-03-16T08:59:33Z",
-      "completed_at": "2026-03-16T09:03:01Z"
+      "complexity": "medium",
+      "github_issue": null
     },
     {
-      "id": "S-417",
-      "title": "Fix admin /gdpr returning 404",
-      "description": "GET /gdpr on the admin panel returns 404 despite admin.route('/gdpr', gdprAdmin) being registered in app.ts line 251. Check src/worker/admin/gdpr.ts — the sub-router may only have POST handlers and no GET handler for the index route. Add a GET / handler that renders the GDPR admin page (subscriber data management, consent logs, purge controls). GitHub #417.",
+      "id": "S-503",
+      "title": "Implement Journey 7: Data Freshness & Loading States",
+      "description": "Create e2e/journeys/07-data-freshness.spec.ts. Using Playwright: (1) Navigate to /, wait 5s, check counter text does NOT contain 'Se încarcă' or 'Loading' — it should show a number. (2) Scroll to campaigns section, verify cards appear (not spinner). (3) Navigate to /#/quiz, verify question text appears within 3s. (4) Navigate to ALL routes, after 5s check no element with text matching /loading|se incarca|spinner/i is visible. Write results to e2e/results/07-freshness.json.",
       "assigned_agent": "ts-fullstack",
-      "priority": 2,
-      "status": "passed",
+      "priority": 1,
+      "status": "pending",
       "depends_on": [],
       "complexity": "low",
-      "github_issue": 417,
-      "started_at": "2026-03-16T08:59:33Z",
-      "attempts": 3,
-      "last_attempt_at": "2026-03-16T09:28:01Z",
-      "completed_at": "2026-03-16T09:28:01Z",
-      "note": "Agent timed out during verification but implementation is complete — GET /gdpr handler + 2 tests added"
+      "github_issue": null
+    },
+    {
+      "id": "S-504",
+      "title": "Implement Journey 2: Campaign Alert Deep-Dive",
+      "description": "Create e2e/journeys/02-campaign-deepdive.spec.ts. Using Playwright: (1) Navigate to /, scroll to campaigns. (2) Click FIRST campaign card. (3) Assert navigation happened in SINGLE click (URL changed). (4) On the detail page, assert background is dark (not light scheme). (5) Assert detail has: title, severity badge, target entity, date. (6) Click 'Back to alerts' or back link, verify return to homepage. Also test the SSR route directly: navigate to /alerte/apel-fals-ing-romania-2025, verify background-color is dark. Write results to e2e/results/02-campaign.json.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 1,
+      "status": "pending",
+      "depends_on": [],
+      "complexity": "medium",
+      "github_issue": null
+    },
+    {
+      "id": "S-505",
+      "title": "Implement Journey 1: First-Time Visitor flow",
+      "description": "Create e2e/journeys/01-visitor-check.spec.ts. Using Playwright: (1) Navigate to /, wait for hero terminal animation (5s). (2) Verify counter shows a number (not loading text). (3) Scroll to checker form, verify textarea visible. (4) Type a suspicious message into the textarea. (5) Click the submit/check button. (6) Wait up to 15s for verdict card to appear. (7) Verify verdict contains 'phishing' or 'suspicious' or 'likely_safe'. (8) Verify confidence is a number. Note: this test hits the real AI endpoint so it may be slow. Write results to e2e/results/01-visitor.json.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 2,
+      "status": "pending",
+      "depends_on": [],
+      "complexity": "medium",
+      "github_issue": null
+    },
+    {
+      "id": "S-506",
+      "title": "Implement Journey 3: Language Switching consistency",
+      "description": "Create e2e/journeys/03-language-switch.spec.ts. Using Playwright: (1) Navigate to / in English (default). (2) Record all nav text. (3) Click language switcher, verify dropdown shows flags + full names (not clipped). (4) Switch to Romanian, verify ALL nav items changed (no English text remaining like 'Check' or 'Alerts'). (5) Navigate to /#/amenintari, verify heading is Romanian ('Amenințări' not 'Threats'). (6) Switch back to English, verify nav is fully English (no 'Mai mult'). (7) Navigate to /#/quiz, verify quiz title is in current language. Write results to e2e/results/03-language.json.",
+      "assigned_agent": "ts-fullstack",
+      "priority": 2,
+      "status": "pending",
+      "depends_on": [],
+      "complexity": "medium",
+      "github_issue": null
     }
   ]
 }

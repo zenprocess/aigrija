@@ -80,6 +80,31 @@ test.describe('Alerts — detail page', () => {
   });
 });
 
+test.describe('Alerts — homepage card single-click navigation (S-420)', () => {
+  test('clicking alert card on homepage navigates to detail on first click', async ({ page, request }) => {
+    const res = await request.get('/api/alerts');
+    const body = await res.json();
+    const campaigns = body.campaigns ?? [];
+    if (campaigns.length === 0) {
+      test.skip(true, 'No campaigns to test card click');
+      return;
+    }
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    // Scroll to alert section so card is in view
+    await page.evaluate(() => {
+      const el = document.getElementById('alerte');
+      if (el) el.scrollIntoView();
+    });
+    // Single click on first card — must navigate without a second click
+    const card = page.locator('[data-testid="alert-card-0"]').first();
+    await expect(card).toBeVisible({ timeout: 10000 });
+    await card.click();
+    await page.waitForLoadState('networkidle');
+    expect(page.url()).toMatch(/\/alerte\//);
+  });
+});
+
 test.describe('Alerts — back navigation', () => {
   test('browser back from detail returns to list page', async ({ page, request }) => {
     const res = await request.get('/api/alerts');

@@ -101,7 +101,7 @@ describe('drafts router', () => {
     const req = new Request('http://localhost/abc/approve', { method: 'POST', headers: AUTH });
     const res = await drafts.fetch(req, env, makeCtx());
     expect(res.status).toBe(302);
-    expect(res.headers.get('location')).toContain('/admin/drafts/abc');
+    expect(res.headers.get('location')).toContain('/admin/drafturi/abc');
   });
 
   it('POST /:id/reject redirects', async () => {

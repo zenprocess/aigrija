@@ -54,7 +54,7 @@ export function renderAlertPage(campaign: Campaign, baseUrl: string, checksMatch
 <meta property="og:type" content="article">
 <link rel="canonical" href="${escapedBase}/alerte/${escapedSlug}">
 <script type="application/ld+json">${jsonLd}</script>
-<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:20px;color:#1a1a1a;line-height:1.6}h1{color:#d32f2f;font-size:1.5rem}.badge{display:inline-block;padding:4px 12px;border-radius:12px;font-size:0.85rem;font-weight:600;margin-right:8px}.red-flag{background:#fff3e0;border-left:4px solid #ff9800;padding:12px;margin:8px 0}.advice{background:#e8f5e9;border-left:4px solid #4caf50;padding:12px;margin:8px 0}a{color:#1976d2}.counter{display:inline-flex;align-items:center;gap:8px;background:#fff8e1;border:1px solid #ffc107;border-radius:8px;padding:10px 16px;margin:12px 0;font-size:0.9rem;font-weight:600;color:#795548}</style>
+<style>*{margin:0;padding:0;box-sizing:border-box}html{background:#0a0a0a;color:#e5e5e5;color-scheme:dark}body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#e5e5e5;line-height:1.6;padding:20px}main{max-width:720px;margin:0 auto}nav{margin-bottom:16px;color:#a3a3a3;font-size:0.9rem}h1{color:#fff;font-size:1.5rem;margin-bottom:12px}h2{color:#fff;font-size:1.1rem;margin:20px 0 8px}a{color:#22c55e;text-decoration:none}a:hover{text-decoration:underline}.badge{display:inline-block;padding:4px 12px;border-radius:12px;font-size:0.85rem;font-weight:600;margin-right:8px;background:#1a1a1a;color:#e5e5e5}.red-flag{background:#1c1410;border-left:4px solid #ff9800;padding:12px;margin:8px 0;border-radius:0 4px 4px 0}.advice{background:#0d1a0d;border-left:4px solid #4caf50;padding:12px;margin:8px 0;border-radius:0 4px 4px 0}.counter{display:inline-flex;align-items:center;gap:8px;background:#1a1408;border:1px solid #ffc107;border-radius:8px;padding:10px 16px;margin:12px 0;font-size:0.9rem;font-weight:600;color:#ffc107}hr{border:none;border-top:1px solid #1f1f1f;margin:24px 0}small{color:#737373}p{margin:8px 0}</style>
 </head>
 <body>
 <nav><a href="/">ai-grija.ro</a> / <a href="/alerte">Alerte</a></nav>
@@ -92,7 +92,7 @@ export function renderAlertsIndex(campaigns: Campaign[], baseUrl: string): strin
 <meta name="description" content="Campaniile de phishing active in Romania. Protejati-va de fraude online.">
 <meta property="og:title" content="Alerte phishing Romania — ai-grija.ro">
 <link rel="canonical" href="${escapedBase}/alerte">
-<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:20px;color:#1a1a1a;line-height:1.6}h1{color:#d32f2f}.card{border:1px solid #e0e0e0;border-radius:8px;padding:16px;margin:12px 0}.card h2{margin:0 0 8px}a{color:#1976d2}</style>
+<style>*{margin:0;padding:0;box-sizing:border-box}html{background:#0a0a0a;color:#e5e5e5;color-scheme:dark}body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#e5e5e5;line-height:1.6;padding:20px}main{max-width:720px;margin:0 auto}nav{margin-bottom:16px;color:#a3a3a3;font-size:0.9rem}h1{color:#fff;font-size:1.75rem;margin-bottom:8px}a{color:#22c55e;text-decoration:none}a:hover{text-decoration:underline}.card{background:#141414;border:1px solid #1f1f1f;border-radius:8px;padding:16px;margin:12px 0}.card:hover{border-color:#22c55e}.card h2{margin:0 0 8px;font-size:1.1rem}.card h2 a{color:#fff}small{color:#737373}p{margin:8px 0}hr{border:none;border-top:1px solid #1f1f1f;margin:24px 0}</style>
 </head>
 <body>
 <nav><a href="/">ai-grija.ro</a></nav>

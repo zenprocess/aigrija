@@ -16,6 +16,7 @@ export interface Env {
   ADMIN_API_KEY: string;
   VIRUSTOTAL_API_KEY: string;
   URLHAUS_AUTH_KEY?: string;
+  PHISHTANK_API_KEY?: string;
   WHATSAPP_APP_SECRET?: string;
   SANITY_PROJECT_ID?: string;
   SANITY_DATASET?: string;

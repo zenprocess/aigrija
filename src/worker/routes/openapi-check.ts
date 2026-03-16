@@ -254,7 +254,8 @@ export class CheckEndpoint extends OpenAPIRoute {
           safeBrowsingEnabled ? c.env.GOOGLE_SAFE_BROWSING_KEY : undefined,
           c.env.VIRUSTOTAL_API_KEY,
           c.env.CACHE,
-          c.env.URLHAUS_AUTH_KEY
+          c.env.URLHAUS_AUTH_KEY,
+          phishtankEnabled ? c.env.PHISHTANK_API_KEY : undefined
         )
       : undefined;
     const campaignMatches = matchCampaigns(body.text, body.url);

@@ -49,9 +49,9 @@ migrations_dir = "migrations"
 queue = "draft-generation"
 binding = "DRAFT_QUEUE"
 
-# [[queues.consumers]]
-# queue = "draft-generation"
-# max_batch_size = 5
+[[queues.consumers]]
+queue = "draft-generation"
+max_batch_size = 5
 
 # [[queues.producers]]
 # queue = "report-signals"
@@ -113,9 +113,9 @@ binding = "AI"
 queue = "draft-generation-preview"
 binding = "DRAFT_QUEUE"
 
-# [[env.preview.queues.consumers]]
-# queue = "draft-generation-preview"
-# max_batch_size = 5
+[[env.preview.queues.consumers]]
+queue = "draft-generation-preview"
+max_batch_size = 5
 
 [env.preview.triggers]
 crons = ["0 0 * * *", "0 2 * * 1-5"]

@@ -53,23 +53,23 @@ async function kvDeleteByPrefix(env: Env, prefix: string): Promise<void> {
 
 // ─── Sanity GROQ queries ──────────────────────────────────────────────────────
 
-const GHID_LIST_QUERY = `*[(_type == "blogPost" && category == "ghid" || _type == "bankGuide") && language == $lang] | order(publishedAt desc) [$from...$to] { _type, title, slug, excerpt, publishedAt, mainImage, categories[]->{ title, slug }, author->{ name } }`;
-const GHID_POST_QUERY = `coalesce(*[_type == "blogPost" && category == "ghid" && slug.current == $slug && language == $lang][0], *[_type == "bankGuide" && slug.current == $slug && language == $lang][0]) { ..., body, author->{ name, image, bio }, categories[]->{ title, slug } }`;
+const GHID_LIST_QUERY = `*[(_type == "blogPost" && category == "ghid" || _type == "bankGuide") && language == $lang] | order(publishedAt desc) [$from...$to] { _type, title, "slug": slug.current, excerpt, publishedAt, mainImage, categories[]->{ title, "slug": slug.current }, author->{ name } }`;
+const GHID_POST_QUERY = `coalesce(*[_type == "blogPost" && category == "ghid" && slug.current == $slug && language == $lang][0], *[_type == "bankGuide" && slug.current == $slug && language == $lang][0]) { ..., body, author->{ name, image, bio }, categories[]->{ title, "slug": slug.current } }`;
 
-const EDUCATIE_LIST_QUERY = `*[(_type == "blogPost" && category == "educatie" || _type == "schoolModule") && language == $lang] | order(publishedAt desc) [$from...$to] { _type, title, slug, excerpt, publishedAt, mainImage, categories[]->{ title, slug }, author->{ name } }`;
-const EDUCATIE_POST_QUERY = `coalesce(*[_type == "blogPost" && category == "educatie" && slug.current == $slug && language == $lang][0], *[_type == "schoolModule" && slug.current == $slug && language == $lang][0]) { ..., body, author->{ name, image, bio }, categories[]->{ title, slug } }`;
+const EDUCATIE_LIST_QUERY = `*[(_type == "blogPost" && category == "educatie" || _type == "schoolModule") && language == $lang] | order(publishedAt desc) [$from...$to] { _type, title, "slug": slug.current, excerpt, publishedAt, mainImage, categories[]->{ title, "slug": slug.current }, author->{ name } }`;
+const EDUCATIE_POST_QUERY = `coalesce(*[_type == "blogPost" && category == "educatie" && slug.current == $slug && language == $lang][0], *[_type == "schoolModule" && slug.current == $slug && language == $lang][0]) { ..., body, author->{ name, image, bio }, categories[]->{ title, "slug": slug.current } }`;
 
-const AMENINTARI_LIST_QUERY = `*[_type == "threatReport" && language == $lang] | order(firstSeen desc) [$from...$to] { title, slug, excerpt, firstSeen, severity, categories[]->{ title, slug } }`;
-const AMENINTARI_POST_QUERY = `*[_type == "threatReport" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, slug } }`;
+const AMENINTARI_LIST_QUERY = `*[_type == "threatReport" && language == $lang] | order(firstSeen desc) [$from...$to] { title, "slug": slug.current, excerpt, firstSeen, severity, categories[]->{ title, "slug": slug.current } }`;
+const AMENINTARI_POST_QUERY = `*[_type == "threatReport" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, "slug": slug.current } }`;
 
-const RAPOARTE_LIST_QUERY = `*[_type == "weeklyDigest" && language == $lang] | order(publishedAt desc) [$from...$to] { title, slug, excerpt, publishedAt, categories[]->{ title, slug } }`;
-const RAPOARTE_POST_QUERY = `*[_type == "weeklyDigest" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, slug } }`;
+const RAPOARTE_LIST_QUERY = `*[_type == "weeklyDigest" && language == $lang] | order(publishedAt desc) [$from...$to] { title, "slug": slug.current, excerpt, publishedAt, categories[]->{ title, "slug": slug.current } }`;
+const RAPOARTE_POST_QUERY = `*[_type == "weeklyDigest" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, "slug": slug.current } }`;
 
-const POVESTI_LIST_QUERY = `*[_type == "communityStory" && language == $lang] | order(publishedAt desc) [$from...$to] { title, slug, excerpt, publishedAt, author->{ name }, categories[]->{ title, slug } }`;
-const POVESTI_POST_QUERY = `*[_type == "communityStory" && slug.current == $slug && language == $lang][0] { ..., body, author->{ name, image, bio }, categories[]->{ title, slug } }`;
+const POVESTI_LIST_QUERY = `*[_type == "communityStory" && language == $lang] | order(publishedAt desc) [$from...$to] { title, "slug": slug.current, excerpt, publishedAt, author->{ name }, categories[]->{ title, "slug": slug.current } }`;
+const POVESTI_POST_QUERY = `*[_type == "communityStory" && slug.current == $slug && language == $lang][0] { ..., body, author->{ name, image, bio }, categories[]->{ title, "slug": slug.current } }`;
 
-const PRESA_LIST_QUERY = `*[_type == "pressRelease" && language == $lang] | order(publishedAt desc) [$from...$to] { title, slug, excerpt, publishedAt, categories[]->{ title, slug } }`;
-const PRESA_POST_QUERY = `*[_type == "pressRelease" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, slug } }`;
+const PRESA_LIST_QUERY = `*[_type == "pressRelease" && language == $lang] | order(publishedAt desc) [$from...$to] { title, "slug": slug.current, excerpt, publishedAt, categories[]->{ title, "slug": slug.current } }`;
+const PRESA_POST_QUERY = `*[_type == "pressRelease" && slug.current == $slug && language == $lang][0] { ..., body, categories[]->{ title, "slug": slug.current } }`;
 
 const SITEMAP_QUERY = `{
   "ghid": *[(_type == "blogPost" && category == "ghid") || _type == "bankGuide"] { "slug": slug.current, "language": language, "_updatedAt": _updatedAt },
@@ -80,16 +80,16 @@ const SITEMAP_QUERY = `{
   "presa": *[_type == "pressRelease"] { "slug": slug.current, "language": language, "_updatedAt": _updatedAt }
 }`;
 
-const RSS_ALL_QUERY = `*[(_type == "blogPost" || _type == "threatReport" || _type == "weeklyDigest" || _type == "communityStory" || _type == "pressRelease") && language == $lang] | order(coalesce(publishedAt, firstSeen) desc) [0...20] { _type, title, slug, excerpt, publishedAt, firstSeen, category, author->{ name } }`;
+const RSS_ALL_QUERY = `*[(_type == "blogPost" || _type == "threatReport" || _type == "weeklyDigest" || _type == "communityStory" || _type == "pressRelease") && language == $lang] | order(coalesce(publishedAt, firstSeen) desc) [0...20] { _type, title, "slug": slug.current, excerpt, publishedAt, firstSeen, category, author->{ name } }`;
 
 // ─── RSS builder helper ───────────────────────────────────────────────────────
 
-type RssPost = { _type?: string; title: string; slug: { current: string }; excerpt?: string; publishedAt?: string; firstSeen?: string; category?: string; author?: { name: string } };
+type RssPost = { _type?: string; title: string; slug: string; excerpt?: string; publishedAt?: string; firstSeen?: string; category?: string; author?: { name: string } };
 
 function buildRss(posts: RssPost[], base: string, feedPath: string, title: string, description: string, lang: string, pathPrefix: string): string {
   const items = (posts ?? []).map((p) => {
     const date = p.publishedAt || p.firstSeen || '';
-    const link = `${base}${pathPrefix}/${p.slug?.current ?? ''}`;
+    const link = `${base}${pathPrefix}/${p.slug ?? ''}`;
     const pubDate = date ? new Date(date).toUTCString() : '';
     return [
       '<item>',
@@ -157,7 +157,7 @@ blog.get('/amenintari/feed.xml', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
   try {
-    const query = `*[_type == "threatReport" && language == $lang] | order(firstSeen desc) [0...20] { title, slug, excerpt, firstSeen, author->{ name } }`;
+    const query = `*[_type == "threatReport" && language == $lang] | order(firstSeen desc) [0...20] { title, "slug": slug.current, excerpt, firstSeen, author->{ name } }`;
     const sanity = createSanityClient(c.env);
     const posts = await sanity<RssPost[]>(query, { lang });
     const xml = buildRss(posts ?? [], c.env.BASE_URL, '/amenintari/feed.xml', 'ai-grija.ro \u2014 Amenintari', 'Rapoarte de amenintari cibernetice', lang, '/amenintari');
@@ -238,7 +238,7 @@ blog.get('/ghid/feed.xml', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
   try {
-    const query = `*[(_type == "blogPost" && category == "ghid" || _type == "bankGuide") && language == $lang] | order(publishedAt desc) [0...20] { title, slug, excerpt, publishedAt, author->{ name } }`;
+    const query = `*[(_type == "blogPost" && category == "ghid" || _type == "bankGuide") && language == $lang] | order(publishedAt desc) [0...20] { title, "slug": slug.current, excerpt, publishedAt, author->{ name } }`;
     const sanity = createSanityClient(c.env);
     const posts = await sanity<RssPost[]>(query, { lang });
     const xml = buildRss(posts ?? [], c.env.BASE_URL, '/ghid/feed.xml', 'ai-grija.ro \u2014 Ghiduri', 'Ghiduri de protectie digitala', lang, '/ghid');
@@ -319,7 +319,7 @@ blog.get('/educatie/feed.xml', async (c) => {
   const cached = await kvGet(c.env, cacheKey);
   if (cached) { c.header('Content-Type', 'application/rss+xml'); c.header('X-Cache', 'HIT'); return c.body(cached); }
   try {
-    const query = `*[(_type == "blogPost" && category == "educatie" || _type == "schoolModule") && language == $lang] | order(publishedAt desc) [0...20] { title, slug, excerpt, publishedAt, author->{ name } }`;
+    const query = `*[(_type == "blogPost" && category == "educatie" || _type == "schoolModule") && language == $lang] | order(publishedAt desc) [0...20] { title, "slug": slug.current, excerpt, publishedAt, author->{ name } }`;
     const sanity = createSanityClient(c.env);
     const posts = await sanity<RssPost[]>(query, { lang });
     const xml = buildRss(posts ?? [], c.env.BASE_URL, '/educatie/feed.xml', 'ai-grija.ro \u2014 Educatie digitala', 'Articole de educatie digitala', lang, '/educatie');
@@ -564,7 +564,7 @@ blog.get('/feed.xml', async (c) => {
       else if (p._type === 'communityStory') prefix = '/povesti';
       else if (p._type === 'pressRelease') prefix = '/presa';
       else if (p._type === 'blogPost' && p.category === 'educatie') prefix = '/educatie';
-      const link = `${base}${prefix}/${p.slug?.current ?? ''}`;
+      const link = `${base}${prefix}/${p.slug ?? ''}`;
       const pubDate = date ? new Date(date).toUTCString() : '';
       return [
         '<item>',

@@ -54,7 +54,7 @@ export default function ContentList({ category }) {
         {items.map((item) => (
           <li key={item.id} className="glass-card p-4 border border-white/10">
             <a
-              href={`#/${category}/${item.slug || item.id}`}
+              href={`#/${category}/${typeof item.slug === 'object' ? item.slug?.current : item.slug || item.id}`}
               className="font-semibold text-green-400 hover:text-green-300 hover:underline"
               data-testid="content-list-item-link"
             >

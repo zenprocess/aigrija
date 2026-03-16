@@ -9,6 +9,7 @@ export type { FeatureFlag, FlagValue, FlagContext } from './feature-flags';
 
 // Core utilities
 export { handleScheduled } from './cron-handler';
+export { handleDraftQueue } from './queue-consumer';
 export { structuredLog } from './logger';
 export { escapeHtml } from './escape-html';
 export { requestId } from './request-id';

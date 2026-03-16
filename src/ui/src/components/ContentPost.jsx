@@ -177,7 +177,7 @@ export default function ContentPost({ slug, category }) {
                 <h2 className="text-xl font-bold text-white mb-4">{t('blog.related_articles')}</h2>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {related.map((rel) => (
-                    <a key={rel.slug} data-testid={`content-related-${rel.slug}`} href={`#/${category}/${rel.slug}`} className="glass-card border border-white/10 rounded-xl p-4 hover:border-blue-500/40 transition-colors group">
+                    <a key={typeof rel.slug === 'object' ? rel.slug?.current : rel.slug} data-testid={`content-related-${typeof rel.slug === 'object' ? rel.slug?.current : rel.slug}`} href={`#/${category}/${typeof rel.slug === 'object' ? rel.slug?.current : rel.slug}`} className="glass-card border border-white/10 rounded-xl p-4 hover:border-blue-500/40 transition-colors group">
                       <p className="text-sm font-medium text-white group-hover:text-blue-300 transition-colors line-clamp-2">{rel.title}</p>
                       {rel.publishedAt && <p className="text-xs text-gray-500 mt-1">{new Date(rel.publishedAt).toLocaleDateString()}</p>}
                     </a>

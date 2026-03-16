@@ -464,10 +464,11 @@ describe('GET /feed.xml', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns combined RSS feed', async () => {
+    // GROQ projects "slug": slug.current — mock returns string slugs, not raw Sanity objects
     const posts = [
-      { _type: 'blogPost', category: 'ghid', title: 'Ghid RSS', slug: { current: 'g1' }, publishedAt: '2024-01-01T00:00:00Z', author: { name: 'Autor' } },
-      { _type: 'threatReport', title: 'Amenintare RSS', slug: { current: 'a1' }, firstSeen: '2024-01-02T00:00:00Z' },
-      { _type: 'blogPost', category: 'educatie', title: 'Educatie RSS', slug: { current: 'e1' }, publishedAt: '2024-01-03T00:00:00Z' },
+      { _type: 'blogPost', category: 'ghid', title: 'Ghid RSS', slug: 'g1', publishedAt: '2024-01-01T00:00:00Z', author: { name: 'Autor' } },
+      { _type: 'threatReport', title: 'Amenintare RSS', slug: 'a1', firstSeen: '2024-01-02T00:00:00Z' },
+      { _type: 'blogPost', category: 'educatie', title: 'Educatie RSS', slug: 'e1', publishedAt: '2024-01-03T00:00:00Z' },
     ];
     mockSanityFetch.mockResolvedValue(posts);
     const env = makeEnv();

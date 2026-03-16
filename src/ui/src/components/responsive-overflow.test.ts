@@ -66,8 +66,8 @@ describe('Responsive CSS — no horizontal overflow at all breakpoints', () => {
       expect(source).toContain('px-4 sm:px-6 lg:px-8');
     });
 
-    it('desktop nav is hidden on mobile (hidden md:flex)', () => {
-      expect(source).toContain('hidden md:flex');
+    it('desktop nav is hidden on mobile/tablet (hidden lg:flex)', () => {
+      expect(source).toContain('hidden lg:flex');
     });
 
     it('mobile menu panel uses left-0 right-0 (full viewport width)', () => {

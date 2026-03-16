@@ -1,13 +1,13 @@
 {
   "project_id": "aigrija",
-  "timestamp": "2026-03-14T19:14:22Z",
+  "timestamp": "2026-03-16T10:55:13Z",
   "environment": "production",
   "threshold": 80,
-  "composite_score": 90.1,
+  "composite_score": 90.0,
   "ready": true,
   "signals": {
     "wow_maturity": {
-      "score": 87.0,
+      "score": 86.8,
       "weight": 0.35
     },
     "fitness_functions": {
@@ -17,7 +17,7 @@
     "qa_results": {
       "score": 100,
       "weight": 0.2,
-      "pass": 1613,
+      "pass": 1620,
       "fail": 0
     },
     "test_coverage": {

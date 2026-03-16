@@ -131,6 +131,48 @@ describe('POST /api/newsletter/subscribe', () => {
     const res = await newsletter.fetch(req, makeEnv(), {} as any);
     expect(res.status).toBe(503);
   });
+
+  it('returns 503 when upstream fetch throws (network error)', async () => {
+    allowedRateLimit();
+    vi.mocked(withCircuitBreaker).mockRejectedValue(new Error('fetch failed'));
+    const req = new Request('http://localhost/api/newsletter/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'test@example.com' }),
+    });
+    const res = await newsletter.fetch(req, makeEnv(), {} as any);
+    expect(res.status).toBe(503);
+    const body = await res.json() as any;
+    expect(body.error.code).toBe('SERVICE_UNAVAILABLE');
+  });
+
+  it('returns 503 when Buttondown returns 401 (invalid API key)', async () => {
+    allowedRateLimit();
+    vi.mocked(withCircuitBreaker).mockResolvedValue(new Response('Unauthorized', { status: 401 }) as any);
+    const req = new Request('http://localhost/api/newsletter/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'test@example.com' }),
+    });
+    const res = await newsletter.fetch(req, makeEnv(), {} as any);
+    expect(res.status).toBe(503);
+    const body = await res.json() as any;
+    expect(body.error.code).toBe('SERVICE_UNAVAILABLE');
+  });
+
+  it('returns 503 when Buttondown returns 500', async () => {
+    allowedRateLimit();
+    vi.mocked(withCircuitBreaker).mockResolvedValue(new Response('Internal Server Error', { status: 500 }) as any);
+    const req = new Request('http://localhost/api/newsletter/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'test@example.com' }),
+    });
+    const res = await newsletter.fetch(req, makeEnv(), {} as any);
+    expect(res.status).toBe(503);
+    const body = await res.json() as any;
+    expect(body.error.code).toBe('SERVICE_UNAVAILABLE');
+  });
 });
 
 describe('POST /api/newsletter/unsubscribe', () => {
@@ -185,5 +227,19 @@ describe('POST /api/newsletter/unsubscribe', () => {
     });
     const res = await newsletter.fetch(req, makeEnv(''), {} as any);
     expect(res.status).toBe(503);
+  });
+
+  it('returns 503 when upstream fetch throws (network error)', async () => {
+    allowedRateLimit();
+    vi.mocked(withCircuitBreaker).mockRejectedValue(new Error('fetch failed'));
+    const req = new Request('http://localhost/api/newsletter/unsubscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'test@example.com' }),
+    });
+    const res = await newsletter.fetch(req, makeEnv(), {} as any);
+    expect(res.status).toBe(503);
+    const body = await res.json() as any;
+    expect(body.error.code).toBe('SERVICE_UNAVAILABLE');
   });
 });

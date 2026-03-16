@@ -171,6 +171,75 @@ describe('language filtering', () => {
   });
 });
 
+// ─── Romanian fallback behavior ───────────────────────────────────────────────
+
+describe('Romanian fallback for non-ro languages', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns Romanian content wrapped with fallback:true when lang=en returns empty', async () => {
+    const roContent = [{ title: 'Conținut Romanian', slug: { current: 'slug-ro' } }];
+    mockSanityFetch
+      .mockResolvedValueOnce([])        // lang=en returns empty
+      .mockResolvedValueOnce(roContent); // lang=ro fallback returns content
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/amenintari?lang=en'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json() as { items: unknown[]; fallback: boolean };
+    expect(json.fallback).toBe(true);
+    expect(Array.isArray(json.items)).toBe(true);
+    expect((json.items[0] as { title: string }).title).toBe('Conținut Romanian');
+  });
+
+  it('returns empty array (no fallback wrapper) when both lang=en and lang=ro are empty', async () => {
+    mockSanityFetch.mockResolvedValue([]);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/ghid?lang=en'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(Array.isArray(json)).toBe(true);
+    expect((json as unknown[]).length).toBe(0);
+  });
+
+  it('does not trigger fallback when lang=ro returns empty', async () => {
+    mockSanityFetch.mockResolvedValue([]);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/educatie'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(Array.isArray(json)).toBe(true);
+    // Only one Sanity call — no fallback retry for ro
+    expect(mockSanityFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns plain array (no fallback wrapper) when lang=en has content', async () => {
+    const enContent = [{ title: 'English Content', slug: { current: 'en-slug' } }];
+    mockSanityFetch.mockResolvedValueOnce(enContent);
+    const env = makeEnv();
+    const res = await blog.fetch(makeRequest('/rapoarte?lang=en'), env);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(Array.isArray(json)).toBe(true);
+    expect((json as { title: string }[])[0].title).toBe('English Content');
+  });
+
+  it('fallback works for all content sections', async () => {
+    const roContent = [{ title: 'RO Content', slug: { current: 'ro-slug' } }];
+    const sections = ['ghid', 'educatie', 'rapoarte', 'povesti', 'presa'];
+    for (const section of sections) {
+      mockSanityFetch.mockClear();
+      mockSanityFetch
+        .mockResolvedValueOnce([])        // lang=en empty
+        .mockResolvedValueOnce(roContent); // lang=ro fallback
+      const env = makeEnv();
+      const res = await blog.fetch(makeRequest(`/${section}?lang=en`), env);
+      expect(res.status).toBe(200);
+      const json = await res.json() as { items: unknown[]; fallback: boolean };
+      expect(json.fallback).toBe(true);
+      expect(json.items.length).toBe(1);
+    }
+  });
+});
+
 // ─── /amenintari ──────────────────────────────────────────────────────────────
 
 describe('GET /amenintari', () => {

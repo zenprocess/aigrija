@@ -31,6 +31,17 @@ export default function Checker() {
   const isOverLimit = charCount > 5000;
 
   useEffect(() => {
+    const pendingId = sessionStorage.getItem('pendingScrollId');
+    if (pendingId) {
+      sessionStorage.removeItem('pendingScrollId');
+      requestAnimationFrame(() => {
+        const el = document.getElementById(pendingId);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+  }, []);
+
+  useEffect(() => {
     if (rateLimitSeconds <= 0) return;
     countdownRef.current = setInterval(() => {
       setRateLimitSeconds(s => {
@@ -51,6 +62,17 @@ export default function Checker() {
       .then(data => setSocialProofCount(data.total_checks))
       .catch(() => {});
     return () => ctrl.abort();
+  }, []);
+
+  useEffect(() => {
+    const pendingId = sessionStorage.getItem('pendingScrollId');
+    if (pendingId) {
+      sessionStorage.removeItem('pendingScrollId');
+      requestAnimationFrame(() => {
+        const el = document.getElementById(pendingId);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
   }, []);
 
   const handleImageChange = (file) => {

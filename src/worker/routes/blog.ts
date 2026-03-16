@@ -118,6 +118,27 @@ function buildRss(posts: RssPost[], base: string, feedPath: string, title: strin
   ].join('\n');
 }
 
+// ─── Romanian fallback helper ────────────────────────────────────────────────
+
+type SanityListClient = <T>(query: string, params: Record<string, string | number | boolean>) => Promise<T>;
+
+async function fetchListWithFallback(
+  sanity: SanityListClient,
+  query: string,
+  lang: string,
+  from: number,
+  to: number,
+): Promise<{ posts: Record<string, unknown>[]; fallback: boolean }> {
+  const posts = (await sanity<Record<string, unknown>[]>(query, { lang, from, to })) ?? [];
+  if (posts.length === 0 && lang !== 'ro') {
+    const roPosts = (await sanity<Record<string, unknown>[]>(query, { lang: 'ro', from, to })) ?? [];
+    if (roPosts.length > 0) {
+      return { posts: roPosts, fallback: true };
+    }
+  }
+  return { posts, fallback: false };
+}
+
 // ─── /amenintari — Threat Reports ────────────────────────────────────────────
 
 blog.get('/amenintari', async (c) => {
@@ -132,14 +153,15 @@ blog.get('/amenintari', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
     const sanity = createSanityClient(c.env);
-    const posts = await sanity<Record<string, unknown>[]>(AMENINTARI_LIST_QUERY, { lang, from, to });
     if (html) {
+      const posts = await sanity<Record<string, unknown>[]>(AMENINTARI_LIST_QUERY, { lang, from, to });
       const rendered = renderBlogListPage(posts as never[], 'amenintari', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
       c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
       return c.html(rendered);
     }
-    const body = JSON.stringify(posts ?? []);
+    const { posts, fallback } = await fetchListWithFallback(sanity, AMENINTARI_LIST_QUERY, lang, from, to);
+    const body = JSON.stringify(fallback ? { items: posts, fallback: true } : posts);
     await kvPut(c.env, cacheKey, body, 300);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
     return c.body(body);
@@ -213,14 +235,15 @@ blog.get('/ghid', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
     const sanity = createSanityClient(c.env);
-    const posts = await sanity<Record<string, unknown>[]>(GHID_LIST_QUERY, { lang, from, to });
     if (html) {
+      const posts = await sanity<Record<string, unknown>[]>(GHID_LIST_QUERY, { lang, from, to });
       const rendered = renderBlogListPage(posts as never[], 'ghid', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
       c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
       return c.html(rendered);
     }
-    const body = JSON.stringify(posts ?? []);
+    const { posts, fallback } = await fetchListWithFallback(sanity, GHID_LIST_QUERY, lang, from, to);
+    const body = JSON.stringify(fallback ? { items: posts, fallback: true } : posts);
     await kvPut(c.env, cacheKey, body, 300);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
     return c.body(body);
@@ -294,14 +317,15 @@ blog.get('/educatie', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
     const sanity = createSanityClient(c.env);
-    const posts = await sanity<Record<string, unknown>[]>(EDUCATIE_LIST_QUERY, { lang, from, to });
     if (html) {
+      const posts = await sanity<Record<string, unknown>[]>(EDUCATIE_LIST_QUERY, { lang, from, to });
       const rendered = renderBlogListPage(posts as never[], 'educatie', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
       c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
       return c.html(rendered);
     }
-    const body = JSON.stringify(posts ?? []);
+    const { posts, fallback } = await fetchListWithFallback(sanity, EDUCATIE_LIST_QUERY, lang, from, to);
+    const body = JSON.stringify(fallback ? { items: posts, fallback: true } : posts);
     await kvPut(c.env, cacheKey, body, 300);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
     return c.body(body);
@@ -375,14 +399,15 @@ blog.get('/rapoarte', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
     const sanity = createSanityClient(c.env);
-    const posts = await sanity<Record<string, unknown>[]>(RAPOARTE_LIST_QUERY, { lang, from, to });
     if (html) {
+      const posts = await sanity<Record<string, unknown>[]>(RAPOARTE_LIST_QUERY, { lang, from, to });
       const rendered = renderBlogListPage(posts as never[], 'rapoarte', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
       c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
       return c.html(rendered);
     }
-    const body = JSON.stringify(posts ?? []);
+    const { posts, fallback } = await fetchListWithFallback(sanity, RAPOARTE_LIST_QUERY, lang, from, to);
+    const body = JSON.stringify(fallback ? { items: posts, fallback: true } : posts);
     await kvPut(c.env, cacheKey, body, 300);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
     return c.body(body);
@@ -435,14 +460,15 @@ blog.get('/povesti', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
     const sanity = createSanityClient(c.env);
-    const posts = await sanity<Record<string, unknown>[]>(POVESTI_LIST_QUERY, { lang, from, to });
     if (html) {
+      const posts = await sanity<Record<string, unknown>[]>(POVESTI_LIST_QUERY, { lang, from, to });
       const rendered = renderBlogListPage(posts as never[], 'povesti', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
       c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
       return c.html(rendered);
     }
-    const body = JSON.stringify(posts ?? []);
+    const { posts, fallback } = await fetchListWithFallback(sanity, POVESTI_LIST_QUERY, lang, from, to);
+    const body = JSON.stringify(fallback ? { items: posts, fallback: true } : posts);
     await kvPut(c.env, cacheKey, body, 300);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
     return c.body(body);
@@ -495,14 +521,15 @@ blog.get('/presa', async (c) => {
   if (cached) { c.header('X-Cache', 'HIT'); c.header('Content-Type', html ? 'text/html; charset=utf-8' : 'application/json'); if (html) c.header('Cache-Control', 'public, max-age=300'); return c.body(cached); }
   try {
     const sanity = createSanityClient(c.env);
-    const posts = await sanity<Record<string, unknown>[]>(PRESA_LIST_QUERY, { lang, from, to });
     if (html) {
+      const posts = await sanity<Record<string, unknown>[]>(PRESA_LIST_QUERY, { lang, from, to });
       const rendered = renderBlogListPage(posts as never[], 'presa', lang, page, c.env.BASE_URL);
       await kvPut(c.env, cacheKey, rendered, 300);
       c.header('X-Cache', 'MISS'); c.header('Cache-Control', 'public, max-age=300');
       return c.html(rendered);
     }
-    const body = JSON.stringify(posts ?? []);
+    const { posts, fallback } = await fetchListWithFallback(sanity, PRESA_LIST_QUERY, lang, from, to);
+    const body = JSON.stringify(fallback ? { items: posts, fallback: true } : posts);
     await kvPut(c.env, cacheKey, body, 300);
     c.header('X-Cache', 'MISS'); c.header('Content-Type', 'application/json');
     return c.body(body);

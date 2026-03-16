@@ -84,23 +84,25 @@ newsletter.post('/api/newsletter/subscribe', async (c) => {
       );
     }
     return c.json(
-      { error: { code: 'UPSTREAM_ERROR', message: 'Eroare la procesarea abonarii. Incearca din nou.' } },
-      502
+      { error: { code: 'SERVICE_UNAVAILABLE', message: 'Serviciul de newsletter este temporar indisponibil. Incearca din nou mai tarziu.' } },
+      503
     );
   }
 
   if (!bdRes.ok) {
     // 400 from Buttondown usually means already subscribed or invalid email
-    const bdBody = await bdRes.json().catch((e) => { console.error("Newsletter JSON parse error:", e); return {}; }) as Record<string, unknown>;
     if (bdRes.status === 400) {
       return c.json(
         { error: { code: 'ALREADY_SUBSCRIBED', message: 'Aceasta adresa este deja abonata sau invalida.' } },
         400
       );
     }
+    if (bdRes.status === 401 || bdRes.status === 403) {
+      console.error('Newsletter: Buttondown authentication failed — check BUTTONDOWN_API_KEY binding', { status: bdRes.status });
+    }
     return c.json(
-      { error: { code: 'UPSTREAM_ERROR', message: 'Eroare la procesarea abonarii. Incearca din nou.', detail: bdBody } },
-      502
+      { error: { code: 'SERVICE_UNAVAILABLE', message: 'Serviciul de newsletter este temporar indisponibil. Incearca din nou mai tarziu.' } },
+      503
     );
   }
 
@@ -173,8 +175,8 @@ newsletter.post('/api/newsletter/unsubscribe', async (c) => {
       );
     }
     return c.json(
-      { error: { code: 'UPSTREAM_ERROR', message: 'Eroare la procesarea dezabonarii. Incearca din nou.' } },
-      502
+      { error: { code: 'SERVICE_UNAVAILABLE', message: 'Serviciul de newsletter este temporar indisponibil. Incearca din nou mai tarziu.' } },
+      503
     );
   }
 
@@ -183,7 +185,10 @@ newsletter.post('/api/newsletter/unsubscribe', async (c) => {
   }
 
   if (!bdRes.ok) {
-    return c.json({ error: { code: 'UPSTREAM_ERROR', message: 'Eroare la procesarea dezabonarii. Incearca din nou.' } }, 502);
+    if (bdRes.status === 401 || bdRes.status === 403) {
+      console.error('Newsletter: Buttondown authentication failed — check BUTTONDOWN_API_KEY binding', { status: bdRes.status });
+    }
+    return c.json({ error: { code: 'SERVICE_UNAVAILABLE', message: 'Serviciul de newsletter este temporar indisponibil. Incearca din nou mai tarziu.' } }, 503);
   }
 
   await revokeConsent(c.env, 'email', parsed.data.email).catch(() => {});

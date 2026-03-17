@@ -98,11 +98,11 @@ function ensureResultsDir() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Visual Consistency — dark background checks', () => {
-  test.setTimeout(60_000);
   const results: PageResult[] = [];
 
   for (const url of TARGET_PAGES) {
     test(`dark background: ${url}`, async ({ page }) => {
+      test.setTimeout(60_000);
       const isMobile = test.info().project.name === 'mobile';
       let bgColor: string | null = null;
       let darkBg = false;
@@ -189,8 +189,8 @@ test.describe('Visual Consistency — dark background checks', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Visual Consistency — hero terminal border alignment', () => {
-  test.setTimeout(60_000);
   test('terminal box left/right borders are vertically aligned', async ({ page }) => {
+    test.setTimeout(60_000);
     await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 20_000 });
     await page.waitForTimeout(500);
 
@@ -290,7 +290,6 @@ test.describe('Visual Consistency — hero terminal border alignment', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Visual Consistency — horizontal overflow checks', () => {
-  test.setTimeout(60_000);
   const overflowResults: OverflowResult[] = [];
 
   // Only check homepage for overflow across viewports (most representative)
@@ -298,6 +297,7 @@ test.describe('Visual Consistency — horizontal overflow checks', () => {
 
   for (const width of VIEWPORTS) {
     test(`no horizontal overflow at ${width}px`, async ({ page }) => {
+      test.setTimeout(60_000);
       await page.setViewportSize({ width, height: 900 });
       await page.goto(OVERFLOW_PAGE, { waitUntil: 'domcontentloaded', timeout: 20_000 });
       await page.waitForTimeout(300);
@@ -349,8 +349,8 @@ test.describe('Visual Consistency — horizontal overflow checks', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Visual Consistency — summary', () => {
-  test.setTimeout(60_000);
   test('write final summary to 06-visual.json', async () => {
+    test.setTimeout(60_000);
     ensureResultsDir();
 
     let report: Partial<VisualReport> = {};

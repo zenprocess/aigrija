@@ -311,7 +311,7 @@ export default function Checker() {
 
         {/* Verdict Section */}
         {result && (
-          <div ref={resultRef} className="mt-12 space-y-6 animate-fade-in-up">
+          <div ref={resultRef} data-testid="verdict-card" className="mt-12 space-y-6 animate-fade-in-up">
 
             {/* Vision Analysis Card */}
             {imageAnalysis && (

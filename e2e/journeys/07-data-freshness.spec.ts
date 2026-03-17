@@ -54,7 +54,6 @@ function ensureResultsDir() {
 }
 
 test.describe('Journey 7: Data Freshness & Loading States', () => {
-  test.setTimeout(60_000);
   let report: FreshnessReport;
 
   test.beforeAll(() => {
@@ -81,6 +80,7 @@ test.describe('Journey 7: Data Freshness & Loading States', () => {
   });
 
   test('counter on homepage shows a number — not a loading placeholder', async ({ page }) => {
+    test.setTimeout(60_000);
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
@@ -115,6 +115,7 @@ test.describe('Journey 7: Data Freshness & Loading States', () => {
   });
 
   test('campaigns section shows cards — not a spinner', async ({ page }) => {
+    test.setTimeout(60_000);
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
@@ -142,6 +143,7 @@ test.describe('Journey 7: Data Freshness & Loading States', () => {
   });
 
   test('quiz page shows a question within 3 seconds', async ({ page }) => {
+    test.setTimeout(60_000);
     await page.goto('/#/quiz');
     await page.waitForLoadState('networkidle');
 
@@ -171,6 +173,7 @@ test.describe('Journey 7: Data Freshness & Loading States', () => {
 
   for (const route of ALL_ROUTES) {
     test(`no loading indicators after 5s on route: ${route}`, async ({ page }) => {
+      test.setTimeout(60_000);
       await page.goto(route);
       await page.waitForLoadState('networkidle');
       await page.waitForTimeout(5000);

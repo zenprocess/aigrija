@@ -37,9 +37,9 @@ const LANGUAGE_NAMES: Record<string, string> = {
 test.describe('Journey 3 — Language Switching Consistency', () => {
   // Force desktop viewport so the desktop nav bar is visible (lg: breakpoint = 1024px)
   test.use({ viewport: { width: 1280, height: 720 } });
-  test.setTimeout(60000);
 
   test('language switcher changes all nav items consistently', async ({ page }) => {
+    test.setTimeout(60000);
     const isMobile = test.info().project.name === 'mobile';
     // On mobile, open the hamburger menu before interacting with nav items
     const openMobileNavIfNeeded = async (): Promise<void> => {

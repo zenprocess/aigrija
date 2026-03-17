@@ -5,6 +5,10 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
 
+// Skip on mobile project — this suite manages its own viewports (375–1440px).
+// Running under isMobile: true causes viewport/scrollbar inconsistencies.
+test.skip(({ browserName }, testInfo) => testInfo.project.name === 'mobile', 'Viewport tests run on chromium only');
+
 const BREAKPOINTS = [
   { name: 'mobile', width: 375, height: 812 },
   { name: 'tablet', width: 768, height: 1024 },

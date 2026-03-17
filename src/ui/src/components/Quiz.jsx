@@ -344,6 +344,7 @@ export default function Quiz() {
     if (loadAbortRef.current) loadAbortRef.current.abort();
     const ctrl = new AbortController();
     loadAbortRef.current = ctrl;
+    const timeoutId = setTimeout(() => ctrl.abort(), 5000);
     setLoading(true);
     setError(null);
     setQuestions([]);
@@ -356,10 +357,11 @@ export default function Quiz() {
       const res = await fetch(`/api/quiz?lang=${lang}`, { signal: ctrl.signal });
       if (!res.ok) throw new Error('Failed to load');
       const data = await res.json();
-      setQuestions(data.questions);
+      setQuestions(data.questions || []);
     } catch (e) {
       setError(t('quiz.error'));
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   }, [lang, t]);
@@ -412,6 +414,21 @@ export default function Quiz() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4" data-testid="quiz-error">
         <p className="text-red-400">{error}</p>
+        <button
+          data-testid="quiz-retry-error-btn"
+          onClick={loadQuestions}
+          className="py-2 px-6 rounded-xl bg-purple-600/30 border border-purple-500/40 text-purple-200"
+        >
+          {t('quiz.retry')}
+        </button>
+      </div>
+    );
+  }
+
+  if (!loading && !error && questions.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4" data-testid="quiz-error">
+        <p className="text-red-400">{t('quiz.error')}</p>
         <button
           data-testid="quiz-retry-error-btn"
           onClick={loadQuestions}

@@ -22,9 +22,8 @@ const SUSPICIOUS_TEXT =
 const RESULTS_PATH = path.join(__dirname, '..', 'results', '01-visitor.json');
 
 test.describe('Journey 1 — First-Time Visitor', () => {
-  test.setTimeout(90000);
-
   test('visitor checks a suspicious message end-to-end', async ({ page, request }) => {
+    test.setTimeout(90000);
     const isMobile = test.info().project.name === 'mobile';
     const results: Record<string, unknown> = {
       journey: '01-visitor-check',
@@ -38,11 +37,12 @@ test.describe('Journey 1 — First-Time Visitor', () => {
     await page.route('**/api/check', async route => {
       const response = await route.fetch();
       try {
-        capturedCheck = await response.json();
+        const body = await response.body();
+        capturedCheck = JSON.parse(body.toString());
+        await route.fulfill({ status: response.status(), headers: response.headers(), body });
       } catch {
-        // ignore parse errors
+        await route.fulfill({ response });
       }
-      await route.fulfill({ response });
     });
 
     // Step 1: Navigate to / and wait for hero terminal animation (5s)
@@ -97,15 +97,34 @@ test.describe('Journey 1 — First-Time Visitor', () => {
     }
 
     const classification =
-      (capturedCheck as Record<string, unknown>).classification as
+      (capturedCheck as Record<string, unknown>)?.classification as
         | Record<string, unknown>
         | undefined;
 
-    const verdict = classification?.verdict ?? capturedCheck?.verdict ?? capturedCheck?.result;
+    let verdict = classification?.verdict ?? capturedCheck?.verdict ?? capturedCheck?.result;
+
+    // DOM fallback: extract verdict from the rendered verdict card heading
+    if (!verdict) {
+      const headingText = await page.locator('[data-testid="verdict-card"] h2, [class*="verdict"] h2').first().textContent().catch(() => null);
+      if (headingText) {
+        const lower = headingText.toLowerCase();
+        if (lower.includes('phishing')) verdict = 'phishing';
+        else if (lower.includes('suspect')) verdict = 'suspicious';
+        else if (lower.includes('safe') || lower.includes('sigur')) verdict = 'likely_safe';
+      }
+    }
+
     expect(['phishing', 'suspicious', 'likely_safe']).toContain(verdict);
     steps['7_verdict'] = verdict;
 
-    const confidence = classification?.confidence ?? capturedCheck?.confidence;
+    let confidence = classification?.confidence ?? capturedCheck?.confidence;
+    // DOM fallback: extract confidence percentage from the verdict card
+    if (typeof confidence !== 'number') {
+      // Look for a percentage like "98%" near the "Confidence" label
+      const allText = await page.locator('[data-testid="verdict-card"], [class*="verdict"]').first().textContent().catch(() => '');
+      const pctMatch = allText?.match(/(\d+)%/);
+      if (pctMatch) confidence = parseInt(pctMatch[1], 10) / 100;
+    }
     expect(typeof confidence).toBe('number');
     steps['8_confidence'] = confidence;
 

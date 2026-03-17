@@ -31,9 +31,8 @@ function isDarkColor(rgb: string): boolean {
 }
 
 test.describe('Journey 2 — Campaign Alert Deep-Dive', () => {
-  test.setTimeout(60000);
-
   test('homepage → card click → detail page → back link', async ({ page }) => {
+    test.setTimeout(60000);
     const isMobile = test.info().project.name === 'mobile';
     const results: Record<string, unknown> = {
       journey: '02-campaign-deepdive',
@@ -151,6 +150,7 @@ test.describe('Journey 2 — Campaign Alert Deep-Dive', () => {
   });
 
   test('SSR route /alerte/:slug has dark background', async ({ page }) => {
+    test.setTimeout(60000);
     const results: Record<string, unknown> = {
       journey: '02-campaign-deepdive-ssr',
       timestamp: new Date().toISOString(),

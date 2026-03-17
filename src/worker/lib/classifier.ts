@@ -2,6 +2,7 @@ import { structuredLog } from '../lib/logger';
 import { redactPii } from './pii-redactor';
 export { matchScamPattern } from '../data/scam-patterns';
 import type { ClassificationResult } from './types';
+import { CircuitBreaker, CircuitOpenError } from './circuit-breaker';
 
 const PRIMARY_MODEL = '@cf/meta/llama-3.1-8b-instruct-fast';
 const FALLBACK_MODEL = '@cf/google/gemma-3-12b-it';
@@ -132,20 +133,22 @@ function validateAndSanitizeInput(text: string): string {
  * Returns a function with the same signature as classify minus the first argument.
  *
  * @param ai  Cloudflare Workers AI binding.
+ * @param kv  Optional KV namespace for circuit breaker state persistence.
  */
-export function createClassifier(ai: Ai) {
+export function createClassifier(ai: Ai, kv?: KVNamespace) {
   return (
     text: string,
     url?: string,
     flags?: ClassifierFlags,
-  ): Promise<ClassificationResult> => classify(ai, text, url, flags);
+  ): Promise<ClassificationResult> => classify(ai, text, url, flags, kv);
 }
 
 export async function classify(
   ai: Ai,
   text: string,
   url?: string,
-  flags: ClassifierFlags = {}
+  flags: ClassifierFlags = {},
+  kv?: KVNamespace,
 ): Promise<ClassificationResult> {
   const { gemma_fallback_enabled = true } = flags;
 
@@ -168,7 +171,13 @@ export async function classify(
   let parsed: Omit<ClassificationResult, 'model_used' | 'ai_disclaimer'> | null = null;
 
   try {
-    const response = await runModel(ai, PRIMARY_MODEL, messages);
+    let response: { response?: string };
+    if (kv) {
+      const cb = new CircuitBreaker('ai-primary', kv);
+      response = await cb.execute(() => runModel(ai, PRIMARY_MODEL, messages));
+    } else {
+      response = await runModel(ai, PRIMARY_MODEL, messages);
+    }
     parsed = parseAiResponse(response.response);
     if (parsed) {
       structuredLog('debug', '[classifier] Primary model used', { model: PRIMARY_MODEL });
@@ -176,19 +185,33 @@ export async function classify(
       structuredLog('warn', '[classifier] Primary model returned empty/invalid response', { fallback: FALLBACK_MODEL });
     }
   } catch (err) {
-    structuredLog('warn', '[classifier] Primary model threw error', { fallback: FALLBACK_MODEL, error: String(err) });
+    if (err instanceof CircuitOpenError) {
+      structuredLog('warn', '[classifier] Workers AI primary circuit OPEN — skipping to fallback');
+    } else {
+      structuredLog('warn', '[classifier] Primary model threw error', { fallback: FALLBACK_MODEL, error: String(err) });
+    }
   }
 
   if (!parsed && gemma_fallback_enabled) {
     modelUsed = FALLBACK_MODEL;
     try {
-      const response = await runModel(ai, FALLBACK_MODEL, messages);
+      let response: { response?: string };
+      if (kv) {
+        const cb = new CircuitBreaker('ai-fallback', kv);
+        response = await cb.execute(() => runModel(ai, FALLBACK_MODEL, messages));
+      } else {
+        response = await runModel(ai, FALLBACK_MODEL, messages);
+      }
       parsed = parseAiResponse(response.response);
       if (parsed) {
         structuredLog('debug', '[classifier] Fallback model used', { model: FALLBACK_MODEL });
       }
     } catch (err) {
-      structuredLog('error', '[classifier] Fallback model also failed', { error: String(err) });
+      if (err instanceof CircuitOpenError) {
+        structuredLog('warn', '[classifier] Workers AI fallback circuit OPEN — returning default result');
+      } else {
+        structuredLog('error', '[classifier] Fallback model also failed', { error: String(err) });
+      }
     }
   } else if (!parsed && !gemma_fallback_enabled) {
     structuredLog('warn', '[classifier] Gemma fallback disabled by feature flag — skipping fallback');

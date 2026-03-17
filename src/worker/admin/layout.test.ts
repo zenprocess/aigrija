@@ -32,6 +32,6 @@ describe('adminLayout', () => {
   it('marks Studio as external link', () => {
     const html = adminLayout('Test', '');
     expect(html).toContain('target="_blank"');
-    expect(html).toContain('/studio');
+    expect(html).toContain('studio.ai-grija.ro');
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { newsletterAdmin } from './newsletter';
+import { newsletterAdmin, fetchButtondownSubscribers, BUTTONDOWN_API_BASE } from './newsletter';
 
 // ---- Helpers ---------------------------------------------------------------
 
@@ -39,6 +39,26 @@ const sampleSubscribers = [
 ];
 
 // ---- Tests -----------------------------------------------------------------
+
+describe('fetchButtondownSubscribers — URL construction', () => {
+  it('builds URL with URLSearchParams, not string concatenation', async () => {
+    const capturedUrls: string[] = [];
+    const mockFetchFn = vi.fn(async (url: string | URL) => {
+      capturedUrls.push(url instanceof URL ? url.toString() : url);
+      return { ok: true, status: 200, statusText: 'OK', json: async () => ({ results: [], count: 0, next: null, previous: null }) };
+    });
+    globalThis.fetch = mockFetchFn as unknown as typeof fetch;
+
+    await fetchButtondownSubscribers('test-key', 3);
+
+    expect(capturedUrls).toHaveLength(1);
+    const parsed = new URL(capturedUrls[0]);
+    expect(parsed.origin + parsed.pathname).toBe(`${BUTTONDOWN_API_BASE}/subscribers`);
+    expect(parsed.searchParams.get('page')).toBe('3');
+    // Ensure no raw template literal injection possible (no extra query chars)
+    expect(parsed.searchParams.toString()).toBe('page=3');
+  });
+});
 
 describe('newsletterAdmin', () => {
   let originalFetch: typeof globalThis.fetch;

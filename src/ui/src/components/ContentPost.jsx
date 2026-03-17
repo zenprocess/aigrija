@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
+import parse from 'html-react-parser';
 import { ArrowLeft, Calendar, User, Clock, Share2, Volume2, Tag } from 'lucide-react';
 import { useTranslation } from '../i18n/index.jsx';
 
 function PortableTextRenderer({ body }) {
   if (!body) return null;
   if (typeof body === 'string') {
-    return <div className="prose-content" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(body) }} />;
+    return <div className="prose-content">{parse(DOMPurify.sanitize(body))}</div>;
   }
   if (!Array.isArray(body)) return null;
   return (

@@ -35,7 +35,8 @@ export async function fetchButtondownSubscribers(
   apiKey: string,
   page: number
 ): Promise<ButtondownListResponse> {
-  const url = `${BUTTONDOWN_API_BASE}/subscribers?page=${page}`;
+  const url = new URL(`${BUTTONDOWN_API_BASE}/subscribers`);
+  url.searchParams.set('page', String(page));
   const res = await fetch(url, {
     headers: {
       Authorization: `Token ${apiKey}`,
@@ -49,7 +50,8 @@ export async function fetchButtondownSubscribers(
 }
 
 export async function deleteButtondownSubscriber(apiKey: string, email: string): Promise<void> {
-  const searchUrl = `${BUTTONDOWN_API_BASE}/subscribers?email=${encodeURIComponent(email)}`;
+  const searchUrl = new URL(`${BUTTONDOWN_API_BASE}/subscribers`);
+  searchUrl.searchParams.set('email', email);
   const searchRes = await fetch(searchUrl, {
     headers: { Authorization: `Token ${apiKey}` },
   });
@@ -62,7 +64,7 @@ export async function deleteButtondownSubscriber(apiKey: string, email: string):
   }
   const subscriberId = data.results[0].id;
 
-  const delUrl = `${BUTTONDOWN_API_BASE}/subscribers/${subscriberId}`;
+  const delUrl = new URL(`${BUTTONDOWN_API_BASE}/subscribers/${encodeURIComponent(subscriberId)}`);
   const delRes = await fetch(delUrl, {
     method: 'DELETE',
     headers: { Authorization: `Token ${apiKey}` },

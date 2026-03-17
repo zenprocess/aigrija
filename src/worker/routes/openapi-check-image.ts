@@ -169,7 +169,7 @@ export class CheckImageEndpoint extends OpenAPIRoute {
 
     let classification;
     if (validatedTextContext && validatedTextContext.trim().length >= 3) {
-      classification = await createClassifier(c.env.AI)(validatedTextContext);
+      classification = await createClassifier(c.env.AI, c.env.CACHE)(validatedTextContext);
       if (visionVerdict === 'phishing' && classification.verdict === 'likely_safe') {
         classification = { ...classification, verdict: 'suspicious' as const };
       }

@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { href: '/admin/config', label: 'Config', icon: '⚙️', key: 'config' },
   { href: '/admin/rapoarte-traduceri', label: 'Translation Reports', icon: '🗒️', key: 'rapoarte-traduceri' },
   { href: '/admin/generare-continut', label: 'AI Generation', icon: '🤖', key: 'generare-continut' },
-  { href: '/studio', label: 'Studio', icon: '🎨', key: 'studio', external: true },
+  { href: 'https://studio.ai-grija.ro', label: 'Studio', icon: '🎨', key: 'studio', external: true },
 ] as const;
 
 export function adminLayout(title: string, content: string, activeNav = '', adminEmail = '', nonce = ''): string {

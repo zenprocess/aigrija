@@ -17,13 +17,9 @@ import { adminFlags } from './admin-flags';
 import { blog } from './blog';
 import { policies } from './policies';
 import { card } from './card';
-import { feed } from './feed';
 import { weekly } from './weekly';
 import { reportGenerator } from './report-generator';
-import { metrics } from './metrics';
 import { quiz } from './quiz';
-import { translationReport } from './translation-report';
-import { newsletter } from './newsletter';
 import { gepa } from './gepa';
 import { createOpenAPIApp } from '../lib/openapi';
 import { CheckEndpoint } from './openapi-check';
@@ -43,6 +39,7 @@ import { TranslationReportEndpoint } from './openapi-translation-report';
 import { QuizEndpoint, QuizCheckEndpoint } from './openapi-quiz';
 import { MetricsEndpoint } from './openapi-metrics';
 import { ShareEndpoint } from './openapi-share';
+import { idempotency } from '../middleware/idempotency';
 import { renderErrorPage } from '../lib/error-pages';
 
 type AppType = Hono<{ Bindings: Env; Variables: AppVariables }>;
@@ -95,6 +92,8 @@ export function registerRoutes(app: AppType): void {
   /** @latency medium (200ms) */
   openapi.post('/api/newsletter/unsubscribe', NewsletterUnsubscribeEndpoint);
   /** @latency medium (200ms) */
+  // idempotency middleware applied before the endpoint to restore at-most-once semantics
+  openapi.use('/api/translation-report', idempotency());
   openapi.post('/api/translation-report', TranslationReportEndpoint);
   /** @latency fast (50ms) */
   openapi.get('/api/quiz', QuizEndpoint);
@@ -109,11 +108,11 @@ export function registerRoutes(app: AppType): void {
   app.route('/', adminFlags);
 
   // Plain Hono routes (no OpenAPI docs needed)
-  /** @latency fast (50ms) */
+  /** @latency fast (50ms) — POST /api/counter (admin increment) */
   app.route('/', counter);
-  /** @latency ssr (500ms) */
-  app.route('/', alerts);   // keeps /alerte SSR + legacy /api/alerts (chanfana takes priority)
-  /** @latency fast (50ms) */
+  /** @latency ssr (500ms) — /alerte SSR pages */
+  app.route('/', alerts);
+  /** @latency fast (50ms) — OPTIONS /api/share/:id preflight */
   app.route('/', share);
   /** @latency fast (50ms) */
   app.route('/', sitemap);
@@ -139,20 +138,12 @@ export function registerRoutes(app: AppType): void {
   app.route('/', policies);
   /** @latency ssr (500ms) */
   app.route('/', card);
-  /** @latency fast (50ms) */
-  app.route('/', feed);
   /** @latency medium (200ms) */
   app.route('/', weekly);
   /** @latency medium (200ms) */
   app.route('/', reportGenerator);
-  /** @latency fast (50ms) */
-  app.route('/', metrics);
-  /** @latency fast (50ms) */
+  /** @latency fast (50ms) — GET /api/quiz/:id (specific question, not in chanfana) */
   app.route('/', quiz);
-  /** @latency medium (200ms) */
-  app.route('/', translationReport);
-  /** @latency medium (200ms) */
-  app.route('/', newsletter);
   /** @latency medium (200ms) */
   app.route('/', gepa);
 

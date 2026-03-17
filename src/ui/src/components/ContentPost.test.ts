@@ -10,18 +10,24 @@ describe('ContentPost XSS prevention', () => {
     expect(source).toContain("import DOMPurify from 'dompurify'");
   });
 
-  it('sanitizes string body before rendering as HTML', () => {
+  it('imports html-react-parser', () => {
+    expect(source).toContain("import parse from 'html-react-parser'");
+  });
+
+  it('sanitizes string body with DOMPurify before parsing', () => {
     expect(source).toContain('DOMPurify.sanitize(body)');
   });
 
-  it('does not render string body as raw unsanitized HTML', () => {
-    // The only dangerouslySetInnerHTML usage should wrap DOMPurify.sanitize
-    const rawHtmlPattern = /dangerouslySetInnerHTML=\{\{ __html: body \}\}/;
-    expect(rawHtmlPattern.test(source)).toBe(false);
+  it('parses sanitized HTML through html-react-parser, not dangerouslySetInnerHTML', () => {
+    expect(source).toContain('parse(DOMPurify.sanitize(body))');
+    expect(source).not.toContain('dangerouslySetInnerHTML');
+  });
+
+  it('does not use dangerouslySetInnerHTML anywhere', () => {
+    expect(source).not.toContain('dangerouslySetInnerHTML');
   });
 
   it('PortableTextRenderer uses React elements for inline marks, not dangerouslySetInnerHTML', () => {
-    // The span used for inline block content must not use dangerouslySetInnerHTML
     expect(source).not.toContain('<span dangerouslySetInnerHTML');
   });
 

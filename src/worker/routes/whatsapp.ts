@@ -263,7 +263,7 @@ whatsapp.post('/webhook/whatsapp', async (c) => {
 
         let classification: ClassificationResult;
         try {
-          classification = await createClassifier(c.env.AI)(text, firstUrl);
+          classification = await createClassifier(c.env.AI, c.env.CACHE)(text, firstUrl);
         } catch (err) {
           structuredLog('error', 'whatsapp_classify_error', { error: String(err) });
           await sendWhatsAppMessage(

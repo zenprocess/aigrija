@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { ClassificationValidationError, createClassifier } from './classifier';
+import { CircuitOpenError } from './circuit-breaker';
 
 function makeMockAi(response?: string): Ai {
   const mockResponse = response ?? JSON.stringify({
@@ -14,6 +15,21 @@ function makeMockAi(response?: string): Ai {
   return {
     run: vi.fn().mockResolvedValue({ response: mockResponse }),
   } as unknown as Ai;
+}
+
+function makeFailingAi(): Ai {
+  return {
+    run: vi.fn().mockRejectedValue(new Error('Workers AI unavailable')),
+  } as unknown as Ai;
+}
+
+function makeKV() {
+  const store = new Map<string, string>();
+  return {
+    get: vi.fn(async (key: string) => store.get(key) ?? null),
+    put: vi.fn(async (key: string, value: string) => { store.set(key, value); }),
+    delete: vi.fn(async (key: string) => { store.delete(key); }),
+  } as unknown as KVNamespace;
 }
 
 describe('ClassificationValidationError', () => {
@@ -74,5 +90,51 @@ describe('input validation via createClassifier', () => {
     const result = await classify('Test message for analysis');
     expect(result.model_used).toBeDefined();
     expect(result.ai_disclaimer).toBeDefined();
+  });
+});
+
+describe('circuit breaker integration', () => {
+  it('succeeds normally when kv is provided and AI is healthy', async () => {
+    const kv = makeKV();
+    const classify = createClassifier(makeMockAi(), kv);
+    const result = await classify('Test message for analysis');
+    expect(result.verdict).toBe('legitimate');
+  });
+
+  it('returns default suspicious result when AI always fails and kv not provided', async () => {
+    const classify = createClassifier(makeFailingAi());
+    const result = await classify('Test message for analysis');
+    expect(result.verdict).toBe('suspicious');
+    expect(result.red_flags).toContain('Analiza automata nu a putut fi finalizata');
+  });
+
+  it('returns default suspicious result when AI always fails and kv is provided', async () => {
+    const kv = makeKV();
+    const classify = createClassifier(makeFailingAi(), kv);
+    const result = await classify('Test message for analysis');
+    expect(result.verdict).toBe('suspicious');
+    expect(result.red_flags).toContain('Analiza automata nu a putut fi finalizata');
+  });
+
+  it('trips circuit OPEN after 5 AI failures and subsequent calls fail fast', async () => {
+    const kv = makeKV();
+    const classify = createClassifier(makeFailingAi(), kv);
+    const validText = 'Test message for analysis';
+
+    // First 5 calls: AI fails, circuit records failures, returns default result
+    for (let i = 0; i < 5; i++) {
+      const result = await classify(validText);
+      expect(result.verdict).toBe('suspicious');
+    }
+
+    // After 5 failures, primary circuit is OPEN; subsequent calls fail fast (CircuitOpenError caught)
+    const result = await classify(validText);
+    expect(result.verdict).toBe('suspicious');
+  });
+
+  it('createClassifier without kv still works (no circuit breaker)', async () => {
+    const classify = createClassifier(makeMockAi());
+    const result = await classify('hello world');
+    expect(result.verdict).toBe('legitimate');
   });
 });

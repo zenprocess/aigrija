@@ -247,7 +247,7 @@ export class CheckEndpoint extends OpenAPIRoute {
       getFlag(c.env, 'safe_browsing_enabled', true),
     ]);
 
-    const classification = await createClassifier(c.env.AI)(body.text, body.url, { gemma_fallback_enabled: gemmaFallbackEnabled });
+    const classification = await createClassifier(c.env.AI, c.env.CACHE)(body.text, body.url, { gemma_fallback_enabled: gemmaFallbackEnabled });
     const urlAnalysis = body.url
       ? await analyzeUrl(
           body.url,

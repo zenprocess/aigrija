@@ -16,7 +16,7 @@ const adminGroupIds = config.require("adminGroupIds").split(",");
 const kvNamespace = new cloudflare.WorkersKvNamespace("ai-grija-cache", {
   accountId,
   title: "ai-grija-cache",
-});
+}, { import: `${accountId}/fd0667f87eb44232badd391fc3c72bde` });
 
 // ---------------------------------------------------------------------------
 // R2 Bucket — Pulumi state backend
@@ -37,7 +37,7 @@ const stateBucket = new cloudflare.R2Bucket("pulumi-state-bucket", {
   accountId,
   name: "ai-grija-pulumi-state",
   location: "EEUR",
-});
+}, { import: `${accountId}/ai-grija-pulumi-state` });
 
 // ---------------------------------------------------------------------------
 // R2 Bucket — share cards storage, closest region to Romania
@@ -46,7 +46,7 @@ const r2Bucket = new cloudflare.R2Bucket("ai-grija-share-cards", {
   accountId,
   name: "ai-grija-share-cards",
   location: "EEUR",
-});
+}, { import: `${accountId}/ai-grija-share-cards` });
 
 // ---------------------------------------------------------------------------
 // D1 Database — admin DB for structured data (conversations, reports, audit)
@@ -56,7 +56,7 @@ const r2Bucket = new cloudflare.R2Bucket("ai-grija-share-cards", {
 const adminDb = new cloudflare.D1Database("ai-grija-admin", {
   accountId,
   name: "ai-grija-admin",
-});
+}, { import: `${accountId}/9d15ccda-3648-4a93-8856-2ac5b5ffe199` });
 
 // ---------------------------------------------------------------------------
 // Queue — async draft generation pipeline
@@ -143,7 +143,7 @@ for (const { configKey, secretName } of secretDefs) {
     scriptName: workerName,
     name: secretName,
     secretText: config.requireSecret(configKey),
-  });
+  }, { import: `${accountId}/${workerName}/${secretName}` });
 }
 
 
@@ -155,18 +155,18 @@ const previewWorkerName = "ai-grija-ro-preview";
 const previewKv = new cloudflare.WorkersKvNamespace("ai-grija-cache-preview", {
   accountId,
   title: "ai-grija-cache-preview",
-});
+}, { import: `${accountId}/912ef2fa84a445f0bb916896881a9fac` });
 
 const previewR2 = new cloudflare.R2Bucket("ai-grija-share-cards-preview", {
   accountId,
   name: "ai-grija-share-cards-preview",
   location: "EEUR",
-});
+}, { import: `${accountId}/ai-grija-share-cards-preview` });
 
 const previewDb = new cloudflare.D1Database("ai-grija-admin-preview", {
   accountId,
   name: "ai-grija-admin-preview",
-});
+}, { import: `${accountId}/4d78649f-36ef-49bf-bcc1-672c61c5dd93` });
 
 const previewQueue = new cloudflare.Queue("draft-generation-preview", {
   accountId,
@@ -230,7 +230,7 @@ const cdnBucket = new cloudflare.R2Bucket("ai-grija-assets", {
   accountId,
   name: "ai-grija-assets",
   location: "EEUR",
-});
+}, { import: `${accountId}/ai-grija-assets` });
 
 // CDN subdomain — cdn.ai-grija.ro proxied to Workers dev subdomain
 new cloudflare.Record("dns-cdn", {
@@ -242,23 +242,44 @@ new cloudflare.Record("dns-cdn", {
 });
 
 // ---------------------------------------------------------------------------
+// Studio DNS — studio.ai-grija.ro and pre-studio.ai-grija.ro
+// Sanity Studio is deployed as a separate Workers target (ai-grija-studio).
+// Independent deploy lifecycle — see .github/workflows/deploy-studio.yml.
+// ---------------------------------------------------------------------------
+new cloudflare.Record("dns-studio", {
+  zoneId,
+  name: "studio",
+  type: "CNAME",
+  content: "ai-grija-studio.workers.dev",
+  proxied: true,
+});
+
+new cloudflare.Record("dns-studio-preview", {
+  zoneId,
+  name: "pre-studio",
+  type: "CNAME",
+  content: "ai-grija-studio-preview.workers.dev",
+  proxied: true,
+});
+
+// ---------------------------------------------------------------------------
 // CF Custom Error Pages — served from R2 CDN for edge-level 500 and 1000 errors
 // ---------------------------------------------------------------------------
 const cfErrorPageUrl = "https://cdn.ai-grija.ro/cf-error.html";
 
 new cloudflare.CustomPages("custom-error-500", {
   zoneId,
-  type: "500Errors",
+  type: "500_errors",
   url: cfErrorPageUrl,
   state: "customized",
-});
+}, { import: `zone/${zoneId}/500_errors` });
 
 new cloudflare.CustomPages("custom-error-1000", {
   zoneId,
-  type: "1000Errors",
+  type: "1000_errors",
   url: cfErrorPageUrl,
   state: "customized",
-});
+}, { import: `zone/${zoneId}/1000_errors` });
 
 // ---------------------------------------------------------------------------
 // Stack Outputs

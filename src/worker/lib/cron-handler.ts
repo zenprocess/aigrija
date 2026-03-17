@@ -11,6 +11,17 @@ import { purgeInactiveSubscribers } from './gdpr-consent';
 import { deleteOldShareCards } from './r2-cleanup';
 
 const BATCH_LIMIT = 5;
+const JOB_TIMEOUT_MS = 10_000;
+
+function withJobTimeout<T>(promise: Promise<T>, jobName: string): Promise<T> {
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(
+      () => reject(new Error(`Job "${jobName}" timed out after ${JOB_TIMEOUT_MS}ms`)),
+      JOB_TIMEOUT_MS
+    )
+  );
+  return Promise.race([promise, timeout]);
+}
 
 async function runDraftGeneration(env: Env): Promise<void> {
   const startTime = Date.now();
@@ -153,54 +164,62 @@ export async function handleScheduled(event: ScheduledEvent, env: Env): Promise<
 
   if (event.cron === '0 0 * * *') {
     // Midnight daily — run scraper
-    const result = await runScraper(dnscScraper, env);
-    structuredLog('info', 'cron_scraper_done', {
-      stage: 'cron',
-      source: result.source,
-      itemsFound: result.itemsFound,
-      itemsNew: result.itemsNew,
-      errorCount: result.errors.length,
-    });
-    if (result.errors.length > 0) {
-      structuredLog('warn', 'cron_scraper_errors', {
+    try {
+      const result = await withJobTimeout(runScraper(dnscScraper, env), 'dnscScraper');
+      structuredLog('info', 'cron_scraper_done', {
         stage: 'cron',
         source: result.source,
-        errors: result.errors,
+        itemsFound: result.itemsFound,
+        itemsNew: result.itemsNew,
+        errorCount: result.errors.length,
       });
+      if (result.errors.length > 0) {
+        structuredLog('warn', 'cron_scraper_errors', {
+          stage: 'cron',
+          source: result.source,
+          errors: result.errors,
+        });
+      }
+    } catch (err) {
+      structuredLog('error', 'cron_scraper_failed', { stage: 'cron', error: String(err) });
     }
   } else if (event.cron === '0 1 * * *') {
     // 01:00 daily — R2 share card cleanup + draft generation + Sanity publish
     try {
-      await deleteOldShareCards(env.STORAGE);
+      await withJobTimeout(deleteOldShareCards(env.STORAGE), 'r2Cleanup');
       structuredLog('info', 'cron_r2_cleanup_done', { stage: 'cron' });
     } catch (err) {
       structuredLog('error', 'cron_r2_cleanup_failed', { stage: 'cron', error: String(err) });
     }
     try {
-      await runDraftGeneration(env);
+      await withJobTimeout(runDraftGeneration(env), 'draftGeneration');
     } catch (err) {
       structuredLog('error', 'cron_draft_generation_unhandled', { stage: 'cron', error: String(err) });
     }
     try {
-      await runSanityPublish(env);
+      await withJobTimeout(runSanityPublish(env), 'sanityPublish');
     } catch (err) {
       structuredLog('error', 'cron_sanity_publish_unhandled', { stage: 'cron', error: String(err) });
     }
   } else if (event.cron === '0 2 * * 1-5') {
     // Weekdays 02:00 — AI educational content generation
     try {
-      await generateStandalonePost(env);
+      await withJobTimeout(generateStandalonePost(env), 'contentGeneration');
       structuredLog('info', 'cron_content_generation_done', { stage: 'cron' });
     } catch (err) {
       structuredLog('error', 'cron_content_generation_failed', { stage: 'cron', error: String(err) });
     }
   } else if (event.cron === '0 6 * * 1') {
     // Monday 06:00 — weekly digest distribution
-    await runWeeklyDigest(env);
+    try {
+      await withJobTimeout(runWeeklyDigest(env), 'weeklyDigest');
+    } catch (err) {
+      structuredLog('error', 'cron_weekly_digest_unhandled', { stage: 'cron', error: String(err) });
+    }
   } else if (event.cron === '0 0 1 * *') {
     // First of month — purge inactive subscribers (GDPR)
     try {
-      const result = await purgeInactiveSubscribers(env);
+      const result = await withJobTimeout(purgeInactiveSubscribers(env), 'gdprPurge');
       structuredLog('info', 'cron_gdpr_purge_done', { stage: 'cron', purged: result.purged });
     } catch (err) {
       structuredLog('error', 'cron_gdpr_purge_failed', { stage: 'cron', error: String(err) });

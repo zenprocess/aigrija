@@ -241,38 +241,9 @@ admin.get('/generare-continut', async (c) => {
   return c.html(adminLayout('AI Content Generation', content, 'generare-continut', email, c.get('cspNonce')));
 });
 
-// --- Sanity Studio SPA ---
-admin.get('/studio', async (c) => {
-  try {
-    const url = new URL(c.req.url);
-    url.pathname = '/studio/index.html';
-    const response = await c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
-    if (response.status === 404) {
-      return c.text('Sanity Studio is not deployed in this environment', 404);
-    }
-    return response;
-  } catch {
-    return c.text('Sanity Studio is not available in this environment', 503);
-  }
-});
-admin.get('/studio/*', async (c) => {
-  try {
-    const response = await c.env.ASSETS.fetch(c.req.raw);
-    if (response.status !== 404) {
-      return response;
-    }
-    // SPA fallback — serve studio/index.html for client-side routing
-    const url = new URL(c.req.url);
-    url.pathname = '/studio/index.html';
-    const fallback = await c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
-    if (fallback.status === 404) {
-      return c.text('Sanity Studio is not deployed in this environment', 404);
-    }
-    return fallback;
-  } catch {
-    return c.text('Sanity Studio is not available in this environment', 503);
-  }
-});
+// --- Sanity Studio — redirects to dedicated deployment ---
+admin.get('/studio', (c) => c.redirect('https://studio.ai-grija.ro', 301));
+admin.get('/studio/*', (c) => c.redirect('https://studio.ai-grija.ro', 301));
 
 // Mount sub-routers — API routes must be mounted before HTML routes to avoid param conflicts
 admin.route('/campanii/api', campaignApiRoutes);

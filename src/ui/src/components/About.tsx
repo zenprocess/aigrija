@@ -1,8 +1,18 @@
 import React from "react";
 import { ClipboardPaste, Brain, FileText, Share2, Scale, ShieldCheck, Building2, Landmark } from "lucide-react";
-import { useTranslation } from '../i18n/index.jsx';
+import { useTranslation } from '../i18n';
 
-const STEPS = [
+interface Step {
+  icon: React.ElementType;
+  color: string;
+  iconBg: string;
+  iconColor: string;
+  numberBg: string;
+  borderColor: string;
+  badges?: boolean;
+}
+
+const STEPS: Step[] = [
   {
     icon: ClipboardPaste,
     color: "green",

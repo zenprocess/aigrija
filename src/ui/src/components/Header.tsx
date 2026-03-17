@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Menu, X, Globe, ChevronDown } from 'lucide-react';
-import { useTranslation } from '../i18n/index.jsx';
+import { useTranslation } from '../i18n';
 
-const CONTENT_NAV = [
+interface NavItem {
+  key: string;
+  i18nKey: string;
+}
+
+const CONTENT_NAV: NavItem[] = [
   { key: 'amenintari', i18nKey: 'content.threats' },
   { key: 'ghid', i18nKey: 'content.guides' },
   { key: 'educatie', i18nKey: 'content.education' },
@@ -17,19 +22,18 @@ export default function Header() {
   const [isContentOpen, setIsContentOpen] = useState(false);
   const { t, lang, setLang, languages, languageNames, languageFlags } = useTranslation();
 
-  const scrollTo = (id) => {
+  const scrollTo = (id: string) => {
     setIsMobileMenuOpen(false);
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     } else {
-      // Not on the home page — persist scroll intent, then navigate home
       sessionStorage.setItem('pendingScrollId', id);
       window.location.hash = '';
     }
   };
 
-  const navigateTo = (hash) => {
+  const navigateTo = (hash: string) => {
     setIsMobileMenuOpen(false);
     setIsContentOpen(false);
     window.location.hash = hash;
@@ -53,12 +57,10 @@ export default function Header() {
             <button data-testid="header-nav-cum-functioneaza" onClick={() => scrollTo('cum-functioneaza')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">{t('header.nav_how_it_works')}</button>
             <button data-testid="header-nav-alerte" onClick={() => scrollTo('alerte')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">{t('header.nav_alerte')}</button>
 
-            {/* Primary content nav items */}
             <button data-testid="header-nav-amenintari" onClick={() => navigateTo('/amenintari')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">{t('content.threats')}</button>
             <button data-testid="header-nav-ghid" onClick={() => navigateTo('/ghid')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">{t('content.guides')}</button>
             <button data-testid="header-nav-educatie" onClick={() => navigateTo('/educatie')} className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">{t('content.education')}</button>
 
-            {/* More dropdown for remaining 3 categories */}
             <div className="relative">
               <button
                 data-testid="header-nav-more-btn"
@@ -124,7 +126,6 @@ export default function Header() {
 
           {/* Mobile Menu Button */}
           <div className="lg:hidden flex items-center gap-2">
-            {/* Mobile lang switcher */}
             <div className="relative">
               <button
                 data-testid="header-lang-switcher-mobile"

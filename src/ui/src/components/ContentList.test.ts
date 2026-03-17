@@ -9,7 +9,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-const source = readFileSync(join(process.cwd(), 'src/ui/src/components/ContentList.jsx'), 'utf-8');
+const source = readFileSync(join(process.cwd(), 'src/ui/src/components/ContentList.tsx'), 'utf-8');
 
 describe('ContentList — defensive slug handling', () => {
   it('exports a default function ContentList', () => {
@@ -43,7 +43,7 @@ describe('ContentList — defensive slug handling', () => {
 });
 
 describe('ContentPost — defensive slug handling for related articles', () => {
-  const postSource = readFileSync(join(process.cwd(), 'src/ui/src/components/ContentPost.jsx'), 'utf-8');
+  const postSource = readFileSync(join(process.cwd(), 'src/ui/src/components/ContentPost.tsx'), 'utf-8');
 
   it('exports a default function ContentPost', () => {
     expect(postSource).toContain('export default function ContentPost');

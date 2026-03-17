@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from '../i18n/index.jsx';
+import { useTranslation } from '../i18n';
 
-export function getConsentPreferences() {
+interface CookieConsentProps {
+  onVisibilityChange?: (visible: boolean) => void;
+}
+
+export function getConsentPreferences(): Record<string, unknown> {
   try {
     return JSON.parse(localStorage.getItem('cookie_preferences') || '{}');
   } catch {
@@ -9,16 +13,16 @@ export function getConsentPreferences() {
   }
 }
 
-export function hasAnalyticsConsent() {
-  return getConsentPreferences().analytics === true;
+export function hasAnalyticsConsent(): boolean {
+  return (getConsentPreferences() as { analytics?: boolean }).analytics === true;
 }
 
-function saveConsent(analytics) {
+function saveConsent(analytics: boolean): void {
   localStorage.setItem('cookie_preferences', JSON.stringify({ essential: true, analytics, timestamp: new Date().toISOString() }));
   localStorage.setItem('cookie_consent_given', 'true');
 }
 
-function injectUmamiScript() {
+function injectUmamiScript(): void {
   if (document.querySelector('script[data-website-id="da9f42d8-48a1-4326-bef7-64c0b7eaab25"]')) return;
   const script = document.createElement('script');
   script.defer = true;
@@ -27,7 +31,7 @@ function injectUmamiScript() {
   document.head.appendChild(script);
 }
 
-export default function CookieConsent({ onVisibilityChange }) {
+export default function CookieConsent({ onVisibilityChange }: CookieConsentProps) {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);

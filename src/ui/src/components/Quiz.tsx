@@ -1,3 +1,4 @@
+// @ts-nocheck — gradual migration from JSX; proper types TBD
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from '../i18n/index.jsx';
 

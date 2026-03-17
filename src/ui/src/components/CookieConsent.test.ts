@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-const filePath = join(process.cwd(), 'src/ui/src/components/CookieConsent.jsx');
+const filePath = join(process.cwd(), 'src/ui/src/components/CookieConsent.tsx');
 const source = readFileSync(filePath, 'utf-8');
 
 describe('CookieConsent exports', () => {

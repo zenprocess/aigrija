@@ -1,22 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { fetchCounter } from '../utils/api';
-import { useTranslation } from '../i18n/index.jsx';
+import { useTranslation } from '../i18n';
 
-function padCenter(text, width) {
+type TranslationFn = (key: string, vars?: Record<string, string | number>) => string;
+
+function padCenter(text: string, width: number): string {
   const pad = Math.max(0, width - text.length);
   const left = Math.floor(pad / 2);
   const right = pad - left;
   return ' '.repeat(left) + text + ' '.repeat(right);
 }
 
-function repeat(ch, n) { return ch.repeat(Math.max(0, n)); }
+function repeat(ch: string, n: number): string { return ch.repeat(Math.max(0, n)); }
 
-function padRight(text, width) {
+function padRight(text: string, width: number): string {
   return text + ' '.repeat(Math.max(0, width - text.length));
 }
 
-function buildShieldLines(t) {
+function buildShieldLines(t: TranslationFn): string[] {
   const W = 52;
   const bar = repeat('─', W);
   const v = t('hero.shield_verify') || 'VERIFICA';
@@ -44,7 +46,7 @@ function buildShieldLines(t) {
   ];
 }
 
-function buildMobileShieldLines(t) {
+function buildMobileShieldLines(t: TranslationFn): string[] {
   const W = 36;
   const bar = repeat('─', W);
   const v = t('hero.shield_mobile_verify') || 'VERIFICA';
@@ -70,15 +72,28 @@ function buildMobileShieldLines(t) {
 
 const NOISE_CHARS = ['░','▒','▓','╔','╗','╚','╝','║','═','◆','●','◉','▲','■','╬','╠','╣','◈','◇','▪','┌','┐','└','┘','─','│'];
 
-function getCharColor(col, cols, cellT) {
+interface CellColor {
+  r: number;
+  g: number;
+  b: number;
+  alpha: number;
+}
+
+function getCharColor(col: number, cols: number, cellT: number): CellColor {
   const brightness = 0.6 + (col / cols) * 0.4;
   const base = Math.round(197 * brightness);
   const alpha = 0.3 + cellT * 0.7;
   return { r: 34, g: base, b: Math.round(94 * brightness), alpha };
 }
 
-function buildTargetCells(lines) {
-  const cells = [];
+interface TargetCell {
+  row: number;
+  col: number;
+  char: string;
+}
+
+function buildTargetCells(lines: string[]): TargetCell[] {
+  const cells: TargetCell[] = [];
   lines.forEach((line, row) => {
     for (let col = 0; col < line.length; col++) {
       if (line[col] !== ' ') cells.push({ row, col, char: line[col] });
@@ -87,10 +102,15 @@ function buildTargetCells(lines) {
   return cells;
 }
 
-function AsciiShield({ isMobile, t }) {
-  const canvasRef = useRef(null);
-  const rafRef = useRef(null);
-  const startRef = useRef(null);
+interface AsciiShieldProps {
+  isMobile: boolean;
+  t: TranslationFn;
+}
+
+function AsciiShield({ isMobile, t }: AsciiShieldProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const startRef = useRef<number | null>(null);
   const [done, setDone] = useState(false);
 
   useEffect(() => {
@@ -102,6 +122,7 @@ function AsciiShield({ isMobile, t }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     const fontSize = isMobile ? 10 : 13;
     const lineHeight = fontSize * 1.6;
@@ -119,13 +140,13 @@ function AsciiShield({ isMobile, t }) {
       return NOISE_CHARS[Math.floor(Math.random() * NOISE_CHARS.length)];
     }
 
-    function draw(ts) {
+    function draw(ts: number) {
       if (!startRef.current) startRef.current = ts;
       const elapsed = ts - startRef.current;
       const globalT = Math.min(elapsed / ANIM_DURATION, 1);
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = fontSize + "px 'Courier New', monospace";
+      ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+      ctx!.font = fontSize + "px 'Courier New', monospace";
 
       let allSettled = true;
 
@@ -140,20 +161,20 @@ function AsciiShield({ isMobile, t }) {
         const c = getCharColor(col, COLS, cellT);
 
         if (cellT >= 1) {
-          ctx.shadowColor = 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',0.6)';
-          ctx.shadowBlur = 4;
+          ctx!.shadowColor = 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',0.6)';
+          ctx!.shadowBlur = 4;
         } else if (cellT > 0) {
-          ctx.shadowColor = 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',0.2)';
-          ctx.shadowBlur = 2;
+          ctx!.shadowColor = 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',0.2)';
+          ctx!.shadowBlur = 2;
         } else {
-          ctx.shadowBlur = 0;
+          ctx!.shadowBlur = 0;
         }
 
-        ctx.fillStyle = 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + c.alpha + ')';
-        ctx.fillText(displayChar, col * charWidth, (row + 1) * lineHeight - 3);
+        ctx!.fillStyle = 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + c.alpha + ')';
+        ctx!.fillText(displayChar, col * charWidth, (row + 1) * lineHeight - 3);
       });
 
-      ctx.shadowBlur = 0;
+      ctx!.shadowBlur = 0;
 
       if (!allSettled) {
         rafRef.current = requestAnimationFrame(draw);
@@ -211,24 +232,24 @@ export default function HeroAscii() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(function() {
-    var check = function() { setIsMobile(window.innerWidth < 640); };
+    const check = function() { setIsMobile(window.innerWidth < 640); };
     check();
     window.addEventListener('resize', check);
     return function() { window.removeEventListener('resize', check); };
   }, []);
 
   useEffect(function() {
-    fetchCounter().then(function(data) {
+    fetchCounter().then(function(data: { count?: number }) {
       if (data && data.count) setTargetCount(data.count);
     });
   }, []);
 
   useEffect(function() {
     if (targetCount === 0) return;
-    var start = 0;
-    var duration = 2000;
-    var increment = targetCount / (duration / 16);
-    var timer = setInterval(function() {
+    let start = 0;
+    const duration = 2000;
+    const increment = targetCount / (duration / 16);
+    const timer = setInterval(function() {
       start += increment;
       if (start >= targetCount) { setCount(targetCount); clearInterval(timer); }
       else setCount(Math.floor(start));
@@ -236,8 +257,8 @@ export default function HeroAscii() {
     return function() { clearInterval(timer); };
   }, [targetCount]);
 
-  var scrollToChecker = function() {
-    var el = document.getElementById('verifica');
+  const scrollToChecker = function() {
+    const el = document.getElementById('verifica');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 

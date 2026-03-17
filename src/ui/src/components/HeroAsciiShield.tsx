@@ -20,8 +20,14 @@ const SHIELD_LINES = [
 
 const NOISE_CHARS = ['░','▒','▓','█','╔','╗','╚','╝','║','═','◆','●','◉','▲','■','╬','╠','╣','╦','╩','▼','◈','◇','□','▪'];
 
-function buildTargetCells(lines) {
-  const cells = [];
+interface TargetCell {
+  row: number;
+  col: number;
+  char: string;
+}
+
+function buildTargetCells(lines: string[]): TargetCell[] {
+  const cells: TargetCell[] = [];
   lines.forEach((line, row) => {
     for (let col = 0; col < line.length; col++) {
       if (line[col] !== ' ') cells.push({ row, col, char: line[col] });
@@ -35,9 +41,9 @@ const ROWS = SHIELD_LINES.length;
 const COLS = Math.max(...SHIELD_LINES.map(l => l.length));
 
 function buildInitialGrid() {
-  const grid = [];
+  const grid: { target: string }[][] = [];
   for (let r = 0; r < ROWS; r++) {
-    const row = [];
+    const row: { target: string }[] = [];
     for (let c = 0; c < COLS; c++) row.push({ target: ' ' });
     grid.push(row);
   }
@@ -47,18 +53,19 @@ function buildInitialGrid() {
   return grid;
 }
 
-const INITIAL_GRID = buildInitialGrid();
+buildInitialGrid();
 
 export default function HeroAsciiShield() {
-  const canvasRef = useRef(null);
-  const startTimeRef = useRef(null);
-  const rafRef = useRef(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const startTimeRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
   const [shieldDone, setShieldDone] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     const isMobile = window.innerWidth < 640;
     const fontSize = isMobile ? 10 : 14;
@@ -79,13 +86,13 @@ export default function HeroAsciiShield() {
       return NOISE_CHARS[Math.floor(Math.random() * NOISE_CHARS.length)];
     }
 
-    function draw(timestamp) {
+    function draw(timestamp: number) {
       if (!startTimeRef.current) startTimeRef.current = timestamp;
       const elapsed = timestamp - startTimeRef.current;
       const globalT = Math.min(elapsed / ANIM_DURATION, 1);
 
-      ctx.clearRect(0, 0, canvasW, canvasH);
-      ctx.font = `${fontSize}px 'Courier New', monospace`;
+      ctx!.clearRect(0, 0, canvasW, canvasH);
+      ctx!.font = `${fontSize}px 'Courier New', monospace`;
 
       let allSettled = true;
 
@@ -105,17 +112,17 @@ export default function HeroAsciiShield() {
         const alpha = 0.35 + cellT * 0.65;
 
         if (cellT >= 1) {
-          ctx.shadowColor = `rgba(${r},${g},${b},0.55)`;
-          ctx.shadowBlur = 5;
+          ctx!.shadowColor = `rgba(${r},${g},${b},0.55)`;
+          ctx!.shadowBlur = 5;
         } else {
-          ctx.shadowBlur = 0;
+          ctx!.shadowBlur = 0;
         }
 
-        ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
-        ctx.fillText(displayChar, col * charWidth, (row + 1) * charHeight - 2);
+        ctx!.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+        ctx!.fillText(displayChar, col * charWidth, (row + 1) * charHeight - 2);
       });
 
-      ctx.shadowBlur = 0;
+      ctx!.shadowBlur = 0;
 
       if (!allSettled) {
         rafRef.current = requestAnimationFrame(draw);

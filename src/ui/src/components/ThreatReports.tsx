@@ -1,22 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Calendar, Eye, CheckCircle, AlertTriangle, Filter } from 'lucide-react';
-import { useTranslation } from '../i18n/index.jsx';
+import { useTranslation } from '../i18n';
 
-const SEVERITY_CONFIG = {
+interface SeverityConfig {
+  label: string;
+  bg: string;
+  text: string;
+  border: string;
+}
+
+interface StatusConfig {
+  label: string;
+  bg: string;
+  text: string;
+  pulse: boolean;
+}
+
+const SEVERITY_CONFIG: Record<string, SeverityConfig> = {
   critical: { label: 'Critical', bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/40' },
   high:     { label: 'High',     bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/40' },
   medium:   { label: 'Medium',   bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/40' },
   low:      { label: 'Low',      bg: 'bg-green-500/20',  text: 'text-green-400',  border: 'border-green-500/40' },
 };
 
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<string, StatusConfig> = {
   active:     { label: 'Activ',       bg: 'bg-red-500/20',   text: 'text-red-400',   pulse: true },
   resolved:   { label: 'Rezolvat',    bg: 'bg-green-500/20', text: 'text-green-400', pulse: false },
   monitoring: { label: 'Monitorizare',bg: 'bg-blue-500/20',  text: 'text-blue-400',  pulse: false },
 };
 
-function SeverityBadge({ severity }) {
-  const cfg = SEVERITY_CONFIG[severity?.toLowerCase()] || SEVERITY_CONFIG.medium;
+interface ThreatReport {
+  slug?: string;
+  _id?: string;
+  severity?: string;
+  status?: string;
+  title: string;
+  affectedEntities?: string[];
+  firstSeen?: string;
+  lastSeen?: string;
+}
+
+interface SeverityBadgeProps {
+  severity?: string;
+}
+
+function SeverityBadge({ severity }: SeverityBadgeProps) {
+  const cfg = SEVERITY_CONFIG[severity?.toLowerCase() ?? ''] || SEVERITY_CONFIG.medium;
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
       {cfg.label}
@@ -24,8 +53,12 @@ function SeverityBadge({ severity }) {
   );
 }
 
-function StatusBadge({ status }) {
-  const cfg = STATUS_CONFIG[status?.toLowerCase()] || STATUS_CONFIG.monitoring;
+interface StatusBadgeProps {
+  status?: string;
+}
+
+function StatusBadge({ status }: StatusBadgeProps) {
+  const cfg = STATUS_CONFIG[status?.toLowerCase() ?? ''] || STATUS_CONFIG.monitoring;
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}>
       {cfg.pulse && (
@@ -39,7 +72,11 @@ function StatusBadge({ status }) {
   );
 }
 
-function ReportCard({ report }) {
+interface ReportCardProps {
+  report: ThreatReport;
+}
+
+function ReportCard({ report }: ReportCardProps) {
   const firstSeen = report.firstSeen ? new Date(report.firstSeen).toLocaleDateString() : null;
   const lastSeen  = report.lastSeen  ? new Date(report.lastSeen).toLocaleDateString()  : null;
 
@@ -99,11 +136,11 @@ function ReportCard({ report }) {
 
 export default function ThreatReports() {
   const { t } = useTranslation();
-  const [reports, setReports] = useState([]);
+  const [reports, setReports] = useState<ThreatReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [severityFilter, setSeverityFilter] = useState(null);
-  const [statusFilter, setStatusFilter] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [severityFilter, setSeverityFilter] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -112,8 +149,8 @@ export default function ThreatReports() {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
-      .then((data) => setReports(data.reports || data.items || data || []))
-      .catch((err) => setError(err.message))
+      .then((data: any) => setReports(data.reports || data.items || data || []))
+      .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
 
@@ -132,7 +169,6 @@ export default function ThreatReports() {
   return (
     <section className="min-h-screen pt-24 pb-16 relative z-10">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Page header */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
             <ShieldAlert className="w-6 h-6 text-orange-500" />
@@ -141,7 +177,6 @@ export default function ThreatReports() {
           <p className="text-gray-400 text-sm">Rapoarte actualizate privind amenintarile cibernetice active</p>
         </div>
 
-        {/* Filters */}
         <div className="flex flex-wrap gap-4 mb-6">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-gray-500 flex items-center gap-1">

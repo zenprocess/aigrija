@@ -3,24 +3,36 @@ import { ArrowLeft, ShieldAlert, Calendar } from 'lucide-react';
 import { fetchAlert } from '../utils/api';
 import { useTranslation } from '../i18n';
 
-const SEVERITY_STYLES = {
+interface AlertData {
+  name: string;
+  severity?: string;
+  status?: string;
+  impersonated_entity?: string;
+  first_seen?: string;
+}
+
+interface AlertDetailProps {
+  slug: string;
+}
+
+const SEVERITY_STYLES: Record<string, string> = {
   critical: 'bg-red-500/20 text-red-400 border-red-500/30',
   high: 'bg-red-500/20 text-red-400 border-red-500/30',
   medium: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   low: 'bg-green-500/20 text-green-400 border-green-500/30',
 };
 
-const STATUS_STYLES = {
+const STATUS_STYLES: Record<string, string> = {
   active: 'bg-green-500/10 text-green-400 border-green-500/20',
   declining: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
   resolved: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
 };
 
-export default function AlertDetail({ slug }) {
+export default function AlertDetail({ slug }: AlertDetailProps) {
   const { t } = useTranslation();
-  const [alert, setAlert] = useState(null);
+  const [alert, setAlert] = useState<AlertData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -28,7 +40,7 @@ export default function AlertDetail({ slug }) {
     setError(null);
     fetchAlert(slug)
       .then(setAlert)
-      .catch((err) => setError(err.message))
+      .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   }, [slug]);
 

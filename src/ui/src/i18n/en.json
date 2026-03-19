@@ -321,6 +321,23 @@
     "feedback_correct": "✓ Correct!",
     "feedback_incorrect": "✗ Incorrect"
   },
+  "onboarding": {
+    "trust_anonymous": "Anonymous — no account needed",
+    "trust_pii": "Personal data auto-masked",
+    "trust_free": "Free, open source",
+    "dismiss_label": "I already know",
+    "dismiss_aria": "Dismiss onboarding",
+    "show_sample": "See what a check looks like",
+    "hide_sample": "Hide example",
+    "sample_intro": "Here is a real example of what a phishing detection looks like:",
+    "sample_cta": "Now paste your own message in the form below ↓",
+    "sample_demo_badge": "DEMO",
+    "sample_message_label": "Checked message:",
+    "sample_message": "\"Urgent: Your BRD account has been suspended. Click the link to reactivate it: https://brd-secure-verify.xyz/auth\"",
+    "sample_flag1": "Creates urgency — pressure to act immediately",
+    "sample_flag2": "Suspicious domain — does not belong to the official bank",
+    "sample_flag3": "Impersonates a financial institution to steal credentials"
+  },
   "feed": {
     "noItems": "No content available"
   },

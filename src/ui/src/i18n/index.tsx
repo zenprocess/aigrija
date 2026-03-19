@@ -13,6 +13,14 @@ export const LANGUAGES: Record<string, string> = {
   en: 'EN',
 };
 
+export const PAGE_TITLES: Record<string, string> = {
+  ro: 'ai-grija.ro — Verifică mesajele suspecte',
+  en: 'ai-grija.ro — Check suspicious messages',
+  hu: 'ai-grija.ro — Ellenőrizd a gyanús üzeneteket',
+  bg: 'ai-grija.ro — Провери подозрителни съобщения',
+  uk: 'ai-grija.ro — Перевір підозрілі повідомлення',
+};
+
 export const LANGUAGE_FLAGS: Record<string, string> = {
   ro: '\u{1F1F7}\u{1F1F4}',
   bg: '\u{1F1E7}\u{1F1EC}',
@@ -82,6 +90,11 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       setLangState(queryLang);
     }
   }, []);
+
+  useEffect(() => {
+    document.title = PAGE_TITLES[lang] || PAGE_TITLES['ro'];
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const setLang = useCallback((newLang: string) => {
     if (!SUPPORTED.includes(newLang)) return;

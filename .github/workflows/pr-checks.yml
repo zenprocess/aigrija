@@ -23,7 +23,7 @@ jobs:
       - run: npx tsc --noEmit
 
   unit-tests:
-    name: Unit tests
+    name: Unit tests with coverage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

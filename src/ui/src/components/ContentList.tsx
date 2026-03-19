@@ -34,7 +34,7 @@ export default function ContentList({ category }: ContentListProps) {
     setError(null);
     setIsFallback(false);
     fetch(`/${encodeURIComponent(category)}?limit=20&lang=${lang}`)
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((data: any) => {
         if (data && data.fallback === true && Array.isArray(data.items)) {
           setItems(data.items);

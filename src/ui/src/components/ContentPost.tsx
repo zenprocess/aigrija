@@ -120,7 +120,24 @@ export default function ContentPost({ slug, category }: ContentPostProps) {
     setError(null);
     fetch(`${baseEndpoint}/${slug}?lang=${lang}`, { signal: ctrl.signal })
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then((data: any) => { setPost(data.post || data); setRelated(data.related || []); })
+      .then((data: any) => {
+        const raw = data.post || data;
+        const normalized = { ...raw };
+        if (Array.isArray(normalized.categories)) {
+          normalized.categories = normalized.categories
+            .map((cat: any) => typeof cat === 'string' ? cat : (cat.title || ''))
+            .filter(Boolean);
+        }
+        if (normalized.author && typeof normalized.author === 'object') {
+          normalized.authorAvatar = normalized.author.image || normalized.authorAvatar;
+          normalized.author = normalized.author.name || '';
+        }
+        if (!normalized.publishedAt && normalized.firstSeen) {
+          normalized.publishedAt = normalized.firstSeen;
+        }
+        setPost(normalized);
+        setRelated(data.related || []);
+      })
       .catch((err: Error) => { if (err.name !== 'AbortError') setError(err.message); })
       .finally(() => setLoading(false));
     return () => ctrl.abort();

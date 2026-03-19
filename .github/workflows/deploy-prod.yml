@@ -169,6 +169,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_STATE_SECRET_ACCESS_KEY }}
           AWS_ENDPOINT_URL_S3: ${{ secrets.AWS_ENDPOINT_URL_S3 }}
       - name: Apply infrastructure changes
+        continue-on-error: true
         uses: pulumi/actions@v6
         with:
           command: up

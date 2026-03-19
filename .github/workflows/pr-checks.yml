@@ -105,6 +105,8 @@ jobs:
   infra-validate:
     name: Infrastructure validation
     runs-on: ubuntu-latest
+    env:
+      HAS_PULUMI: ${{ secrets.PULUMI_CONFIG_PASSPHRASE != '' && 'true' || '' }}
     steps:
       - uses: actions/checkout@v4
       - name: Validate infra config
@@ -117,7 +119,7 @@ jobs:
       - name: Install policy pack
         run: cd infra/policy && npm install
       - name: Pulumi login (R2 backend)
-        if: ${{ secrets.PULUMI_CONFIG_PASSPHRASE != '' }}
+        if: env.HAS_PULUMI
         run: pulumi login "s3://ai-grija-pulumi-state?region=auto&endpoint=https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com"
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
@@ -125,7 +127,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_ENDPOINT_URL_S3: ${{ secrets.AWS_ENDPOINT_URL_S3 }}
       - name: Pulumi preview with CrossGuard
-        if: ${{ secrets.PULUMI_CONFIG_PASSPHRASE != '' }}
+        if: env.HAS_PULUMI
         uses: pulumi/actions@v6
         with:
           command: preview
@@ -139,7 +141,7 @@ jobs:
           AWS_ENDPOINT_URL_S3: ${{ secrets.AWS_ENDPOINT_URL_S3 }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       - name: Warn if Pulumi passphrase missing
-        if: ${{ secrets.PULUMI_CONFIG_PASSPHRASE == '' }}
+        if: ${{ !env.HAS_PULUMI }}
         run: echo "::warning::PULUMI_CONFIG_PASSPHRASE not set — infrastructure validation skipped. Add it to GitHub secrets."
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}

@@ -173,7 +173,7 @@ export async function classify(
   try {
     let response: { response?: string };
     if (kv) {
-      const cb = new CircuitBreaker('ai-primary', kv);
+      const cb = new CircuitBreaker('ai-primary', kv, { failureThreshold: 3 });
       response = await cb.execute(() => runModel(ai, PRIMARY_MODEL, messages));
     } else {
       response = await runModel(ai, PRIMARY_MODEL, messages);
@@ -197,7 +197,7 @@ export async function classify(
     try {
       let response: { response?: string };
       if (kv) {
-        const cb = new CircuitBreaker('ai-fallback', kv);
+        const cb = new CircuitBreaker('ai-fallback', kv, { failureThreshold: 3 });
         response = await cb.execute(() => runModel(ai, FALLBACK_MODEL, messages));
       } else {
         response = await runModel(ai, FALLBACK_MODEL, messages);

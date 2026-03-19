@@ -14,13 +14,14 @@ const BATCH_LIMIT = 5;
 const JOB_TIMEOUT_MS = 10_000;
 
 function withJobTimeout<T>(promise: Promise<T>, jobName: string): Promise<T> {
-  const timeout = new Promise<never>((_, reject) =>
-    setTimeout(
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
       () => reject(new Error(`Job "${jobName}" timed out after ${JOB_TIMEOUT_MS}ms`)),
       JOB_TIMEOUT_MS
-    )
-  );
-  return Promise.race([promise, timeout]);
+    );
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
 async function runDraftGeneration(env: Env): Promise<void> {

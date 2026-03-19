@@ -174,7 +174,6 @@ jobs:
           command: up
           stack-name: dev
           work-dir: infra
-          policyPacks: policy
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

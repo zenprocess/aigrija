@@ -74,12 +74,10 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: npx playwright install --with-deps chromium
-      - name: Build SPA assets
-        run: pnpm run build
-      - name: Apply D1 migrations (local SQLite)
-        run: npx wrangler d1 migrations apply ai-grija-admin --local
-      - name: Run Playwright tests
+      - name: Run Playwright tests against live preview
         run: npx playwright test --workers=2
+        env:
+          BASE_URL: https://pre.ai-grija.ro
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

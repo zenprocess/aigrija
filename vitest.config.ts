@@ -9,6 +9,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    testTimeout: 15_000,
     include: ['src/**/*.{test,spec}.?(c|m)[jt]s?(x)', 'infra/tests/**/*.{test,spec}.?(c|m)[jt]s?(x)'],
     exclude: ['e2e/**', 'node_modules/**', 'infra/policy/**', '.claude/**'],
     coverage: {

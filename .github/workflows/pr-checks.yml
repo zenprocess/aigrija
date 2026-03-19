@@ -59,30 +59,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  e2e-tests:
-    name: E2E Playwright tests
-    needs: [typecheck, unit-tests]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.25.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - run: npx playwright install --with-deps chromium
-      - name: Run Playwright tests against live preview
-        run: npx playwright test --workers=2
-        env:
-          BASE_URL: https://pre.ai-grija.ro
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-report
-          path: playwright-report/
+  # E2E tests run in preview-deploy.yml after actual deployment — not here.
+  # PR Checks gates on: typecheck, unit tests, secret scan, dep audit, infra.
 
   dependency-audit:
     name: Dependency audit

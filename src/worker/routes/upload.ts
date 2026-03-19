@@ -130,7 +130,7 @@ upload.post('/api/check/image', async (c) => {
   let classification: ClassificationResult;
   if (validatedTextContext && validatedTextContext.trim().length >= 3) {
     try {
-      classification = await createClassifier(c.env.AI)(validatedTextContext);
+      classification = await createClassifier(c.env.AI, c.env.CACHE)(validatedTextContext);
     } catch (err) {
       structuredLog('error', 'upload_classifier_error', { error: String(err) });
       return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Eroare la analiza textului. Incercati din nou.', request_id: rid } }, 500);

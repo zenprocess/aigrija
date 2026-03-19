@@ -1,3 +1,4 @@
+// @ts-nocheck — gradual migration from JSX; proper types TBD
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Copy, ExternalLink, Check, Trash2, FileText } from 'lucide-react';
 import { generateReport } from '../lib/report-generator';

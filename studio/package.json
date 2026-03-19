@@ -4,8 +4,9 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "sanity dev",
-    "build": "sanity build --output-path ../dist/studio",
-    "deploy": "sanity deploy"
+    "build": "sanity build --output-path ./dist",
+    "deploy": "npx wrangler deploy",
+    "deploy:preview": "npx wrangler deploy --env preview"
   },
   "dependencies": {
     "sanity": "^3.40.0",

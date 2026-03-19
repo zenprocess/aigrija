@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { handleScheduled } from './cron-handler';
 import type { Env } from './types';
 
@@ -401,6 +401,79 @@ describe('handleScheduled', () => {
 
       expect(structuredLog).toHaveBeenCalledWith('warn', 'cron_unknown', expect.objectContaining({
         cron: '*/5 * * * *',
+      }));
+    });
+  });
+
+  describe('per-job timeout guard (10s)', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('times out DNSC scraper and logs error', async () => {
+      vi.useFakeTimers();
+      vi.mocked(runScraper).mockReturnValue(new Promise(() => {}));
+
+      const promise = handleScheduled(makeEvent('0 0 * * *'), makeEnv());
+      await vi.runAllTimersAsync();
+      await promise;
+
+      expect(structuredLog).toHaveBeenCalledWith('error', 'cron_scraper_failed', expect.objectContaining({
+        error: expect.stringContaining('timed out'),
+      }));
+    });
+
+    it('times out R2 cleanup in 0 1 * * * and continues to draft generation', async () => {
+      vi.useFakeTimers();
+      vi.mocked(deleteOldShareCards).mockReturnValue(new Promise(() => {}));
+
+      const promise = handleScheduled(makeEvent('0 1 * * *'), makeEnv());
+      await vi.runAllTimersAsync();
+      await promise;
+
+      expect(structuredLog).toHaveBeenCalledWith('error', 'cron_r2_cleanup_failed', expect.objectContaining({
+        error: expect.stringContaining('timed out'),
+      }));
+      // draft generation should still be attempted
+      expect(structuredLog).toHaveBeenCalledWith('info', 'cron_draft_generation_start', expect.any(Object));
+    });
+
+    it('times out content generation and logs error', async () => {
+      vi.useFakeTimers();
+      vi.mocked(generateStandalonePost).mockReturnValue(new Promise(() => {}));
+
+      const promise = handleScheduled(makeEvent('0 2 * * 1-5'), makeEnv());
+      await vi.runAllTimersAsync();
+      await promise;
+
+      expect(structuredLog).toHaveBeenCalledWith('error', 'cron_content_generation_failed', expect.objectContaining({
+        error: expect.stringContaining('timed out'),
+      }));
+    });
+
+    it('times out weekly digest and logs error', async () => {
+      vi.useFakeTimers();
+      vi.mocked(generateWeeklyDigest).mockReturnValue(new Promise(() => {}));
+
+      const promise = handleScheduled(makeEvent('0 6 * * 1'), makeEnv());
+      await vi.runAllTimersAsync();
+      await promise;
+
+      expect(structuredLog).toHaveBeenCalledWith('error', 'cron_weekly_digest_unhandled', expect.objectContaining({
+        error: expect.stringContaining('timed out'),
+      }));
+    });
+
+    it('times out GDPR purge and logs error', async () => {
+      vi.useFakeTimers();
+      vi.mocked(purgeInactiveSubscribers).mockReturnValue(new Promise(() => {}));
+
+      const promise = handleScheduled(makeEvent('0 0 1 * *'), makeEnv());
+      await vi.runAllTimersAsync();
+      await promise;
+
+      expect(structuredLog).toHaveBeenCalledWith('error', 'cron_gdpr_purge_failed', expect.objectContaining({
+        error: expect.stringContaining('timed out'),
       }));
     });
   });

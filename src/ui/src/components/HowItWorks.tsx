@@ -1,11 +1,20 @@
 import React from 'react';
 import { ClipboardPaste, Brain, CheckCircle } from 'lucide-react';
-import { useTranslation } from '../i18n/index.jsx';
+import { useTranslation } from '../i18n';
+
+interface Step {
+  icon: React.ElementType;
+  iconColor: string;
+  bgColor: string;
+  glow: string;
+  titleKey: string;
+  descKey: string;
+}
 
 export default function HowItWorks() {
   const { t } = useTranslation();
 
-  const steps = [
+  const steps: Step[] = [
     {
       icon: ClipboardPaste,
       iconColor: 'text-green-400',

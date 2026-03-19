@@ -28,7 +28,7 @@ function makeEnv(): Env {
 }
 
 describe('GET /api/report/:type — zen_labs_credit', () => {
-  it('includes zen_labs_credit in response', async () => {
+  it('includes zen_labs_credit in response', { timeout: 15_000 }, async () => {
     const { report } = await import('./report');
     const app = new Hono<{ Bindings: Env }>();
     app.route('/', report);

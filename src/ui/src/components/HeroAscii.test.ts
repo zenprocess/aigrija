@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-const filePath = join(process.cwd(), 'src/ui/src/components/HeroAscii.jsx');
+const filePath = join(process.cwd(), 'src/ui/src/components/HeroAscii.tsx');
 const source = readFileSync(filePath, 'utf-8');
 
 describe('HeroAscii component', () => {
@@ -54,9 +54,9 @@ describe('HeroAscii component', () => {
 
 describe('Hero component delegates to HeroAscii', () => {
   it('imports HeroAscii', () => {
-    const heroPath = join(process.cwd(), 'src/ui/src/components/Hero.jsx');
+    const heroPath = join(process.cwd(), 'src/ui/src/components/Hero.tsx');
     const heroSource = readFileSync(heroPath, 'utf-8');
-    expect(heroSource).toContain("import HeroAscii from './HeroAscii.jsx'");
+    expect(heroSource).toContain("import HeroAscii from './HeroAscii'");
     expect(heroSource).toContain('HeroAscii');
   });
 });

@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from '../i18n/index.jsx';
+import { useTranslation } from '../i18n';
 
-const SLUG_TO_I18N_KEY = {
+interface ContentItem {
+  id: string | number;
+  slug?: string | { current?: string };
+  title: string;
+  summary?: string;
+}
+
+interface ContentListProps {
+  category: string;
+}
+
+const SLUG_TO_I18N_KEY: Record<string, string> = {
   amenintari: 'threats',
   ghid: 'guides',
   educatie: 'education',
@@ -10,11 +21,11 @@ const SLUG_TO_I18N_KEY = {
   presa: 'press',
 };
 
-export default function ContentList({ category }) {
+export default function ContentList({ category }: ContentListProps) {
   const { t, lang } = useTranslation();
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [isFallback, setIsFallback] = useState(false);
 
   useEffect(() => {
@@ -24,7 +35,7 @@ export default function ContentList({ category }) {
     setIsFallback(false);
     fetch(`/${encodeURIComponent(category)}?limit=20&lang=${lang}`)
       .then((r) => r.json())
-      .then((data) => {
+      .then((data: any) => {
         if (data && data.fallback === true && Array.isArray(data.items)) {
           setItems(data.items);
           setIsFallback(true);

@@ -1,12 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
+import parse from 'html-react-parser';
 import { ArrowLeft, Calendar, User, Clock, Share2, Volume2, Tag } from 'lucide-react';
-import { useTranslation } from '../i18n/index.jsx';
+import { useTranslation } from '../i18n';
 
-function PortableTextRenderer({ body }) {
+interface PortableTextChild {
+  text?: string;
+  marks?: string[];
+}
+
+interface PortableTextBlock {
+  _type: string;
+  style?: string;
+  children?: PortableTextChild[];
+  asset?: { url?: string };
+  url?: string;
+  alt?: string;
+  caption?: string;
+}
+
+interface RelatedPost {
+  slug?: string | { current?: string };
+  title: string;
+  publishedAt?: string;
+}
+
+interface Post {
+  title: string;
+  body?: string | PortableTextBlock[];
+  author?: string;
+  authorAvatar?: string;
+  publishedAt?: string;
+  mainImage?: string;
+  categories?: string[];
+  excerpt?: string;
+}
+
+interface PortableTextRendererProps {
+  body?: string | PortableTextBlock[];
+}
+
+function PortableTextRenderer({ body }: PortableTextRendererProps) {
   if (!body) return null;
   if (typeof body === 'string') {
-    return <div className="prose-content" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(body) }} />;
+    return <div className="prose-content">{parse(DOMPurify.sanitize(body))}</div>;
   }
   if (!Array.isArray(body)) return null;
   return (
@@ -15,7 +52,7 @@ function PortableTextRenderer({ body }) {
         if (block._type === 'block') {
           const style = block.style || 'normal';
           const children = (block.children || []).map((child, childIdx) => {
-            let node = child.text || '';
+            let node: React.ReactNode = child.text || '';
             const marks = child.marks || [];
             if (marks.includes('strong')) node = <strong>{node}</strong>;
             if (marks.includes('em')) node = <em>{node}</em>;
@@ -42,7 +79,7 @@ function PortableTextRenderer({ body }) {
   );
 }
 
-function estimateReadingTime(body) {
+function estimateReadingTime(body?: string | PortableTextBlock[]): number {
   if (!body) return 1;
   let words = 0;
   if (typeof body === 'string') words = body.split(/\s+/).length;
@@ -50,7 +87,7 @@ function estimateReadingTime(body) {
   return Math.max(1, Math.ceil(words / 200));
 }
 
-const CATEGORY_ENDPOINTS = {
+const CATEGORY_ENDPOINTS: Record<string, string> = {
   amenintari: '/amenintari',
   ghid: '/ghid',
   educatie: '/educatie',
@@ -59,12 +96,17 @@ const CATEGORY_ENDPOINTS = {
   presa: '/presa',
 };
 
-export default function ContentPost({ slug, category }) {
+interface ContentPostProps {
+  slug: string;
+  category: string;
+}
+
+export default function ContentPost({ slug, category }: ContentPostProps) {
   const { t, lang } = useTranslation();
-  const [post, setPost] = useState(null);
-  const [related, setRelated] = useState([]);
+  const [post, setPost] = useState<Post | null>(null);
+  const [related, setRelated] = useState<RelatedPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [ttsPlaying, setTtsPlaying] = useState(false);
 
@@ -78,8 +120,8 @@ export default function ContentPost({ slug, category }) {
     setError(null);
     fetch(`${baseEndpoint}/${slug}?lang=${lang}`, { signal: ctrl.signal })
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then((data) => { setPost(data.post || data); setRelated(data.related || []); })
-      .catch((err) => { if (err.name !== 'AbortError') setError(err.message); })
+      .then((data: any) => { setPost(data.post || data); setRelated(data.related || []); })
+      .catch((err: Error) => { if (err.name !== 'AbortError') setError(err.message); })
       .finally(() => setLoading(false));
     return () => ctrl.abort();
   }, [slug, category, lang]);

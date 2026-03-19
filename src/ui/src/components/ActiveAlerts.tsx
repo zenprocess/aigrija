@@ -1,10 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, ArrowRight, ShieldAlert } from 'lucide-react';
 import { fetchAlerts } from '../utils/api';
-import { useTranslation } from '../i18n/index.jsx';
+import { useTranslation } from '../i18n';
+
+interface Alert {
+  slug?: string;
+  id?: string | number;
+  severity: string;
+  status: string;
+  name: string;
+  target?: string;
+  description: string;
+}
+
+interface SeverityStyles {
+  border: string;
+  badge: string;
+  glow: string;
+}
 
 export default function ActiveAlerts() {
-  const [alerts, setAlerts] = useState([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
 
@@ -24,7 +40,7 @@ export default function ActiveAlerts() {
     getAlerts();
   }, []);
 
-  const getSeverityStyles = (severity) => {
+  const getSeverityStyles = (severity: string): SeverityStyles => {
     switch (severity) {
       case 'critical':
       case 'high': return { border: 'border-l-red-500', badge: 'bg-red-500/20 text-red-400 border-red-500/30', glow: 'shadow-[inset_4px_0_0_rgba(220,38,38,1)]' };

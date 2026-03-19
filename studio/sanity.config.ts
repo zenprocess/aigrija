@@ -8,7 +8,7 @@ export default defineConfig({
   title: 'ai-grija.ro Content Studio',
   projectId: process.env.SANITY_STUDIO_PROJECT_ID || 'REPLACE_ME',
   dataset: process.env.SANITY_STUDIO_DATASET || 'production',
-  basePath: '/studio',
+  basePath: '/',
   plugins: [
     structureTool({
       structure: (S) =>

@@ -1,3 +1,4 @@
+// @ts-nocheck — gradual migration from JSX; proper types TBD
 import React, { useState, useRef, useEffect } from 'react';
 import { AlertCircle, ShieldAlert, AlertTriangle, ShieldCheck, CheckCircle, ExternalLink, Phone, Share2, Copy, X, Loader2, Link2, AlertOctagon, ImageIcon, Eye, FileText, Scale, Building2, Landmark } from 'lucide-react';
 import { checkContent, checkImage } from '../utils/api';
@@ -311,7 +312,7 @@ export default function Checker() {
 
         {/* Verdict Section */}
         {result && (
-          <div ref={resultRef} className="mt-12 space-y-6 animate-fade-in-up">
+          <div ref={resultRef} data-testid="verdict-card" className="mt-12 space-y-6 animate-fade-in-up">
 
             {/* Vision Analysis Card */}
             {imageAnalysis && (

@@ -9,8 +9,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-const headerSource = readFileSync(join(process.cwd(), 'src/ui/src/components/Header.jsx'), 'utf-8');
-const checkerSource = readFileSync(join(process.cwd(), 'src/ui/src/components/Checker.jsx'), 'utf-8');
+const headerSource = readFileSync(join(process.cwd(), 'src/ui/src/components/Header.tsx'), 'utf-8');
+const checkerSource = readFileSync(join(process.cwd(), 'src/ui/src/components/Checker.tsx'), 'utf-8');
 
 describe('Header — scrollTo nav anchor fix', () => {
   it('has header-nav-verifica button that calls scrollTo', () => {

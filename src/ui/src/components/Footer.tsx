@@ -1,19 +1,23 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Github, Heart, MessageSquare } from 'lucide-react';
-import { useTranslation } from '../i18n/index.jsx';
+import { useTranslation } from '../i18n';
 
-function TranslationReportModal({ open, onClose }) {
+interface TranslationReportModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+function TranslationReportModal({ open, onClose }: TranslationReportModalProps) {
   const { t, language } = useTranslation();
   const [currentText, setCurrentText] = useState('');
   const [suggestedText, setSuggestedText] = useState('');
   const [comment, setComment] = useState('');
-  const [status, setStatus] = useState(null); // null | 'loading' | 'success' | 'error'
-  const dialogRef = useRef(null);
-  const submitAbortRef = useRef(null);
+  const [status, setStatus] = useState<null | 'loading' | 'success' | 'error'>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const submitAbortRef = useRef<AbortController | null>(null);
 
   const page = typeof window !== 'undefined' ? window.location.hash || '/' : '/';
 
-  // Open/close the native dialog in sync with the `open` prop
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -24,11 +28,10 @@ function TranslationReportModal({ open, onClose }) {
     }
   }, [open]);
 
-  // Forward the native ESC-key cancel event to onClose
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    function handleCancel(e) {
+    function handleCancel(e: Event) {
       e.preventDefault();
       onClose();
     }
@@ -36,12 +39,11 @@ function TranslationReportModal({ open, onClose }) {
     return () => dialog.removeEventListener('cancel', handleCancel);
   }, [onClose]);
 
-  // Close when clicking outside the dialog panel (on the ::backdrop area)
-  function handleBackdropClick(e) {
+  function handleBackdropClick(e: React.MouseEvent<HTMLDialogElement>) {
     if (e.target === dialogRef.current) onClose();
   }
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!comment.trim()) return;
     if (submitAbortRef.current) submitAbortRef.current.abort();

@@ -211,7 +211,7 @@ telegram.post('/webhook/telegram', async (c) => {
     if (iq.query.length >= 3) {
       let classification: ClassificationResult;
       try {
-        classification = await createClassifier(c.env.AI)(iq.query);
+        classification = await createClassifier(c.env.AI, c.env.CACHE)(iq.query);
       } catch {
         await answerInlineQuery(token, iq.id, []);
         return c.json({ ok: true });
@@ -340,7 +340,7 @@ telegram.post('/webhook/telegram', async (c) => {
 
   let classification: ClassificationResult;
   try {
-    classification = await createClassifier(c.env.AI)(text, firstUrl);
+    classification = await createClassifier(c.env.AI, c.env.CACHE)(text, firstUrl);
   } catch (err) {
     structuredLog('error', 'telegram_classify_error', { error: String(err), stack: err instanceof Error ? err.stack : undefined });
     await sendMessage(token, chatId, 'A aparut o eroare la analiza. Te rugam sa incerci din nou.');

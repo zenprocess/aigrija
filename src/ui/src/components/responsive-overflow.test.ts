@@ -55,8 +55,8 @@ describe('Responsive CSS — no horizontal overflow at all breakpoints', () => {
     });
   });
 
-  describe('Header.jsx — responsive nav layout', () => {
-    const source = read('src/ui/src/components/Header.jsx');
+  describe('Header.tsx — responsive nav layout', () => {
+    const source = read('src/ui/src/components/Header.tsx');
 
     it('header is fixed with left-0 right-0 (full width, no overflow)', () => {
       expect(source).toContain('fixed top-0 left-0 right-0');
@@ -75,8 +75,8 @@ describe('Responsive CSS — no horizontal overflow at all breakpoints', () => {
     });
   });
 
-  describe('ContentPost.jsx — content layout', () => {
-    const source = read('src/ui/src/components/ContentPost.jsx');
+  describe('ContentPost.tsx — content layout', () => {
+    const source = read('src/ui/src/components/ContentPost.tsx');
 
     it('uses max-w-3xl for narrow readable column', () => {
       expect(source).toContain('max-w-3xl');
@@ -91,8 +91,8 @@ describe('Responsive CSS — no horizontal overflow at all breakpoints', () => {
     });
   });
 
-  describe('ActiveAlerts.jsx — section layout', () => {
-    const source = read('src/ui/src/components/ActiveAlerts.jsx');
+  describe('ActiveAlerts.tsx — section layout', () => {
+    const source = read('src/ui/src/components/ActiveAlerts.tsx');
 
     it('uses max-w-4xl with responsive padding', () => {
       expect(source).toContain('max-w-4xl');
@@ -100,8 +100,8 @@ describe('Responsive CSS — no horizontal overflow at all breakpoints', () => {
     });
   });
 
-  describe('HeroAscii.jsx — canvas responsiveness', () => {
-    const source = read('src/ui/src/components/HeroAscii.jsx');
+  describe('HeroAscii.tsx — canvas responsiveness', () => {
+    const source = read('src/ui/src/components/HeroAscii.tsx');
 
     it('handles mobile responsiveness with isMobile check', () => {
       expect(source).toContain('isMobile');

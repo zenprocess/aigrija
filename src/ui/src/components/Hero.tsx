@@ -1,5 +1,5 @@
 import React from 'react';
-import HeroAscii from './HeroAscii.jsx';
+import HeroAscii from './HeroAscii';
 
 /**
  * Hero — delegates to HeroAscii which provides the full hero section

@@ -1,13 +1,22 @@
 import React from 'react';
 
-export default class ErrorBoundary extends React.Component {
-  state = { hasError: false, error: null };
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
 
-  static getDerivedStateFromError(error) {
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error, info) {
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, info);
   }
 
@@ -20,7 +29,7 @@ export default class ErrorBoundary extends React.Component {
             <p className="text-gray-400">A apărut o eroare neașteptată.</p>
             <button
               data-testid="error-retry-btn"
-              onClick={() => { this.setState({ hasError: false }); window.location.hash = ''; }}
+              onClick={() => { this.setState({ hasError: false, error: null }); window.location.hash = ''; }}
               className="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-500 min-h-[44px]"
             >
               Încearcă din nou

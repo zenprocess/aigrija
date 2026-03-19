@@ -238,6 +238,36 @@ jobs:
         run: bash scripts/infra-smoke-test.sh "${{ env.PREVIEW_URL }}"
 
   # ---------------------------------------------------------------------------
+  # E2E Playwright spec suite against the live preview deployment.
+  # Tests real D1 data (from crawler), real AI bindings, real KV/R2 state.
+  # ---------------------------------------------------------------------------
+  e2e-playwright:
+    name: E2E Playwright tests
+    needs: health-check
+    if: always() && needs.health-check.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: npx playwright install --with-deps chromium
+      - name: Run Playwright tests against preview
+        run: npx playwright test --workers=2
+        env:
+          BASE_URL: ${{ env.PREVIEW_URL }}
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-preview
+          path: playwright-report/
+
+  # ---------------------------------------------------------------------------
   # Wait for Greptile AI code review.
   # PR-only. continue-on-error: true so a Greptile timeout or failure never
   # blocks bowser-test. bowser-test does NOT list this job in needs — intentional.

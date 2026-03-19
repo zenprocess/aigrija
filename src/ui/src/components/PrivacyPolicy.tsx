@@ -1,6 +1,6 @@
 import React from 'react';
 import { ShieldCheck, ArrowLeft } from 'lucide-react';
-import { useTranslation } from '../i18n/index.jsx';
+import { useTranslation } from '../i18n';
 
 export default function PrivacyPolicy() {
   const { t, lang } = useTranslation();

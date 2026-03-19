@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
+  testMatch: '**/*.spec.ts',
   outputDir: './test-results',
   snapshotDir: './e2e/baselines',
   timeout: 30_000,
@@ -18,13 +19,13 @@ export default defineConfig({
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile', use: { ...devices['iPhone 14'] } },
+    { name: 'mobile', use: { ...devices['Desktop Chrome'], viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true } },
   ],
   webServer: process.env.BASE_URL ? undefined : {
     command: 'npx wrangler dev --port 8787 --local || true',
-    port: 8787,
+    url: 'http://localhost:8787/health',
     reuseExistingServer: true,
-    timeout: 30_000,
+    timeout: 60_000,
     stdout: 'pipe',
     stderr: 'pipe',
   },

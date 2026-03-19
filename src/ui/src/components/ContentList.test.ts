@@ -42,6 +42,12 @@ describe('ContentList — defensive slug handling', () => {
   });
 });
 
+describe('ContentList — HTTP error handling', () => {
+  it('checks r.ok before parsing JSON to surface server errors', () => {
+    expect(source).toContain("if (!r.ok) throw new Error(`HTTP ${r.status}`)");
+  });
+});
+
 describe('ContentPost — defensive slug handling for related articles', () => {
   const postSource = readFileSync(join(process.cwd(), 'src/ui/src/components/ContentPost.tsx'), 'utf-8');
 

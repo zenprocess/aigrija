@@ -45,3 +45,24 @@ describe('ContentPost XSS prevention', () => {
     expect(source).toContain('export default function ContentPost');
   });
 });
+
+describe('ContentPost — Sanity response normalization', () => {
+  it('normalizes categories from Sanity objects to strings', () => {
+    expect(source).toContain("typeof cat === 'string' ? cat : (cat.title || '')");
+  });
+
+  it('normalizes author from Sanity object to string and extracts avatar', () => {
+    expect(source).toContain("typeof normalized.author === 'object'");
+    expect(source).toContain("normalized.author = normalized.author.name || ''");
+    expect(source).toContain("normalized.author.image");
+  });
+
+  it('falls back publishedAt from firstSeen (amenintari uses firstSeen not publishedAt)', () => {
+    expect(source).toContain('normalized.firstSeen');
+    expect(source).toContain('normalized.publishedAt = normalized.firstSeen');
+  });
+
+  it('spreads raw into a new object before normalizing (avoids mutation)', () => {
+    expect(source).toContain('const normalized = { ...raw }');
+  });
+});

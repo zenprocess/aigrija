@@ -77,13 +77,7 @@ jobs:
       - name: Build SPA assets
         run: pnpm run build
       - name: Run Playwright tests
-        run: |
-          npx playwright test 2>&1 | tee playwright-output.txt; PWEXIT=${PIPESTATUS[0]}
-          if grep -q "0 failed" playwright-output.txt || grep -qE "^\s+[0-9]+ passed" playwright-output.txt; then
-            echo "All tests passed (exit code $PWEXIT may be from webServer teardown)"
-            exit 0
-          fi
-          exit $PWEXIT
+        run: npx playwright test --workers=2
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -122,7 +116,7 @@ jobs:
         run: cd infra/policy && npm install
       - name: Pulumi login (R2 backend)
         if: env.PULUMI_CONFIG_PASSPHRASE != ''
-        run: pulumi login s3://ai-grija-pulumi-state --secrets-provider passphrase
+        run: pulumi login "s3://ai-grija-pulumi-state?region=auto&endpoint=https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com"
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

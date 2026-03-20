@@ -321,6 +321,23 @@
     "feedback_correct": "✓ Corect!",
     "feedback_incorrect": "✗ Incorect"
   },
+  "onboarding": {
+    "trust_anonymous": "Anonim — fără cont necesar",
+    "trust_pii": "Date personale mascate automat",
+    "trust_free": "Gratuit, open source",
+    "dismiss_label": "Știu deja",
+    "dismiss_aria": "Închide onboarding",
+    "show_sample": "Vezi cum arată o verificare",
+    "hide_sample": "Ascunde exemplul",
+    "sample_intro": "Iată un exemplu real de detectare a phishing-ului:",
+    "sample_cta": "Acum lipește propriul tău mesaj în formularul de mai jos ↓",
+    "sample_demo_badge": "DEMO",
+    "sample_message_label": "Mesaj verificat:",
+    "sample_message": "\"Urgent: Contul tău BRD a fost suspendat. Accesează linkul pentru reactivare: https://brd-secure-verify.xyz/auth\"",
+    "sample_flag1": "Creează urgență — presiune de a acționa imediat",
+    "sample_flag2": "Domeniu suspect — nu aparține băncii oficiale",
+    "sample_flag3": "Uzurpă identitatea unei instituții financiare pentru a fura credențiale"
+  },
   "feed": {
     "noItems": "Nu există conținut disponibil"
   },

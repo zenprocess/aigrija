@@ -1,6 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
+import OnboardingFlow from './components/OnboardingFlow';
 import Checker from './components/Checker';
 import HowItWorks from './components/HowItWorks';
 import ActiveAlerts from './components/ActiveAlerts';
@@ -121,6 +122,7 @@ function App() {
 
         <main id="main-content" className="flex-grow pt-16">
           <Hero />
+          <OnboardingFlow />
           <Checker />
           <HowItWorks />
           <ActiveAlerts />

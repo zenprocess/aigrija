@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@dicebear/collection": "^9.3.2",
-    "@dicebear/core": "^9.3.2",
+    "@dicebear/core": "^9.4.1",
     "@sentry/cloudflare": "^9.47.1",
     "chanfana": "^3.2.1",
     "class-variance-authority": "^0.7.1",

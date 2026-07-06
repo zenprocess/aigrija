@@ -30,7 +30,7 @@ ai-grija.ro is a Romanian anti-phishing platform that classifies URLs via Worker
 
 ### Secret Lifecycle
 
-1. **Authoring**: secrets created and stored in **Infisical** (`sec.zp.digital`) via `mcp__infisical__create-secret`
+1. **Authoring**: secrets created and stored in a **centralized secrets manager** (e.g. Infisical, self-hosted) via its API/MCP integration
 2. **Local dev**: secrets pulled to `.dev.vars` (gitignored) — `wrangler dev` reads this automatically
 3. **Production binding**: `npx wrangler secret put KEY_NAME` binds secret to the Worker; accessed as `env.KEY_NAME` at runtime
 4. **Never in source**: no hardcoded values in `.ts`, `.toml`, or any tracked file

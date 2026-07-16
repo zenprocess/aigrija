@@ -125,10 +125,11 @@ async function runWeeklyDigest(env: Env): Promise<void> {
 
   const weekOf = getISOWeek(new Date());
 
-  // generateWeeklyDigest handles KV caching internally and returns WeeklyDigest
+  // Force-refresh bypasses the KV cache so a stale empty digest (cached before content
+  // was published) doesn't suppress the Monday distribution.
   let digest;
   try {
-    digest = await generateWeeklyDigest(env);
+    digest = await generateWeeklyDigest(env, true);
   } catch (err) {
     structuredLog('error', 'cron_weekly_digest_generate_failed', {
       stage: 'cron',

@@ -150,6 +150,21 @@ describe('generateWeeklyDigest', () => {
     expect(digest2.weekOf).toBe(digest1.weekOf);
   });
 
+  it('forceRefresh bypasses the KV cache', async () => {
+    const kvStore: Record<string, string> = {};
+    const env = makeEnv(kvStore);
+    // First call caches with empty DB results
+    await generateWeeklyDigest(env);
+    // Inject a KV stat value that would only appear on a fresh query
+    kvStore['stats:total_checks'] = '777';
+    // Without forceRefresh the cache is served (old value 0)
+    const cached = await generateWeeklyDigest(env, false);
+    expect(cached.stats.totalChecks).toBe(0);
+    // With forceRefresh the cache is bypassed and the new value is read
+    const fresh = await generateWeeklyDigest(env, true);
+    expect(fresh.stats.totalChecks).toBe(777);
+  });
+
   it('maps D1 campaigns to topScams', async () => {
     const dbRows = [
       { id: '1', title: 'Frauda Banca X', source_url: 'https://example.com', severity: 'critical', created_at: new Date().toISOString() },
@@ -161,6 +176,27 @@ describe('generateWeeklyDigest', () => {
     expect(digest.topScams[0].title).toBe('Frauda Banca X');
     expect(digest.topScams[0].severity).toBe('critical');
     expect(digest.topScams[1].url).toBe('https://ai-grija.ro/alerte');
+  });
+
+  it('passes SQLite-compatible date (no T / no Z) to D1 queries', async () => {
+    // D1 stores datetime('now') as "YYYY-MM-DD HH:MM:SS" (space separator, no timezone).
+    // Using toISOString() (which produces the T+Z form) breaks lexicographic comparisons:
+    //   '2026-03-13 07:00:00' < '2026-03-13T06:00:00.000Z'  ← wrong, misses same-day records.
+    const bindSpy = vi.fn().mockReturnValue({ all: async () => ({ results: [] }) });
+    const env = makeEnv({}, []);
+    env.DB = {
+      prepare: () => ({ bind: bindSpy }),
+    } as any;
+
+    await generateWeeklyDigest(env);
+
+    // Both the topScams query and blogPosts query bind a date parameter
+    for (const call of bindSpy.mock.calls) {
+      const dateArg: string = call[0];
+      expect(dateArg).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+      expect(dateArg).not.toContain('T');
+      expect(dateArg).not.toContain('Z');
+    }
   });
 
   it('handles D1 failure gracefully', async () => {

@@ -337,6 +337,16 @@ describe('handleScheduled', () => {
       expect(sendDigestEmail).toHaveBeenCalledWith(expect.anything(), digest);
     });
 
+    it('calls generateWeeklyDigest with forceRefresh=true to bypass stale cache', async () => {
+      vi.mocked(generateWeeklyDigest).mockResolvedValue({ weekOf: '2026-W10' } as any);
+      vi.mocked(sendDigestToTelegram).mockResolvedValue(undefined);
+      vi.mocked(sendDigestEmail).mockResolvedValue(undefined);
+
+      await handleScheduled(makeEvent('0 6 * * 1'), makeEnv());
+
+      expect(generateWeeklyDigest).toHaveBeenCalledWith(expect.anything(), true);
+    });
+
     it('stops if digest generation fails', async () => {
       vi.mocked(generateWeeklyDigest).mockRejectedValue(new Error('DB error'));
       await handleScheduled(makeEvent('0 6 * * 1'), makeEnv());

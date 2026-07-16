@@ -136,20 +136,28 @@ export function weekLabel(date: Date = new Date()): string {
 
 // ─── Main aggregation function ────────────────────────────────────────────────
 
-export async function generateWeeklyDigest(env: Env): Promise<WeeklyDigest> {
+export async function generateWeeklyDigest(env: Env, forceRefresh = false): Promise<WeeklyDigest> {
   const weekKey = currentWeekKey();
   const cacheKey = `digest:${weekKey}`;
 
-  const cached = await env.CACHE.get(cacheKey);
-  if (cached) {
-    try {
-      return JSON.parse(cached) as WeeklyDigest;
-    } catch {
-      // Corrupted cache - recompute
+  if (!forceRefresh) {
+    const cached = await env.CACHE.get(cacheKey);
+    if (cached) {
+      try {
+        return JSON.parse(cached) as WeeklyDigest;
+      } catch {
+        // Corrupted cache - recompute
+      }
     }
   }
 
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  // Use SQLite-compatible format: "YYYY-MM-DD HH:MM:SS" (space separator, no timezone suffix).
+  // D1 stores datetime('now') without the T/Z that toISOString() adds; mixing formats breaks
+  // lexicographic comparisons — e.g. '2026-03-13 07:00:00' < '2026-03-13T06:00:00.000Z'.
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .replace('T', ' ')
+    .slice(0, 19);
 
   // Top 10 scam campaigns from D1
   let topScams: WeeklyDigestScam[] = [];
